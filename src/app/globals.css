@@ -220,78 +220,153 @@ body {
   }
 }
 
-  /* ── Smooth Theme Transition ── */
+/* ── Smooth Theme Transition ── */
 html {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* ── Dark Mode: Body ── */
+/* ═══════════════ BASE ═══════════════ */
+
 html.dark body {
-  background-color: #030712; /* gray-950 */
-  color: #f1f5f9; /* slate-100 */
+  background-color: #030712;
+  color: #e2e8f0;
 }
 
-/* ── Dark Mode: card-glass Override ── */
+/* ═══════════════ DASHBOARD GRADIENT ═══════════════ */
+
+html.dark .dashboard-gradient {
+  background: linear-gradient(135deg, #030712 0%, #0f172a 50%, #030712 100%) !important;
+}
+
+/* ═══════════════ CARD-GLASS ═══════════════ */
+
 html.dark .card-glass {
-  background: rgba(17, 24, 39, 0.85); /* gray-900 mit Transparenz */
-  border-color: rgba(55, 65, 81, 0.5); /* gray-700 */
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(51, 65, 85, 0.5);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(51, 65, 85, 0.2);
+  color: #e2e8f0;
 }
 
-/* ── Dark Mode: Scrollbar ── */
-html.dark ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+html.dark .card-glass:hover {
+  border-color: rgba(71, 85, 105, 0.6);
 }
 
-html.dark ::-webkit-scrollbar-track {
-  background: #111827; /* gray-900 */
+/* ═══════════════ BG-WHITE → DARK ═══════════════ */
+
+html.dark .dashboard-gradient .bg-white,
+html.dark .dashboard-gradient [class*="bg-white"] {
+  background-color: #111827 !important;
+  border-color: #1e293b !important;
 }
 
-html.dark ::-webkit-scrollbar-thumb {
-  background: #374151; /* gray-700 */
-  border-radius: 3px;
+/* ═══════════════ TEXT OVERRIDES ═══════════════ */
+
+html.dark .dashboard-gradient .text-gray-900 { color: #f1f5f9 !important; }
+html.dark .dashboard-gradient .text-gray-800 { color: #e2e8f0 !important; }
+html.dark .dashboard-gradient .text-gray-700 { color: #cbd5e1 !important; }
+html.dark .dashboard-gradient .text-gray-600 { color: #94a3b8 !important; }
+html.dark .dashboard-gradient .text-gray-500 { color: #64748b !important; }
+
+/* Colored text – etwas heller im Dark */
+html.dark .dashboard-gradient .text-red-500 { color: #f87171 !important; }
+html.dark .dashboard-gradient .text-green-500,
+html.dark .dashboard-gradient .text-green-600 { color: #4ade80 !important; }
+
+/* ═══════════════ BORDER OVERRIDES ═══════════════ */
+
+html.dark .dashboard-gradient .border-gray-100,
+html.dark .dashboard-gradient .border-gray-200,
+html.dark .dashboard-gradient .border-gray-300 {
+  border-color: #1e293b !important;
 }
 
-html.dark ::-webkit-scrollbar-thumb:hover {
-  background: #4b5563; /* gray-600 */
+html.dark .dashboard-gradient [class*="divide-gray"] > * + * {
+  border-color: #1e293b !important;
 }
 
-/* ── Dark Mode: Allgemeine Overrides für häufige Patterns ── */
+/* ═══════════════ BG-GRAY OVERRIDES ═══════════════ */
 
-/* Weiße Karten → Dunkel */
-html.dark .bg-white {
-  /* Tailwind dark: Klassen übernehmen das meiste,
-     aber für inline/legacy styles: */
+html.dark .dashboard-gradient .bg-gray-50 { background-color: #0f172a !important; }
+html.dark .dashboard-gradient .bg-gray-100 { background-color: #1e293b !important; }
+
+/* ═══════════════ SHADOWS ═══════════════ */
+
+html.dark .shadow-sm { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important; }
+html.dark .shadow-md,
+html.dark .shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4) !important; }
+html.dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4) !important; }
+html.dark .shadow-xl,
+html.dark .shadow-2xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important; }
+html.dark .shadow-inner { box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3) !important; }
+
+/* ═══════════════ RECHARTS ═══════════════ */
+
+html.dark .recharts-text { fill: #94a3b8 !important; }
+html.dark .recharts-cartesian-grid line { stroke: #1e293b !important; }
+html.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
 }
 
-/* Shadows im Dark Mode subtiler */
-html.dark .shadow-sm {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+/* ═══════════════ TABELLEN ═══════════════ */
+
+html.dark .dashboard-gradient table { color: #e2e8f0; }
+html.dark .dashboard-gradient thead { background-color: #0f172a !important; }
+html.dark .dashboard-gradient thead th { color: #94a3b8 !important; border-color: #1e293b !important; }
+html.dark .dashboard-gradient tbody tr { border-color: #1e293b !important; }
+html.dark .dashboard-gradient tbody tr:hover { background-color: rgba(15, 23, 42, 0.5) !important; }
+html.dark .dashboard-gradient tbody td { border-color: #1e293b !important; }
+
+/* ═══════════════ INPUTS & SELECTS ═══════════════ */
+
+html.dark .dashboard-gradient select,
+html.dark .dashboard-gradient input[type="text"],
+html.dark .dashboard-gradient input[type="search"] {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
 }
 
-html.dark .shadow-md {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+html.dark .dashboard-gradient button[class*="border-gray"] {
+  border-color: #334155;
+  color: #cbd5e1;
 }
 
-/* ── Focus Rings im Dark Mode ── */
-html.dark *:focus-visible {
-  outline-color: #818cf8; /* indigo-400 */
+html.dark .dashboard-gradient button[class*="border-gray"]:hover {
+  background-color: #1e293b;
+  border-color: #475569;
 }
 
-/* ── Print: Dark Mode ignorieren ── */
+/* ═══════════════ COLORED BG-*-50 BADGES ═══════════════ */
+
+html.dark .dashboard-gradient .bg-indigo-50 { background-color: rgba(79, 70, 229, 0.15) !important; }
+html.dark .dashboard-gradient .bg-emerald-50,
+html.dark .dashboard-gradient .bg-green-50 { background-color: rgba(16, 185, 129, 0.15) !important; }
+html.dark .dashboard-gradient .bg-red-50 { background-color: rgba(239, 68, 68, 0.15) !important; }
+html.dark .dashboard-gradient .bg-yellow-50,
+html.dark .dashboard-gradient .bg-amber-50 { background-color: rgba(245, 158, 11, 0.15) !important; }
+html.dark .dashboard-gradient .bg-blue-50 { background-color: rgba(59, 130, 246, 0.15) !important; }
+
+/* ═══════════════ SCROLLBAR ═══════════════ */
+
+html.dark ::-webkit-scrollbar { width: 6px; height: 6px; }
+html.dark ::-webkit-scrollbar-track { background: #0f172a; }
+html.dark ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+html.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* ═══════════════ FOCUS RINGS ═══════════════ */
+
+html.dark *:focus-visible { outline-color: #818cf8; }
+
+/* ═══════════════ PRINT: IGNORE DARK ═══════════════ */
+
 @media print {
-  html.dark body {
-    background-color: white;
-    color: black;
-  }
-  
-  html.dark .card-glass {
-    background: white;
-    border-color: #e5e7eb;
-  }
+  html.dark body { background-color: white !important; color: black !important; }
+  html.dark .card-glass { background: white !important; border-color: #e5e7eb !important; color: black !important; }
+  html.dark .dashboard-gradient { background: white !important; }
+  html.dark .dashboard-gradient .bg-white { background-color: white !important; }
+  html.dark .shadow-sm, html.dark .shadow-md, html.dark .shadow, html.dark .shadow-lg { box-shadow: none !important; }
 }
-
-  
