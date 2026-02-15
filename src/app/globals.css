@@ -219,3 +219,79 @@ body {
     max-height: none !important;
   }
 }
+
+  /* ── Smooth Theme Transition ── */
+html {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ── Dark Mode: Body ── */
+html.dark body {
+  background-color: #030712; /* gray-950 */
+  color: #f1f5f9; /* slate-100 */
+}
+
+/* ── Dark Mode: card-glass Override ── */
+html.dark .card-glass {
+  background: rgba(17, 24, 39, 0.85); /* gray-900 mit Transparenz */
+  border-color: rgba(55, 65, 81, 0.5); /* gray-700 */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Dark Mode: Scrollbar ── */
+html.dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #111827; /* gray-900 */
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #374151; /* gray-700 */
+  border-radius: 3px;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #4b5563; /* gray-600 */
+}
+
+/* ── Dark Mode: Allgemeine Overrides für häufige Patterns ── */
+
+/* Weiße Karten → Dunkel */
+html.dark .bg-white {
+  /* Tailwind dark: Klassen übernehmen das meiste,
+     aber für inline/legacy styles: */
+}
+
+/* Shadows im Dark Mode subtiler */
+html.dark .shadow-sm {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Focus Rings im Dark Mode ── */
+html.dark *:focus-visible {
+  outline-color: #818cf8; /* indigo-400 */
+}
+
+/* ── Print: Dark Mode ignorieren ── */
+@media print {
+  html.dark body {
+    background-color: white;
+    color: black;
+  }
+  
+  html.dark .card-glass {
+    background: white;
+    border-color: #e5e7eb;
+  }
+}
+
+  
