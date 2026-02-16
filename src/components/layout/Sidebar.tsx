@@ -44,7 +44,7 @@ export default function Sidebar() {
   // LOGO-KONFIGURATION (DATEITAUSCH)
   // ═══════════════════════════════════════════════════════
   const logoLight = "/logo-data-peak.webp"; // Pfad für helles Theme
-  const logoDark = "/logo-data-peak.webp";  // Hier den Pfad zum Dark-Logo eintragen (z.B. -white.webp)
+  const logoDark = "/logo-data-peak-dark.webp";  // Hier den Pfad zum Dark-Logo eintragen (z.B. -white.webp)
   
   // Wählt das Logo basierend auf Theme oder User-Upload
   const systemLogo = theme === 'dark' ? logoDark : logoLight;
