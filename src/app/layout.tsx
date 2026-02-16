@@ -1,7 +1,7 @@
 // app/layout.tsx
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
-import "./globals.css";  // Hier können wir fallback-mäßig importieren, falls nötig
+import "./globals.css";
 import { Providers } from "./providers";
 import MainLayout from '@/components/MainLayout';
 import { Toaster } from 'sonner';
@@ -29,13 +29,34 @@ export function generateMetadata(): Metadata {
   };
 }
 
+// ─── Theme Init Script ───────────────────────────────────
+// Läuft VOR React-Hydration um Flash of Wrong Theme zu verhindern.
+// Liest localStorage und setzt/entfernt die 'dark' Klasse auf <html>
+// BEVOR irgendein CSS oder React-Component rendert.
+const themeInitScript = `
+  (function() {
+    try {
+      var theme = localStorage.getItem('datapeak-theme');
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch(e) {}
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de">
+    <html lang="de" suppressHydrationWarning>
+      <head>
+        {/* Theme SOFORT setzen – vor allem anderen */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className={`${poppins.className} bg-gray-50`}>
         <Providers>
           <Toaster position="top-right" richColors closeButton />
