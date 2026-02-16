@@ -44,7 +44,10 @@ export default function Sidebar() {
   // DASHBOARD SEKTIONEN – Untermenü für Projekt-Dashboard
   // ═══════════════════════════════════════════════════════
 
-  const isDashboardPage = pathname.startsWith('/projekt/') || (pathname.startsWith('/dashboard/') && pathname !== '/dashboard/freigabe');
+  // Dashboard-Seite erkennen: Admin über /projekt/[id], User über / oder /dashboard/[id]
+  const isDashboardPage = pathname.startsWith('/projekt/') || 
+    (pathname.startsWith('/dashboard/') && pathname !== '/dashboard/freigabe') ||
+    (isUser && pathname === '/');
 
   const dashboardSections = [
     { id: 'section-kpis',         label: 'Traffic & Reichweite',  icon: <BarChartFill size={13} /> },
@@ -58,31 +61,36 @@ export default function Sidebar() {
   // Scroll-Spy: Beobachte welche Sektion gerade sichtbar ist
   useEffect(() => {
     if (!isDashboardPage) return;
+    if (typeof IntersectionObserver === 'undefined') return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Finde die oberste sichtbare Sektion
-        const visible = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible.length > 0) {
-          setActiveSection(visible[0].target.id);
-        }
-      },
-      { rootMargin: '-80px 0px -50% 0px', threshold: 0.1 }
-    );
+    let observer: IntersectionObserver | null = null;
 
-    // Etwas verzögert starten damit die DOM-Elemente da sind
     const timer = setTimeout(() => {
-      dashboardSections.forEach(({ id }) => {
-        const el = document.getElementById(id);
-        if (el) observer.observe(el);
-      });
-    }, 500);
+      try {
+        observer = new IntersectionObserver(
+          (entries) => {
+            const visible = entries
+              .filter(e => e.isIntersecting)
+              .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+            if (visible.length > 0) {
+              setActiveSection(visible[0].target.id);
+            }
+          },
+          { rootMargin: '-80px 0px -50% 0px', threshold: 0.1 }
+        );
+
+        dashboardSections.forEach(({ id }) => {
+          const el = document.getElementById(id);
+          if (el && observer) observer.observe(el);
+        });
+      } catch (e) {
+        // Silent fail – Sektionen noch nicht im DOM
+      }
+    }, 1000);
 
     return () => {
       clearTimeout(timer);
-      observer.disconnect();
+      if (observer) observer.disconnect();
     };
   }, [isDashboardPage, pathname]);
 
