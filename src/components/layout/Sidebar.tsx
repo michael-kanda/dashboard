@@ -216,6 +216,7 @@ export default function Sidebar() {
       sidebar-bg
       border-r border-gray-200 dark:border-gray-800
       transition-all duration-200 ease-in-out relative flex-shrink-0
+      sticky top-0 h-screen
       ${isCollapsed ? 'w-[72px]' : 'w-[260px]'}
     `}>
       {/* Toggle Button */}
@@ -262,7 +263,7 @@ export default function Sidebar() {
 
       {/* Navigation */}
       {status === 'authenticated' && (
-        <nav className="flex-1 px-2.5 py-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-thin">
           {!isCollapsed && (
             <div className="px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">Navigation</div>
           )}
@@ -293,7 +294,7 @@ export default function Sidebar() {
       )}
 
       {status !== 'authenticated' && (
-        <nav className="flex-1 px-2.5 py-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-thin">
           {renderThemeToggle()}
         </nav>
       )}
