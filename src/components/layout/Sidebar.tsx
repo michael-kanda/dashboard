@@ -211,17 +211,16 @@ export default function Sidebar() {
   // ═══════════════════════════════════════════════════════
 
   const renderDesktopSidebar = () => (
-    <aside className={`
+    <aside data-sidebar className={`
       hidden md:flex flex-col
-      bg-white dark:bg-gray-900
+      sidebar-bg
       border-r border-gray-200 dark:border-gray-800
       transition-all duration-200 ease-in-out relative flex-shrink-0
-      min-h-screen self-stretch
       ${isCollapsed ? 'w-[72px]' : 'w-[260px]'}
     `}>
       {/* Toggle Button */}
       <button onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-[28px] z-50 w-6 h-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all duration-150 text-gray-400 hover:text-indigo-600 dark:text-gray-500 dark:hover:text-indigo-400"
+        className="absolute -right-3 top-[28px] z-50 w-6 h-6 sidebar-bg border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all duration-150 text-gray-400 hover:text-indigo-600 dark:text-gray-500 dark:hover:text-indigo-400"
         title={isCollapsed ? 'Sidebar ausklappen' : 'Sidebar einklappen'}
       >
         {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
@@ -263,7 +262,7 @@ export default function Sidebar() {
 
       {/* Navigation */}
       {status === 'authenticated' && (
-        <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-none">
+        <nav className="flex-1 px-2.5 py-3 space-y-1">
           {!isCollapsed && (
             <div className="px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">Navigation</div>
           )}
@@ -294,7 +293,7 @@ export default function Sidebar() {
       )}
 
       {status !== 'authenticated' && (
-        <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-none">
+        <nav className="flex-1 px-2.5 py-3 space-y-1">
           {renderThemeToggle()}
         </nav>
       )}
@@ -336,7 +335,7 @@ export default function Sidebar() {
   // ═══════════════════════════════════════════════════════
 
   const renderMobileHeader = () => (
-    <header className="md:hidden bg-white dark:bg-gray-900 shadow-md relative print:hidden">
+    <header className="md:hidden sidebar-bg shadow-md relative print:hidden">
       <nav className="w-full px-6 py-3 flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <Link href="/" onClick={handleLinkClick}>
@@ -367,7 +366,7 @@ export default function Sidebar() {
       </nav>
 
       {isMobileMenuOpen && status === 'authenticated' && (
-        <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-900 shadow-lg border-t border-gray-100 dark:border-gray-800 z-50"
+        <div className="absolute top-full left-0 w-full sidebar-bg shadow-lg border-t border-gray-100 dark:border-gray-800 z-50"
           onClick={handleLinkClick}>
           <div className="flex flex-col space-y-2 p-4">
             {isAdmin && (
