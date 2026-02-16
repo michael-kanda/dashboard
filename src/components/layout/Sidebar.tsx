@@ -40,9 +40,15 @@ export default function Sidebar() {
   const isSuperAdmin = session?.user?.role === 'SUPERADMIN';
   const isUser = session?.user?.role === 'BENUTZER';
 
-  // Logo-Konfiguration
-  const defaultLogo = "/logo-data-peak.webp"; 
-  const logoSrc = session?.user?.logo_url || defaultLogo;
+  // ═══════════════════════════════════════════════════════
+  // LOGO-KONFIGURATION (DATEITAUSCH)
+  // ═══════════════════════════════════════════════════════
+  const logoLight = "/logo-data-peak.webp"; // Pfad für helles Theme
+  const logoDark = "/logo-data-peak.webp";  // Hier den Pfad zum Dark-Logo eintragen (z.B. -white.webp)
+  
+  // Wählt das Logo basierend auf Theme oder User-Upload
+  const systemLogo = theme === 'dark' ? logoDark : logoLight;
+  const logoSrc = session?.user?.logo_url || systemLogo;
   const priorityLoad = true;
 
   // ═══════════════════════════════════════════════════════
@@ -87,10 +93,6 @@ export default function Sidebar() {
     };
     if (status !== 'loading') checkLandingpages();
   }, [session, status]);
-
-  // ═══════════════════════════════════════════════════════
-  // HILFSFUNKTIONEN & RENDERING
-  // ═══════════════════════════════════════════════════════
 
   if (pathname === '/login' || isInMaintenance) return null;
   if (isCheckingMaintenance && status === 'authenticated' && session?.user?.role !== 'SUPERADMIN') return null;
@@ -171,8 +173,7 @@ export default function Sidebar() {
 
   const renderThemeToggle = () => (
     <button onClick={toggleTheme}
-      title={theme === 'dark' ? 'Zum Light Mode wechseln' : 'Zum Dark Mode wechseln'}
-      className="group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200 w-full"
+      className="group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 w-full"
     >
       <span className="flex-shrink-0 flex items-center justify-center w-5 h-5">
         {theme === 'dark' ? <SunFill size={18} /> : <MoonStarsFill size={18} />}
@@ -180,11 +181,6 @@ export default function Sidebar() {
       <span className={`whitespace-nowrap transition-all duration-200 ${isCollapsed ? 'md:opacity-0 md:w-0 md:overflow-hidden' : 'opacity-100'}`}>
         {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
       </span>
-      {isCollapsed && (
-        <span className="hidden md:group-hover:flex absolute left-full ml-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg z-[100] pointer-events-none after:content-[''] after:absolute after:right-full after:top-1/2 after:-translate-y-1/2 after:border-[5px] after:border-transparent after:border-r-gray-900">
-          {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-        </span>
-      )}
     </button>
   );
 
@@ -204,7 +200,7 @@ export default function Sidebar() {
         {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
 
-      {/* Logo Bereich - Schriftzug entfernt, Logo skaliert */}
+      {/* Logo Bereich */}
       <div className="flex items-center h-[80px] px-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
         <Link href="/" onClick={handleLinkClick} className="flex items-center justify-center w-full">
           <div className={`relative h-[50px] transition-all duration-200 ${isCollapsed ? 'w-[40px]' : 'w-full'}`}>
@@ -215,9 +211,9 @@ export default function Sidebar() {
               priority={priorityLoad}
               onError={(e) => { 
                 const target = e.target as HTMLImageElement;
-                if (logoSrc !== defaultLogo) target.src = defaultLogo; 
+                if (logoSrc !== logoLight) target.src = logoLight; 
               }}
-              className={`object-contain transition-all duration-300 ${theme === 'dark' ? 'brightness-0 invert' : ''}`}
+              className="object-contain transition-all duration-300"
               sizes={isCollapsed ? "40px" : "240px"} 
             />
           </div>
@@ -297,9 +293,9 @@ export default function Sidebar() {
               priority={priorityLoad}
               onError={(e) => { 
                 const target = e.target as HTMLImageElement;
-                if (logoSrc !== defaultLogo) target.src = defaultLogo; 
+                if (logoSrc !== logoLight) target.src = logoLight; 
               }}
-              className={`object-contain transition-all duration-300 ${theme === 'dark' ? 'brightness-0 invert' : ''}`} 
+              className="object-contain transition-all duration-300" 
               sizes="180px" 
             />
           </div>
