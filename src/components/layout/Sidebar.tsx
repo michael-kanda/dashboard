@@ -227,17 +227,20 @@ export default function Sidebar() {
         {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
 
-      {/* Logo */}
-      <div className="flex items-center h-[68px] px-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0 gap-3">
-        <Link href="/" onClick={handleLinkClick} className="flex items-center gap-3 flex-shrink-0">
-          <div className="relative h-[40px] w-[40px] flex-shrink-0">
-            <Image src={logoSrc} alt="Dashboard Logo" fill priority={priorityLoad}
+{/* Logo */}
+      <div className="flex items-center h-[80px] px-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+        <Link href="/" onClick={handleLinkClick} className="flex items-center justify-center w-full">
+          <div className={`relative h-[50px] transition-all duration-200 ${isCollapsed ? 'w-[40px]' : 'w-full'}`}>
+            <Image 
+              src={logoSrc} 
+              alt="Dashboard Logo" 
+              fill 
+              priority={priorityLoad}
               onError={(e) => { if (logoSrc !== defaultLogo) (e.target as HTMLImageElement).src = defaultLogo; }}
-              className="object-contain" sizes="40px" />
+              className="object-contain" 
+              sizes={isCollapsed ? "40px" : "200px"} 
+            />
           </div>
-          {!isCollapsed && (
-            <span className="text-base font-bold text-gray-900 dark:text-white tracking-tight whitespace-nowrap sr-only">DataPeak</span>
-          )}
         </Link>
       </div>
 
