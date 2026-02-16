@@ -34,6 +34,7 @@ export default function Sidebar() {
   const [dashboardSubmenuOpen, setDashboardSubmenuOpen] = useState(true);
   const [activeSection, setActiveSection] = useState<string>('');
   const [isCheckingMaintenance, setIsCheckingMaintenance] = useState(true);
+  const [isInMaintenance, setIsInMaintenance] = useState(false);
   const [kiToolEnabled, setKiToolEnabled] = useState(true);
   const [hasLandingpages, setHasLandingpages] = useState(false);
   const [isCheckingLandingpages, setIsCheckingLandingpages] = useState(true);
