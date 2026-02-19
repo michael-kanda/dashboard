@@ -26,7 +26,7 @@ export default function GlobalHeader({
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
 
   return (
-    <div className="relative sm:sticky sm:top-0 z-40 p-4 sm:p-6 mb-6 print:hidden bg-white/98 dark:bg-gray-900/98 backdrop-blur-md shadow-sm dark:shadow-none transition-all duration-200 border-b border-gray-200/80 dark:border-gray-700/60 rounded-xl sm:rounded-none">
+    <div className="relative sm:sticky sm:top-0 z-40 card-glass p-4 sm:p-6 mb-6 print:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-md transition-all duration-200 border-b border-gray-100 dark:border-gray-800">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         
         {/* LINKE SEITE: Projekt-Kontext */}

@@ -113,7 +113,7 @@ export default function TableauKpiCard({
       {/* Hintergrund-Balken */}
       {barComparison && (
         <div 
-          className="absolute left-0 top-0 bottom-0 opacity-15 pointer-events-none rounded-l-lg"
+          className="absolute left-0 top-0 bottom-0 opacity-15 pointer-events-none rounded-l-xl"
           style={{ 
             width: `${Math.min((barComparison.current / Math.max(barComparison.current, barComparison.previous)) * 100, 100)}%`,
             backgroundColor: color 
