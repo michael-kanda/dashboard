@@ -695,6 +695,11 @@ html.dark .bg-gray-50.rounded-lg.hover\:bg-gray-100:hover {
 
 /* ═══════════════════════════════════════════════════════════
    DASHBOARD SECTION SCROLL OFFSET
+   ═══════════════════════════════════════════════════════════ */
+
+[id^="section-"] {
+  scroll-margin-top: 5rem;
+}
 
 /* ═══════════════════════════════════════════════════════════
    FIX: Theme-sichere Textfarben
