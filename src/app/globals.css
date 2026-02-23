@@ -155,6 +155,31 @@
   /* Mix blend */
   --dp-blend-mode: multiply;
   --dp-blend-opacity: 1;
+
+  /* ── Accent: Indigo (Active states, Icons, Links) ── */
+  --dp-accent-indigo-text: #4f46e5;           /* indigo-600 */
+  --dp-accent-indigo-text-soft: #4338ca;      /* indigo-700 */
+  --dp-accent-indigo-text-muted: #6366f1;     /* indigo-500 */
+  --dp-accent-indigo-bg: rgba(238, 242, 255, 0.8);  /* indigo-50/80 */
+  --dp-accent-indigo-bg-active: #eef2ff;      /* indigo-50 */
+  --dp-accent-indigo-border: rgba(224, 231, 255, 0.5); /* indigo-100/50 */
+  --dp-accent-indigo-border-hover: #c7d2fe;   /* indigo-300 */
+
+  /* ── Accent: Emerald/Teal (User badges, Avatars) ── */
+  --dp-accent-emerald-text: #059669;          /* emerald-600 */
+  --dp-accent-emerald-bg-from: #ecfdf5;       /* emerald-50 */
+  --dp-accent-emerald-bg-to: #f0fdfa;         /* teal-50 */
+  --dp-accent-emerald-border: rgba(167, 243, 208, 0.8); /* emerald-200/80 */
+  --dp-accent-emerald-badge-text: #047857;    /* emerald-700 */
+
+  /* ── Hover states ── */
+  --dp-hover-subtle: rgba(249, 250, 251, 1);  /* gray-50 */
+  --dp-hover-red-bg: #fef2f2;                 /* red-50 */
+
+  /* ── Overlay ── */
+  --dp-overlay-muted: rgba(17, 24, 39, 0.1);  /* gray-900/10 */
+  --dp-overlay-muted-border: rgba(17, 24, 39, 0.2); /* gray-900/20 */
+  --dp-overlay-backdrop: rgba(0, 0, 0, 0.2);
 }
 
 /* ── 2. DARK MODE TOKENS ── */
@@ -302,6 +327,31 @@ html.dark {
   /* Mix blend */
   --dp-blend-mode: screen;
   --dp-blend-opacity: 0.1;
+
+  /* ── Accent: Indigo (Active states, Icons, Links) ── */
+  --dp-accent-indigo-text: #818cf8;           /* indigo-400 */
+  --dp-accent-indigo-text-soft: #a5b4fc;      /* indigo-300 */
+  --dp-accent-indigo-text-muted: #6366f1;     /* indigo-500 */
+  --dp-accent-indigo-bg: rgba(99, 102, 241, 0.15);   /* indigo-500/15 */
+  --dp-accent-indigo-bg-active: rgba(99, 102, 241, 0.15);
+  --dp-accent-indigo-border: rgba(99, 102, 241, 0.2); /* indigo-500/20 */
+  --dp-accent-indigo-border-hover: rgba(99, 102, 241, 0.5); /* indigo-500 */
+
+  /* ── Accent: Emerald/Teal (User badges, Avatars) ── */
+  --dp-accent-emerald-text: #34d399;          /* emerald-400 */
+  --dp-accent-emerald-bg-from: rgba(16, 185, 129, 0.15); /* emerald-500/15 */
+  --dp-accent-emerald-bg-to: rgba(20, 184, 166, 0.15);   /* teal-500/15 */
+  --dp-accent-emerald-border: rgba(16, 185, 129, 0.3); /* emerald-500/30 */
+  --dp-accent-emerald-badge-text: #34d399;    /* emerald-400 */
+
+  /* ── Hover states ── */
+  --dp-hover-subtle: rgba(255, 255, 255, 0.05); /* white/5 */
+  --dp-hover-red-bg: rgba(239, 68, 68, 0.1);   /* red-500/10 */
+
+  /* ── Overlay ── */
+  --dp-overlay-muted: rgba(243, 244, 246, 0.1);  /* gray-100/10 */
+  --dp-overlay-muted-border: rgba(243, 244, 246, 0.2); /* gray-100/20 */
+  --dp-overlay-backdrop: rgba(0, 0, 0, 0.4);
 }
 
 /* ── 3. TAILWIND v4 THEME – Utility-Klassen generieren ── */
@@ -723,6 +773,74 @@ html.dark .bg-gray-50.rounded-lg.hover\:bg-gray-100 {
 }
 html.dark .bg-gray-50.rounded-lg.hover\:bg-gray-100:hover {
   background-color: var(--dp-bg-quaternary);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACCENT UTILITY CLASSES (Light/Dark via Tokens)
+   Ersetzen dark: Tailwind-Klassen in Komponenten
+   ═══════════════════════════════════════════════════════════ */
+
+/* Indigo Icon-Box (z.B. GlobalHeader Globe-Icon) */
+.accent-indigo-box {
+  color: var(--dp-accent-indigo-text);
+  background-color: var(--dp-accent-indigo-bg);
+  border-color: var(--dp-accent-indigo-border);
+}
+
+/* Indigo Active Nav Item */
+.nav-active {
+  background-color: var(--dp-accent-indigo-bg-active);
+  color: var(--dp-accent-indigo-text-soft);
+}
+
+/* Indigo Icon in active state */
+.accent-indigo-text {
+  color: var(--dp-accent-indigo-text);
+}
+
+/* Indigo Active indicator bar */
+.accent-indigo-indicator {
+  background-color: var(--dp-accent-indigo-text-muted);
+}
+
+/* Nav link hover (replaces dark:hover:bg-white/5) */
+.nav-hover:hover {
+  background-color: var(--dp-hover-subtle);
+}
+
+/* Indigo border hover (collapse button, card hover) */
+.hover-border-indigo:hover {
+  border-color: var(--dp-accent-indigo-border-hover);
+}
+
+/* Emerald/Teal Avatar gradient */
+.accent-emerald-avatar {
+  background-image: linear-gradient(to bottom right, var(--dp-accent-emerald-bg-from), var(--dp-accent-emerald-bg-to));
+  border-color: var(--dp-accent-emerald-border);
+  color: var(--dp-accent-emerald-text);
+}
+
+/* Emerald "Betreut durch" Badge */
+.accent-emerald-badge {
+  background-image: linear-gradient(to right, var(--dp-accent-emerald-bg-from), var(--dp-accent-emerald-bg-to));
+  color: var(--dp-accent-emerald-badge-text);
+  border-color: var(--dp-accent-emerald-border);
+}
+
+/* Red hover background (Abmelden button) */
+.hover-red-bg:hover {
+  background-color: var(--dp-hover-red-bg);
+}
+
+/* Overlay muted (z.B. "Für Kunden ausgeblendet" Badge) */
+.overlay-muted-badge {
+  background-color: var(--dp-overlay-muted);
+  border-color: var(--dp-overlay-muted-border);
+}
+
+/* Dark overlay backdrop */
+.overlay-backdrop {
+  background-color: var(--dp-overlay-backdrop);
 }
 
 /* ═══════════════════════════════════════════════════════════
