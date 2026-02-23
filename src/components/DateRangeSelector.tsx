@@ -11,6 +11,8 @@ interface DateRangeSelectorProps {
   className?: string;
 }
 
+// Behalte die originalen langen Labels für die Export-Funktion 
+// (falls sie z.B. im Titel des Dashboards genutzt wird)
 const rangeLabels: Record<DateRangeOption, string> = {
   '30d': 'Letzte 30 Tage',
   '3m': 'Letzte 3 Monate',
@@ -18,6 +20,16 @@ const rangeLabels: Record<DateRangeOption, string> = {
   '12m': 'Letzte 12 Monate',
   '18m': 'Letzte 18 Monate',
   '24m': 'Letzte 24 Monate',
+};
+
+// Kürzere Labels speziell für die kleineren Buttons
+const buttonLabels: Record<DateRangeOption, string> = {
+  '30d': '30 Tage',
+  '3m': '3 Monate',
+  '6m': '6 Monate',
+  '12m': '12 Monate',
+  '18m': '18 Monate',
+  '24m': '24 Monate',
 };
 
 export function getRangeLabel(range: DateRangeOption): string {
@@ -29,23 +41,24 @@ export default function DateRangeSelector({
   onChange, 
   className = '' 
 }: DateRangeSelectorProps) {
-  const options: DateRangeOption[] = ['30d', '3m', '6m', '12m', '18m', '24m' ];
+  const options: DateRangeOption[] = ['30d', '3m', '6m', '12m', '18m', '24m'];
 
   return (
-    <div className={`inline-flex rounded-lg border border-gray-300 bg-white ${className}`}>
+    // grid-cols-3 sorgt für exakt 3 Spalten und einen automatischen Zeilenumbruch danach
+    <div className={`grid grid-cols-3 gap-1.5 ${className}`}>
       {options.map((option) => (
         <button
           key={option}
           onClick={() => onChange(option)}
-          className={`px-4 py-2 text-sm font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
-            value === option
-              ? 'bg-[#188BDB] text-white'
-              : 'text-gray-700 hover:bg-gray-50'
-          } ${
-            value !== option && option !== options[0] ? 'border-l border-gray-300' : ''
-          }`}
+          className={`
+            px-2 py-1.5 text-xs font-medium rounded-md transition-colors border
+            ${value === option
+              ? 'bg-[#188BDB] text-white border-[#188BDB] shadow-sm'
+              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }
+          `}
         >
-          {rangeLabels[option]}
+          {buttonLabels[option]}
         </button>
       ))}
     </div>
