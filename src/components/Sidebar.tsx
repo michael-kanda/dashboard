@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
-import NotificationBell from '@/components/NotificationBell';
+// import NotificationBell from '@/components/NotificationBell';
 import { useTheme } from '@/components/ThemeProvider';
 import { useState, useEffect, useCallback } from 'react';
 import { 
@@ -16,6 +16,10 @@ import {
   BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search
 } from 'react-bootstrap-icons';
 
+// ═══════════════════════════════════════════════════════
+// KONFIGURATION
+// ═══════════════════════════════════════════════════════
+
 interface NavItem {
   href: string;
   label: string;
@@ -23,6 +27,16 @@ interface NavItem {
   visible?: boolean;
   className?: string;
 }
+
+// Wir lagern die Sektionen aus, damit sie übersichtlich an einem Ort sind
+const DASHBOARD_SECTIONS = [
+  { id: 'section-kpis',         label: 'Traffic & Reichweite',  icon: <BarChartFill size={13} /> },
+  { id: 'section-verlauf',      label: 'Verlauf & Analyse',     icon: <GraphUpArrow size={13} /> },
+  { id: 'section-ki-traffic',   label: 'KI-Traffic',            icon: <Robot size={13} /> },
+  { id: 'section-landingpages', label: 'Top Landingpages',      icon: <FileEarmarkText size={13} /> },
+  { id: 'section-zugriffe',     label: 'Zugriffe nach Quelle',  icon: <PieChartFill size={13} /> },
+  { id: 'section-semrush',      label: 'Semrush Keywords',      icon: <Search size={13} /> },
+];
 
 export default function Sidebar() {
   const { data: session, status } = useSession();
@@ -39,6 +53,12 @@ export default function Sidebar() {
   const [hasLandingpages, setHasLandingpages] = useState(false);
   const [isCheckingLandingpages, setIsCheckingLandingpages] = useState(true);
 
+  // NEU: State speichert alle Sektions-IDs, die tatsächlich im DOM existieren.
+  // Standardmäßig nehmen wir erstmal an, dass alle da sind, bis geprüft wurde.
+  const [availableSectionIds, setAvailableSectionIds] = useState<string[]>(
+    DASHBOARD_SECTIONS.map(s => s.id)
+  );
+
   const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERADMIN';
   const isSuperAdmin = session?.user?.role === 'SUPERADMIN';
   const isUser = session?.user?.role === 'BENUTZER';
@@ -52,16 +72,7 @@ export default function Sidebar() {
     (pathname.startsWith('/dashboard/') && pathname !== '/dashboard/freigabe') ||
     (session?.user?.role === 'BENUTZER' && pathname === '/');
 
-  const dashboardSections = [
-    { id: 'section-kpis',         label: 'Traffic & Reichweite',  icon: <BarChartFill size={13} /> },
-    { id: 'section-verlauf',      label: 'Verlauf & Analyse',     icon: <GraphUpArrow size={13} /> },
-    { id: 'section-ki-traffic',   label: 'KI-Traffic',            icon: <Robot size={13} /> },
-    { id: 'section-landingpages', label: 'Top Landingpages',      icon: <FileEarmarkText size={13} /> },
-    { id: 'section-zugriffe',     label: 'Zugriffe nach Quelle',  icon: <PieChartFill size={13} /> },
-    { id: 'section-semrush',      label: 'Semrush Keywords',      icon: <Search size={13} /> },
-  ];
-
-  // Scroll-Spy: Beobachte welche Sektion gerade sichtbar ist
+  // Scroll-Spy: Beobachte welche Sektion gerade sichtbar ist & prüfe auf Existenz
   useEffect(() => {
     if (!isDashboardPage) return;
     if (typeof IntersectionObserver === 'undefined') return;
@@ -69,6 +80,14 @@ export default function Sidebar() {
     let observer: IntersectionObserver | null = null;
 
     const timer = setTimeout(() => {
+      // 1. NEU: DOM-Check - Welche Sektionen existieren wirklich auf der Seite?
+      const foundIds = DASHBOARD_SECTIONS
+        .map(sec => sec.id)
+        .filter(id => document.getElementById(id) !== null);
+      
+      setAvailableSectionIds(foundIds);
+
+      // 2. Observer aufsetzen (nur für die gefundenen Sektionen)
       try {
         observer = new IntersectionObserver(
           (entries) => {
@@ -82,7 +101,7 @@ export default function Sidebar() {
           { rootMargin: '-80px 0px -50% 0px', threshold: 0.1 }
         );
 
-        dashboardSections.forEach(({ id }) => {
+        foundIds.forEach((id) => {
           const el = document.getElementById(id);
           if (el && observer) observer.observe(el);
         });
@@ -109,10 +128,9 @@ export default function Sidebar() {
   // ═══════════════════════════════════════════════════════
   // LOGO-KONFIGURATION (DATEITAUSCH)
   // ═══════════════════════════════════════════════════════
-  const logoLight = "/logo-data-peak.webp"; // Pfad für helles Theme
-  const logoDark = "/logo-data-peak-dark.webp";  // Hier den Pfad zum Dark-Logo eintragen (z.B. -white.webp)
+  const logoLight = "/logo-data-peak.webp"; 
+  const logoDark = "/logo-data-peak-dark.webp";  
   
-  // Wählt das Logo basierend auf Theme oder User-Upload
   const systemLogo = theme === 'dark' ? logoDark : logoLight;
   const logoSrc = session?.user?.logo_url || systemLogo;
   const priorityLoad = true;
@@ -321,28 +339,31 @@ export default function Sidebar() {
             </button>
             {dashboardSubmenuOpen && (
               <div className="space-y-0.5 mt-0.5">
-                {dashboardSections.map(({ id, label, icon }) => {
-                  const isActiveSection = activeSection === id;
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => scrollToSection(id)}
-                      className={`
-                        flex items-center gap-2.5 w-full px-3 py-1.5 rounded-lg text-xs
-                        transition-all duration-200 text-left relative
-                        ${isActiveSection
-                          ? 'nav-active font-semibold'
-                          : 'text-faint hover:bg-surface-secondary hover:text-body nav-hover font-medium'
-                        }
-                      `}
-                    >
-                      {isActiveSection && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-full accent-indigo-indicator" />
-                      )}
-                      <span className={`flex-shrink-0 ${isActiveSection ? 'accent-indigo-text' : ''}`}>{icon}</span>
-                      <span className="truncate">{label}</span>
-                    </button>
-                  );
+                {/* NEU: Wir filtern hier nach vorhandenen Sektionen */}
+                {DASHBOARD_SECTIONS
+                  .filter(section => availableSectionIds.includes(section.id))
+                  .map(({ id, label, icon }) => {
+                    const isActiveSection = activeSection === id;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => scrollToSection(id)}
+                        className={`
+                          flex items-center gap-2.5 w-full px-3 py-1.5 rounded-lg text-xs
+                          transition-all duration-200 text-left relative
+                          ${isActiveSection
+                            ? 'nav-active font-semibold'
+                            : 'text-faint hover:bg-surface-secondary hover:text-body nav-hover font-medium'
+                          }
+                        `}
+                      >
+                        {isActiveSection && (
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-full accent-indigo-indicator" />
+                        )}
+                        <span className={`flex-shrink-0 ${isActiveSection ? 'accent-indigo-text' : ''}`}>{icon}</span>
+                        <span className="truncate">{label}</span>
+                      </button>
+                    );
                 })}
               </div>
             )}
@@ -358,10 +379,7 @@ export default function Sidebar() {
         )}
 
         <div className="my-2 mx-3 h-px bg-theme-border-subtle" />
-        <div className="relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 text-sm font-medium text-muted hover:bg-surface-secondary hover:text-heading nav-hover">
-          <NotificationBell />
-          {!isCollapsed && <span className="whitespace-nowrap">Benachrichtigungen</span>}
-        </div>
+        
         {renderThemeToggle()}
       </nav>
 
@@ -410,7 +428,7 @@ export default function Sidebar() {
           <button onClick={toggleTheme} className="p-2 text-muted">
             {theme === 'dark' ? <SunFill size={18} /> : <MoonStarsFill size={18} />}
           </button>
-          {status === 'authenticated' && <NotificationBell />}
+          
           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-secondary">
             {isMobileMenuOpen ? <X size={28} /> : <List size={28} />}
           </button>
@@ -432,18 +450,21 @@ export default function Sidebar() {
           {isDashboardPage && (
             <div className="space-y-1 ml-2 mt-1 mb-1">
               <div className="text-[10px] font-semibold uppercase tracking-widest text-faint px-2">Sektionen</div>
-              {dashboardSections.map(({ id, label, icon }) => (
-                <button
-                  key={id}
-                  onClick={() => { scrollToSection(id); setIsMobileMenuOpen(false); }}
-                  className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-all
-                    ${activeSection === id
-                      ? 'nav-active'
-                      : 'text-muted hover:bg-surface-secondary nav-hover'}`}
-                >
-                  {icon}
-                  <span>{label}</span>
-                </button>
+              {/* NEU: Filterung auch hier im mobilen Menü */}
+              {DASHBOARD_SECTIONS
+                .filter(section => availableSectionIds.includes(section.id))
+                .map(({ id, label, icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => { scrollToSection(id); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-all
+                      ${activeSection === id
+                        ? 'nav-active'
+                        : 'text-muted hover:bg-surface-secondary nav-hover'}`}
+                  >
+                    {icon}
+                    <span>{label}</span>
+                  </button>
               ))}
             </div>
           )}
