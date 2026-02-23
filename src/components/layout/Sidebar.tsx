@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
-import NotificationBell from '@/components/NotificationBell';
+// import NotificationBell from '@/components/NotificationBell';
 import { useTheme } from '@/components/ThemeProvider';
 import { useState, useEffect, useCallback } from 'react';
 import { 
@@ -16,6 +16,10 @@ import {
   BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search
 } from 'react-bootstrap-icons';
 
+// ═══════════════════════════════════════════════════════
+// KONFIGURATION
+// ═══════════════════════════════════════════════════════
+
 interface NavItem {
   href: string;
   label: string;
@@ -23,6 +27,16 @@ interface NavItem {
   visible?: boolean;
   className?: string;
 }
+
+// Wir lagern die Sektionen aus, damit sie übersichtlich an einem Ort sind
+const DASHBOARD_SECTIONS = [
+  { id: 'section-kpis',         label: 'Traffic & Reichweite',  icon: <BarChartFill size={13} /> },
+  { id: 'section-verlauf',      label: 'Verlauf & Analyse',     icon: <GraphUpArrow size={13} /> },
+  { id: 'section-ki-traffic',   label: 'KI-Traffic',            icon: <Robot size={13} /> },
+  { id: 'section-landingpages', label: 'Top Landingpages',      icon: <FileEarmarkText size={13} /> },
+  { id: 'section-zugriffe',     label: 'Zugriffe nach Quelle',  icon: <PieChartFill size={13} /> },
+  { id: 'section-semrush',      label: 'Semrush Keywords',      icon: <Search size={13} /> },
+];
 
 export default function Sidebar() {
   const { data: session, status } = useSession();
@@ -39,6 +53,12 @@ export default function Sidebar() {
   const [hasLandingpages, setHasLandingpages] = useState(false);
   const [isCheckingLandingpages, setIsCheckingLandingpages] = useState(true);
 
+  // NEU: State speichert alle Sektions-IDs, die tatsächlich im DOM existieren.
+  // Standardmäßig nehmen wir erstmal an, dass alle da sind, bis geprüft wurde.
+  const [availableSectionIds, setAvailableSectionIds] = useState<string[]>(
+    DASHBOARD_SECTIONS.map(s => s.id)
+  );
+
   const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERADMIN';
   const isSuperAdmin = session?.user?.role === 'SUPERADMIN';
   const isUser = session?.user?.role === 'BENUTZER';
@@ -52,16 +72,7 @@ export default function Sidebar() {
     (pathname.startsWith('/dashboard/') && pathname !== '/dashboard/freigabe') ||
     (session?.user?.role === 'BENUTZER' && pathname === '/');
 
-  const dashboardSections = [
-    { id: 'section-kpis',         label: 'Traffic & Reichweite',  icon: <BarChartFill size={13} /> },
-    { id: 'section-verlauf',      label: 'Verlauf & Analyse',     icon: <GraphUpArrow size={13} /> },
-    { id: 'section-ki-traffic',   label: 'KI-Traffic',            icon: <Robot size={13} /> },
-    { id: 'section-landingpages', label: 'Top Landingpages',      icon: <FileEarmarkText size={13} /> },
-    { id: 'section-zugriffe',     label: 'Zugriffe nach Quelle',  icon: <PieChartFill size={13} /> },
-    { id: 'section-semrush',      label: 'Semrush Keywords',      icon: <Search size={13} /> },
-  ];
-
-  // Scroll-Spy: Beobachte welche Sektion gerade sichtbar ist
+  // Scroll-Spy: Beobachte welche Sektion gerade sichtbar ist & prüfe auf Existenz
   useEffect(() => {
     if (!isDashboardPage) return;
     if (typeof IntersectionObserver === 'undefined') return;
@@ -69,6 +80,14 @@ export default function Sidebar() {
     let observer: IntersectionObserver | null = null;
 
     const timer = setTimeout(() => {
+      // 1. NEU: DOM-Check - Welche Sektionen existieren wirklich auf der Seite?
+      const foundIds = DASHBOARD_SECTIONS
+        .map(sec => sec.id)
+        .filter(id => document.getElementById(id) !== null);
+      
+      setAvailableSectionIds(foundIds);
+
+      // 2. Observer aufsetzen (nur für die gefundenen Sektionen)
       try {
         observer = new IntersectionObserver(
           (entries) => {
@@ -82,7 +101,7 @@ export default function Sidebar() {
           { rootMargin: '-80px 0px -50% 0px', threshold: 0.1 }
         );
 
-        dashboardSections.forEach(({ id }) => {
+        foundIds.forEach((id) => {
           const el = document.getElementById(id);
           if (el && observer) observer.observe(el);
         });
@@ -109,10 +128,9 @@ export default function Sidebar() {
   // ═══════════════════════════════════════════════════════
   // LOGO-KONFIGURATION (DATEITAUSCH)
   // ═══════════════════════════════════════════════════════
-  const logoLight = "/logo-data-peak.webp"; // Pfad für helles Theme
-  const logoDark = "/logo-data-peak-dark.webp";  // Hier den Pfad zum Dark-Logo eintragen (z.B. -white.webp)
+  const logoLight = "/logo-data-peak.webp"; 
+  const logoDark = "/logo-data-peak-dark.webp";  
   
-  // Wählt das Logo basierend auf Theme oder User-Upload
   const systemLogo = theme === 'dark' ? logoDark : logoLight;
   const logoSrc = session?.user?.logo_url || systemLogo;
   const priorityLoad = true;
@@ -177,7 +195,7 @@ export default function Sidebar() {
 
   const adminNavItems: NavItem[] = [
     { href: '/admin', label: 'Admin-Bereich', icon: <ShieldLock size={18} />, visible: isAdmin },
-    { href: '/admin/system', label: 'System', icon: <HddNetwork size={18} />, visible: isSuperAdmin, className: 'text-indigo-600 dark:text-indigo-400' },
+    { href: '/admin/system', label: 'System', icon: <HddNetwork size={18} />, visible: isSuperAdmin, className: 'accent-indigo-text' },
   ];
 
   const isActive = (href: string): boolean => {
@@ -195,13 +213,13 @@ export default function Sidebar() {
           group relative flex items-center gap-3 px-3 py-2.5 rounded-xl
           transition-all duration-150 text-sm font-medium
           ${active
-            ? 'bg-indigo-50 text-indigo-700 shadow-sm dark:bg-indigo-500/15 dark:text-indigo-300'
-            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200'
+            ? 'nav-active shadow-sm'
+            : 'text-muted hover:bg-surface-secondary hover:text-heading nav-hover'
           }
           ${item.className || ''}
         `}
       >
-        <span className={`flex-shrink-0 flex items-center justify-center w-5 h-5 ${active ? 'text-indigo-600 dark:text-indigo-400' : ''}`}>
+        <span className={`flex-shrink-0 flex items-center justify-center w-5 h-5 ${active ? 'accent-indigo-text' : ''}`}>
           {item.icon}
         </span>
         <span className={`whitespace-nowrap transition-all duration-200 ${isCollapsed ? 'md:opacity-0 md:w-0 md:overflow-hidden' : 'opacity-100'}`}>
@@ -226,7 +244,7 @@ export default function Sidebar() {
           text-sm font-medium transition-all
           ${active
             ? 'bg-indigo-600 text-white shadow-sm'
-            : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700'
+            : 'bg-surface text-body border border-theme-border-default hover:bg-surface-secondary'
           }
           ${item.className || ''}
         `}>
@@ -239,7 +257,7 @@ export default function Sidebar() {
 
   const renderThemeToggle = () => (
     <button onClick={toggleTheme}
-      className="group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 w-full"
+      className="group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 text-sm font-medium text-muted hover:bg-surface-secondary hover:text-heading nav-hover w-full"
     >
       <span className="flex-shrink-0 flex items-center justify-center w-5 h-5">
         {theme === 'dark' ? <SunFill size={18} /> : <MoonStarsFill size={18} />}
@@ -256,18 +274,18 @@ export default function Sidebar() {
 
   const renderDesktopSidebar = () => (
     <aside data-sidebar className={`
-      hidden md:flex flex-col sidebar-bg border-r border-gray-200 dark:border-gray-800
+      hidden md:flex flex-col sidebar-bg border-r border-theme-border-default
       transition-all duration-200 ease-in-out relative flex-shrink-0 sticky top-0 h-screen
       ${isCollapsed ? 'w-[72px]' : 'w-[260px]'}
     `}>
       <button onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-[28px] z-50 w-6 h-6 sidebar-bg border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500 transition-all duration-150 text-gray-400 hover:text-indigo-600"
+        className="absolute -right-3 top-[28px] z-50 w-6 h-6 sidebar-bg border border-theme-border-default rounded-full flex items-center justify-center shadow-sm hover:shadow-md hover-border-indigo transition-all duration-150 text-faint hover:text-indigo-600"
       >
         {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
 
       {/* Logo Bereich */}
-      <div className="flex items-center h-[80px] px-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+      <div className="flex items-center h-[80px] px-4 border-b border-theme-border-subtle flex-shrink-0">
         <Link href="/" onClick={handleLinkClick} className="flex items-center justify-center w-full">
           <div className={`relative h-[50px] transition-all duration-200 ${isCollapsed ? 'w-[40px]' : 'w-full'}`}>
             <Image 
@@ -287,8 +305,8 @@ export default function Sidebar() {
       </div>
 
       {status === 'authenticated' && session?.user && (
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-500/20 dark:to-teal-500/20 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center flex-shrink-0 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-theme-border-subtle flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl accent-emerald-avatar border flex items-center justify-center flex-shrink-0 text-sm font-semibold">
             {(session.user.name || session.user.email || '?').charAt(0).toUpperCase()}
           </div>
           {!isCollapsed && (
@@ -296,7 +314,7 @@ export default function Sidebar() {
               <div className="text-sm font-semibold text-theme-heading truncate">
                 {session.user?.name ?? session.user?.email}
               </div>
-              <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider accent-indigo-text">
                 {isAdmin && <ShieldLock size={9} />}
                 <span>{session.user.role}</span>
               </div>
@@ -306,7 +324,7 @@ export default function Sidebar() {
       )}
 
       <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-thin">
-        {!isCollapsed && <div className="px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">Navigation</div>}
+        {!isCollapsed && <div className="px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-faint">Navigation</div>}
         {mainNavItems.map((item, i) => renderNavLink(item, i))}
         
         {/* ── Dashboard Sektions-Untermenü ── */}
@@ -314,35 +332,38 @@ export default function Sidebar() {
           <div className="ml-3 mt-1">
             <button 
               onClick={() => setDashboardSubmenuOpen(!dashboardSubmenuOpen)}
-              className="flex items-center gap-2 w-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-faint hover:text-muted transition-colors"
             >
               <span>Sektionen</span>
               {dashboardSubmenuOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
             </button>
             {dashboardSubmenuOpen && (
               <div className="space-y-0.5 mt-0.5">
-                {dashboardSections.map(({ id, label, icon }) => {
-                  const isActiveSection = activeSection === id;
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => scrollToSection(id)}
-                      className={`
-                        flex items-center gap-2.5 w-full px-3 py-1.5 rounded-lg text-xs
-                        transition-all duration-200 text-left relative
-                        ${isActiveSection
-                          ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300 font-semibold'
-                          : 'text-gray-400 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300 font-medium'
-                        }
-                      `}
-                    >
-                      {isActiveSection && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-full bg-indigo-500 dark:bg-indigo-400" />
-                      )}
-                      <span className={`flex-shrink-0 ${isActiveSection ? 'text-indigo-500 dark:text-indigo-400' : ''}`}>{icon}</span>
-                      <span className="truncate">{label}</span>
-                    </button>
-                  );
+                {/* NEU: Wir filtern hier nach vorhandenen Sektionen */}
+                {DASHBOARD_SECTIONS
+                  .filter(section => availableSectionIds.includes(section.id))
+                  .map(({ id, label, icon }) => {
+                    const isActiveSection = activeSection === id;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => scrollToSection(id)}
+                        className={`
+                          flex items-center gap-2.5 w-full px-3 py-1.5 rounded-lg text-xs
+                          transition-all duration-200 text-left relative
+                          ${isActiveSection
+                            ? 'nav-active font-semibold'
+                            : 'text-faint hover:bg-surface-secondary hover:text-body nav-hover font-medium'
+                          }
+                        `}
+                      >
+                        {isActiveSection && (
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-full accent-indigo-indicator" />
+                        )}
+                        <span className={`flex-shrink-0 ${isActiveSection ? 'accent-indigo-text' : ''}`}>{icon}</span>
+                        <span className="truncate">{label}</span>
+                      </button>
+                    );
                 })}
               </div>
             )}
@@ -351,30 +372,27 @@ export default function Sidebar() {
         
         {adminNavItems.some(item => item.visible !== false) && (
           <>
-            {!isCollapsed && <div className="px-3 pt-5 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">Administration</div>}
-            {isCollapsed && <div className="my-2 mx-3 h-px bg-gray-100 dark:bg-gray-800" />}
+            {!isCollapsed && <div className="px-3 pt-5 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-faint">Administration</div>}
+            {isCollapsed && <div className="my-2 mx-3 h-px bg-theme-border-subtle" />}
             {adminNavItems.map((item, i) => renderNavLink(item, i))}
           </>
         )}
 
-        <div className="my-2 mx-3 h-px bg-gray-100 dark:bg-gray-800" />
-        <div className="relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5">
-          <NotificationBell />
-          {!isCollapsed && <span className="whitespace-nowrap">Benachrichtigungen</span>}
-        </div>
+        <div className="my-2 mx-3 h-px bg-theme-border-subtle" />
+        
         {renderThemeToggle()}
       </nav>
 
-      <div className="px-2.5 py-3 border-t border-gray-100 dark:border-gray-800 flex-shrink-0">
+      <div className="px-2.5 py-3 border-t border-theme-border-subtle flex-shrink-0">
         {status === 'authenticated' ? (
           <button onClick={() => signOut({ callbackUrl: '/login' })}
-            className="group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+            className="group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover-red-bg"
           >
             <BoxArrowRight size={18} className="flex-shrink-0" />
             {!isCollapsed && <span>Abmelden</span>}
           </button>
         ) : (
-          <Link href="/login" className="group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400">
+          <Link href="/login" className="group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium accent-indigo-text hover:bg-indigo-50">
             <BoxArrowInRight size={18} className="flex-shrink-0" />
             {!isCollapsed && <span>Anmelden</span>}
           </Link>
@@ -407,11 +425,11 @@ export default function Sidebar() {
           </div>
         </Link>
         <div className="flex items-center gap-2">
-          <button onClick={toggleTheme} className="p-2 text-gray-500 dark:text-gray-400">
+          <button onClick={toggleTheme} className="p-2 text-muted">
             {theme === 'dark' ? <SunFill size={18} /> : <MoonStarsFill size={18} />}
           </button>
-          {status === 'authenticated' && <NotificationBell />}
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-gray-600 dark:text-gray-400">
+          
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-secondary">
             {isMobileMenuOpen ? <X size={28} /> : <List size={28} />}
           </button>
         </div>
@@ -419,38 +437,41 @@ export default function Sidebar() {
 
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 md:hidden backdrop-blur-[1px]"
+          className="fixed inset-0 overlay-backdrop z-40 md:hidden backdrop-blur-[1px]"
           onClick={() => setIsMobileMenuOpen(false)}
           aria-hidden="true"
         />
       )}
       {isMobileMenuOpen && status === 'authenticated' && (
-        <div className="absolute top-full left-0 w-full sidebar-bg shadow-xl border-t border-gray-100 dark:border-gray-800 z-50 p-4 flex flex-col gap-2 max-h-[80vh] overflow-y-auto">
+        <div className="absolute top-full left-0 w-full sidebar-bg shadow-xl border-t border-theme-border-subtle z-50 p-4 flex flex-col gap-2 max-h-[80vh] overflow-y-auto">
           {mainNavItems.map((item, i) => renderMobileNavLink(item, i))}
           
           {/* Mobile: Dashboard Sektionen */}
           {isDashboardPage && (
             <div className="space-y-1 ml-2 mt-1 mb-1">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Sektionen</div>
-              {dashboardSections.map(({ id, label, icon }) => (
-                <button
-                  key={id}
-                  onClick={() => { scrollToSection(id); setIsMobileMenuOpen(false); }}
-                  className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-all
-                    ${activeSection === id 
-                      ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300' 
-                      : 'text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5'}`}
-                >
-                  {icon}
-                  <span>{label}</span>
-                </button>
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-faint px-2">Sektionen</div>
+              {/* NEU: Filterung auch hier im mobilen Menü */}
+              {DASHBOARD_SECTIONS
+                .filter(section => availableSectionIds.includes(section.id))
+                .map(({ id, label, icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => { scrollToSection(id); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-all
+                      ${activeSection === id
+                        ? 'nav-active'
+                        : 'text-muted hover:bg-surface-secondary nav-hover'}`}
+                  >
+                    {icon}
+                    <span>{label}</span>
+                  </button>
               ))}
             </div>
           )}
           
           {adminNavItems.map((item, i) => renderMobileNavLink(item, i))}
-          <hr className="my-2 border-gray-200 dark:border-gray-700" />
-          <button className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700"
+          <hr className="my-2 border-theme-border-default" />
+          <button className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-surface text-body border border-theme-border-default"
             onClick={() => signOut({ callbackUrl: '/login' })}>
             <BoxArrowRight size={16} /> Abmelden
           </button>
