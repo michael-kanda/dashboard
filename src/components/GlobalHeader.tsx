@@ -84,7 +84,7 @@ export default function GlobalHeader({
           <DateRangeSelector
             value={dateRange}
             onChange={onDateRangeChange}
-            className="w-full sm:w-auto shadow-sm"
+            className="w-full sm:w-auto" // <-- Hier wurde shadow-sm entfernt!
           />
         </div>
       </div>
