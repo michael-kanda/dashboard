@@ -1,20 +1,733 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* ═══════════════════════════════════════════════════════════
+   DATAPEAK DESIGN TOKENS
+   CSS Custom Properties für automatisches Light/Dark Theming.
+   Tailwind v4 @theme inline generiert Utility-Klassen.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 1. LIGHT MODE TOKENS (Default) ── */
 :root {
-  /* Wir erzwingen hier dauerhaft die Light-Mode Farben */
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary-highlight: #188BDB; 
+  /* Backgrounds */
+  --dp-bg-primary: #ffffff;
+  --dp-bg-secondary: #f9fafb;       /* gray-50 */
+  --dp-bg-tertiary: #f3f4f6;        /* gray-100 */
+  --dp-bg-quaternary: #e5e7eb;       /* gray-200 */
+
+  /* Text */
+  --dp-text-heading: #111827;        /* gray-900 */
+  --dp-text-strong: #1f2937;         /* gray-800 */
+  --dp-text-body: #374151;           /* gray-700 */
+  --dp-text-secondary: #4b5563;      /* gray-600 */
+  --dp-text-muted: #6b7280;          /* gray-500 */
+  --dp-text-faint: #9ca3af;          /* gray-400 */
+
+  /* Borders */
+  --dp-border-subtle: #f3f4f6;       /* gray-100 */
+  --dp-border-default: #e5e7eb;      /* gray-200 */
+  --dp-border-strong: #d1d5db;       /* gray-300 */
+
+  /* Surfaces (Glass/Cards) */
+  --dp-surface-card: rgba(255, 255, 255, 0.8);
+  --dp-surface-card-border: rgba(255, 255, 255, 0.6);
+  --dp-surface-sidebar: #ffffff;
+  --dp-surface-overlay: rgba(255, 255, 255, 0.7);
+
+  /* Shadows */
+  --dp-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --dp-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --dp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --dp-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --dp-shadow-card: 0 8px 30px -8px rgba(79, 70, 229, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  --dp-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+
+  /* Inputs */
+  --dp-input-bg: #ffffff;
+  --dp-input-border: #d1d5db;        /* gray-300 */
+  --dp-input-text: #111827;          /* gray-900 */
+  --dp-input-placeholder: #9ca3af;   /* gray-400 */
+  --dp-input-disabled-bg: #f9fafb;   /* gray-50 */
+  --dp-input-disabled-text: #9ca3af;
+  --dp-input-focus-border: #6366f1;  /* indigo-500 */
+  --dp-input-focus-ring: rgba(99, 102, 241, 0.3);
+
+  /* Tables */
+  --dp-table-header-bg: #f9fafb;     /* gray-50 */
+  --dp-table-header-text: #6b7280;   /* gray-500 */
+  --dp-table-row-border: #f3f4f6;    /* gray-100 */
+  --dp-table-row-hover: rgba(249, 250, 251, 0.5);
+  --dp-table-cell-text: #374151;     /* gray-700 */
+
+  /* Charts (Recharts) */
+  --dp-chart-text: #6b7280;          /* gray-500 */
+  --dp-chart-grid: #f3f4f6;          /* gray-100 */
+  --dp-chart-tooltip-bg: #ffffff;
+  --dp-chart-tooltip-border: #e5e7eb;
+  --dp-chart-tooltip-text: #111827;
+
+  /* Scrollbar */
+  --dp-scrollbar-track: #f9fafb;
+  --dp-scrollbar-thumb: #d1d5db;
+  --dp-scrollbar-thumb-hover: #9ca3af;
+
+  /* Code */
+  --dp-code-bg: #f3f4f6;            /* gray-100 */
+  --dp-code-border: #e5e7eb;
+  --dp-code-text: #111827;
+
+  /* Focus */
+  --dp-focus-ring: #6366f1;          /* indigo-500 */
+
+  /* Colored Backgrounds (Badges, Alerts) - Light Mode */
+  --dp-bg-red-subtle: rgba(254, 242, 242, 1);        /* red-50 */
+  --dp-bg-red-muted: rgba(254, 226, 226, 1);         /* red-100 */
+  --dp-bg-green-subtle: rgba(240, 253, 244, 1);      /* green-50 */
+  --dp-bg-green-muted: rgba(220, 252, 231, 1);       /* green-100 */
+  --dp-bg-emerald-subtle: rgba(236, 253, 245, 1);    /* emerald-50 */
+  --dp-bg-emerald-muted: rgba(209, 250, 229, 1);     /* emerald-100 */
+  --dp-bg-blue-subtle: rgba(239, 246, 255, 1);       /* blue-50 */
+  --dp-bg-blue-muted: rgba(219, 234, 254, 1);        /* blue-100 */
+  --dp-bg-yellow-subtle: rgba(254, 252, 232, 1);     /* yellow-50 */
+  --dp-bg-yellow-muted: rgba(254, 249, 195, 1);      /* yellow-100 */
+  --dp-bg-amber-subtle: rgba(255, 251, 235, 1);      /* amber-50 */
+  --dp-bg-amber-muted: rgba(254, 243, 199, 1);       /* amber-100 */
+  --dp-bg-indigo-subtle: rgba(238, 242, 255, 1);     /* indigo-50 */
+  --dp-bg-indigo-muted: rgba(224, 231, 255, 1);      /* indigo-100 */
+  --dp-bg-purple-subtle: rgba(250, 245, 255, 1);     /* purple-50 */
+  --dp-bg-purple-muted: rgba(243, 232, 255, 1);      /* purple-100 */
+  --dp-bg-sky-subtle: rgba(240, 249, 255, 1);        /* sky-50 */
+  --dp-bg-sky-muted: rgba(224, 242, 254, 1);         /* sky-100 */
+  --dp-bg-orange-subtle: rgba(255, 247, 237, 1);     /* orange-50 */
+
+  /* Colored Text */
+  --dp-text-red-500: #ef4444;
+  --dp-text-red-600: #dc2626;
+  --dp-text-red-700: #b91c1c;
+  --dp-text-red-800: #991b1b;
+  --dp-text-green-500: #22c55e;
+  --dp-text-green-600: #16a34a;
+  --dp-text-green-700: #15803d;
+  --dp-text-green-800: #166534;
+  --dp-text-blue-700: #1d4ed8;
+  --dp-text-blue-800: #1e40af;
+  --dp-text-amber-800: #92400e;
+  --dp-text-yellow-700: #a16207;
+  --dp-text-indigo-600: #4f46e5;
+  --dp-text-indigo-700: #4338ca;
+  --dp-text-indigo-800: #3730a3;
+  --dp-text-purple-600: #9333ea;
+  --dp-text-sky-600: #0284c7;
+  --dp-text-sky-800: #075985;
+
+  /* Colored Borders */
+  --dp-border-red-200: #fecaca;
+  --dp-border-green-200: #bbf7d0;
+  --dp-border-blue-100: #dbeafe;
+  --dp-border-blue-200: #bfdbfe;
+  --dp-border-amber-200: #fde68a;
+  --dp-border-amber-300: #fcd34d;
+  --dp-border-yellow-300: #fde047;
+  --dp-border-indigo-100: #e0e7ff;
+  --dp-border-indigo-200: #c7d2fe;
+  --dp-border-purple-200: #e9d5ff;
+  --dp-border-sky-200: #bae6fd;
+  --dp-border-dashed: #d1d5db;
+
+  /* Dividers */
+  --dp-divider: #e5e7eb;
+
+  /* Button variants */
+  --dp-btn-gray-bg: #f3f4f6;
+  --dp-btn-gray-text: #374151;
+  --dp-btn-gray-hover: #e5e7eb;
+  --dp-btn-white-bg: #ffffff;
+  --dp-btn-white-text: #374151;
+  --dp-btn-white-border: #d1d5db;
+  --dp-btn-white-hover: #f9fafb;
+  --dp-btn-border-color: #d1d5db;
+  --dp-btn-border-text: #374151;
+  --dp-btn-border-hover: #f3f4f6;
+
+  /* Primary highlight */
+  --primary-highlight: #188BDB;
+
+  /* Mix blend */
+  --dp-blend-mode: multiply;
+  --dp-blend-opacity: 1;
 }
 
+/* ── 2. DARK MODE TOKENS ── */
+html.dark {
+  /* Backgrounds */
+  --dp-bg-primary: #111827;          /* gray-900 */
+  --dp-bg-secondary: #030712;        /* gray-950 */
+  --dp-bg-tertiary: #0f172a;         /* slate-900 */
+  --dp-bg-quaternary: #1e293b;       /* slate-800 */
+
+  /* Text */
+  --dp-text-heading: #f1f5f9;        /* slate-100 */
+  --dp-text-strong: #e2e8f0;         /* slate-200 */
+  --dp-text-body: #cbd5e1;           /* slate-300 */
+  --dp-text-secondary: #94a3b8;      /* slate-400 */
+  --dp-text-muted: #64748b;          /* slate-500 */
+  --dp-text-faint: #475569;          /* slate-600 */
+
+  /* Borders */
+  --dp-border-subtle: #1e293b;       /* slate-800 */
+  --dp-border-default: #1e293b;      /* slate-800 */
+  --dp-border-strong: #334155;       /* slate-700 */
+
+  /* Surfaces (Glass/Cards) */
+  --dp-surface-card: rgba(15, 23, 42, 0.8);
+  --dp-surface-card-border: rgba(51, 65, 85, 0.5);
+  --dp-surface-sidebar: #111827;
+  --dp-surface-overlay: rgba(3, 7, 18, 0.8);
+
+  /* Shadows */
+  --dp-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --dp-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --dp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --dp-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --dp-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(51, 65, 85, 0.2);
+  --dp-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+
+  /* Inputs */
+  --dp-input-bg: #1e293b;
+  --dp-input-border: #334155;
+  --dp-input-text: #e2e8f0;
+  --dp-input-placeholder: #475569;
+  --dp-input-disabled-bg: #0f172a;
+  --dp-input-disabled-text: #475569;
+  --dp-input-focus-border: #6366f1;
+  --dp-input-focus-ring: rgba(99, 102, 241, 0.3);
+
+  /* Tables */
+  --dp-table-header-bg: #0f172a;
+  --dp-table-header-text: #94a3b8;
+  --dp-table-row-border: #1e293b;
+  --dp-table-row-hover: rgba(15, 23, 42, 0.5);
+  --dp-table-cell-text: #cbd5e1;
+
+  /* Charts (Recharts) */
+  --dp-chart-text: #94a3b8;
+  --dp-chart-grid: #1e293b;
+  --dp-chart-tooltip-bg: #1e293b;
+  --dp-chart-tooltip-border: #334155;
+  --dp-chart-tooltip-text: #e2e8f0;
+
+  /* Scrollbar */
+  --dp-scrollbar-track: #0f172a;
+  --dp-scrollbar-thumb: #334155;
+  --dp-scrollbar-thumb-hover: #475569;
+
+  /* Code */
+  --dp-code-bg: #0f172a;
+  --dp-code-border: #334155;
+  --dp-code-text: #e2e8f0;
+
+  /* Focus */
+  --dp-focus-ring: #818cf8;          /* indigo-400 */
+
+  /* Colored Backgrounds (Badges, Alerts) - Dark Mode */
+  --dp-bg-red-subtle: rgba(239, 68, 68, 0.1);
+  --dp-bg-red-muted: rgba(239, 68, 68, 0.15);
+  --dp-bg-green-subtle: rgba(34, 197, 94, 0.1);
+  --dp-bg-green-muted: rgba(34, 197, 94, 0.15);
+  --dp-bg-emerald-subtle: rgba(16, 185, 129, 0.1);
+  --dp-bg-emerald-muted: rgba(16, 185, 129, 0.15);
+  --dp-bg-blue-subtle: rgba(59, 130, 246, 0.1);
+  --dp-bg-blue-muted: rgba(59, 130, 246, 0.15);
+  --dp-bg-yellow-subtle: rgba(234, 179, 8, 0.1);
+  --dp-bg-yellow-muted: rgba(234, 179, 8, 0.12);
+  --dp-bg-amber-subtle: rgba(245, 158, 11, 0.1);
+  --dp-bg-amber-muted: rgba(245, 158, 11, 0.15);
+  --dp-bg-indigo-subtle: rgba(99, 102, 241, 0.1);
+  --dp-bg-indigo-muted: rgba(99, 102, 241, 0.15);
+  --dp-bg-purple-subtle: rgba(147, 51, 234, 0.1);
+  --dp-bg-purple-muted: rgba(147, 51, 234, 0.15);
+  --dp-bg-sky-subtle: rgba(14, 165, 233, 0.1);
+  --dp-bg-sky-muted: rgba(14, 165, 233, 0.15);
+  --dp-bg-orange-subtle: rgba(249, 115, 22, 0.1);
+
+  /* Colored Text */
+  --dp-text-red-500: #f87171;
+  --dp-text-red-600: #f87171;
+  --dp-text-red-700: #fca5a5;
+  --dp-text-red-800: #fecaca;
+  --dp-text-green-500: #4ade80;
+  --dp-text-green-600: #4ade80;
+  --dp-text-green-700: #86efac;
+  --dp-text-green-800: #bbf7d0;
+  --dp-text-blue-700: #93c5fd;
+  --dp-text-blue-800: #bfdbfe;
+  --dp-text-amber-800: #fcd34d;
+  --dp-text-yellow-700: #fcd34d;
+  --dp-text-indigo-600: #818cf8;
+  --dp-text-indigo-700: #a5b4fc;
+  --dp-text-indigo-800: #c7d2fe;
+  --dp-text-purple-600: #a78bfa;
+  --dp-text-sky-600: #7dd3fc;
+  --dp-text-sky-800: #bae6fd;
+
+  /* Colored Borders */
+  --dp-border-red-200: rgba(239, 68, 68, 0.3);
+  --dp-border-green-200: rgba(34, 197, 94, 0.3);
+  --dp-border-blue-100: rgba(59, 130, 246, 0.2);
+  --dp-border-blue-200: rgba(59, 130, 246, 0.3);
+  --dp-border-amber-200: rgba(245, 158, 11, 0.3);
+  --dp-border-amber-300: rgba(245, 158, 11, 0.4);
+  --dp-border-yellow-300: rgba(234, 179, 8, 0.3);
+  --dp-border-indigo-100: rgba(99, 102, 241, 0.2);
+  --dp-border-indigo-200: rgba(99, 102, 241, 0.3);
+  --dp-border-purple-200: rgba(147, 51, 234, 0.3);
+  --dp-border-sky-200: rgba(14, 165, 233, 0.3);
+  --dp-border-dashed: #334155;
+
+  /* Dividers */
+  --dp-divider: #1e293b;
+
+  /* Button variants */
+  --dp-btn-gray-bg: #1e293b;
+  --dp-btn-gray-text: #cbd5e1;
+  --dp-btn-gray-hover: #334155;
+  --dp-btn-white-bg: #111827;
+  --dp-btn-white-text: #e2e8f0;
+  --dp-btn-white-border: #334155;
+  --dp-btn-white-hover: #1e293b;
+  --dp-btn-border-color: #334155;
+  --dp-btn-border-text: #cbd5e1;
+  --dp-btn-border-hover: #1e293b;
+
+  /* Mix blend */
+  --dp-blend-mode: screen;
+  --dp-blend-opacity: 0.1;
+}
+
+/* ── 3. TAILWIND v4 THEME – Utility-Klassen generieren ── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Semantic Colors → bg-surface, text-heading, border-default etc. */
+  --color-surface: var(--dp-bg-primary);
+  --color-surface-secondary: var(--dp-bg-secondary);
+  --color-surface-tertiary: var(--dp-bg-tertiary);
+  --color-surface-quaternary: var(--dp-bg-quaternary);
+
+  --color-heading: var(--dp-text-heading);
+  --color-strong: var(--dp-text-strong);
+  --color-body: var(--dp-text-body);
+  --color-secondary: var(--dp-text-secondary);
+  --color-muted: var(--dp-text-muted);
+  --color-faint: var(--dp-text-faint);
+
+  --color-theme-border-subtle: var(--dp-border-subtle);
+  --color-theme-border-default: var(--dp-border-default);
+  --color-theme-border-strong: var(--dp-border-strong);
+
+  --color-background: var(--dp-bg-primary);
+  --color-foreground: var(--dp-text-heading);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   SMOOTH TRANSITION
+   ═══════════════════════════════════════════════════════════ */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BODY
+   ═══════════════════════════════════════════════════════════ */
+body {
+  background: var(--dp-bg-secondary);
+  color: var(--dp-text-body);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GLASSMORPHISM & THEME UTILITIES
+   Alle nutzen CSS-Variablen → kein html.dark Override noetig
+   ═══════════════════════════════════════════════════════════ */
+
+/* 1. Dashboard Hintergrund (braucht separaten dark Override wegen Gradient) */
+.dashboard-gradient {
+  background-color: #f8fafc;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.03) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.03) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+html.dark .dashboard-gradient {
+  background: linear-gradient(135deg, #030712 0%, #0f172a 50%, #030712 100%);
+}
+
+/* 2. Glass Panel */
+.glass-panel {
+  background: var(--dp-surface-card);
+  border: 1px solid var(--dp-surface-card-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* 3. Soft Shadow */
+.soft-shadow {
+  box-shadow: var(--dp-shadow-card);
+}
+
+/* 4. Card Glass (kombiniert) */
+.card-glass {
+  background: var(--dp-surface-card);
+  border: 1px solid var(--dp-surface-card-border);
+  border-radius: 0.75rem;
+  box-shadow: var(--dp-shadow-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--dp-text-body);
+}
+
+/* 5. Card Glass Hover */
+.card-glass-hover {
+  transition: all 0.3s;
+}
+.card-glass-hover:hover {
+  transform: translateY(-0.25rem);
+  box-shadow: 0 15px 35px -5px rgba(79, 70, 229, 0.1);
+}
+
+/* 6. Sidebar Background */
+.sidebar-bg {
+  background-color: var(--dp-surface-sidebar);
+}
+
+/* 7. Theme Text Utilities */
+.text-theme-heading {
+  color: var(--dp-text-heading);
+}
+.text-theme-body {
+  color: var(--dp-text-body);
+}
+.text-theme-muted {
+  color: var(--dp-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL OVERRIDES via CSS Variables
+   Jeder Override nutzt eine Variable → automatisch Light/Dark
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Background Overrides ── */
+html.dark .bg-white {
+  background-color: var(--dp-bg-primary);
+  color: var(--dp-text-strong);
+}
+html.dark .bg-gray-50 { background-color: var(--dp-bg-secondary); }
+html.dark .bg-gray-100 { background-color: var(--dp-bg-tertiary); }
+html.dark .bg-gray-200 { background-color: var(--dp-bg-quaternary); }
+
+/* ── Text Overrides ── */
+html.dark .text-gray-900 { color: var(--dp-text-heading); }
+html.dark .text-gray-800 { color: var(--dp-text-strong); }
+html.dark .text-gray-700 { color: var(--dp-text-body); }
+html.dark .text-gray-600 { color: var(--dp-text-secondary); }
+html.dark .text-gray-500 { color: var(--dp-text-muted); }
+html.dark .text-gray-400 { color: var(--dp-text-faint); }
+
+/* Colored Text */
+html.dark .text-red-500 { color: var(--dp-text-red-500); }
+html.dark .text-red-600 { color: var(--dp-text-red-600); }
+html.dark .text-red-700 { color: var(--dp-text-red-700); }
+html.dark .text-red-800 { color: var(--dp-text-red-800); }
+html.dark .text-green-500 { color: var(--dp-text-green-500); }
+html.dark .text-green-600 { color: var(--dp-text-green-600); }
+html.dark .text-green-700 { color: var(--dp-text-green-700); }
+html.dark .text-green-800 { color: var(--dp-text-green-800); }
+html.dark .text-blue-700 { color: var(--dp-text-blue-700); }
+html.dark .text-blue-800 { color: var(--dp-text-blue-800); }
+html.dark .text-amber-800 { color: var(--dp-text-amber-800); }
+html.dark .text-yellow-700 { color: var(--dp-text-yellow-700); }
+html.dark .text-indigo-600 { color: var(--dp-text-indigo-600); }
+html.dark .text-indigo-700 { color: var(--dp-text-indigo-700); }
+html.dark .text-indigo-800 { color: var(--dp-text-indigo-800); }
+html.dark .text-purple-600 { color: var(--dp-text-purple-600); }
+html.dark .text-sky-600 { color: var(--dp-text-sky-600); }
+html.dark .text-sky-800 { color: var(--dp-text-sky-800); }
+
+/* ── Border Overrides ── */
+html.dark .border-gray-100 { border-color: var(--dp-border-subtle); }
+html.dark .border-gray-200 { border-color: var(--dp-border-default); }
+html.dark .border-gray-300 { border-color: var(--dp-border-strong); }
+
+/* Colored Borders */
+html.dark .border-red-200 { border-color: var(--dp-border-red-200); }
+html.dark .border-green-200 { border-color: var(--dp-border-green-200); }
+html.dark .border-blue-200 { border-color: var(--dp-border-blue-200); }
+html.dark .border-blue-100 { border-color: var(--dp-border-blue-100); }
+html.dark .border-amber-200 { border-color: var(--dp-border-amber-200); }
+html.dark .border-amber-300 { border-color: var(--dp-border-amber-300); }
+html.dark .border-yellow-300 { border-color: var(--dp-border-yellow-300); }
+html.dark .border-indigo-100 { border-color: var(--dp-border-indigo-100); }
+html.dark .border-indigo-200 { border-color: var(--dp-border-indigo-200); }
+html.dark .border-purple-200 { border-color: var(--dp-border-purple-200); }
+html.dark .border-sky-200 { border-color: var(--dp-border-sky-200); }
+
+/* Dividers */
+html.dark .divide-gray-200 > * + * { border-color: var(--dp-divider); }
+html.dark .border-b { border-color: var(--dp-divider); }
+html.dark .border-t { border-color: var(--dp-divider); }
+html.dark .border-dashed { border-color: var(--dp-border-dashed); }
+
+/* White cards with border */
+html.dark .bg-white.border,
+html.dark .bg-white[class*="border-gray"],
+html.dark .bg-white[class*="shadow"] {
+  border-color: var(--dp-border-default);
+}
+
+/* ── Colored Background Overrides ── */
+html.dark .bg-red-50 { background-color: var(--dp-bg-red-subtle); }
+html.dark .bg-red-100 { background-color: var(--dp-bg-red-muted); }
+html.dark .bg-green-50 { background-color: var(--dp-bg-green-subtle); }
+html.dark .bg-green-100 { background-color: var(--dp-bg-green-muted); }
+html.dark .bg-emerald-50 { background-color: var(--dp-bg-emerald-subtle); }
+html.dark .bg-emerald-100 { background-color: var(--dp-bg-emerald-muted); }
+html.dark .bg-blue-50 { background-color: var(--dp-bg-blue-subtle); }
+html.dark .bg-blue-100 { background-color: var(--dp-bg-blue-muted); }
+html.dark .bg-yellow-50 { background-color: var(--dp-bg-yellow-subtle); }
+html.dark .bg-yellow-100 { background-color: var(--dp-bg-yellow-muted); }
+html.dark .bg-amber-50 { background-color: var(--dp-bg-amber-subtle); }
+html.dark .bg-amber-100 { background-color: var(--dp-bg-amber-muted); }
+html.dark .bg-indigo-50 { background-color: var(--dp-bg-indigo-subtle); }
+html.dark .bg-indigo-100 { background-color: var(--dp-bg-indigo-muted); }
+html.dark .bg-purple-50 { background-color: var(--dp-bg-purple-subtle); }
+html.dark .bg-purple-100 { background-color: var(--dp-bg-purple-muted); }
+html.dark .bg-sky-50 { background-color: var(--dp-bg-sky-subtle); }
+html.dark .bg-sky-100 { background-color: var(--dp-bg-sky-muted); }
+html.dark .bg-orange-50 { background-color: var(--dp-bg-orange-subtle); }
+
+/* ── Shadow Overrides ── */
+html.dark .shadow-sm { box-shadow: var(--dp-shadow-sm); }
+html.dark .shadow-md,
+html.dark .shadow { box-shadow: var(--dp-shadow-md); }
+html.dark .shadow-lg { box-shadow: var(--dp-shadow-lg); }
+html.dark .shadow-xl { box-shadow: var(--dp-shadow-xl); }
+html.dark .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6); }
+html.dark .shadow-inner { box-shadow: var(--dp-shadow-inner); }
+
+/* ── Hover State Overrides ── */
+html.dark .hover\:bg-gray-50:hover { background-color: var(--dp-bg-tertiary); }
+html.dark .hover\:bg-gray-100:hover { background-color: var(--dp-bg-quaternary); }
+html.dark .hover\:bg-gray-200:hover { background-color: var(--dp-border-strong); }
+html.dark .hover\:text-gray-700:hover { color: var(--dp-text-strong); }
+html.dark .hover\:text-gray-800:hover { color: var(--dp-text-heading); }
+html.dark .hover\:text-gray-900:hover { color: #f8fafc; }
+
+html.dark .hover\:bg-red-50:hover { background-color: rgba(239, 68, 68, 0.15); }
+html.dark .hover\:bg-red-100:hover { background-color: rgba(239, 68, 68, 0.2); }
+html.dark .hover\:bg-green-100:hover { background-color: rgba(34, 197, 94, 0.2); }
+html.dark .hover\:bg-green-200:hover { background-color: rgba(34, 197, 94, 0.25); }
+html.dark .hover\:bg-indigo-100:hover { background-color: rgba(99, 102, 241, 0.2); }
+
+/* ── Overlay ── */
+html.dark .bg-white\/70 { background-color: var(--dp-surface-overlay); }
+
+/* ═══════════════════════════════════════════════════════════
+   INPUTS, SELECTS, TEXTAREAS
+   ═══════════════════════════════════════════════════════════ */
+html.dark input[type="text"],
+html.dark input[type="email"],
+html.dark input[type="password"],
+html.dark input[type="url"],
+html.dark input[type="search"],
+html.dark input[type="date"],
+html.dark input[type="number"],
+html.dark select,
+html.dark textarea {
+  background-color: var(--dp-input-bg);
+  border-color: var(--dp-input-border);
+  color: var(--dp-input-text);
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: var(--dp-input-placeholder);
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+  border-color: var(--dp-input-focus-border);
+  box-shadow: 0 0 0 2px var(--dp-input-focus-ring);
+}
+
+html.dark input:disabled,
+html.dark select:disabled,
+html.dark textarea:disabled {
+  background-color: var(--dp-input-disabled-bg);
+  color: var(--dp-input-disabled-text);
+  cursor: not-allowed;
+}
+
+html.dark input[type="file"] {
+  background-color: var(--dp-input-bg);
+  border-color: var(--dp-input-border);
+  color: var(--dp-text-secondary);
+}
+
+html.dark input[type="checkbox"] {
+  background-color: var(--dp-input-bg);
+  border-color: var(--dp-text-faint);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TABLES
+   ═══════════════════════════════════════════════════════════ */
+html.dark table { color: var(--dp-text-strong); }
+
+html.dark thead,
+html.dark thead th {
+  background-color: var(--dp-table-header-bg);
+  color: var(--dp-table-header-text);
+  border-color: var(--dp-table-row-border);
+}
+
+html.dark tbody tr { border-color: var(--dp-table-row-border); }
+html.dark tbody tr:hover { background-color: var(--dp-table-row-hover); }
+html.dark tbody td { border-color: var(--dp-table-row-border); color: var(--dp-table-cell-text); }
+
+/* ═══════════════════════════════════════════════════════════
+   BUTTONS (generische Overrides)
+   ═══════════════════════════════════════════════════════════ */
+html.dark button.bg-gray-100,
+html.dark .bg-gray-100[role="button"],
+html.dark button[class*="bg-gray-100"] {
+  background-color: var(--dp-btn-gray-bg);
+  color: var(--dp-btn-gray-text);
+}
+
+html.dark button.bg-gray-100:hover,
+html.dark button[class*="bg-gray-100"]:hover {
+  background-color: var(--dp-btn-gray-hover);
+}
+
+html.dark button.bg-white,
+html.dark button[class*="bg-white"] {
+  background-color: var(--dp-btn-white-bg);
+  color: var(--dp-btn-white-text);
+  border-color: var(--dp-btn-white-border);
+}
+
+html.dark button.bg-white:hover,
+html.dark button[class*="bg-white"]:hover {
+  background-color: var(--dp-btn-white-hover);
+}
+
+html.dark button[class*="border-gray-300"] {
+  border-color: var(--dp-btn-border-color);
+  color: var(--dp-btn-border-text);
+}
+
+html.dark button[class*="border-gray-300"]:hover {
+  background-color: var(--dp-btn-border-hover);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RECHARTS (Charts)
+   ═══════════════════════════════════════════════════════════ */
+html.dark .recharts-text { fill: var(--dp-chart-text); }
+html.dark .recharts-cartesian-grid line { stroke: var(--dp-chart-grid); }
+
+html.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: var(--dp-chart-tooltip-bg);
+  border-color: var(--dp-chart-tooltip-border);
+  color: var(--dp-chart-tooltip-text);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KI-TOOL: AI OUTPUT
+   ═══════════════════════════════════════════════════════════ */
+html.dark .ai-output { color: var(--dp-text-body); }
+html.dark .ai-content p { color: var(--dp-text-secondary); }
+html.dark .ai-content h3 { color: var(--dp-text-heading); }
+html.dark .ai-content h4 { color: var(--dp-text-secondary); }
+html.dark .ai-content li { color: var(--dp-text-body); border-color: var(--dp-border-default); }
+html.dark .ai-content strong, html.dark .ai-content b { color: var(--dp-text-heading); }
+
+html.dark .ai-content [class*="bg-white"] {
+  background: var(--dp-bg-primary);
+  border-color: var(--dp-border-default);
+}
+
+html.dark .ai-content [class*="bg-gray-50"] {
+  background: var(--dp-bg-tertiary);
+  border-color: var(--dp-border-default);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TABS & NAVIGATION
+   ═══════════════════════════════════════════════════════════ */
+html.dark .border-b.border-gray-200 { border-color: var(--dp-border-default); }
+html.dark button[class*="border-transparent"][class*="text-gray-500"]:hover { color: var(--dp-text-strong); }
+
+/* ═══════════════════════════════════════════════════════════
+   CODE BLOCKS
+   ═══════════════════════════════════════════════════════════ */
+html.dark code {
+  background-color: var(--dp-code-bg);
+  border-color: var(--dp-code-border);
+  color: var(--dp-code-text);
+}
+
+html.dark pre {
+  background-color: var(--dp-code-bg);
+  border-color: var(--dp-code-border);
+  color: var(--dp-code-text);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════ */
+html.dark ::-webkit-scrollbar { width: 6px; height: 6px; }
+html.dark ::-webkit-scrollbar-track { background: var(--dp-scrollbar-track); }
+html.dark ::-webkit-scrollbar-thumb { background: var(--dp-scrollbar-thumb); border-radius: 3px; }
+html.dark ::-webkit-scrollbar-thumb:hover { background: var(--dp-scrollbar-thumb-hover); }
+
+/* ═══════════════════════════════════════════════════════════
+   FOCUS RINGS
+   ═══════════════════════════════════════════════════════════ */
+html.dark *:focus-visible { outline-color: var(--dp-focus-ring); }
+
+/* ═══════════════════════════════════════════════════════════
+   SPECIFIC COMPONENT PATTERNS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Rounded pills/badges */
+html.dark .rounded-full[class*="bg-indigo-100"] { background-color: rgba(99, 102, 241, 0.2); }
+html.dark .rounded-full[class*="bg-blue-100"] { background-color: rgba(59, 130, 246, 0.2); }
+html.dark .rounded-full[class*="bg-green-100"] { background-color: rgba(34, 197, 94, 0.2); }
+html.dark .rounded-full[class*="bg-red-100"] { background-color: rgba(239, 68, 68, 0.2); }
+html.dark .rounded-full[class*="bg-purple-100"] { background-color: rgba(147, 51, 234, 0.2); }
+
+/* Gradient blurs (KI-Tool output decorations) */
+html.dark .mix-blend-multiply {
+  mix-blend-mode: var(--dp-blend-mode);
+  opacity: var(--dp-blend-opacity);
+}
+
+/* Landing page chart specific */
+html.dark .bg-gray-50.rounded-lg.hover\:bg-gray-100 {
+  background-color: var(--dp-bg-tertiary);
+}
+html.dark .bg-gray-50.rounded-lg.hover\:bg-gray-100:hover {
+  background-color: var(--dp-bg-quaternary);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GAP CONTENT (Lists)
+   ═══════════════════════════════════════════════════════════ */
 .gap-content ul {
   list-style-type: disc;
   padding-left: 1.5rem;
@@ -24,58 +737,37 @@
   margin-bottom: 0.25rem;
 }
 
-/* ENTFERNT: Der folgende Block wurde gelöscht, um Dark Mode zu verhindern.
-   @media (prefers-color-scheme: dark) { ... } 
-*/
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD SECTION SCROLL OFFSET
+   ═══════════════════════════════════════════════════════════ */
+[id^="section-"] {
+  scroll-margin-top: 5rem;
 }
 
-/* --- Glassmorphism & Theme Utilities --- */
-
-/* 1. Der Hintergrund */
-.dashboard-gradient {
-  background-color: #f8fafc;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.03) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.03) 0px, transparent 50%);
-  background-attachment: fixed;
-}
-
-/* 2. Hilfsklassen */
-.glass-panel {
-  @apply bg-white/80 backdrop-blur-md border border-white/60;
-}
-
-.soft-shadow {
-  box-shadow: 0 8px 30px -8px rgba(79, 70, 229, 0.06), 
-              0 2px 4px -1px rgba(0, 0, 0, 0.02);
-}
-
-/* 3. Kombinierte Klasse für Karten */
-.card-glass {
-  @apply bg-white/80 backdrop-blur-md border border-white/60 rounded-xl;
-  box-shadow: 0 8px 30px -8px rgba(79, 70, 229, 0.06), 
-              0 2px 4px -1px rgba(0, 0, 0, 0.02);
-}
-
-/* Hover-Effekt */
-.card-glass-hover {
-  @apply transition-all duration-300 hover:-translate-y-1;
-  &:hover {
-    box-shadow: 0 15px 35px -5px rgba(79,70,229,0.1);
-  }
-}
-
-/* ============================================================
+/* ═══════════════════════════════════════════════════════════
    PDF-EXPORT STYLES
-   (Der Rest der Datei bleibt unverändert)
-   ============================================================ */
+   ═══════════════════════════════════════════════════════════ */
 @media print {
+  /* Reset alle Tokens auf Light Mode für Print */
+  :root, html.dark {
+    --dp-bg-primary: #ffffff;
+    --dp-bg-secondary: #f9fafb;
+    --dp-bg-tertiary: #f3f4f6;
+    --dp-text-heading: #111827;
+    --dp-text-strong: #1f2937;
+    --dp-text-body: #374151;
+    --dp-text-muted: #6b7280;
+    --dp-text-faint: #9ca3af;
+    --dp-border-default: #e5e7eb;
+    --dp-border-subtle: #f3f4f6;
+    --dp-surface-card: #ffffff;
+    --dp-surface-card-border: #e5e7eb;
+    --dp-shadow-card: none;
+    --dp-shadow-sm: none;
+    --dp-shadow-md: none;
+    --dp-shadow-lg: none;
+  }
+
   @page {
     size: A4 portrait;
     margin: 8mm 8mm 10mm 8mm;
@@ -143,7 +835,7 @@ body {
 
   .print-kpi-grid .grid {
     display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important; 
+    grid-template-columns: repeat(4, 1fr) !important;
     gap: 8px !important;
     margin-bottom: 0 !important;
   }
@@ -151,7 +843,7 @@ body {
     padding: 8px !important;
     min-height: 0 !important;
   }
-  
+
   .print-trend-chart {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
@@ -208,522 +900,29 @@ body {
   .recharts-wrapper {
     width: 100% !important;
   }
-  
+
   h1 { font-size: 16pt !important; color: #188BDB !important; }
   h2 { font-size: 12pt !important; font-weight: bold !important; margin-bottom: 5px !important; }
   h3 { font-size: 10pt !important; font-weight: bold !important; color: #333 !important; }
-  
+
   .overflow-y-auto, .overflow-x-auto {
     overflow: visible !important;
     height: auto !important;
     max-height: none !important;
   }
-}
 
-/* ══════════════════════════════════════════════════════════
-   DATAPEAK DARK MODE – GLOBAL OVERRIDES
-   ══════════════════════════════════════════════════════════
-   
-   Zu globals.css hinzufügen (ERSETZE die alte dark-mode Version).
-   
-   Strategie: Statt jede Komponente einzeln zu editieren,
-   überschreiben wir unter html.dark ALLE gängigen Tailwind-
-   Patterns global. So funktioniert Dark Mode auf ALLEN Seiten
-   (Admin, Dashboard, Formulare, System, KI-Tool etc.) sofort.
-   
-   tailwind.config.ts → darkMode: 'class' ← bereits vorhanden ✓
-   
-   ══════════════════════════════════════════════════════════ */
-
-/* ── Smooth Transition ── */
-html {
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   1. BASE: Body, Min-h-screen Container
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark body {
-  background-color: #030712; /* gray-950 */
-  color: #e2e8f0;           /* slate-200 */
-}
-
-/* Alle Seiten die min-h-screen bg-gray-50 nutzen (Admin, Edit, Redaktion etc.) */
-html.dark .bg-gray-50  { background-color: #030712 !important; }
-html.dark .bg-gray-100 { background-color: #0f172a !important; }
-html.dark .bg-gray-200 { background-color: #1e293b !important; }
-
-/* ═══════════════════════════════════════════════════════════
-   2. DASHBOARD GRADIENT
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark .dashboard-gradient {
-  background: linear-gradient(135deg, #030712 0%, #0f172a 50%, #030712 100%) !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   3. CARD-GLASS (Dashboard-Karten)
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark .card-glass {
-  background: rgba(15, 23, 42, 0.8) !important;
-  border-color: rgba(51, 65, 85, 0.5) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(51, 65, 85, 0.2);
-  color: #e2e8f0;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   4. BG-WHITE → DARK (globale Karten, Formulare, Modals)
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark .bg-white {
-  background-color: #111827 !important; /* gray-900 */
-  color: #e2e8f0 !important;
-}
-
-/* ── Sidebar Background ──
-   Eigene Klasse, wird NICHT vom globalen bg-white Override betroffen.
-   Light: weiß | Dark: gray-900 */
-.sidebar-bg {
-  background-color: #ffffff;
-}
-html.dark .sidebar-bg {
-  background-color: #111827;
-}
-
-/* Weiße Karten mit Border → dunkle Border */
-html.dark .bg-white.border,
-html.dark .bg-white[class*="border-gray"],
-html.dark .bg-white[class*="shadow"] {
-  border-color: #1e293b !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   5. TEXT OVERRIDES (global, nicht nur dashboard-gradient)
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark .text-gray-900 { color: #f1f5f9 !important; }
-html.dark .text-gray-800 { color: #e2e8f0 !important; }
-html.dark .text-gray-700 { color: #cbd5e1 !important; }
-html.dark .text-gray-600 { color: #94a3b8 !important; }
-html.dark .text-gray-500 { color: #64748b !important; }
-html.dark .text-gray-400 { color: #475569 !important; }
-
-/* Colored text – etwas heller im Dark */
-html.dark .text-red-500   { color: #f87171 !important; }
-html.dark .text-red-600   { color: #f87171 !important; }
-html.dark .text-red-700   { color: #fca5a5 !important; }
-html.dark .text-red-800   { color: #fecaca !important; }
-html.dark .text-green-500 { color: #4ade80 !important; }
-html.dark .text-green-600 { color: #4ade80 !important; }
-html.dark .text-green-700 { color: #86efac !important; }
-html.dark .text-green-800 { color: #bbf7d0 !important; }
-html.dark .text-blue-700  { color: #93c5fd !important; }
-html.dark .text-blue-800  { color: #bfdbfe !important; }
-html.dark .text-amber-800 { color: #fcd34d !important; }
-html.dark .text-yellow-700 { color: #fcd34d !important; }
-html.dark .text-indigo-600 { color: #818cf8 !important; }
-html.dark .text-indigo-700 { color: #a5b4fc !important; }
-html.dark .text-indigo-800 { color: #c7d2fe !important; }
-html.dark .text-purple-600 { color: #a78bfa !important; }
-html.dark .text-sky-600   { color: #7dd3fc !important; }
-html.dark .text-sky-800   { color: #bae6fd !important; }
-
-/* ═══════════════════════════════════════════════════════════
-   6. BORDER OVERRIDES (global)
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark .border-gray-100 { border-color: #1e293b !important; }
-html.dark .border-gray-200 { border-color: #1e293b !important; }
-html.dark .border-gray-300 { border-color: #334155 !important; }
-
-html.dark .border-red-200  { border-color: rgba(239, 68, 68, 0.3) !important; }
-html.dark .border-green-200 { border-color: rgba(34, 197, 94, 0.3) !important; }
-html.dark .border-blue-200 { border-color: rgba(59, 130, 246, 0.3) !important; }
-html.dark .border-blue-100 { border-color: rgba(59, 130, 246, 0.2) !important; }
-html.dark .border-amber-200 { border-color: rgba(245, 158, 11, 0.3) !important; }
-html.dark .border-amber-300 { border-color: rgba(245, 158, 11, 0.4) !important; }
-html.dark .border-yellow-300 { border-color: rgba(234, 179, 8, 0.3) !important; }
-html.dark .border-indigo-100 { border-color: rgba(99, 102, 241, 0.2) !important; }
-html.dark .border-indigo-200 { border-color: rgba(99, 102, 241, 0.3) !important; }
-html.dark .border-purple-200 { border-color: rgba(147, 51, 234, 0.3) !important; }
-html.dark .border-sky-200 { border-color: rgba(14, 165, 233, 0.3) !important; }
-
-/* Dividers */
-html.dark .divide-gray-200 > * + * { border-color: #1e293b !important; }
-html.dark .border-b { border-color: #1e293b; }
-html.dark .border-t { border-color: #1e293b; }
-
-/* Dashed borders */
-html.dark .border-dashed { border-color: #334155 !important; }
-
-/* ═══════════════════════════════════════════════════════════
-   7. COLORED BACKGROUNDS (Badges, Alerts, Status-Boxen)
-   ═══════════════════════════════════════════════════════════ */
-
-/* Rot */
-html.dark .bg-red-50   { background-color: rgba(239, 68, 68, 0.1) !important; }
-html.dark .bg-red-100  { background-color: rgba(239, 68, 68, 0.15) !important; }
-
-/* Grün */
-html.dark .bg-green-50  { background-color: rgba(34, 197, 94, 0.1) !important; }
-html.dark .bg-green-100 { background-color: rgba(34, 197, 94, 0.15) !important; }
-html.dark .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.1) !important; }
-html.dark .bg-emerald-100 { background-color: rgba(16, 185, 129, 0.15) !important; }
-
-/* Blau */
-html.dark .bg-blue-50  { background-color: rgba(59, 130, 246, 0.1) !important; }
-html.dark .bg-blue-100 { background-color: rgba(59, 130, 246, 0.15) !important; }
-
-/* Gelb / Amber */
-html.dark .bg-yellow-50  { background-color: rgba(234, 179, 8, 0.1) !important; }
-html.dark .bg-yellow-100 { background-color: rgba(234, 179, 8, 0.12) !important; }
-html.dark .bg-amber-50   { background-color: rgba(245, 158, 11, 0.1) !important; }
-html.dark .bg-amber-100  { background-color: rgba(245, 158, 11, 0.15) !important; }
-
-/* Indigo */
-html.dark .bg-indigo-50  { background-color: rgba(99, 102, 241, 0.1) !important; }
-html.dark .bg-indigo-100 { background-color: rgba(99, 102, 241, 0.15) !important; }
-
-/* Purple */
-html.dark .bg-purple-50  { background-color: rgba(147, 51, 234, 0.1) !important; }
-html.dark .bg-purple-100 { background-color: rgba(147, 51, 234, 0.15) !important; }
-
-/* Sky */
-html.dark .bg-sky-50  { background-color: rgba(14, 165, 233, 0.1) !important; }
-html.dark .bg-sky-100 { background-color: rgba(14, 165, 233, 0.15) !important; }
-
-/* Orange */
-html.dark .bg-orange-50 { background-color: rgba(249, 115, 22, 0.1) !important; }
-
-/* ═══════════════════════════════════════════════════════════
-   8. SHADOWS
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark .shadow-sm    { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important; }
-html.dark .shadow-md,
-html.dark .shadow       { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4) !important; }
-html.dark .shadow-lg    { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4) !important; }
-html.dark .shadow-xl    { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important; }
-html.dark .shadow-2xl   { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important; }
-html.dark .shadow-inner { box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3) !important; }
-
-/* ═══════════════════════════════════════════════════════════
-   9. INPUTS, SELECTS, TEXTAREAS (Formulare global)
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark input[type="text"],
-html.dark input[type="email"],
-html.dark input[type="password"],
-html.dark input[type="url"],
-html.dark input[type="search"],
-html.dark input[type="date"],
-html.dark input[type="number"],
-html.dark select,
-html.dark textarea {
-  background-color: #1e293b !important; /* slate-800 */
-  border-color: #334155 !important;     /* slate-700 */
-  color: #e2e8f0 !important;            /* slate-200 */
-}
-
-html.dark input::placeholder,
-html.dark textarea::placeholder {
-  color: #475569 !important; /* slate-600 */
-}
-
-html.dark input:focus,
-html.dark select:focus,
-html.dark textarea:focus {
-  border-color: #6366f1 !important; /* indigo-500 */
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3) !important;
-}
-
-html.dark input:disabled,
-html.dark select:disabled,
-html.dark textarea:disabled {
-  background-color: #0f172a !important; /* slate-900 */
-  color: #475569 !important;
-  cursor: not-allowed;
-}
-
-/* File inputs */
-html.dark input[type="file"] {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
-  color: #94a3b8 !important;
-}
-
-/* Checkboxes – Keep brand colors, darker bg */
-html.dark input[type="checkbox"] {
-  background-color: #1e293b !important;
-  border-color: #475569 !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   10. TABLES (Admin, Redaktionsplan etc.)
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark table {
-  color: #e2e8f0;
-}
-
-html.dark thead,
-html.dark thead th {
-  background-color: #0f172a !important;
-  color: #94a3b8 !important;
-  border-color: #1e293b !important;
-}
-
-html.dark tbody tr {
-  border-color: #1e293b !important;
-}
-
-html.dark tbody tr:hover {
-  background-color: rgba(15, 23, 42, 0.5) !important;
-}
-
-html.dark tbody td {
-  border-color: #1e293b !important;
-  color: #cbd5e1;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   11. BUTTONS (generische Overrides für nicht-farbige Buttons)
-   ═══════════════════════════════════════════════════════════ */
-
-/* Grau-Buttons */
-html.dark button.bg-gray-100,
-html.dark .bg-gray-100[role="button"],
-html.dark button[class*="bg-gray-100"] {
-  background-color: #1e293b !important;
-  color: #cbd5e1 !important;
-}
-
-html.dark button.bg-gray-100:hover,
-html.dark button[class*="bg-gray-100"]:hover {
-  background-color: #334155 !important;
-}
-
-/* White buttons with border */
-html.dark button.bg-white,
-html.dark button[class*="bg-white"] {
-  background-color: #111827 !important;
-  color: #e2e8f0 !important;
-  border-color: #334155 !important;
-}
-
-html.dark button.bg-white:hover,
-html.dark button[class*="bg-white"]:hover {
-  background-color: #1e293b !important;
-}
-
-/* Border buttons (filter, tabs etc.) */
-html.dark button[class*="border-gray-300"] {
-  border-color: #334155 !important;
-  color: #cbd5e1 !important;
-}
-
-html.dark button[class*="border-gray-300"]:hover {
-  background-color: #1e293b !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   12. RECHARTS (Charts global)
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark .recharts-text { fill: #94a3b8 !important; }
-html.dark .recharts-cartesian-grid line { stroke: #1e293b !important; }
-
-html.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
-  color: #e2e8f0 !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   13. KI-TOOL: AI OUTPUT DARK MODE
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark .ai-output {
-  color: #cbd5e1;
-}
-
-html.dark .ai-content p { color: #94a3b8 !important; }
-html.dark .ai-content h3 { color: #f1f5f9 !important; }
-html.dark .ai-content h4 { color: #94a3b8 !important; }
-html.dark .ai-content li { color: #cbd5e1 !important; border-color: #1e293b !important; }
-html.dark .ai-content strong, html.dark .ai-content b { color: #f1f5f9 !important; }
-
-html.dark .ai-content [class*="bg-white"] {
-  background: #111827 !important;
-  border-color: #1e293b !important;
-}
-
-html.dark .ai-content [class*="bg-gray-50"] {
-  background: #0f172a !important;
-  border-color: #1e293b !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   14. BACKDROP/OVERLAY (Lightbox, Modals)
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark .bg-white\/70 {
-  background-color: rgba(3, 7, 18, 0.8) !important; /* gray-950/80 */
-}
-
-/* ═══════════════════════════════════════════════════════════
-   15. HOVER STATES
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark .hover\:bg-gray-50:hover  { background-color: #0f172a !important; }
-html.dark .hover\:bg-gray-100:hover { background-color: #1e293b !important; }
-html.dark .hover\:bg-gray-200:hover { background-color: #334155 !important; }
-html.dark .hover\:text-gray-700:hover { color: #e2e8f0 !important; }
-html.dark .hover\:text-gray-800:hover { color: #f1f5f9 !important; }
-html.dark .hover\:text-gray-900:hover { color: #f8fafc !important; }
-
-html.dark .hover\:bg-red-50:hover   { background-color: rgba(239, 68, 68, 0.15) !important; }
-html.dark .hover\:bg-red-100:hover  { background-color: rgba(239, 68, 68, 0.2) !important; }
-html.dark .hover\:bg-green-100:hover { background-color: rgba(34, 197, 94, 0.2) !important; }
-html.dark .hover\:bg-green-200:hover { background-color: rgba(34, 197, 94, 0.25) !important; }
-html.dark .hover\:bg-indigo-100:hover { background-color: rgba(99, 102, 241, 0.2) !important; }
-
-/* ═══════════════════════════════════════════════════════════
-   16. TABS & NAVIGATION (KI-Tool, Filters etc.)
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark .border-b.border-gray-200 {
-  border-color: #1e293b !important;
-}
-
-/* Tab active states – keep brand colors */
-/* Tab inactive hover */
-html.dark button[class*="border-transparent"][class*="text-gray-500"]:hover {
-  color: #e2e8f0 !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   17. CODE BLOCKS (Schema Analyzer output etc.)
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark code {
-  background-color: #0f172a !important;
-  border-color: #334155 !important;
-  color: #e2e8f0 !important;
-}
-
-html.dark pre {
-  background-color: #0f172a !important;
-  border-color: #334155 !important;
-  color: #e2e8f0 !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   18. SCROLLBAR
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark ::-webkit-scrollbar { width: 6px; height: 6px; }
-html.dark ::-webkit-scrollbar-track { background: #0f172a; }
-html.dark ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-html.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-/* ═══════════════════════════════════════════════════════════
-   19. FOCUS RINGS
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark *:focus-visible {
-  outline-color: #818cf8 !important; /* indigo-400 */
-}
-
-/* ═══════════════════════════════════════════════════════════
-   20. SPECIFIC COMPONENT PATTERNS
-   ═══════════════════════════════════════════════════════════ */
-
-/* Status dots – keep their colors, just darken surroundings */
-html.dark .animate-pulse[class*="bg-red"] {
-  /* Keep red pulse visible */
-}
-
-/* Rounded pills/badges – ensure text contrast */
-html.dark .rounded-full[class*="bg-indigo-100"] { background-color: rgba(99, 102, 241, 0.2) !important; }
-html.dark .rounded-full[class*="bg-blue-100"]   { background-color: rgba(59, 130, 246, 0.2) !important; }
-html.dark .rounded-full[class*="bg-green-100"]  { background-color: rgba(34, 197, 94, 0.2) !important; }
-html.dark .rounded-full[class*="bg-red-100"]    { background-color: rgba(239, 68, 68, 0.2) !important; }
-html.dark .rounded-full[class*="bg-purple-100"] { background-color: rgba(147, 51, 234, 0.2) !important; }
-
-/* Gradient blurs (KI-Tool output decorations) */
-html.dark .mix-blend-multiply {
-  mix-blend-mode: screen !important;
-  opacity: 0.1 !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   21. LANDING PAGE CHART (specific to that component)
-   ═══════════════════════════════════════════════════════════ */
-
-html.dark .bg-gray-50.rounded-lg.hover\:bg-gray-100 {
-  background-color: #0f172a !important;
-}
-
-html.dark .bg-gray-50.rounded-lg.hover\:bg-gray-100:hover {
-  background-color: #1e293b !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   22. PRINT: DARK MODE IGNORIEREN
-   ═══════════════════════════════════════════════════════════ */
-
-@media print {
-  html.dark body                { background-color: white !important; color: black !important; }
-  html.dark .card-glass         { background: white !important; border-color: #e5e7eb !important; color: black !important; }
+  /* Print: Dark Mode komplett zuruecksetzen */
+  html.dark body { background-color: white !important; color: black !important; }
+  html.dark .card-glass { background: white !important; border-color: #e5e7eb !important; color: black !important; }
   html.dark .dashboard-gradient { background: white !important; }
-  html.dark .bg-white           { background-color: white !important; color: black !important; }
-  html.dark .bg-gray-50         { background-color: #f9fafb !important; }
-  html.dark .text-gray-900      { color: #111827 !important; }
-  html.dark .text-gray-700      { color: #374151 !important; }
-  html.dark .text-gray-500      { color: #6b7280 !important; }
+  html.dark .bg-white { background-color: white !important; color: black !important; }
+  html.dark .bg-gray-50 { background-color: #f9fafb !important; }
+  html.dark .text-gray-900 { color: #111827 !important; }
+  html.dark .text-gray-700 { color: #374151 !important; }
+  html.dark .text-gray-500 { color: #6b7280 !important; }
   html.dark .shadow-sm,
   html.dark .shadow-md,
   html.dark .shadow,
-  html.dark .shadow-lg          { box-shadow: none !important; }
+  html.dark .shadow-lg { box-shadow: none !important; }
   html.dark table, html.dark td, html.dark th { color: black !important; }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   DASHBOARD SECTION SCROLL OFFSET
-   ═══════════════════════════════════════════════════════════ */
-
-[id^="section-"] {
-  scroll-margin-top: 5rem;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   FIX: Theme-sichere Textfarben
-   Diese Klassen überschreiben die globalen dark-mode Overrides
-   und stellen sicher dass Texte in beiden Modi korrekt sind.
-   ═══════════════════════════════════════════════════════════ */
-
-.text-theme-heading {
-  color: #111827 !important;  /* gray-900 - dunkel */
-}
-html.dark .text-theme-heading {
-  color: #f1f5f9 !important;  /* slate-100 - hell */
-}
-
-.text-theme-body {
-  color: #374151 !important;  /* gray-700 */
-}
-html.dark .text-theme-body {
-  color: #e2e8f0 !important;  /* slate-200 */
-}
-
-.text-theme-muted {
-  color: #6b7280 !important;  /* gray-500 */
-}
-html.dark .text-theme-muted {
-  color: #94a3b8 !important;  /* slate-400 */
 }
