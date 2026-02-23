@@ -151,8 +151,8 @@ export default function ProjectDashboard({
       
       {/* Lightbox Spinner */}
       {isUpdating && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/70 dark:bg-gray-950/80 backdrop-blur-md transition-all animate-in fade-in duration-300">
-           <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl dark:shadow-gray-950/50 border border-gray-100 dark:border-gray-800 flex flex-col items-center gap-6 max-w-md w-full text-center transform scale-100 animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/70 backdrop-blur-md transition-all animate-in fade-in duration-300">
+           <div className="bg-surface p-8 rounded-3xl shadow-2xl border border-theme-border-subtle flex flex-col items-center gap-6 max-w-md w-full text-center transform scale-100 animate-in zoom-in-95 duration-300">
               <div className="relative w-full flex justify-center">
                  <Image 
                    src="/data-max-arbeitet.webp" 
@@ -164,12 +164,12 @@ export default function ProjectDashboard({
                  />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-1">Daten werden aktualisiert</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                <h3 className="text-xl font-bold text-strong mb-1">Daten werden aktualisiert</h3>
+                <p className="text-muted text-sm leading-relaxed">
                   Rufe aktuelle Metriken von Google & Semrush ab...
                 </p>
               </div>
-              <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-surface-tertiary rounded-full overflow-hidden">
                 <div className="h-full bg-indigo-500 w-1/3 rounded-full animate-indeterminate-bar"></div>
               </div>
            </div>
@@ -275,7 +275,7 @@ export default function ProjectDashboard({
                <div className="flex items-center justify-end mb-2 print:hidden">
                  <button 
                     onClick={() => setIsLandingPagesVisible(!isLandingPagesVisible)}
-                    className="flex items-center gap-2 text-xs font-medium text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                    className="flex items-center gap-2 text-xs font-medium text-muted hover:text-strong transition-colors"
                  >
                     {isLandingPagesVisible ? <EyeSlash size={14}/> : <Eye size={14}/>}
                     {isLandingPagesVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}
@@ -293,7 +293,7 @@ export default function ProjectDashboard({
                />
                {!isLandingPagesVisible && isAdmin && (
                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                   <div className="bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-[1px] px-4 py-2 rounded-lg border border-gray-900/20 dark:border-gray-100/20 text-gray-800 dark:text-gray-200 text-xs font-semibold shadow-sm">
+                   <div className="bg-gray-900/10 dark:bg-gray-100/10 backdrop-blur-[1px] px-4 py-2 rounded-lg border border-gray-900/20 dark:border-gray-100/20 text-strong text-xs font-semibold shadow-sm">
                      🚫 Für Kunden ausgeblendet
                    </div>
                  </div>

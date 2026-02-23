@@ -96,7 +96,7 @@ export default function TableauKpiCard({
 
   if (isLoading) {
     return (
-      <div className={`bg-white dark:bg-gray-900/80 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5 ${className}`}>
+      <div className={`bg-surface rounded-xl border border-theme-border-default p-5 ${className}`}>
         <div className="animate-pulse space-y-4">
           <div className="h-4 bg-gray-200 rounded w-1/3"></div>
           <div className="h-3 bg-gray-200 rounded w-1/2"></div>
@@ -108,7 +108,7 @@ export default function TableauKpiCard({
   }
 
   return (
-    <div className={`bg-white dark:bg-gray-900/80 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5 transition-all duration-300 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 relative overflow-visible flex flex-col ${className}`}>
+    <div className={`bg-surface rounded-xl border border-theme-border-default p-5 transition-all duration-300 hover:shadow-lg hover:border-theme-border-strong relative overflow-visible flex flex-col ${className}`}>
       
       {/* Hintergrund-Balken */}
       {barComparison && (
@@ -251,7 +251,7 @@ export default function TableauKpiCard({
         )}
 
         {/* --- FOOTER --- */}
-        <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700/50 text-xs text-gray-400 dark:text-gray-500 text-left font-medium">
+        <div className="mt-3 pt-2 border-t border-theme-border-subtle text-xs text-faint text-left font-medium">
           {subtitle}
         </div>
 

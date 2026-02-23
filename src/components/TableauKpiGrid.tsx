@@ -74,10 +74,10 @@ export default function TableauKpiGrid({
       
       {/* ZEILE 1: Traffic & Reichweite */}
       <div>
-        <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4 px-1 flex items-center gap-3">
-          <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
+        <h3 className="text-xs font-bold text-faint uppercase tracking-widest mb-4 px-1 flex items-center gap-3">
+          <span className="h-px flex-1 bg-theme-border-default"></span>
           <span>Traffic & Reichweite</span>
-          <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
+          <span className="h-px flex-1 bg-theme-border-default"></span>
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           
@@ -146,10 +146,10 @@ export default function TableauKpiGrid({
 
       {/* ZEILE 2: Qualität & Interaktion */}
       <div>
-        <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4 px-1 flex items-center gap-3">
-          <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
+        <h3 className="text-xs font-bold text-faint uppercase tracking-widest mb-4 px-1 flex items-center gap-3">
+          <span className="h-px flex-1 bg-theme-border-default"></span>
           <span>Qualität & Interaktion</span>
-          <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
+          <span className="h-px flex-1 bg-theme-border-default"></span>
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           

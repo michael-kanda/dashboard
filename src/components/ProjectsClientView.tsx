@@ -93,11 +93,11 @@ export default function ProjectsClientView({ initialProjects }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-surface-secondary p-4 sm:p-6 lg:p-8">
       <div className="max-w-[1600px] mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-heading flex items-center gap-3">
               <Briefcase className="text-indigo-600" />
               Projekt Übersicht
             </h1>
@@ -111,7 +111,7 @@ export default function ProjectsClientView({ initialProjects }: Props) {
             <input
               type="text"
               placeholder="Projekt, Domain oder E-Mail suchen..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all bg-white dark:bg-gray-800 dark:text-gray-200 shadow-sm dark:shadow-none"
+              className="w-full pl-10 pr-4 py-2 border border-theme-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all bg-surface text-heading shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -134,7 +134,7 @@ export default function ProjectsClientView({ initialProjects }: Props) {
             }
 
             return (
-              <div key={user.id} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-500/30 hover:-translate-y-0.5 transition-all duration-300 p-6 flex flex-col h-full">
+              <div key={user.id} className="bg-surface rounded-xl shadow-sm border border-theme-border-default hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-500/30 hover:-translate-y-0.5 transition-all duration-300 p-6 flex flex-col h-full">
                 
                 <div className="flex justify-between items-start mb-4">
                   <div>
@@ -211,7 +211,7 @@ export default function ProjectsClientView({ initialProjects }: Props) {
                   </div>
                 </div>
 
-                <div className="mb-5 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                <div className="mb-5 bg-surface-secondary rounded-lg p-3 border border-theme-border-subtle">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-xs font-semibold text-gray-700">Landingpages ({user.landingpages_count || 0})</span>
                   </div>
@@ -258,7 +258,7 @@ export default function ProjectsClientView({ initialProjects }: Props) {
           })}
           
           {filteredProjects.length === 0 && (
-            <div className="col-span-full text-center py-12 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400">
+            <div className="col-span-full text-center py-12 bg-surface rounded-xl border border-theme-border-default text-muted">
               Keine Projekte gefunden.
             </div>
           )}

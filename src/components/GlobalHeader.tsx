@@ -26,7 +26,7 @@ export default function GlobalHeader({
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
 
   return (
-    <div className="relative sm:sticky sm:top-0 z-40 card-glass p-4 sm:p-6 mb-6 print:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-md transition-all duration-200 border-b border-gray-100 dark:border-gray-800">
+    <div className="relative sm:sticky sm:top-0 z-40 card-glass p-4 sm:p-6 mb-6 print:hidden backdrop-blur-md transition-all duration-200 border-b border-theme-border-subtle">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         
         {/* LINKE SEITE: Projekt-Kontext */}
@@ -35,13 +35,13 @@ export default function GlobalHeader({
             <Globe size={28} />
           </div>
 
-          <div className="h-12 w-px bg-gray-200/60 dark:bg-gray-700/60 mx-1 hidden sm:block"></div>
+          <div className="h-12 w-px bg-theme-border-default/60 mx-1 hidden sm:block"></div>
 
           <div>
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-xl font-bold text-theme-heading tracking-tight">{domain || 'Projekt Dashboard'}</h1>
               {isAdmin && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-surface-tertiary text-secondary border border-theme-border-default">
                   <ShieldLock size={10} />
                   <span>Admin</span>
                 </span>
@@ -77,7 +77,7 @@ export default function GlobalHeader({
           {/* Update-Info (über dem Picker) */}
           <span className="text-theme-muted text-[10px] flex items-center gap-1">
             <span>Google Updates: 24h</span>
-            <span className="text-gray-300 dark:text-gray-600">•</span>
+            <span className="text-faint">•</span>
             <span>Semrush Updates: 14 Tage</span>
           </span>
 
