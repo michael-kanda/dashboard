@@ -482,25 +482,25 @@ Antworte auf Deutsch.`,
         ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
             r.sentiment === 'positive' ? 'bg-emerald-100 text-emerald-700' :
             r.sentiment === 'negative' ? 'bg-rose-100 text-rose-700' :
-            'bg-gray-100 text-gray-700'
+            'bg-surface-secondary text-body'
           }">${r.sentiment}</span>`
-        : '<span class="text-gray-400 text-xs">Nicht erwähnt</span>';
+        : '<span class="text-faint text-xs">Nicht erwähnt</span>';
       
       return `
-        <details class="border border-gray-100 rounded-lg mb-2 overflow-hidden">
-          <summary class="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 transition-colors">
+        <details class="border border-theme-border-subtle rounded-lg mb-2 overflow-hidden">
+          <summary class="flex items-center gap-3 p-3 cursor-pointer hover:bg-surface-secondary transition-colors">
             <div class="shrink-0">${statusIcon}</div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-800">${r.description}</p>
+              <p class="text-sm font-medium text-strong">${r.description}</p>
             </div>
             ${sentimentBadge}
-            <i class="bi bi-chevron-down text-gray-400 transition-transform"></i>
+            <i class="bi bi-chevron-down text-faint transition-transform"></i>
           </summary>
-          <div class="p-3 pt-0 border-t border-gray-100 bg-gray-50/50">
-            <div class="text-sm text-gray-600 leading-relaxed">${r.excerpt || 'Keine Details verfügbar'}</div>
+          <div class="p-3 pt-0 border-t border-theme-border-subtle bg-surface-secondary/50">
+            <div class="text-sm text-secondary leading-relaxed">${r.excerpt || 'Keine Details verfügbar'}</div>
             ${r.competitors.length > 0 ? `
-              <div class="mt-2 pt-2 border-t border-gray-100">
-                <p class="text-xs text-gray-500 mb-1">Erwähnte Alternativen:</p>
+              <div class="mt-2 pt-2 border-t border-theme-border-subtle">
+                <p class="text-xs text-muted mb-1">Erwähnte Alternativen:</p>
                 <div class="flex flex-wrap gap-1">
                   ${r.competitors.map(c => `<span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs">${c}</span>`).join('')}
                 </div>
@@ -525,7 +525,7 @@ Antworte auf Deutsch.`,
     // Konkurrenten HTML
     const competitorsHTML = allCompetitors.length > 0
       ? allCompetitors.map(c => `<a href="https://${c}" target="_blank" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded text-sm transition-colors">${c}</a>`).join(' ')
-      : '<span class="text-gray-400 text-sm italic">Keine Konkurrenten in KI-Antworten identifiziert</span>';
+      : '<span class="text-faint text-sm italic">Keine Konkurrenten in KI-Antworten identifiziert</span>';
 
     // Empfehlungen basierend auf Analyse
     const recommendations: string[] = [];
@@ -568,12 +568,12 @@ Antworte auf Deutsch.`,
     <i class="${scoreCategory.icon} ${scoreCategory.color} text-xl"></i>
     <div>
       <p class="font-bold ${scoreCategory.color}">${scoreCategory.label}</p>
-      <p class="text-xs text-gray-600">${mentionCount} von ${testResults.length} KI-Tests erfolgreich</p>
+      <p class="text-xs text-secondary">${mentionCount} von ${testResults.length} KI-Tests erfolgreich</p>
     </div>
   </div>
   <div class="text-right">
     <div class="text-2xl font-bold ${scoreCategory.color}">${mentionRate.toFixed(0)}%</div>
-    <div class="text-[10px] text-gray-500 uppercase">Erwähnungsrate</div>
+    <div class="text-[10px] text-muted uppercase">Erwähnungsrate</div>
   </div>
 </div>
 
@@ -600,7 +600,7 @@ Antworte auf Deutsch.`,
 <!-- TEST-ERGEBNISSE -->
 <div class="${STYLES.card}">
   <h4 class="${STYLES.h4}"><i class="bi bi-search ${STYLES.iconIndigo}"></i> Gemini Live-Tests (mit Web-Suche)</h4>
-  <p class="text-xs text-gray-500 mb-3">Echte Web-Suchen mit Google Search Grounding</p>
+  <p class="text-xs text-muted mb-3">Echte Web-Suchen mit Google Search Grounding</p>
   ${testResultsHTML}
 </div>
 
@@ -630,16 +630,16 @@ ${allCompetitors.length > 0 ? `
 <div class="${STYLES.card}">
   <h4 class="${STYLES.h4}"><i class="bi bi-shield-check ${STYLES.iconIndigo}"></i> E-E-A-T Signale</h4>
   <div class="space-y-2">
-    <div class="flex items-center justify-between py-2 border-b border-gray-100">
-      <span class="text-sm text-gray-700">About/Team-Seite</span>
+    <div class="flex items-center justify-between py-2 border-b border-theme-border-subtle">
+      <span class="text-sm text-body">About/Team-Seite</span>
       <span class="${domainAnalysis.hasAboutPage ? 'text-emerald-600' : 'text-rose-500'}">${domainAnalysis.hasAboutPage ? '<i class="bi bi-check-circle-fill"></i> Vorhanden' : '<i class="bi bi-x-circle-fill"></i> Fehlt'}</span>
     </div>
-    <div class="flex items-center justify-between py-2 border-b border-gray-100">
-      <span class="text-sm text-gray-700">Kontakt/Impressum</span>
+    <div class="flex items-center justify-between py-2 border-b border-theme-border-subtle">
+      <span class="text-sm text-body">Kontakt/Impressum</span>
       <span class="${domainAnalysis.hasContactPage ? 'text-emerald-600' : 'text-rose-500'}">${domainAnalysis.hasContactPage ? '<i class="bi bi-check-circle-fill"></i> Vorhanden' : '<i class="bi bi-x-circle-fill"></i> Fehlt'}</span>
     </div>
     <div class="flex items-center justify-between py-2">
-      <span class="text-sm text-gray-700">Autor-Informationen</span>
+      <span class="text-sm text-body">Autor-Informationen</span>
       <span class="${domainAnalysis.hasAuthorInfo ? 'text-emerald-600' : 'text-rose-500'}">${domainAnalysis.hasAuthorInfo ? '<i class="bi bi-check-circle-fill"></i> Vorhanden' : '<i class="bi bi-x-circle-fill"></i> Fehlt'}</span>
     </div>
   </div>
