@@ -315,8 +315,8 @@ export default function KiToolPage() {
       
       {/* LIGHTBOX */}
       {isWaitingForStream && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-md transition-all animate-in fade-in duration-300">
-           <div className="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100 flex flex-col items-center gap-6 max-w-md w-full text-center transform scale-100 animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/70 backdrop-blur-md transition-all animate-in fade-in duration-300">
+           <div className="bg-surface p-8 rounded-3xl shadow-2xl border border-theme-border-subtle flex flex-col items-center gap-6 max-w-md w-full text-center transform scale-100 animate-in zoom-in-95 duration-300">
               
               <div className="relative w-full flex justify-center">
                  <Image 
@@ -330,8 +330,8 @@ export default function KiToolPage() {
               </div>
               
               <div>
-                <h3 className="text-xl font-bold text-gray-800 mb-1">Data Max at work</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">
+                <h3 className="text-xl font-bold text-strong mb-1">Data Max at work</h3>
+                <p className="text-muted text-sm leading-relaxed">
                   {activeTab === 'gap' ? 'Analysiere Webseite...' : 
                    activeTab === 'spy' ? 'Vergleiche mit Konkurrenz...' : 
                    activeTab === 'trends' ? 'Recherchiere Keyword-Trends...' :
@@ -341,7 +341,7 @@ export default function KiToolPage() {
                 </p>
               </div>
 
-              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-surface-tertiary rounded-full overflow-hidden">
                 <div className="h-full bg-indigo-500 w-1/3 rounded-full animate-indeterminate-bar"></div>
               </div>
            </div>
@@ -351,18 +351,18 @@ export default function KiToolPage() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 tracking-tight flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-strong tracking-tight flex items-center gap-3">
             <Magic className="text-indigo-600" />
             KI Content Suite
           </h1>
-          <p className="text-gray-500 mt-1">Nutzen Sie KI-Tools zur Optimierung Ihrer Inhalte.</p>
+          <p className="text-muted mt-1">Nutzen Sie KI-Tools zur Optimierung Ihrer Inhalte.</p>
         </div>
 
         <div className="w-full md:w-80">
-          <label className="block text-xs font-semibold text-gray-500 mb-1 ml-1 uppercase tracking-wider">Aktives Projekt</label>
+          <label className="block text-xs font-semibold text-muted mb-1 ml-1 uppercase tracking-wider">Aktives Projekt</label>
           <div className="relative">
             <select
-              className="w-full p-3 pl-10 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm appearance-none transition-all font-medium text-gray-700"
+              className="w-full p-3 pl-10 bg-surface border border-theme-border-default rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm appearance-none transition-all font-medium text-body"
               value={selectedProjectId}
               onChange={(e) => {
                 setSelectedProjectId(e.target.value);
@@ -389,13 +389,13 @@ export default function KiToolPage() {
       </div>
 
       {/* TABS */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-theme-border-default">
         <nav className="-mb-px flex space-x-8 overflow-x-auto">
           <button
             onClick={() => setActiveTab('questions')}
             className={`
               flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'questions' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}
+              ${activeTab === 'questions' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
             `}
           >
             <ChatText size={18} />
@@ -406,7 +406,7 @@ export default function KiToolPage() {
             onClick={() => setActiveTab('gap')}
             className={`
               flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'gap' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}
+              ${activeTab === 'gap' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
             `}
           >
             <FileEarmarkBarGraph size={18} />
@@ -417,7 +417,7 @@ export default function KiToolPage() {
             onClick={() => setActiveTab('spy')}
             className={`
               flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'spy' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}
+              ${activeTab === 'spy' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
             `}
           >
             <Binoculars size={18} />
@@ -428,7 +428,7 @@ export default function KiToolPage() {
             onClick={() => setActiveTab('schema')}
             className={`
               flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'schema' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}
+              ${activeTab === 'schema' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
             `}
           >
             <CodeSquare size={18} />
@@ -439,7 +439,7 @@ export default function KiToolPage() {
             onClick={() => setActiveTab('news')} 
             className={`
               flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'news' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}
+              ${activeTab === 'news' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
             `}
           >
             <Newspaper size={18} />
@@ -451,7 +451,7 @@ export default function KiToolPage() {
             onClick={() => setActiveTab('landingpage')}
             className={`
               flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'landingpage' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700'}
+              ${activeTab === 'landingpage' ? 'border-purple-500 text-purple-600' : 'border-transparent text-muted hover:text-body'}
             `}
           >
             <FileText size={18} />
@@ -463,7 +463,7 @@ export default function KiToolPage() {
             onClick={() => setActiveTab('ai-visibility')}
             className={`
               flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'ai-visibility' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700'}
+              ${activeTab === 'ai-visibility' ? 'border-purple-500 text-purple-600' : 'border-transparent text-muted hover:text-body'}
             `}
           >
             <Robot size={18} />
@@ -475,7 +475,7 @@ export default function KiToolPage() {
             onClick={() => setActiveTab('trends')}
             className={`
               flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'trends' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}
+              ${activeTab === 'trends' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
             `}
           >
             <GraphUpArrow size={18} />
@@ -487,7 +487,7 @@ export default function KiToolPage() {
             onClick={() => setActiveTab('ctr')}
             className={`
               flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'ctr' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}
+              ${activeTab === 'ctr' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
             `}
           >
             <RocketTakeoff size={18} />
@@ -498,12 +498,12 @@ export default function KiToolPage() {
 
       {/* MAIN CONTENT AREA */}
       {!selectedProjectId ? (
-        <div className="text-center py-20 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white shadow-sm mb-4">
-            <Magic className="text-gray-300 text-2xl" />
+        <div className="text-center py-20 bg-surface-secondary rounded-2xl border border-dashed border-theme-border-default">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface shadow-sm mb-4">
+            <Magic className="text-faint text-2xl" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900">Kein Projekt ausgewählt</h3>
-            <p className="text-gray-500 mt-1">Bitte wählen Sie oben rechts ein Projekt aus.</p>
+            <h3 className="text-lg font-medium text-heading">Kein Projekt ausgewählt</h3>
+            <p className="text-muted mt-1">Bitte wählen Sie oben rechts ein Projekt aus.</p>
         </div>
       ) : (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -517,11 +517,11 @@ export default function KiToolPage() {
                 
                 {/* --- URL INPUTS FÜR SPY, GAP & SCHEMA --- */}
                 {(activeTab === 'gap' || activeTab === 'spy' || activeTab === 'schema') && (
-                  <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 space-y-4">
+                  <div className="bg-surface border border-theme-border-subtle shadow-sm rounded-2xl p-6 space-y-4">
                     
                     {/* Input: ZU ANALYSIERENDE URL */}
                     <div>
-                        <h2 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <h2 className="text-sm font-semibold text-body mb-2 flex items-center gap-2">
                             <Globe className="text-indigo-500" /> 
                             {activeTab === 'schema' ? 'Zu analysierende URL' : 'Meine URL'}
                         </h2>
@@ -530,28 +530,28 @@ export default function KiToolPage() {
                             value={analyzeUrl}
                             onChange={(e) => setAnalyzeUrl(e.target.value)}
                             placeholder="https://meine-seite.de/artikel"
-                            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                         />
                     </div>
 
                     {/* Input: GEGNER URL (Nur bei Spy - OPTIONAL) */}
                     {activeTab === 'spy' && (
-                        <div className="pt-2 border-t border-gray-50 animate-in slide-in-from-top-2">
-                            <h2 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <div className="pt-2 border-t border-theme-border-subtle animate-in slide-in-from-top-2">
+                            <h2 className="text-sm font-semibold text-body mb-2 flex items-center gap-2">
                                 <Binoculars className="text-rose-500" /> Konkurrenz URL 
-                                <span className="text-xs font-normal text-gray-400">(optional)</span>
+                                <span className="text-xs font-normal text-faint">(optional)</span>
                             </h2>
                             <input 
                                 type="url" 
                                 value={competitorUrl}
                                 onChange={(e) => setCompetitorUrl(e.target.value)}
                                 placeholder="https://konkurrenz.de/besserer-artikel"
-                                className="w-full p-3 bg-rose-50 border border-rose-100 rounded-xl text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all text-gray-700 placeholder-rose-300"
+                                className="w-full p-3 bg-rose-50 border border-rose-100 rounded-xl text-sm focus:ring-2 focus:ring-rose-500 outline-none transition-all text-body placeholder-rose-300"
                             />
                         </div>
                     )}
                     
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-faint">
                         {activeTab === 'spy' 
                          ? (competitorUrl 
                             ? 'Vergleich: Wir analysieren beide Seiten.' 
@@ -565,20 +565,20 @@ export default function KiToolPage() {
                 
                 {/* --- NEWS CRAWLER: TOPIC EINGABE --- */}
                 {activeTab === 'news' && (
-                  <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 space-y-4">
-                    <div className="text-center pb-4 border-b border-gray-100">
+                  <div className="bg-surface border border-theme-border-subtle shadow-sm rounded-2xl p-6 space-y-4">
+                    <div className="text-center pb-4 border-b border-theme-border-subtle">
                       <div className="w-14 h-14 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
                         <Newspaper className="text-2xl text-indigo-600" />
                       </div>
-                      <h3 className="font-bold text-gray-900">News-Crawler</h3>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <h3 className="font-bold text-heading">News-Crawler</h3>
+                      <p className="text-xs text-muted mt-1">
                         Findet relevante News für interne Recherche.
                       </p>
                     </div>
                     
                     {/* TOPIC INPUT */}
                     <div>
-                      <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <label className="text-sm font-semibold text-body mb-2 flex items-center gap-2">
                         <Search className="text-indigo-500" /> Suchbegriff / Topic
                       </label>
                       <input 
@@ -586,19 +586,19 @@ export default function KiToolPage() {
                         value={newsTopic}
                         onChange={(e) => setNewsTopic(e.target.value)}
                         placeholder="z.B. SEO Trends 2026, Grippe Welle News..."
-                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-gray-700 placeholder-gray-400"
+                        className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-body placeholder-faint"
                       />
                     </div>
 
                     {/* Beispiele */}
-                    <div className="pt-3 border-t border-gray-100">
-                      <p className="text-xs text-gray-500 mb-2">Beispiele:</p>
+                    <div className="pt-3 border-t border-theme-border-subtle">
+                      <p className="text-xs text-muted mb-2">Beispiele:</p>
                       <div className="flex flex-wrap gap-2">
                         {['SEO OnPage 2025', 'Google Updates News', 'KI Content Strategien', 'Datenschutz'].map((example) => (
                           <button
                             key={example}
                             onClick={() => setNewsTopic(example)}
-                            className="px-2.5 py-1 bg-gray-100 hover:bg-indigo-100 text-gray-600 hover:text-indigo-700 rounded-lg text-xs transition-colors"
+                            className="px-2.5 py-1 bg-surface-tertiary hover:bg-indigo-100 text-secondary hover:text-indigo-700 rounded-lg text-xs transition-colors"
                           >
                             {example}
                           </button>
@@ -610,20 +610,20 @@ export default function KiToolPage() {
                 
                 {/* --- TREND RADAR: THEMEN EINGABE --- */}
                 {activeTab === 'trends' && (
-                  <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 space-y-4">
-                    <div className="text-center pb-4 border-b border-gray-100">
+                  <div className="bg-surface border border-theme-border-subtle shadow-sm rounded-2xl p-6 space-y-4">
+                    <div className="text-center pb-4 border-b border-theme-border-subtle">
                       <div className="w-14 h-14 bg-gradient-to-br from-emerald-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
                         <GraphUpArrow className="text-2xl text-indigo-600" />
                       </div>
-                      <h3 className="font-bold text-gray-900">Trend Radar</h3>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Finde Content-Chancen für <strong className="text-gray-700">{selectedProject?.domain}</strong>
+                      <h3 className="font-bold text-heading">Trend Radar</h3>
+                      <p className="text-xs text-muted mt-1">
+                        Finde Content-Chancen für <strong className="text-body">{selectedProject?.domain}</strong>
                       </p>
                     </div>
                     
                     {/* THEMEN INPUT */}
                     <div>
-                      <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <label className="text-sm font-semibold text-body mb-2 flex items-center gap-2">
                         <Search className="text-emerald-500" /> Thema / Branche
                       </label>
                       <input 
@@ -631,19 +631,19 @@ export default function KiToolPage() {
                         value={trendTopic}
                         onChange={(e) => setTrendTopic(e.target.value)}
                         placeholder="z.B. Rechtsanwalt Wien, SEO Agentur..."
-                        className="w-full p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-gray-700 placeholder-emerald-400"
+                        className="w-full p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-body placeholder-emerald-400"
                       />
                     </div>
 
                     {/* LÄNDER DROPDOWN */}
                     <div>
-                      <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <label className="text-sm font-semibold text-body mb-2 flex items-center gap-2">
                         <GeoAlt className="text-indigo-500" /> Region
                       </label>
                       <select
                         value={trendCountry}
                         onChange={(e) => setTrendCountry(e.target.value)}
-                        className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-gray-700"
+                        className="w-full p-3 bg-surface border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-body"
                       >
                         {COUNTRIES.map((country) => (
                           <option key={country.code} value={country.code}>
@@ -654,14 +654,14 @@ export default function KiToolPage() {
                     </div>
 
                     {/* Beispiele */}
-                    <div className="pt-3 border-t border-gray-100">
-                      <p className="text-xs text-gray-500 mb-2">Beispiele:</p>
+                    <div className="pt-3 border-t border-theme-border-subtle">
+                      <p className="text-xs text-muted mb-2">Beispiele:</p>
                       <div className="flex flex-wrap gap-2">
                         {['Rechtsanwalt Wien', 'SEO Agentur', 'Zahnarzt Linz', 'Nachhilfe Mathematik'].map((example) => (
                           <button
                             key={example}
                             onClick={() => setTrendTopic(example)}
-                            className="px-2.5 py-1 bg-gray-100 hover:bg-indigo-100 text-gray-600 hover:text-indigo-700 rounded-lg text-xs transition-colors"
+                            className="px-2.5 py-1 bg-surface-tertiary hover:bg-indigo-100 text-secondary hover:text-indigo-700 rounded-lg text-xs transition-colors"
                           >
                             {example}
                           </button>
@@ -675,9 +675,9 @@ export default function KiToolPage() {
                 {(activeTab === 'questions' || activeTab === 'gap') && ( 
                   <>
                     {/* GSC Keywords */}
-                    <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 flex flex-col h-[350px]">
+                    <div className="bg-surface border border-theme-border-subtle shadow-sm rounded-2xl p-6 flex flex-col h-[350px]">
                       <div className="flex justify-between items-center mb-4">
-                        <h2 className="font-semibold text-gray-800">Keywords aus GSC</h2>
+                        <h2 className="font-semibold text-strong">Keywords aus GSC</h2>
                         <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
                           {selectedKeywords.length} gewählt
                         </span>
@@ -693,26 +693,26 @@ export default function KiToolPage() {
                               onClick={() => toggleKeyword(kw.query)}
                               className={`
                                 cursor-pointer p-2.5 rounded-lg border text-sm flex items-center gap-2 transition-all
-                                ${selectedKeywords.includes(kw.query) ? 'bg-indigo-50 border-indigo-200 text-indigo-800' : 'bg-white border-gray-100 hover:bg-gray-50'}
+                                ${selectedKeywords.includes(kw.query) ? 'bg-indigo-50 border-indigo-200 text-indigo-800' : 'bg-surface border-theme-border-subtle hover:bg-surface-secondary'}
                               `}
                             >
-                               <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedKeywords.includes(kw.query) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
+                               <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedKeywords.includes(kw.query) ? 'bg-indigo-600 border-indigo-600' : 'border-theme-border-default'}`}>
                                   {selectedKeywords.includes(kw.query) && <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                                </div>
                                <span className="truncate flex-1">{kw.query}</span>
-                               <span className="text-xs text-gray-400 tabular-nums">{kw.clicks}</span>
+                               <span className="text-xs text-faint tabular-nums">{kw.clicks}</span>
                             </div>
                           ))}
                         </div>
                       ) : (
-                          <div className="text-center text-sm text-gray-400 mt-10">Keine GSC-Daten verfügbar</div>
+                          <div className="text-center text-sm text-faint mt-10">Keine GSC-Daten verfügbar</div>
                       )}
                     </div>
 
                     {/* EIGENE KEYWORDS EINGABE */}
-                    <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6">
+                    <div className="bg-surface border border-theme-border-subtle shadow-sm rounded-2xl p-6">
                       <div className="flex justify-between items-center mb-3">
-                        <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+                        <h2 className="font-semibold text-strong flex items-center gap-2">
                           <PlusCircle className="text-emerald-500" /> Eigene Keywords
                         </h2>
                         {customKeywords.trim() && (
@@ -726,9 +726,9 @@ export default function KiToolPage() {
                         value={customKeywords}
                         onChange={(e) => setCustomKeywords(e.target.value)}
                         placeholder="Keywords eingeben (Komma oder Zeilenumbruch getrennt)&#10;&#10;z.B.:&#10;keyword 1, keyword 2&#10;keyword 3"
-                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none h-24"
+                        className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none h-24"
                       />
-                      <p className="text-xs text-gray-400 mt-2">
+                      <p className="text-xs text-faint mt-2">
                         Zusätzliche Keywords die nicht in GSC sind.
                       </p>
                     </div>
@@ -763,11 +763,11 @@ export default function KiToolPage() {
 
               {/* RECHTER BEREICH: OUTPUT */}
               <div className="lg:col-span-8">
-                  <div className="bg-white border border-gray-100 shadow-xl rounded-2xl p-8 h-full min-h-[600px] flex flex-col relative overflow-hidden">
+                  <div className="bg-surface border border-theme-border-subtle shadow-xl rounded-2xl p-8 h-full min-h-[600px] flex flex-col relative overflow-hidden">
                      <div className="absolute top-0 right-0 w-64 h-64 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
                      <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
 
-                     <h2 className="text-lg font-semibold text-gray-800 mb-4 z-10 flex items-center gap-2">
+                     <h2 className="text-lg font-semibold text-strong mb-4 z-10 flex items-center gap-2">
                        {activeTab === 'news' ? 'News-Crawler Report' :
                         activeTab === 'trends' ? 'Keyword Trends' :
                         activeTab === 'spy' ? (competitorUrl ? 'Konkurrenz Vergleich' : 'Webseiten Analyse') : 
@@ -778,7 +778,7 @@ export default function KiToolPage() {
 
                      <div 
                        ref={outputRef}
-                       className="flex-1 bg-gray-50/50 rounded-xl border border-gray-200/60 p-4 overflow-y-auto z-10 custom-scrollbar ai-output"
+                       className="flex-1 bg-surface-secondary/50 rounded-xl border border-theme-border-default/60 p-4 overflow-y-auto z-10 custom-scrollbar ai-output"
                      >
                        {generatedContent ? (
                          <div 
@@ -786,24 +786,24 @@ export default function KiToolPage() {
                            dangerouslySetInnerHTML={{ __html: generatedContent }} 
                          />
                        ) : (
-                         <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center p-8">
+                         <div className="h-full flex flex-col items-center justify-center text-faint text-center p-8">
                             {activeTab === 'news' ? (
                                 <>
                                     <Newspaper className="text-4xl mb-3 text-indigo-200" />
-                                    <p className="font-medium text-gray-500">Interne Weiterbildung</p>
+                                    <p className="font-medium text-muted">Interne Weiterbildung</p>
                                     <p className="text-xs mt-2">Geben Sie einen Suchbegriff ein, um aktuelle Artikel zu crawlen und analysieren.</p>
                                 </>
                             ) : activeTab === 'trends' ? (
                                 <>
                                     <GraphUpArrow className="text-4xl mb-3 text-emerald-200" />
-                                    <p className="font-medium text-gray-500">Keyword-Trends entdecken</p>
+                                    <p className="font-medium text-muted">Keyword-Trends entdecken</p>
                                     <p className="text-xs mt-2">Geben Sie links ein Thema ein und wählen Sie die Region.</p>
                                 </>
                             ) : activeTab === 'spy' ? (
                                 <>
                                     <Binoculars className="text-4xl mb-3 text-rose-200" />
-                                    <p className="font-medium text-gray-500">Webseiten Analyse</p>
-                                    <p className="text-xs mt-2 text-gray-400">
+                                    <p className="font-medium text-muted">Webseiten Analyse</p>
+                                    <p className="text-xs mt-2 text-faint">
                                       Nur Ihre URL → Detaillierte Einzelanalyse<br/>
                                       Mit Konkurrenz URL → Vergleichsanalyse
                                     </p>
@@ -811,19 +811,19 @@ export default function KiToolPage() {
                             ) : activeTab === 'schema' ? (
                                 <>
                                     <CodeSquare className="text-4xl mb-3 text-indigo-200" />
-                                    <p className="font-medium text-gray-500">Schema Analyzer</p>
+                                    <p className="font-medium text-muted">Schema Analyzer</p>
                                     <p className="text-xs mt-2">URL eingeben, um Strukturierte Daten zu analysieren.</p>
                                 </>
                             ) : activeTab === 'gap' ? (
                                 <>
                                     <FileEarmarkBarGraph className="text-4xl mb-3 text-indigo-200" />
-                                    <p className="font-medium text-gray-500">Content Gap Analyse</p>
+                                    <p className="font-medium text-muted">Content Gap Analyse</p>
                                     <p className="text-xs mt-2">URL eingeben & Keywords wählen oder eigene eingeben.</p>
                                 </>
                             ) : (
                                 <>
                                     <Magic className="text-4xl mb-3 text-indigo-200" />
-                                    <p className="font-medium text-gray-500">Fragen Generator</p>
+                                    <p className="font-medium text-muted">Fragen Generator</p>
                                     <p className="text-xs mt-2">Keywords wählen oder eigene eingeben.</p>
                                 </>
                             )}
@@ -863,147 +863,147 @@ export default function KiToolPage() {
       )}
 
       {/* --- MODUL INFO-BOXEN (Volle Breite, immer sichtbar) --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-10 border-t border-gray-200 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-10 border-t border-theme-border-default animate-in fade-in slide-in-from-bottom-4 duration-500">
         
         {/* Box 1: Fragen */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-surface p-6 rounded-2xl border border-theme-border-subtle shadow-sm hover:shadow-md transition-shadow">
            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center mb-4 text-indigo-600">
               <ChatText size={20} />
            </div>
-           <h3 className="font-bold text-gray-900 mb-2">Fragen Generator</h3>
-           <div className="text-sm text-gray-600 space-y-2 leading-relaxed">
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Aktion:</span> Generiert Fragen aus Keywords.</p>
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Ziel:</span> Neue Content-Ideen finden.</p>
+           <h3 className="font-bold text-heading mb-2">Fragen Generator</h3>
+           <div className="text-sm text-secondary space-y-2 leading-relaxed">
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Aktion:</span> Generiert Fragen aus Keywords.</p>
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Ziel:</span> Neue Content-Ideen finden.</p>
               
-              <p className="pt-2 text-xs text-gray-500 border-t border-gray-50 mt-2">
+              <p className="pt-2 text-xs text-muted border-t border-theme-border-subtle mt-2">
                 💡 Wichtig für KI wie ChatGPT, Gemini usw. (Suchintention etc.)
               </p>
            </div>
         </div>
 
         {/* Box 2: Gap Analyse */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-surface p-6 rounded-2xl border border-theme-border-subtle shadow-sm hover:shadow-md transition-shadow">
            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center mb-4 text-indigo-600">
               <FileEarmarkBarGraph size={20} />
            </div>
-           <h3 className="font-bold text-gray-900 mb-2">Gap Analyse</h3>
-           <div className="text-sm text-gray-600 space-y-2 leading-relaxed">
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Aktion:</span> Prüft URL auf fehlende Keywords.</p>
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Ziel:</span> Rankings verbessern.</p>
+           <h3 className="font-bold text-heading mb-2">Gap Analyse</h3>
+           <div className="text-sm text-secondary space-y-2 leading-relaxed">
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Aktion:</span> Prüft URL auf fehlende Keywords.</p>
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Ziel:</span> Rankings verbessern.</p>
               
-              <p className="pt-2 text-xs text-gray-500 border-t border-gray-50 mt-2">
+              <p className="pt-2 text-xs text-muted border-t border-theme-border-subtle mt-2">
                 💡 Deckt inhaltliche Lücken auf für bessere Rankings (Holistic Content).
               </p>
            </div>
         </div>
 
         {/* Box 3: Competitor Spy */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-surface p-6 rounded-2xl border border-theme-border-subtle shadow-sm hover:shadow-md transition-shadow">
            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center mb-4 text-indigo-600">
               <Binoculars size={20} />
            </div>
-           <h3 className="font-bold text-gray-900 mb-2">Competitor Spy</h3>
-           <div className="text-sm text-gray-600 space-y-2 leading-relaxed">
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Aktion:</span> Analysiert eine oder zwei URLs.</p>
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Ziel:</span> Technik, Features & SEO bewerten.</p>
+           <h3 className="font-bold text-heading mb-2">Competitor Spy</h3>
+           <div className="text-sm text-secondary space-y-2 leading-relaxed">
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Aktion:</span> Analysiert eine oder zwei URLs.</p>
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Ziel:</span> Technik, Features & SEO bewerten.</p>
               
-              <p className="pt-2 text-xs text-gray-500 border-t border-gray-50 mt-2">
+              <p className="pt-2 text-xs text-muted border-t border-theme-border-subtle mt-2">
                 💡 Einzelanalyse oder Vergleich mit Konkurrenz möglich.
               </p>
            </div>
         </div>
 
         {/* Box 4: Schema Analyzer */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-surface p-6 rounded-2xl border border-theme-border-subtle shadow-sm hover:shadow-md transition-shadow">
            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center mb-4 text-indigo-600">
               <CodeSquare size={20} />
            </div>
-           <h3 className="font-bold text-gray-900 mb-2">Schema Analyzer</h3>
-           <div className="text-sm text-gray-600 space-y-2 leading-relaxed">
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Aktion:</span> Extrahiert & bewertet JSON-LD.</p>
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Ziel:</span> Rich Snippets freischalten.</p>
+           <h3 className="font-bold text-heading mb-2">Schema Analyzer</h3>
+           <div className="text-sm text-secondary space-y-2 leading-relaxed">
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Aktion:</span> Extrahiert & bewertet JSON-LD.</p>
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Ziel:</span> Rich Snippets freischalten.</p>
               
-              <p className="pt-2 text-xs text-gray-500 border-t border-gray-50 mt-2">
+              <p className="pt-2 text-xs text-muted border-t border-theme-border-subtle mt-2">
                 💡 Prüft auf fehlende Schemas (z.B. FAQ, LocalBusiness) und generiert Code.
               </p>
            </div>
         </div>
 
         {/* Box 5: News-Crawler */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-surface p-6 rounded-2xl border border-theme-border-subtle shadow-sm hover:shadow-md transition-shadow">
            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center mb-4 text-indigo-600">
               <Newspaper size={20} />
            </div>
-           <h3 className="font-bold text-gray-900 mb-2">News-Crawler</h3>
-           <div className="text-sm text-gray-600 space-y-2 leading-relaxed">
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Aktion:</span> Crawlt & analysiert News zum Topic.</p>
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Ziel:</span> Interne Recherche optimieren.</p>
+           <h3 className="font-bold text-heading mb-2">News-Crawler</h3>
+           <div className="text-sm text-secondary space-y-2 leading-relaxed">
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Aktion:</span> Crawlt & analysiert News zum Topic.</p>
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Ziel:</span> Interne Recherche optimieren.</p>
               
-              <p className="pt-2 text-xs text-gray-500 border-t border-gray-50 mt-2">
+              <p className="pt-2 text-xs text-muted border-t border-theme-border-subtle mt-2">
                 💡 Top-Artikel werden gecrawlt, zusammengefasst und Relevanz bewertet.
               </p>
            </div>
         </div>
 
         {/* Box 6: Landingpage Generator */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-surface p-6 rounded-2xl border border-theme-border-subtle shadow-sm hover:shadow-md transition-shadow">
            <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center mb-4 text-purple-600">
               <FileText size={20} />
            </div>
-           <h3 className="font-bold text-gray-900 mb-2">Landingpage Generator</h3>
-           <div className="text-sm text-gray-600 space-y-2 leading-relaxed">
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Aktion:</span> Erstellt SEO-Content aus allen Datenquellen.</p>
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Ziel:</span> Schnell rankende Landingpages.</p>
+           <h3 className="font-bold text-heading mb-2">Landingpage Generator</h3>
+           <div className="text-sm text-secondary space-y-2 leading-relaxed">
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Aktion:</span> Erstellt SEO-Content aus allen Datenquellen.</p>
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Ziel:</span> Schnell rankende Landingpages.</p>
               
-              <p className="pt-2 text-xs text-gray-500 border-t border-gray-50 mt-2">
+              <p className="pt-2 text-xs text-muted border-t border-theme-border-subtle mt-2">
                 💡 Kombiniert GSC-Keywords, News und Gap-Analysen zu perfektem Content.
               </p>
            </div>
         </div>
 
         {/* Box 7: KI-Sichtbarkeit (NEU) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-surface p-6 rounded-2xl border border-theme-border-subtle shadow-sm hover:shadow-md transition-shadow">
            <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center mb-4 text-purple-600">
               <Robot size={20} />
            </div>
-           <h3 className="font-bold text-gray-900 mb-2">KI-Sichtbarkeit</h3>
-           <div className="text-sm text-gray-600 space-y-2 leading-relaxed">
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Aktion:</span> Prüft ob Domain in KI-Antworten erwähnt wird.</p>
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Ziel:</span> Sichtbarkeit in ChatGPT, Gemini etc. optimieren.</p>
+           <h3 className="font-bold text-heading mb-2">KI-Sichtbarkeit</h3>
+           <div className="text-sm text-secondary space-y-2 leading-relaxed">
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Aktion:</span> Prüft ob Domain in KI-Antworten erwähnt wird.</p>
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Ziel:</span> Sichtbarkeit in ChatGPT, Gemini etc. optimieren.</p>
               
-              <p className="pt-2 text-xs text-gray-500 border-t border-gray-50 mt-2">
+              <p className="pt-2 text-xs text-muted border-t border-theme-border-subtle mt-2">
                 💡 Testet live mit Gemini API und analysiert Schema.org & E-E-A-T Signale.
               </p>
            </div>
         </div>
         
         {/* Box 8: Trend Radar */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-surface p-6 rounded-2xl border border-theme-border-subtle shadow-sm hover:shadow-md transition-shadow">
            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center mb-4 text-emerald-600">
               <GraphUpArrow size={20} />
            </div>
-           <h3 className="font-bold text-gray-900 mb-2">Trend Radar</h3>
-           <div className="text-sm text-gray-600 space-y-2 leading-relaxed">
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Aktion:</span> Findet Keyword-Trends für ein Thema.</p>
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Ziel:</span> Content-Chancen früh erkennen.</p>
+           <h3 className="font-bold text-heading mb-2">Trend Radar</h3>
+           <div className="text-sm text-secondary space-y-2 leading-relaxed">
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Aktion:</span> Findet Keyword-Trends für ein Thema.</p>
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Ziel:</span> Content-Chancen früh erkennen.</p>
               
-              <p className="pt-2 text-xs text-gray-500 border-t border-gray-50 mt-2">
+              <p className="pt-2 text-xs text-muted border-t border-theme-border-subtle mt-2">
                 💡 First-Mover-Vorteil: Ranke für Trends bevor die Konkurrenz reagiert.
               </p>
            </div>
         </div>
 
         {/* Box 9: CTR Booster */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-surface p-6 rounded-2xl border border-theme-border-subtle shadow-sm hover:shadow-md transition-shadow">
            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center mb-4 text-indigo-600">
               <RocketTakeoff size={20} />
            </div>
-           <h3 className="font-bold text-gray-900 mb-2">CTR Booster</h3>
-           <div className="text-sm text-gray-600 space-y-2 leading-relaxed">
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Aktion:</span> Optimiert Titel & Beschreibung.</p>
-              <p><span className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Ziel:</span> Klickrate (CTR) erhöhen.</p>
+           <h3 className="font-bold text-heading mb-2">CTR Booster</h3>
+           <div className="text-sm text-secondary space-y-2 leading-relaxed">
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Aktion:</span> Optimiert Titel & Beschreibung.</p>
+              <p><span className="font-semibold text-strong text-xs uppercase tracking-wide">Ziel:</span> Klickrate (CTR) erhöhen.</p>
               
-              <p className="pt-2 text-xs text-gray-500 border-t border-gray-50 mt-2">
+              <p className="pt-2 text-xs text-muted border-t border-theme-border-subtle mt-2">
                  💡 Mehr Klicks senden positive Signale an den Google-Algorithmus.
               </p>
            </div>
@@ -1105,7 +1105,7 @@ export default function KiToolPage() {
           margin-bottom: 12px !important;
         }
         
-        .ai-content [class*="bg-white"] {
+        .ai-content [class*="bg-surface"] {
           background: white !important;
           border: 1px solid #e5e7eb !important;
           border-radius: 8px !important;
@@ -1113,7 +1113,7 @@ export default function KiToolPage() {
           margin-bottom: 8px !important;
         }
         
-        .ai-content [class*="bg-gray-50"] {
+        .ai-content [class*="bg-surface-secondary"] {
           background: #f9fafb !important;
           border: 1px solid #e5e7eb !important;
           border-radius: 8px !important;
@@ -1254,12 +1254,12 @@ export default function KiToolPage() {
         .ai-content [class*="text-blue-"] { color: #2563eb !important; }
         .ai-content [class*="text-indigo-"] { color: #4f46e5 !important; }
         .ai-content [class*="text-purple-"] { color: #7c3aed !important; }
-        .ai-content [class*="text-gray-400"] { color: #9ca3af !important; }
-        .ai-content [class*="text-gray-500"] { color: #6b7280 !important; }
-        .ai-content [class*="text-gray-600"] { color: #4b5563 !important; }
-        .ai-content [class*="text-gray-700"] { color: #374151 !important; }
-        .ai-content [class*="text-gray-800"] { color: #1f2937 !important; }
-        .ai-content [class*="text-gray-900"] { color: #111827 !important; }
+        .ai-content [class*="text-faint"] { color: #9ca3af !important; }
+        .ai-content [class*="text-muted"] { color: #6b7280 !important; }
+        .ai-content [class*="text-secondary"] { color: #4b5563 !important; }
+        .ai-content [class*="text-body"] { color: #374151 !important; }
+        .ai-content [class*="text-strong"] { color: #1f2937 !important; }
+        .ai-content [class*="text-heading"] { color: #111827 !important; }
         
         /* Strong/Bold */
         .ai-content strong, .ai-content b {
