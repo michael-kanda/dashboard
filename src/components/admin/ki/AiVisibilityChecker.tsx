@@ -130,8 +130,8 @@ export default function AiVisibilityChecker({ projectDomain }: AiVisibilityCheck
     <div className="space-y-6">
       {/* LIGHTBOX */}
       {isWaitingForStream && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-md transition-all animate-in fade-in duration-300">
-          <div className="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100 flex flex-col items-center gap-6 max-w-md w-full text-center transform scale-100 animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/70 backdrop-blur-md transition-all animate-in fade-in duration-300">
+          <div className="bg-surface p-8 rounded-3xl shadow-2xl border border-theme-border-subtle flex flex-col items-center gap-6 max-w-md w-full text-center transform scale-100 animate-in zoom-in-95 duration-300">
             <div className="relative w-full flex justify-center">
               <Image 
                 src="/data-max-arbeitet.webp" 
@@ -144,28 +144,28 @@ export default function AiVisibilityChecker({ projectDomain }: AiVisibilityCheck
             </div>
             
             <div>
-              <h3 className="text-xl font-bold text-gray-800 mb-1">KI-Sichtbarkeit wird geprüft</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
+              <h3 className="text-xl font-bold text-strong mb-1">KI-Sichtbarkeit wird geprüft</h3>
+              <p className="text-muted text-sm leading-relaxed">
                 Analysiere Domain, teste Gemini-Antworten und bewerte KI-Faktoren...
               </p>
             </div>
 
             <div className="w-full space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-secondary">
                 <div className="w-4 h-4 rounded-full bg-indigo-500 animate-pulse"></div>
                 <span>Crawle Website & Schema.org...</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <div className="w-4 h-4 rounded-full bg-gray-200"></div>
+              <div className="flex items-center gap-2 text-sm text-faint">
+                <div className="w-4 h-4 rounded-full bg-surface-tertiary"></div>
                 <span>Teste Sichtbarkeit in Gemini...</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <div className="w-4 h-4 rounded-full bg-gray-200"></div>
+              <div className="flex items-center gap-2 text-sm text-faint">
+                <div className="w-4 h-4 rounded-full bg-surface-tertiary"></div>
                 <span>Generiere Report...</span>
               </div>
             </div>
 
-            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-surface-tertiary rounded-full overflow-hidden">
               <div className="h-full bg-purple-500 w-1/3 rounded-full animate-indeterminate-bar"></div>
             </div>
           </div>
@@ -185,25 +185,25 @@ export default function AiVisibilityChecker({ projectDomain }: AiVisibilityCheck
                 <Robot size={24} />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900">KI-Sichtbarkeits-Check</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Powered by Gemini</p>
+                <h3 className="font-bold text-heading">KI-Sichtbarkeits-Check</h3>
+                <p className="text-xs text-muted mt-0.5">Powered by Gemini</p>
               </div>
             </div>
             
-            <p className="text-sm text-gray-600 leading-relaxed">
+            <p className="text-sm text-secondary leading-relaxed">
               Prüft, ob und wie Ihre Domain von KI-Assistenten wie ChatGPT, Gemini oder Perplexity empfohlen wird.
             </p>
             
             <div className="mt-4 pt-4 border-t border-purple-100 space-y-2">
-              <div className="flex items-center gap-2 text-xs text-gray-600">
+              <div className="flex items-center gap-2 text-xs text-secondary">
                 <CheckCircleFill className="text-purple-500 shrink-0" />
                 <span>Live-Test mit Gemini API</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-600">
+              <div className="flex items-center gap-2 text-xs text-secondary">
                 <CheckCircleFill className="text-purple-500 shrink-0" />
                 <span>Schema.org & E-E-A-T Analyse</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-600">
+              <div className="flex items-center gap-2 text-xs text-secondary">
                 <CheckCircleFill className="text-purple-500 shrink-0" />
                 <span>Konkurrenz-Vergleich</span>
               </div>
@@ -211,9 +211,9 @@ export default function AiVisibilityChecker({ projectDomain }: AiVisibilityCheck
           </div>
 
           {/* DOMAIN INPUT */}
-          <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 space-y-4">
+          <div className="bg-surface border border-theme-border-subtle shadow-sm rounded-2xl p-6 space-y-4">
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <label className="text-sm font-semibold text-body mb-2 flex items-center gap-2">
                 <Globe className="text-purple-500" /> Domain / URL
               </label>
               <input 
@@ -221,27 +221,27 @@ export default function AiVisibilityChecker({ projectDomain }: AiVisibilityCheck
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
                 placeholder="z.B. meine-firma.at oder https://..."
-                className="w-full p-3 bg-purple-50 border border-purple-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all text-gray-700 placeholder-purple-300"
+                className="w-full p-3 bg-purple-50 border border-purple-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all text-body placeholder-purple-300"
               />
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <label className="text-sm font-semibold text-body mb-2 flex items-center gap-2">
                 <Search className="text-purple-500" /> Branche / Thema
-                <span className="text-xs font-normal text-gray-400">(optional)</span>
+                <span className="text-xs font-normal text-faint">(optional)</span>
               </label>
               <input 
                 type="text" 
                 value={branche}
                 onChange={(e) => setBranche(e.target.value)}
                 placeholder="z.B. Rechtsanwalt Wien, SEO Agentur..."
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all text-gray-700 placeholder-gray-400"
+                className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all text-body placeholder-faint"
               />
             </div>
 
             {/* Quick-Select Branchen */}
             <div>
-              <p className="text-xs text-gray-500 mb-2">Schnellauswahl:</p>
+              <p className="text-xs text-muted mb-2">Schnellauswahl:</p>
               <div className="flex flex-wrap gap-2">
                 {exampleBranches.map((b) => (
                   <button
@@ -250,7 +250,7 @@ export default function AiVisibilityChecker({ projectDomain }: AiVisibilityCheck
                     className={`px-2.5 py-1 rounded-lg text-xs transition-colors ${
                       branche === b 
                         ? 'bg-purple-500 text-white' 
-                        : 'bg-gray-100 hover:bg-purple-100 text-gray-600 hover:text-purple-700'
+                        : 'bg-surface-tertiary hover:bg-purple-100 text-secondary hover:text-purple-700'
                     }`}
                   >
                     {b}
@@ -281,8 +281,8 @@ export default function AiVisibilityChecker({ projectDomain }: AiVisibilityCheck
 
           {/* SCORE PREVIEW */}
           {visibilityScore !== null && (
-            <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4 text-center animate-in slide-in-from-bottom-2">
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Ihr Score</p>
+            <div className="bg-surface border border-theme-border-subtle shadow-sm rounded-2xl p-4 text-center animate-in slide-in-from-bottom-2">
+              <p className="text-xs text-muted uppercase tracking-wider mb-2">Ihr Score</p>
               <ScoreBadge score={visibilityScore} />
             </div>
           )}
@@ -301,12 +301,12 @@ export default function AiVisibilityChecker({ projectDomain }: AiVisibilityCheck
 
         {/* RECHTE SPALTE: OUTPUT */}
         <div className="lg:col-span-8">
-          <div className="bg-white border border-gray-100 shadow-xl rounded-2xl p-8 h-full min-h-[700px] flex flex-col relative overflow-hidden">
+          <div className="bg-surface border border-theme-border-subtle shadow-xl rounded-2xl p-8 h-full min-h-[700px] flex flex-col relative overflow-hidden">
             {/* Decorative Background */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
 
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 z-10 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-strong mb-4 z-10 flex items-center gap-2">
               <Robot className="text-purple-500" />
               KI-Sichtbarkeits-Report
               {visibilityScore !== null && (
@@ -318,7 +318,7 @@ export default function AiVisibilityChecker({ projectDomain }: AiVisibilityCheck
 
             <div 
               ref={outputRef}
-              className="flex-1 bg-gray-50/50 rounded-xl border border-gray-200/60 p-4 overflow-y-auto z-10 custom-scrollbar ai-output"
+              className="flex-1 bg-surface-secondary/50 rounded-xl border border-theme-border-default/60 p-4 overflow-y-auto z-10 custom-scrollbar ai-output"
             >
               {result ? (
                 <div 
@@ -326,28 +326,28 @@ export default function AiVisibilityChecker({ projectDomain }: AiVisibilityCheck
                   dangerouslySetInnerHTML={{ __html: result }} 
                 />
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center p-8">
+                <div className="h-full flex flex-col items-center justify-center text-faint text-center p-8">
                   <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-2xl flex items-center justify-center mb-4">
                     <Robot className="text-4xl text-purple-300" />
                   </div>
-                  <p className="font-medium text-gray-500">Bereit für den Check</p>
+                  <p className="font-medium text-muted">Bereit für den Check</p>
                   <p className="text-xs mt-2 max-w-xs">
                     Geben Sie links eine Domain ein und starten Sie den KI-Sichtbarkeits-Check. 
                     Wir prüfen, ob und wie die Domain von Gemini empfohlen wird.
                   </p>
                   
                   <div className="mt-6 grid grid-cols-3 gap-4 text-center">
-                    <div className="p-3 bg-white rounded-xl border border-gray-100">
+                    <div className="p-3 bg-surface rounded-xl border border-theme-border-subtle">
                       <div className="text-lg font-bold text-purple-600">1</div>
-                      <div className="text-[10px] text-gray-500 mt-1">Domain crawlen</div>
+                      <div className="text-[10px] text-muted mt-1">Domain crawlen</div>
                     </div>
-                    <div className="p-3 bg-white rounded-xl border border-gray-100">
+                    <div className="p-3 bg-surface rounded-xl border border-theme-border-subtle">
                       <div className="text-lg font-bold text-purple-600">2</div>
-                      <div className="text-[10px] text-gray-500 mt-1">Gemini befragen</div>
+                      <div className="text-[10px] text-muted mt-1">Gemini befragen</div>
                     </div>
-                    <div className="p-3 bg-white rounded-xl border border-gray-100">
+                    <div className="p-3 bg-surface rounded-xl border border-theme-border-subtle">
                       <div className="text-lg font-bold text-purple-600">3</div>
-                      <div className="text-[10px] text-gray-500 mt-1">Report erstellen</div>
+                      <div className="text-[10px] text-muted mt-1">Report erstellen</div>
                     </div>
                   </div>
                 </div>
