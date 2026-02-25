@@ -88,12 +88,12 @@ export async function POST(req: NextRequest) {
 
     // Rising Keywords HTML
     const risingHTML = rising.length > 0 
-      ? rising.map((r: RQ) => `<div class="${STYLES.keywordRow}"><span class="text-gray-700">${r.query}</span><span class="${STYLES.textPositive} font-semibold">${r.value}</span></div>`).join('')
+      ? rising.map((r: RQ) => `<div class="${STYLES.keywordRow}"><span class="text-body">${r.query}</span><span class="${STYLES.textPositive} font-semibold">${r.value}</span></div>`).join('')
       : `<p class="${STYLES.pSmall} italic">Keine Daten für dieses Keyword</p>`;
 
     // Top Keywords HTML  
     const topHTML = top.length > 0
-      ? top.map((r: RQ) => `<div class="${STYLES.keywordRow}"><span class="text-gray-700">${r.query}</span><span class="${STYLES.textInfo} font-semibold">${r.value}</span></div>`).join('')
+      ? top.map((r: RQ) => `<div class="${STYLES.keywordRow}"><span class="text-body">${r.query}</span><span class="${STYLES.textInfo} font-semibold">${r.value}</span></div>`).join('')
       : `<p class="${STYLES.pSmall} italic">Keine Daten für dieses Keyword</p>`;
 
     // Fazit Box basierend auf Recommendation
