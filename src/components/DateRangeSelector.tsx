@@ -38,31 +38,23 @@ export default function DateRangeSelector({
   onChange, 
   className = '' 
 }: DateRangeSelectorProps) {
-  const topRow: DateRangeOption[] = ['30d', '3m', '6m'];
-  const bottomRow: DateRangeOption[] = ['12m', '18m', '24m'];
-
-  const renderButton = (option: DateRangeOption) => (
-    <button
-      key={option}
-      onClick={() => onChange(option)}
-      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 ${
-        value === option
-          ? 'bg-[#188BDB] text-white shadow-sm'
-          : 'text-body hover:bg-surface-secondary border border-theme-border-default'
-      }`}
-    >
-      {shortLabels[option]}
-    </button>
-  );
+  const options: DateRangeOption[] = ['30d', '3m', '6m', '12m', '18m', '24m'];
 
   return (
-    <div className={`flex flex-col gap-1.5 ${className}`}>
-      <div className="flex gap-1.5">
-        {topRow.map(renderButton)}
-      </div>
-      <div className="flex gap-1.5">
-        {bottomRow.map(renderButton)}
-      </div>
+    <div className={`grid grid-cols-3 gap-1.5 ${className}`}>
+      {options.map((option) => (
+        <button
+          key={option}
+          onClick={() => onChange(option)}
+          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 text-center ${
+            value === option
+              ? 'bg-[#188BDB] text-white shadow-sm'
+              : 'text-body hover:bg-surface-secondary border border-theme-border-default'
+          }`}
+        >
+          {shortLabels[option]}
+        </button>
+      ))}
     </div>
   );
 }
