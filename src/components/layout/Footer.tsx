@@ -6,15 +6,15 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full bg-surface dark:bg-gray-900 mt-12 py-6 border-t border-theme-border-default dark:border-gray-800 transition-colors duration-200">
-      <div className="w-full px-6 text-center text-theme-muted dark:text-gray-400 text-xs">
+    <footer className="w-full bg-surface mt-12 py-6 border-t border-theme-border-default transition-colors duration-200">
+      <div className="w-full px-6 text-center text-theme-muted text-xs">
         <p>
           &copy; {currentYear}{' '}
           <a
             href="https://designare.at/"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-theme-strong dark:hover:text-gray-300 hover:underline transition-colors"
+            className="hover:text-theme-strong hover:underline transition-colors"
           >
             Michael Kanda & Evita
           </a>
@@ -24,14 +24,14 @@ const Footer = () => {
           <span className="mx-2">|</span>
           <Link
             href="/impressum"
-            className="hover:text-theme-strong dark:hover:text-gray-300 hover:underline transition-colors"
+            className="hover:text-theme-strong hover:underline transition-colors"
           >
             Impressum
           </Link>
           <span className="mx-2">|</span>
           <Link
             href="/datenschutz"
-            className="hover:text-theme-strong dark:hover:text-gray-300 hover:underline transition-colors"
+            className="hover:text-theme-strong hover:underline transition-colors"
           >
             Datenschutzerklärung
           </Link>
