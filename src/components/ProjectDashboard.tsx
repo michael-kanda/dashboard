@@ -223,6 +223,7 @@ export default function ProjectDashboard({
             activeKpi={activeKpi}
             onKpiChange={(kpi) => setActiveKpi(kpi as ActiveKpi)}
             allChartData={allChartData}
+            weatherData={data.weatherData}
           />
         </div>
         
