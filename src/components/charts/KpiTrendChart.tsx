@@ -17,6 +17,7 @@ import { de } from 'date-fns/locale';
 import { ChartPoint, ActiveKpi } from '@/lib/dashboard-shared'; 
 import { ArrowLeftRight, CalendarEvent, Filter } from 'react-bootstrap-icons';
 import { cn } from '@/lib/utils';
+import { buildHolidayMap, type HolidayInfo } from '@/lib/holidays';
 
 // --- KONFIGURATION ---
 const KPI_CONFIG: Record<string, { label: string; color: string; gradientId: string }> = {
@@ -27,7 +28,6 @@ const KPI_CONFIG: Record<string, { label: string; color: string; gradientId: str
   totalUsers: { label: 'Besucher', color: '#0ea5e9', gradientId: 'gradSky' },     
   sessions: { label: 'Sessions', color: '#06b6d4', gradientId: 'gradCyan' },       
   
-  // ✅ NEU: KI-Traffic Konfiguration
   aiTraffic: { label: 'KI-Traffic', color: '#7c3aed', gradientId: 'gradAi' },
 
   // Engagement
@@ -36,8 +36,18 @@ const KPI_CONFIG: Record<string, { label: string; color: string; gradientId: str
   avgEngagementTime: { label: 'Ø Verweildauer', color: '#f59e0b', gradientId: 'gradAmber' },
   bounceRate: { label: 'Absprungrate', color: '#f43f5e', gradientId: 'gradRose' },
   
-  // ✅ NEU: Paid Search Konfiguration
   paidSearch: { label: 'Paid Search', color: '#14b8a6', gradientId: 'gradTeal' },
+};
+
+// Wochentag-Kürzel auf Deutsch
+const WEEKDAY_SHORT: Record<number, string> = {
+  0: 'So', 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa'
+};
+
+// Flaggen-Emoji für Tooltip
+const COUNTRY_FLAG: Record<string, string> = {
+  DE: '🇩🇪',
+  AT: '🇦🇹'
 };
 
 interface KpiTrendChartProps {
@@ -61,13 +71,35 @@ const formatValue = (value: number, kpi: string) => {
   return new Intl.NumberFormat('de-DE').format(value);
 };
 
-const CustomTooltip = ({ active, payload, label, kpi1, kpi2 }: any) => {
+const CustomTooltip = ({ active, payload, label, kpi1, kpi2, holidayMap }: any) => {
   if (active && payload && payload.length) {
-    const dateLabel = label ? format(new Date(label), 'dd. MMMM yyyy', { locale: de }) : '';
+    const dateObj = label ? new Date(label) : null;
+    const dateLabel = dateObj 
+      ? format(dateObj, 'EEEE, dd. MMMM yyyy', { locale: de }) 
+      : '';
+    
+    // Feiertag nachschlagen
+    const dateKey = dateObj ? dateObj.toISOString().split('T')[0] : '';
+    const holiday: HolidayInfo | undefined = holidayMap?.get(dateKey);
     
     return (
-      <div className="bg-surface px-3 py-2 rounded-lg shadow-xl border border-theme-border-default text-sm z-50">
-        <p className="text-faint font-medium mb-2 border-b border-theme-border-subtle pb-1">{dateLabel}</p>
+      <div className="bg-surface px-3 py-2 rounded-lg shadow-xl border border-theme-border-default text-sm z-50 max-w-[280px]">
+        {/* Datum mit vollem Wochentag */}
+        <p className="text-faint font-medium mb-1 border-b border-theme-border-subtle pb-1">
+          {dateLabel}
+        </p>
+        
+        {/* Feiertags-Badge */}
+        {holiday && (
+          <div className="flex items-center gap-1.5 mb-2 px-1.5 py-1 bg-amber-50 dark:bg-amber-950/30 rounded text-xs border border-amber-200 dark:border-amber-800">
+            <span className="text-amber-600 dark:text-amber-400 font-semibold">
+              📅 {holiday.name}
+            </span>
+            <span className="text-amber-500 dark:text-amber-500 ml-auto">
+              {holiday.countries.map(c => COUNTRY_FLAG[c]).join(' ')}
+            </span>
+          </div>
+        )}
         
         {payload.map((entry: any, index: number) => {
           const kpiKey = entry.dataKey === 'value' ? kpi1 : kpi2;
@@ -139,6 +171,14 @@ export default function KpiTrendChart({
     );
   }, [allChartData, activeKpi, compareKpi]);
 
+  // ✅ NEU: Feiertags-Map einmal für den sichtbaren Zeitraum berechnen
+  const holidayMap = useMemo(() => {
+    if (chartData.length === 0) return new Map();
+    const firstDate = chartData[0].date;
+    const lastDate = chartData[chartData.length - 1].date;
+    return buildHolidayMap(firstDate, lastDate);
+  }, [chartData]);
+
   const activeConfig = KPI_CONFIG[activeKpi] || KPI_CONFIG['sessions'];
   const compareConfig = compareKpi !== 'none' ? KPI_CONFIG[compareKpi] : null;
 
@@ -147,6 +187,14 @@ export default function KpiTrendChart({
     if (val >= 1000) return `${(val / 1000).toFixed(0)}k`;
     if (isPercentageKpi(kpiContext)) return `${val}%`;
     return String(val);
+  };
+
+  // ✅ NEU: X-Achsen-Formatter mit Wochentag
+  const formatXAxisTick = (date: string) => {
+    const d = new Date(date);
+    const weekday = WEEKDAY_SHORT[d.getDay()];
+    const dayMonth = format(d, 'd.MMM', { locale: de });
+    return `${weekday} ${dayMonth}`;
   };
 
   if (isLoading) {
@@ -229,14 +277,15 @@ export default function KpiTrendChart({
             
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
             
+            {/* ✅ UPDATED: Wochentag im Tick */}
             <XAxis
               dataKey="date"
-              tickFormatter={(date) => format(new Date(date), 'd.MMM', { locale: de })}
+              tickFormatter={formatXAxisTick}
               tick={{ fontSize: 11, fill: '#6b7280' }}
               axisLine={false}
               tickLine={false}
               dy={10}
-              minTickGap={30}
+              minTickGap={50}
             />
             
             <YAxis
@@ -260,11 +309,13 @@ export default function KpiTrendChart({
               />
             )}
 
+            {/* ✅ UPDATED: Tooltip mit holidayMap */}
             <Tooltip 
               content={
                 <CustomTooltip 
                   kpi1={activeKpi} 
-                  kpi2={compareKpi !== 'none' ? compareKpi : undefined} 
+                  kpi2={compareKpi !== 'none' ? compareKpi : undefined}
+                  holidayMap={holidayMap}
                 />
               } 
             />
