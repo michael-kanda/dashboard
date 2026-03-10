@@ -9,6 +9,7 @@ import type {
 } from '@/types/dashboard';
 
 import type { AiTrafficData } from '@/types/ai-traffic';
+import type { DailyWeather } from '@/lib/weather'; // ✅ NEU
 
 // Re-exportiere die Basis-Typen
 export type { KpiDatum, ChartPoint, TopQueryData, AiTrafficData };
@@ -27,7 +28,7 @@ export const KPI_TAB_META: Record<string, { label: string; color: string }> = {
   bounceRate: { label: 'Bounce Rate', color: '#ef4444' },  
   newUsers: { label: 'Neue Nutzer', color: '#06b6d4' },    
   avgEngagementTime: { label: 'Ø Zeit', color: '#6366f1' },
-  paidSearch: { label: 'Paid Search', color: '#14b8a6' }, // ✅ NEU
+  paidSearch: { label: 'Paid Search', color: '#14b8a6' },
 };
 
 export interface ChartEntry {
@@ -40,7 +41,7 @@ export interface ChartEntry {
   subLabel2?: string;
 }
 
-// ✅ NEU: Bing Datenstruktur für das Diagramm
+// Bing Datenstruktur
 export interface BingDataPoint {
   date: string;
   clicks: number;
@@ -51,10 +52,10 @@ export interface ApiErrorStatus {
   gsc?: string;
   ga4?: string;
   semrush?: string;
-  bing?: string; // Optional: Auch Bing-Fehler tracken
+  bing?: string;
 }
 
-// ✅ NEU: Landing Page Query Interfaces
+// Landing Page Query Interfaces
 export interface LandingPageQueryData {
   query: string;
   clicks: number;
@@ -65,7 +66,7 @@ export interface LandingPageQueries {
   [path: string]: LandingPageQueryData[];
 }
 
-// ✅ NEU: Folgepfade Interfaces
+// Folgepfade Interfaces
 export interface FollowUpPath {
   path: string;
   sessions: number;
@@ -99,7 +100,7 @@ export interface ProjectDashboardData {
     bounceRate?: KpiDatum;        
     newUsers?: KpiDatum;          
     avgEngagementTime?: KpiDatum;
-    paidSearch?: KpiDatum; // ✅ NEU
+    paidSearch?: KpiDatum;
   };
   charts?: {
     clicks?: ChartPoint[];
@@ -111,18 +112,17 @@ export interface ProjectDashboardData {
     bounceRate?: ChartPoint[];
     newUsers?: ChartPoint[];
     avgEngagementTime?: ChartPoint[];
-    aiTraffic?: ChartPoint[]; // Chart-Daten für AI Traffic
-    paidSearch?: ChartPoint[]; // ✅ NEU: Chart-Daten für Paid Search
+    aiTraffic?: ChartPoint[];
+    paidSearch?: ChartPoint[];
   };
   topQueries?: TopQueryData[];
   topConvertingPages?: ConvertingPageData[];
   aiTraffic?: AiTrafficData;
-  
-  // ✅ NEU: Bing Daten im Dashboard-Objekt
   bingData?: BingDataPoint[];
-  
-  // ✅ NEU: Queries pro Landing Page
   landingPageQueries?: LandingPageQueries;
+
+  // ✅ NEU: Wetterdaten pro Tag (serialisiert als Object statt Map)
+  weatherData?: Record<string, DailyWeather>;
 
   countryData?: ChartEntry[];
   channelData?: ChartEntry[];
@@ -144,17 +144,15 @@ export function normalizeFlatKpis(input?: ProjectDashboardData['kpis']) {
     bounceRate: input?.bounceRate ?? ZERO_KPI,
     newUsers: input?.newUsers ?? ZERO_KPI,
     avgEngagementTime: input?.avgEngagementTime ?? ZERO_KPI,
-    paidSearch: input?.paidSearch ?? ZERO_KPI, // ✅ NEU
+    paidSearch: input?.paidSearch ?? ZERO_KPI,
   };
 }
 
 export function hasDashboardData(data: ProjectDashboardData): boolean {
-  // Wenn GSC & GA4 Fehler haben, aber Bing Daten da sind, zeigen wir trotzdem was an
   if (data.apiErrors?.gsc && data.apiErrors?.ga4 && (!data.bingData || data.bingData.length === 0)) return false;
   
   const k = normalizeFlatKpis(data.kpis);
   
-  // Zeige Dashboard wenn Google Daten ODER Bing Daten da sind
   if (k.clicks.value > 0 || k.sessions.value > 0 || (data.bingData && data.bingData.length > 0)) return true;
   
   return false;
