@@ -58,16 +58,16 @@ function buildWeatherContext(weatherData?: Record<string, DailyWeather>): string
   if (entries.length === 0) return '';
 
   // Zusammenfassung statt alle Einzeltage (sonst wird der Kontext zu lang)
-  const temps = entries.map(([, w]) => w.tempMax ?? w.temp ?? 0);
-  const avgTemp = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
-  const minTemp = Math.min(...temps).toFixed(1);
-  const maxTemp = Math.max(...temps).toFixed(1);
+  const maxTemps = entries.map(([, w]) => w.tempMax);
+  const minTemps = entries.map(([, w]) => w.tempMin);
+  const avgTemp = (maxTemps.reduce((a, b) => a + b, 0) / maxTemps.length).toFixed(1);
+  const minTemp = Math.min(...minTemps).toFixed(1);
+  const maxTemp = Math.max(...maxTemps).toFixed(1);
 
-  // Wetterbedingungs-Häufigkeit
+  // Wetterbedingungs-Häufigkeit (nutzt label: "Sonnig", "Regen", etc.)
   const conditionCounts: Record<string, number> = {};
   entries.forEach(([, w]) => {
-    const cond = w.description || w.condition || 'unbekannt';
-    conditionCounts[cond] = (conditionCounts[cond] || 0) + 1;
+    conditionCounts[w.label] = (conditionCounts[w.label] || 0) + 1;
   });
   const topConditions = Object.entries(conditionCounts)
     .sort(([, a], [, b]) => b - a)
@@ -75,27 +75,25 @@ function buildWeatherContext(weatherData?: Record<string, DailyWeather>): string
     .map(([cond, count]) => `${cond} (${count} Tage)`)
     .join(', ');
 
-  // Regen-/Niederschlagstage zählen
-  const rainyDays = entries.filter(([, w]) => {
-    const cond = (w.description || w.condition || '').toLowerCase();
-    return cond.includes('regen') || cond.includes('rain') || cond.includes('schnee') || cond.includes('snow') || (w.precipitation && w.precipitation > 0);
-  }).length;
+  // Niederschlagstage zählen (icon: 'rain', 'snow', 'thunderstorm')
+  const rainyDays = entries.filter(([, w]) =>
+    w.icon === 'rain' || w.icon === 'snow' || w.icon === 'thunderstorm'
+  ).length;
 
   // Auffällige Wettertage (Extremwerte)
-  const extremeDays = entries.filter(([, w]) => {
-    const temp = w.tempMax ?? w.temp ?? 0;
-    return temp > 35 || temp < -5;
-  });
+  const extremeDays = entries.filter(([, w]) =>
+    w.tempMax > 35 || w.tempMin < -5
+  );
 
   let section = `
 === WETTERDATEN IM ZEITRAUM ===
-Durchschnittstemperatur: ${avgTemp}°C (Min: ${minTemp}°C, Max: ${maxTemp}°C)
+Durchschnittstemperatur (Max): ${avgTemp}°C (Min: ${minTemp}°C, Max: ${maxTemp}°C)
 Häufigste Bedingungen: ${topConditions}
 Niederschlagstage: ${rainyDays} von ${entries.length} Tagen
 `;
 
   if (extremeDays.length > 0) {
-    section += `Extreme Wetterereignisse: ${extremeDays.map(([date, w]) => `${date}: ${(w.tempMax ?? w.temp ?? 0).toFixed(0)}°C`).join(', ')}\n`;
+    section += `Extreme Wetterereignisse: ${extremeDays.map(([date, w]) => `${date}: ${w.tempMax}°C/${w.tempMin}°C ${w.label}`).join(', ')}\n`;
   }
 
   // Letzte 7 Tage Detail (für kurzfristige Korrelationen)
@@ -103,7 +101,7 @@ Niederschlagstage: ${rainyDays} von ${entries.length} Tagen
   if (last7.length > 0) {
     section += `\nLetzte 7 Tage (Detail):\n`;
     last7.forEach(([date, w]) => {
-      section += `- ${date}: ${(w.tempMax ?? w.temp ?? 0).toFixed(0)}°C, ${w.description || w.condition || 'k.A.'}\n`;
+      section += `- ${date}: ${w.tempMax}°C/${w.tempMin}°C, ${w.label}\n`;
     });
   }
 
