@@ -455,7 +455,10 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Kontext bauen (mit Extended AI Traffic + Wetter + Feiertage)
-    const userCountry = user.country || 'AT'; // Fallback auf Österreich
+    // Land aus Domain-TLD ableiten (z.B. "example.at" → "AT", "example.de" → "DE")
+    const domainParts = (user.domain || '').replace(/^https?:\/\//, '').replace(/\/.*$/, '').split('.');
+    const tld = domainParts[domainParts.length - 1]?.toUpperCase() || 'AT';
+    const userCountry = ['AT', 'DE', 'CH'].includes(tld) ? tld : 'AT';
     const context = buildChatContext(dashboardData, user, dateRange, aiTrafficDetail, userCountry);
     
     // Feiertage prüfen für Suggested Questions
@@ -597,7 +600,9 @@ export async function GET(req: NextRequest) {
 
     const questions = generateSuggestedQuestions(dashboardData, aiTrafficDetail, (() => {
       try {
-        const userCountry = user.country || 'AT';
+        const domainParts = (user.domain || '').replace(/^https?:\/\//, '').replace(/\/.*$/, '').split('.');
+        const tld = domainParts[domainParts.length - 1]?.toUpperCase() || 'AT';
+        const userCountry = ['AT', 'DE', 'CH'].includes(tld) ? tld : 'AT';
         const hd = new Holidays(userCountry);
         const dateRanges = getDateRanges(dateRange);
         const start = new Date(dateRanges.current.start);
