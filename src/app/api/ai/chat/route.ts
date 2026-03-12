@@ -7,6 +7,8 @@ import { streamTextSafe } from '@/lib/ai-config';
 import { UserSchema, type User } from '@/lib/schemas';
 import type { ProjectDashboardData } from '@/lib/dashboard-shared';
 import { getAiTrafficDetailWithComparison } from '@/lib/ai-traffic-extended';
+import Holidays from 'date-holidays';
+import type { DailyWeather } from '@/lib/weather';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,6 +46,141 @@ function getDateRanges(dateRange: string) {
 }
 
 // ============================================================================
+// HELPER: Wetter- & Feiertags-Kontext
+// ============================================================================
+
+function buildWeatherContext(weatherData?: Record<string, DailyWeather>): string {
+  if (!weatherData || Object.keys(weatherData).length === 0) return '';
+
+  const entries = Object.entries(weatherData)
+    .sort(([a], [b]) => a.localeCompare(b));
+
+  if (entries.length === 0) return '';
+
+  // Zusammenfassung statt alle Einzeltage (sonst wird der Kontext zu lang)
+  const temps = entries.map(([, w]) => w.tempMax ?? w.temp ?? 0);
+  const avgTemp = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
+  const minTemp = Math.min(...temps).toFixed(1);
+  const maxTemp = Math.max(...temps).toFixed(1);
+
+  // Wetterbedingungs-Häufigkeit
+  const conditionCounts: Record<string, number> = {};
+  entries.forEach(([, w]) => {
+    const cond = w.description || w.condition || 'unbekannt';
+    conditionCounts[cond] = (conditionCounts[cond] || 0) + 1;
+  });
+  const topConditions = Object.entries(conditionCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([cond, count]) => `${cond} (${count} Tage)`)
+    .join(', ');
+
+  // Regen-/Niederschlagstage zählen
+  const rainyDays = entries.filter(([, w]) => {
+    const cond = (w.description || w.condition || '').toLowerCase();
+    return cond.includes('regen') || cond.includes('rain') || cond.includes('schnee') || cond.includes('snow') || (w.precipitation && w.precipitation > 0);
+  }).length;
+
+  // Auffällige Wettertage (Extremwerte)
+  const extremeDays = entries.filter(([, w]) => {
+    const temp = w.tempMax ?? w.temp ?? 0;
+    return temp > 35 || temp < -5;
+  });
+
+  let section = `
+=== WETTERDATEN IM ZEITRAUM ===
+Durchschnittstemperatur: ${avgTemp}°C (Min: ${minTemp}°C, Max: ${maxTemp}°C)
+Häufigste Bedingungen: ${topConditions}
+Niederschlagstage: ${rainyDays} von ${entries.length} Tagen
+`;
+
+  if (extremeDays.length > 0) {
+    section += `Extreme Wetterereignisse: ${extremeDays.map(([date, w]) => `${date}: ${(w.tempMax ?? w.temp ?? 0).toFixed(0)}°C`).join(', ')}\n`;
+  }
+
+  // Letzte 7 Tage Detail (für kurzfristige Korrelationen)
+  const last7 = entries.slice(-7);
+  if (last7.length > 0) {
+    section += `\nLetzte 7 Tage (Detail):\n`;
+    last7.forEach(([date, w]) => {
+      section += `- ${date}: ${(w.tempMax ?? w.temp ?? 0).toFixed(0)}°C, ${w.description || w.condition || 'k.A.'}\n`;
+    });
+  }
+
+  section += `\nHINWEIS: Wetterdaten können Traffic-Schwankungen erklären (z.B. weniger Sessions bei extremem Wetter, mehr Indoor-Suchen bei Regen).\n`;
+
+  return section;
+}
+
+function buildHolidayContext(dateRange: string, country: string = 'AT'): string {
+  try {
+    const hd = new Holidays(country);
+    
+    const end = new Date();
+    end.setDate(end.getDate() - 1);
+    const start = new Date(end);
+    
+    let days = 30;
+    if (dateRange === '7d') days = 7;
+    if (dateRange === '3m') days = 90;
+    if (dateRange === '6m') days = 180;
+    if (dateRange === '12m') days = 365;
+    start.setDate(end.getDate() - days);
+
+    // Feiertage im Zeitraum sammeln
+    const holidays: { date: string; name: string; type: string }[] = [];
+    
+    // Alle Jahre im Bereich abdecken
+    const years = new Set<number>();
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      years.add(d.getFullYear());
+    }
+
+    years.forEach(year => {
+      const yearHolidays = hd.getHolidays(year);
+      yearHolidays.forEach((h: any) => {
+        const hDate = new Date(h.date);
+        if (hDate >= start && hDate <= end) {
+          holidays.push({
+            date: hDate.toISOString().split('T')[0],
+            name: h.name,
+            type: h.type, // 'public', 'bank', 'school', 'optional'
+          });
+        }
+      });
+    });
+
+    if (holidays.length === 0) return '';
+
+    const publicHolidays = holidays.filter(h => h.type === 'public');
+    const otherHolidays = holidays.filter(h => h.type !== 'public');
+
+    let section = `\n=== FEIERTAGE IM ZEITRAUM (${country}) ===\n`;
+    
+    if (publicHolidays.length > 0) {
+      section += `Gesetzliche Feiertage:\n`;
+      publicHolidays.forEach(h => {
+        section += `- ${h.date}: ${h.name}\n`;
+      });
+    }
+    
+    if (otherHolidays.length > 0) {
+      section += `Weitere Feiertage/Events:\n`;
+      otherHolidays.forEach(h => {
+        section += `- ${h.date}: ${h.name} (${h.type})\n`;
+      });
+    }
+
+    section += `\nHINWEIS: An Feiertagen sinkt typischerweise der B2B-Traffic, während B2C-Traffic je nach Branche steigen kann. Nutze diese Daten um Traffic-Einbrüche zu erklären.\n`;
+
+    return section;
+  } catch (e) {
+    console.warn('[DataMax Chat] Feiertage nicht verfügbar:', e);
+    return '';
+  }
+}
+
+// ============================================================================
 // KONTEXT-BUILDER (Erweitert mit AI Traffic Details)
 // ============================================================================
 
@@ -51,7 +188,8 @@ function buildChatContext(
   data: ProjectDashboardData, 
   user: User, 
   dateRange: string,
-  aiTrafficDetail?: any // Extended AI Traffic Data
+  aiTrafficDetail?: any, // Extended AI Traffic Data
+  country?: string // Land für Feiertage
 ): string {
   const kpis = data.kpis;
   const fmt = (val?: number) => val?.toLocaleString('de-DE') ?? '0';
@@ -154,6 +292,10 @@ Top-Quellen: ${data.aiTraffic.topAiSources?.slice(0, 3).map(s => `${s.source} ($
 `;
   }
 
+  // Wetter- und Feiertagskontext
+  const weatherSection = buildWeatherContext(data.weatherData);
+  const holidaySection = buildHolidayContext(dateRange, country || 'AT');
+
   return `
 PROJEKT: ${user.domain || 'Unbekannt'}
 ZEITRAUM: ${dateRange === '7d' ? 'Letzte 7 Tage' : dateRange === '30d' ? 'Letzte 30 Tage' : dateRange === '3m' ? 'Letzte 3 Monate' : dateRange === '6m' ? 'Letzte 6 Monate' : 'Letztes Jahr'}
@@ -178,14 +320,14 @@ ${topPages}
 
 === TRAFFIC-KANAELE ===
 ${channels}
-`.trim();
+${weatherSection}${holidaySection}`.trim();
 }
 
 // ============================================================================
 // SUGGESTED QUESTIONS GENERATOR (Erweitert)
 // ============================================================================
 
-function generateSuggestedQuestions(data: ProjectDashboardData, aiTrafficDetail?: any): string[] {
+function generateSuggestedQuestions(data: ProjectDashboardData, aiTrafficDetail?: any, hasHolidays?: boolean): string[] {
   const questions: string[] = [];
   const kpis = data.kpis;
 
@@ -216,6 +358,14 @@ function generateSuggestedQuestions(data: ProjectDashboardData, aiTrafficDetail?
   
   if (data.topQueries?.some(q => q.position >= 4 && q.position <= 10)) {
     questions.push('Welche Keywords sollte ich priorisieren?');
+  }
+
+  // ✅ NEU: Wetter- & Feiertags-Fragen
+  if (data.weatherData && Object.keys(data.weatherData).length > 0) {
+    questions.push('Hat das Wetter meinen Traffic beeinflusst?');
+  }
+  if (hasHolidays) {
+    questions.push('Wie haben Feiertage meinen Traffic beeinflusst?');
   }
 
   // Fallback-Fragen
@@ -306,9 +456,31 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 5. Kontext bauen (mit Extended AI Traffic)
-    const context = buildChatContext(dashboardData, user, dateRange, aiTrafficDetail);
-    const suggestedQuestions = generateSuggestedQuestions(dashboardData, aiTrafficDetail);
+    // 5. Kontext bauen (mit Extended AI Traffic + Wetter + Feiertage)
+    const userCountry = user.country || 'AT'; // Fallback auf Österreich
+    const context = buildChatContext(dashboardData, user, dateRange, aiTrafficDetail, userCountry);
+    
+    // Feiertage prüfen für Suggested Questions
+    const hasHolidays = (() => {
+      try {
+        const hd = new Holidays(userCountry);
+        const dateRanges = getDateRanges(dateRange);
+        const start = new Date(dateRanges.current.start);
+        const end = new Date(dateRanges.current.end);
+        const years = new Set<number>();
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          years.add(d.getFullYear());
+        }
+        return Array.from(years).some(year => 
+          hd.getHolidays(year).some((h: any) => {
+            const hDate = new Date(h.date);
+            return hDate >= start && hDate <= end && h.type === 'public';
+          })
+        );
+      } catch { return false; }
+    })();
+    
+    const suggestedQuestions = generateSuggestedQuestions(dashboardData, aiTrafficDetail, hasHolidays);
 
     // 6. System-Prompt
     const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
@@ -332,6 +504,9 @@ REGELN:
 5. Formatiere mit **fett** fuer wichtige Zahlen und Begriffe
 6. Nutze Aufzaehlungen fuer Empfehlungen
 7. Bei KI-Traffic Fragen: Erklaere welche Seiten von welchen KI-Systemen empfohlen werden
+8. Bei Wetter-Fragen: Korreliere Wetterdaten mit Traffic-Schwankungen (z.B. Hitzetage vs. Sessions)
+9. Bei Feiertags-Fragen: Erklaere wie Feiertage den Traffic beeinflussen (B2B sinkt, B2C variiert)
+10. Wenn Traffic-Einbrueche sichtbar sind, pruefe ob Wetter oder Feiertage eine Erklaerung bieten
 
 ${isAdmin ? `
 ADMIN-MODUS AKTIV:
@@ -422,7 +597,25 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const questions = generateSuggestedQuestions(dashboardData, aiTrafficDetail);
+    const questions = generateSuggestedQuestions(dashboardData, aiTrafficDetail, (() => {
+      try {
+        const userCountry = user.country || 'AT';
+        const hd = new Holidays(userCountry);
+        const dateRanges = getDateRanges(dateRange);
+        const start = new Date(dateRanges.current.start);
+        const end = new Date(dateRanges.current.end);
+        const years = new Set<number>();
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          years.add(d.getFullYear());
+        }
+        return Array.from(years).some(year =>
+          hd.getHolidays(year).some((h: any) => {
+            const hDate = new Date(h.date);
+            return hDate >= start && hDate <= end && h.type === 'public';
+          })
+        );
+      } catch { return false; }
+    })());
     return NextResponse.json({ questions });
 
   } catch (error) {
