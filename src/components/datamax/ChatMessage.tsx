@@ -8,9 +8,10 @@ import type { ChatMessage as ChatMessageType } from '@/hooks/useDataMaxChat';
 
 interface ChatMessageProps {
   message: ChatMessageType;
+  fontSizeClass?: string;
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageProps) {
   const isUser = message.role === 'user';
 
   return (
@@ -41,7 +42,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       `}>
         {/* Content mit Markdown */}
         <div className={`
-          text-sm leading-relaxed
+          ${fontSizeClass} leading-relaxed
           ${message.isStreaming ? 'animate-pulse' : ''}
         `}>
           {message.content ? (
@@ -54,16 +55,16 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 components={{
                   // Überschriften
                   h1: ({ children }) => (
-                    <h1 className="text-base font-bold text-gray-900 mt-3 mb-2 first:mt-0">{children}</h1>
+                    <h1 className="font-bold text-gray-900 mt-3 mb-2 first:mt-0" style={{ fontSize: '1.1em' }}>{children}</h1>
                   ),
                   h2: ({ children }) => (
-                    <h2 className="text-base font-bold text-gray-900 mt-3 mb-2 first:mt-0">{children}</h2>
+                    <h2 className="font-bold text-gray-900 mt-3 mb-2 first:mt-0" style={{ fontSize: '1.05em' }}>{children}</h2>
                   ),
                   h3: ({ children }) => (
-                    <h3 className="text-sm font-bold text-gray-900 mt-3 mb-2 first:mt-0">{children}</h3>
+                    <h3 className="font-bold text-gray-900 mt-3 mb-2 first:mt-0" style={{ fontSize: '1em' }}>{children}</h3>
                   ),
                   h4: ({ children }) => (
-                    <h4 className="text-sm font-semibold text-gray-900 mt-2 mb-1 first:mt-0">{children}</h4>
+                    <h4 className="font-semibold text-gray-900 mt-2 mb-1 first:mt-0" style={{ fontSize: '1em' }}>{children}</h4>
                   ),
                   
                   // Absätze
@@ -87,7 +88,6 @@ export function ChatMessage({ message }: ChatMessageProps) {
                     <ol className="list-none space-y-2 my-2 pl-0 counter-reset-item">{children}</ol>
                   ),
                   li: ({ children, ...props }) => {
-                    // Prüfen ob es eine ordered list ist
                     const isOrdered = (props as any).ordered;
                     return (
                       <li className="flex gap-2 text-gray-700">
@@ -103,11 +103,11 @@ export function ChatMessage({ message }: ChatMessageProps) {
                   code: ({ children, className }) => {
                     const isInline = !className;
                     return isInline ? (
-                      <code className="bg-gray-100 text-indigo-700 px-1.5 py-0.5 rounded text-xs font-mono">
+                      <code className="bg-gray-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono" style={{ fontSize: '0.85em' }}>
                         {children}
                       </code>
                     ) : (
-                      <code className="block bg-gray-900 text-gray-100 p-3 rounded-lg text-xs font-mono overflow-x-auto my-2">
+                      <code className="block bg-gray-900 text-gray-100 p-3 rounded-lg font-mono overflow-x-auto my-2" style={{ fontSize: '0.85em' }}>
                         {children}
                       </code>
                     );
