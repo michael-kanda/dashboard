@@ -1148,7 +1148,7 @@ export async function getLandingPageFollowUpPaths(
 }
 
 // ═══════════════════════════════════════════════════════
-// DATEI 1: src/lib/google-api.ts  (ANHÄNGEN am Ende der Datei)
+// Google Ads Report – ERSETZE alles ab Zeile 1150 in google-api.ts
 // ═══════════════════════════════════════════════════════
 
 // ── Types ──
@@ -1178,10 +1178,9 @@ export interface GoogleAdsData {
   };
 }
 
-// ── Fetcher ──
-
 /**
  * Holt Google Ads Performance-Daten über die GA4 Data API.
+ * Nutzt dasselbe googleapis + JWT Auth-Pattern wie alle anderen Funktionen.
  * Voraussetzung: Google Ads ist mit der GA4-Property verlinkt.
  */
 export async function getGoogleAdsReport(
@@ -1189,47 +1188,51 @@ export async function getGoogleAdsReport(
   startDate: string,
   endDate: string
 ): Promise<GoogleAdsData> {
-  const { BetaAnalyticsDataClient } = await import(
-    '@google-analytics/data'
-  );
+  const formattedPropertyId = propertyId.startsWith('properties/')
+    ? propertyId
+    : `properties/${propertyId}`;
 
-  const client = new BetaAnalyticsDataClient();
+  const auth = createAuth();
+  const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
-  const [response] = await client.runReport({
-    property: `properties/${propertyId}`,
-    dateRanges: [{ startDate, endDate }],
-    dimensions: [
-      { name: 'sessionGoogleAdsCampaignName' },
-      { name: 'sessionGoogleAdsAdGroupName' },
-      { name: 'sessionGoogleAdsKeyword' },
-      { name: 'sessionGoogleAdsQuery' },
-      { name: 'landingPagePlusQueryString' },
-    ],
-    metrics: [
-      { name: 'advertiserAdCost' },
-      { name: 'advertiserAdClicks' },
-      { name: 'advertiserAdCostPerClick' },
-      { name: 'returnOnAdSpend' },
-      { name: 'conversions' },
-      { name: 'sessions' },
-    ],
-    orderBys: [
-      { metric: { metricName: 'advertiserAdCost' }, desc: true },
-    ],
-    limit: 500,
-    // Filter: Nur Zeilen mit tatsächlichen Ads-Daten (nicht "(not set)")
-    dimensionFilter: {
-      filter: {
-        fieldName: 'sessionGoogleAdsCampaignName',
-        stringFilter: {
-          matchType: 'FULL_REGEXP' as any,
-          value: '^(?!\\(not set\\)$).+',
+  const response = await analytics.properties.runReport({
+    property: formattedPropertyId,
+    requestBody: {
+      dateRanges: [{ startDate, endDate }],
+      dimensions: [
+        { name: 'sessionGoogleAdsCampaignName' },
+        { name: 'sessionGoogleAdsAdGroupName' },
+        { name: 'sessionGoogleAdsKeyword' },
+        { name: 'sessionGoogleAdsQuery' },
+        { name: 'landingPagePlusQueryString' },
+      ],
+      metrics: [
+        { name: 'advertiserAdCost' },
+        { name: 'advertiserAdClicks' },
+        { name: 'advertiserAdCostPerClick' },
+        { name: 'returnOnAdSpend' },
+        { name: 'conversions' },
+        { name: 'sessions' },
+      ],
+      orderBys: [
+        { metric: { metricName: 'advertiserAdCost' }, desc: true },
+      ],
+      limit: 500,
+      dimensionFilter: {
+        filter: {
+          fieldName: 'sessionGoogleAdsCampaignName',
+          stringFilter: {
+            matchType: 'FULL_REGEXP',
+            value: '^(?!\\(not set\\)$).+',
+          },
         },
       },
     },
   });
 
-  const rows: GoogleAdsRow[] = (response.rows || []).map((row) => {
+  const apiRows = response.data.rows || [];
+
+  const rows: GoogleAdsRow[] = apiRows.map((row) => {
     const dims = row.dimensionValues || [];
     const mets = row.metricValues || [];
 
@@ -1253,8 +1256,8 @@ export async function getGoogleAdsReport(
     (acc, r) => ({
       cost: acc.cost + r.cost,
       clicks: acc.clicks + r.clicks,
-      avgCpc: 0, // wird unten berechnet
-      roas: 0,   // wird unten berechnet
+      avgCpc: 0,
+      roas: 0,
       conversions: acc.conversions + r.conversions,
       sessions: acc.sessions + r.sessions,
     }),
@@ -1262,7 +1265,6 @@ export async function getGoogleAdsReport(
   );
 
   totals.avgCpc = totals.clicks > 0 ? totals.cost / totals.clicks : 0;
-  // ROAS = Revenue / Cost  → wir nehmen den gewichteten Durchschnitt
   const totalRevenue = rows.reduce((sum, r) => sum + r.roas * r.cost, 0);
   totals.roas = totals.cost > 0 ? totalRevenue / totals.cost : 0;
 
