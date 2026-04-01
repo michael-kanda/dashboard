@@ -1179,9 +1179,9 @@ export interface GoogleAdsData {
 /**
  * Google Ads Performance über GA4 Data API.
  *
- * Call 1: Ads-Dimensionen + Ads-Metriken (Kampagne, Anzeigengruppe, Query)
- * Call 2: landingPagePlusQueryString + Standard-Metriken, gefiltert auf Paid Search
- *         (Ads-Metriken sind mit landingPage inkompatibel)
+ * Call 1: sessionGoogleAds*-Dimensionen + advertiserAd*-Metriken
+ * Call 2: pagePath + sessions/conversions, gefiltert auf Paid Search
+ *         (komplett getrennt, eigener try/catch – fliegt nie auf)
  */
 export async function getGoogleAdsReport(
   propertyId: string,
@@ -1195,67 +1195,41 @@ export async function getGoogleAdsReport(
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
-  const [adsResponse, lpResponse] = await Promise.all([
-    // ── CALL 1: Ads-Performance ──
-    analytics.properties.runReport({
-      property: formattedPropertyId,
-      requestBody: {
-        dateRanges: [{ startDate, endDate }],
-        dimensions: [
-          { name: 'sessionGoogleAdsCampaignName' },
-          { name: 'sessionGoogleAdsAdGroupName' },
-          { name: 'sessionGoogleAdsQuery' },
-        ],
-        metrics: [
-          { name: 'advertiserAdCost' },
-          { name: 'advertiserAdClicks' },
-          { name: 'advertiserAdCostPerClick' },
-          { name: 'returnOnAdSpend' },
-          { name: 'conversions' },
-          { name: 'sessions' },
-        ],
-        orderBys: [
-          { metric: { metricName: 'advertiserAdCost' }, desc: true },
-        ],
-        limit: '500',
-        dimensionFilter: {
-          notExpression: {
-            filter: {
-              fieldName: 'sessionGoogleAdsCampaignName',
-              stringFilter: { matchType: 'EXACT', value: '(not set)' },
-            },
-          },
-        },
-      },
-    }),
-
-    // ── CALL 2: Landingpages (nur Standard-Metriken, Paid Search Filter) ──
-    analytics.properties.runReport({
-      property: formattedPropertyId,
-      requestBody: {
-        dateRanges: [{ startDate, endDate }],
-        dimensions: [
-          { name: 'landingPagePlusQueryString' },
-        ],
-        metrics: [
-          { name: 'sessions' },
-          { name: 'conversions' },
-        ],
-        orderBys: [
-          { metric: { metricName: 'sessions' }, desc: true },
-        ],
-        limit: '100',
-        dimensionFilter: {
+  // ═════════════════════════════════════════
+  // CALL 1: Ads-Performance (funktioniert sicher)
+  // ═════════════════════════════════════════
+  const adsResponse = await analytics.properties.runReport({
+    property: formattedPropertyId,
+    requestBody: {
+      dateRanges: [{ startDate, endDate }],
+      dimensions: [
+        { name: 'sessionGoogleAdsCampaignName' },
+        { name: 'sessionGoogleAdsAdGroupName' },
+        { name: 'sessionGoogleAdsQuery' },
+      ],
+      metrics: [
+        { name: 'advertiserAdCost' },
+        { name: 'advertiserAdClicks' },
+        { name: 'advertiserAdCostPerClick' },
+        { name: 'returnOnAdSpend' },
+        { name: 'conversions' },
+        { name: 'sessions' },
+      ],
+      orderBys: [
+        { metric: { metricName: 'advertiserAdCost' }, desc: true },
+      ],
+      limit: '500',
+      dimensionFilter: {
+        notExpression: {
           filter: {
-            fieldName: 'sessionDefaultChannelGroup',
-            stringFilter: { matchType: 'EXACT', value: 'Paid Search' },
+            fieldName: 'sessionGoogleAdsCampaignName',
+            stringFilter: { matchType: 'EXACT', value: '(not set)' },
           },
         },
       },
-    }),
-  ]);
+    },
+  });
 
-  // ── Call 1 parsen ──
   const rows: GoogleAdsRow[] = (adsResponse.data.rows || []).map((row) => {
     const dims = row.dimensionValues || [];
     const mets = row.metricValues || [];
@@ -1274,24 +1248,61 @@ export async function getGoogleAdsReport(
     };
   });
 
-  // ── Call 2 parsen ──
-  const landingPageRows: GoogleAdsRow[] = (lpResponse.data.rows || []).map((row) => {
-    const dims = row.dimensionValues || [];
-    const mets = row.metricValues || [];
-    return {
-      campaign: '–',
-      adGroup: '–',
-      keyword: '–',
-      searchQuery: '–',
-      landingPage: dims[0]?.value || '(not set)',
-      cost: 0,
-      clicks: 0,
-      cpc: 0,
-      roas: 0,
-      conversions: parseFloat(mets[1]?.value || '0'),
-      sessions: parseInt(mets[0]?.value || '0', 10),
-    };
-  });
+  // ═════════════════════════════════════════
+  // CALL 2: Paid Search Landingpages (optional, fängt sich selbst)
+  // Keine Google-Ads-Dimensionen, keine Ads-Metriken
+  // Nur Standard-GA4: pagePath + sessions/conversions
+  // ═════════════════════════════════════════
+  let landingPageRows: GoogleAdsRow[] = [];
+
+  try {
+    const lpResponse = await analytics.properties.runReport({
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [
+          { name: 'pagePath' },
+        ],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'conversions' },
+        ],
+        orderBys: [
+          { metric: { metricName: 'sessions' }, desc: true },
+        ],
+        limit: '100',
+        dimensionFilter: {
+          filter: {
+            fieldName: 'sessionDefaultChannelGroup',
+            stringFilter: { matchType: 'EXACT', value: 'Paid Search' },
+          },
+        },
+      },
+    });
+
+    landingPageRows = (lpResponse.data.rows || []).map((row) => {
+      const dims = row.dimensionValues || [];
+      const mets = row.metricValues || [];
+      return {
+        campaign: '–',
+        adGroup: '–',
+        keyword: '–',
+        searchQuery: '–',
+        landingPage: dims[0]?.value || '(not set)',
+        cost: 0,
+        clicks: 0,
+        cpc: 0,
+        roas: 0,
+        sessions: parseInt(mets[0]?.value || '0', 10),
+        conversions: parseFloat(mets[1]?.value || '0'),
+      };
+    });
+
+    console.log(`[Google Ads] LP-Call: ${landingPageRows.length} Paid Search Landingpages`);
+  } catch (e) {
+    console.warn('[Google Ads] Landingpage-Call fehlgeschlagen (ignoriert):', e);
+    // landingPageRows bleibt [] – Widget zeigt den Tab trotzdem nicht
+  }
 
   // Totals aus Call 1
   const totals = rows.reduce(
