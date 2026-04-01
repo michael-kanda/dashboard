@@ -1164,9 +1164,7 @@ export interface GoogleAdsRow {
 }
 
 export interface GoogleAdsData {
-  /** Kampagne + Anzeigengruppe + Suchanfrage (Call 1) */
   rows: GoogleAdsRow[];
-  /** Landingpages pro Kampagne (Call 2) */
   landingPageRows: GoogleAdsRow[];
   totals: {
     cost: number;
@@ -1179,11 +1177,11 @@ export interface GoogleAdsData {
 }
 
 /**
- * Holt Google Ads Performance-Daten über die GA4 Data API.
- * 
- * GA4 erlaubt nicht alle Dimensionen in einem Request.
- * `landingPagePlusQueryString` ist inkompatibel mit `sessionGoogleAdsKeyword/Query`.
- * Daher: Zwei parallele API-Calls.
+ * Google Ads Performance über GA4 Data API.
+ *
+ * Call 1: Ads-Dimensionen + Ads-Metriken (Kampagne, Anzeigengruppe, Query)
+ * Call 2: landingPagePlusQueryString + Standard-Metriken, gefiltert auf Paid Search
+ *         (Ads-Metriken sind mit landingPage inkompatibel)
  */
 export async function getGoogleAdsReport(
   propertyId: string,
@@ -1197,20 +1195,8 @@ export async function getGoogleAdsReport(
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
-  const notSetFilter = {
-    notExpression: {
-      filter: {
-        fieldName: 'sessionGoogleAdsCampaignName',
-        stringFilter: {
-          matchType: 'EXACT' as const,
-          value: '(not set)',
-        },
-      },
-    },
-  };
-
   const [adsResponse, lpResponse] = await Promise.all([
-    // CALL 1: Ads-Performance
+    // ── CALL 1: Ads-Performance ──
     analytics.properties.runReport({
       property: formattedPropertyId,
       requestBody: {
@@ -1232,34 +1218,44 @@ export async function getGoogleAdsReport(
           { metric: { metricName: 'advertiserAdCost' }, desc: true },
         ],
         limit: '500',
-        dimensionFilter: notSetFilter,
+        dimensionFilter: {
+          notExpression: {
+            filter: {
+              fieldName: 'sessionGoogleAdsCampaignName',
+              stringFilter: { matchType: 'EXACT', value: '(not set)' },
+            },
+          },
+        },
       },
     }),
-    // CALL 2: Landingpages
+
+    // ── CALL 2: Landingpages (nur Standard-Metriken, Paid Search Filter) ──
     analytics.properties.runReport({
       property: formattedPropertyId,
       requestBody: {
         dateRanges: [{ startDate, endDate }],
         dimensions: [
-          { name: 'sessionGoogleAdsCampaignName' },
           { name: 'landingPagePlusQueryString' },
         ],
         metrics: [
-          { name: 'advertiserAdCost' },
-          { name: 'advertiserAdClicks' },
-          { name: 'conversions' },
           { name: 'sessions' },
+          { name: 'conversions' },
         ],
         orderBys: [
           { metric: { metricName: 'sessions' }, desc: true },
         ],
-        limit: '500',
-        dimensionFilter: notSetFilter,
+        limit: '100',
+        dimensionFilter: {
+          filter: {
+            fieldName: 'sessionDefaultChannelGroup',
+            stringFilter: { matchType: 'EXACT', value: 'Paid Search' },
+          },
+        },
       },
     }),
   ]);
 
-  // Call 1 parsen
+  // ── Call 1 parsen ──
   const rows: GoogleAdsRow[] = (adsResponse.data.rows || []).map((row) => {
     const dims = row.dimensionValues || [];
     const mets = row.metricValues || [];
@@ -1278,22 +1274,22 @@ export async function getGoogleAdsReport(
     };
   });
 
-  // Call 2 parsen
+  // ── Call 2 parsen ──
   const landingPageRows: GoogleAdsRow[] = (lpResponse.data.rows || []).map((row) => {
     const dims = row.dimensionValues || [];
     const mets = row.metricValues || [];
     return {
-      campaign: dims[0]?.value || '(not set)',
+      campaign: '–',
       adGroup: '–',
       keyword: '–',
       searchQuery: '–',
-      landingPage: dims[1]?.value || '(not set)',
-      cost: parseFloat(mets[0]?.value || '0'),
-      clicks: parseInt(mets[1]?.value || '0', 10),
+      landingPage: dims[0]?.value || '(not set)',
+      cost: 0,
+      clicks: 0,
       cpc: 0,
       roas: 0,
-      conversions: parseFloat(mets[2]?.value || '0'),
-      sessions: parseInt(mets[3]?.value || '0', 10),
+      conversions: parseFloat(mets[1]?.value || '0'),
+      sessions: parseInt(mets[0]?.value || '0', 10),
     };
   });
 
