@@ -14,7 +14,6 @@ import type { DailyWeather } from '@/lib/weather';
 // Re-exportiere die Basis-Typen
 export type { KpiDatum, ChartPoint, TopQueryData, AiTrafficData };
 
-// ✅ UPDATE: 'paidSearch' zur ActiveKpi Union hinzufügen
 export type ActiveKpi = BaseActiveKpi | 'conversions' | 'engagementRate' | 'bounceRate' | 'newUsers' | 'avgEngagementTime' | 'aiTraffic' | 'paidSearch';
 
 // Metadaten für KPI Tabs (Farben & Labels)
@@ -89,7 +88,8 @@ export interface ConvertingPageData {
   ctr?: number;
 }
 
-// ✅ NEU: Google Ads Types
+// ── Google Ads Types ──
+
 export interface GoogleAdsRow {
   campaign: string;
   adGroup: string;
@@ -105,7 +105,10 @@ export interface GoogleAdsRow {
 }
 
 export interface GoogleAdsData {
+  /** Kampagne + Anzeigengruppe + Suchanfrage (GA4 Call 1) */
   rows: GoogleAdsRow[];
+  /** Landingpages pro Kampagne (GA4 Call 2 – separate Abfrage wegen Inkompatibilität) */
+  landingPageRows: GoogleAdsRow[];
   totals: {
     cost: number;
     clicks: number;
@@ -147,13 +150,8 @@ export interface ProjectDashboardData {
   aiTraffic?: AiTrafficData;
   bingData?: BingDataPoint[];
   landingPageQueries?: LandingPageQueries;
-
-  // Wetterdaten pro Tag (serialisiert als Object statt Map)
   weatherData?: Record<string, DailyWeather>;
-
-  // ✅ NEU: Google Ads Performance-Daten
   googleAdsData?: GoogleAdsData;
-
   countryData?: ChartEntry[];
   channelData?: ChartEntry[];
   deviceData?: ChartEntry[];
