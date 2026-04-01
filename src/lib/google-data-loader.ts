@@ -10,8 +10,10 @@ import {
   getTopConvertingPages,
   getGscPageCtr, 
   getQueriesByLandingPageObject,
+  getGoogleAdsReport,
   type AiTrafficData,
-  type Ga4ExtendedData
+  type Ga4ExtendedData,
+  type GoogleAdsData
 } from '@/lib/google-api';
 import { getBingData } from '@/lib/bing-api';
 import { 
@@ -26,7 +28,7 @@ import type { TopQueryData, ChartPoint } from '@/types/dashboard';
 // ✅ DEMO-DATEN IMPORT
 import { getDemoAnalyticsData } from '@/lib/demo-data';
 
-// ✅ NEU: Weather Import
+// ✅ Weather Import
 import { fetchWeatherData, weatherMapToObject } from '@/lib/weather';
 
 function getCacheDuration(dateRange: string): number {
@@ -114,22 +116,22 @@ export async function getOrFetchGoogleData(
     }
   }
 
-// 2. Daten frisch holen
-console.log(`[Google Cache] 🔄 Lade frische Daten für ${user.email}...`);
+  // 2. Daten frisch holen
+  console.log(`[Google Cache] 🔄 Lade frische Daten für ${user.email}...`);
 
-//  End-Datum = gestern (damit nur vollständige Tage angezeigt werden)
-const end = new Date();
-end.setDate(end.getDate() - 1); // Immer einen Tag zurück
+  //  End-Datum = gestern (damit nur vollständige Tage angezeigt werden)
+  const end = new Date();
+  end.setDate(end.getDate() - 1); // Immer einen Tag zurück
 
-const start = new Date(end);
-let days = 30;
-if (dateRange === '7d') days = 7;
-if (dateRange === '3m') days = 90;
-if (dateRange === '6m') days = 180;
-if (dateRange === '12m') days = 365;
-if (dateRange === '18m') days = 548;  // ~18 Monate
-if (dateRange === '24m') days = 730;  // ~24 Monate
-start.setDate(end.getDate() - days);
+  const start = new Date(end);
+  let days = 30;
+  if (dateRange === '7d') days = 7;
+  if (dateRange === '3m') days = 90;
+  if (dateRange === '6m') days = 180;
+  if (dateRange === '12m') days = 365;
+  if (dateRange === '18m') days = 548;  // ~18 Monate
+  if (dateRange === '24m') days = 730;  // ~24 Monate
+  start.setDate(end.getDate() - days);
   
   const startDateStr = start.toISOString().split('T')[0];
   const endDateStr = end.toISOString().split('T')[0];
@@ -154,6 +156,7 @@ start.setDate(end.getDate() - days);
   let bingData: any[] = [];
   let apiErrors: ApiErrorStatus = {};
   let landingPageQueries: LandingPageQueries = {};
+  let googleAdsData: GoogleAdsData | undefined;  // ✅ NEU
 
   // --- GSC FETCH ---
   if (user.gsc_site_url) {
@@ -265,6 +268,15 @@ start.setDate(end.getDate() - days);
         console.error('[GA4 Dimensions Error]', e); 
       }
 
+      // ✅ NEU: Google Ads Report
+      try {
+        googleAdsData = await getGoogleAdsReport(propertyId, startDateStr, endDateStr);
+        console.log(`[Google Ads] ✅ ${googleAdsData.rows.length} Zeilen geladen, Spend: €${googleAdsData.totals.cost.toFixed(2)}`);
+      } catch (e) {
+        console.warn('[Google Ads] Keine Ads-Daten verfügbar (ignoriert):', e);
+        // Kein apiErrors-Eintrag – wenn keine Ads verknüpft sind, ist das kein Fehler
+      }
+
     } catch (e: any) {
       console.error('[GA4 Error]', e);
       apiErrors.ga4 = e.message || 'GA4 Fehler';
@@ -282,7 +294,7 @@ start.setDate(end.getDate() - days);
     }
   }
 
-  // --- ✅ NEU: WETTER FETCH (parallel-safe, Fehler werden ignoriert) ---
+  // --- WETTER FETCH (parallel-safe, Fehler werden ignoriert) ---
   let weatherData: Record<string, import('@/lib/weather').DailyWeather> = {};
   try {
     const weatherMap = await fetchWeatherData(user.domain, startDateStr, endDateStr);
@@ -342,7 +354,8 @@ start.setDate(end.getDate() - days);
     channelData,
     deviceData,
     bingData,
-    weatherData, // ✅ NEU
+    weatherData,
+    googleAdsData,    // ✅ NEU
     apiErrors: Object.keys(apiErrors).length > 0 ? apiErrors : undefined
   };
 
