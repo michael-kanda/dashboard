@@ -1,19 +1,13 @@
-// ═══════════════════════════════════════════════════════
-// DATEI 4: src/components/GoogleAdsWidget.tsx  (NEUE DATEI)
-// ═══════════════════════════════════════════════════════
-
+// src/components/GoogleAdsWidget.tsx
 'use client';
 
 import { useState, useMemo } from 'react';
 import {
   CurrencyDollar,
-  Bullseye,
-  ArrowRepeat,
-  Funnel,
   ChevronDown,
   ChevronUp,
-  SortDown,
-  SortUp,
+  CaretDownFill,
+  CaretUpFill,
   Search,
 } from 'react-bootstrap-icons';
 import type { GoogleAdsData, GoogleAdsRow } from '@/lib/dashboard-shared';
@@ -43,13 +37,6 @@ function formatNumber(value: number): string {
   return new Intl.NumberFormat('de-DE').format(value);
 }
 
-function formatPercent(value: number): string {
-  return new Intl.NumberFormat('de-DE', {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  }).format(value) + '%';
-}
-
 // ── Aggregations-Logik ──
 
 interface AggregatedRow {
@@ -73,7 +60,7 @@ function aggregateBy(rows: GoogleAdsRow[], field: keyof GoogleAdsRow): Aggregate
     existing.clicks += row.clicks;
     existing.conversions += row.conversions;
     existing.sessions += row.sessions;
-    existing.revenue += row.roas * row.cost; // Rück-Rechnung
+    existing.revenue += row.roas * row.cost;
     existing.subRows.push(row);
     map.set(key, existing);
   }
@@ -101,7 +88,6 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
 
   const { totals } = data;
 
-  // View-Mode → Dimension Mapping
   const fieldMap: Record<ViewMode, keyof GoogleAdsRow> = {
     campaign: 'campaign',
     keyword: 'keyword',
@@ -109,11 +95,9 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
     searchquery: 'searchQuery',
   };
 
-  // Aggregierte + sortierte + gefilterte Daten
   const tableData = useMemo(() => {
     let aggregated = aggregateBy(data.rows, fieldMap[viewMode]);
 
-    // Suchfilter
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       aggregated = aggregated.filter((row) =>
@@ -121,7 +105,6 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
       );
     }
 
-    // Sortierung
     aggregated.sort((a, b) => {
       const valA = a[sortField] as number;
       const valB = b[sortField] as number;
@@ -142,7 +125,9 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return null;
-    return sortAsc ? <SortUp size={11} className="ml-0.5 inline" /> : <SortDown size={11} className="ml-0.5 inline" />;
+    return sortAsc
+      ? <CaretUpFill size={10} className="ml-0.5 inline" />
+      : <CaretDownFill size={10} className="ml-0.5 inline" />;
   };
 
   const viewModeLabels: Record<ViewMode, string> = {
@@ -198,7 +183,6 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
 
       {/* ── Toolbar ── */}
       <div className="px-4 sm:px-6 py-3 flex flex-wrap items-center gap-3 border-b border-theme-border-subtle bg-surface/50">
-        {/* View-Mode Tabs */}
         <div className="flex rounded-lg border border-theme-border-subtle overflow-hidden">
           {(Object.keys(viewModeLabels) as ViewMode[]).map((mode) => (
             <button
@@ -215,7 +199,6 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
           ))}
         </div>
 
-        {/* Suche */}
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" />
           <input
@@ -338,9 +321,7 @@ function TableRow({
         <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.sessions)}</td>
       </tr>
 
-      {/* Aufgeklappte Detail-Zeilen */}
       {isExpanded && hasSubRows && row.subRows?.map((sub, i) => {
-        // Zeige die Sub-Dimension, die NICHT die aktuelle viewMode-Dimension ist
         const subLabel = viewMode === 'campaign'
           ? sub.adGroup
           : viewMode === 'keyword'
