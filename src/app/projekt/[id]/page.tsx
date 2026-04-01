@@ -15,11 +15,11 @@ interface ExtendedUser extends User {
   assigned_admins?: string;
   creator_email?: string;
   data_max_enabled?: boolean; 
+  settings_show_google_ads?: boolean;  // ← NEU
 }
 
 async function loadData(projectId: string, dateRange: string) {
   try {
-    // Komplexe Query mit JOINs für Admin-Daten und NEU: data_max_enabled
     const { rows } = await sql`
       SELECT
         u.id::text as id, 
@@ -36,6 +36,7 @@ async function loadData(projectId: string, dateRange: string) {
         u.project_start_date, 
         u.project_duration_months,
         u.settings_show_landingpages,
+        u.settings_show_google_ads,
         u.data_max_enabled, 
         
         -- E-Mail des Erstellers holen
@@ -58,7 +59,6 @@ async function loadData(projectId: string, dateRange: string) {
 
     const projectUser = rows[0] as ExtendedUser;
     
-    // User-Objekt korrekt übergeben
     const dashboardData = await getOrFetchGoogleData(projectUser, dateRange);
 
     return { projectUser, dashboardData };
@@ -112,7 +112,6 @@ export default async function ProjectPage({
         dateRange={dateRange}
         projectId={projectUser.id}
         domain={projectUser.domain || ''}
-        // KORREKTUR: || undefined wandelt null (aus DB) in undefined (für Props) um
         faviconUrl={projectUser.favicon_url || undefined}
         semrushTrackingId={projectUser.semrush_tracking_id || undefined}
         semrushTrackingId02={projectUser.semrush_tracking_id_02 || undefined}
@@ -123,6 +122,7 @@ export default async function ProjectPage({
         userRole={session.user.role}
         userEmail={supportEmail}
         showLandingPages={projectUser.settings_show_landingpages !== false}
+        showGoogleAds={projectUser.settings_show_google_ads === true}
         dataMaxEnabled={isDataMaxEnabled}
       />
     </Suspense>
