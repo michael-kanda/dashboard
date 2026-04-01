@@ -1164,7 +1164,10 @@ export interface GoogleAdsRow {
 }
 
 export interface GoogleAdsData {
+  /** Kampagne + Anzeigengruppe + Suchanfrage (Call 1) */
   rows: GoogleAdsRow[];
+  /** Landingpages pro Kampagne (Call 2) */
+  landingPageRows: GoogleAdsRow[];
   totals: {
     cost: number;
     clicks: number;
@@ -1177,8 +1180,10 @@ export interface GoogleAdsData {
 
 /**
  * Holt Google Ads Performance-Daten über die GA4 Data API.
- * Nutzt googleapis + JWT Auth (wie alle anderen Funktionen).
- * Voraussetzung: Google Ads ist mit der GA4-Property verlinkt.
+ * 
+ * GA4 erlaubt nicht alle Dimensionen in einem Request.
+ * `landingPagePlusQueryString` ist inkompatibel mit `sessionGoogleAdsKeyword/Query`.
+ * Daher: Zwei parallele API-Calls.
  */
 export async function getGoogleAdsReport(
   propertyId: string,
@@ -1192,55 +1197,78 @@ export async function getGoogleAdsReport(
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
-  const response = await analytics.properties.runReport({
-    property: formattedPropertyId,
-    requestBody: {
-      dateRanges: [{ startDate, endDate }],
-      dimensions: [
-        { name: 'sessionGoogleAdsCampaignName' },
-        { name: 'sessionGoogleAdsAdGroupName' },
-        { name: 'sessionGoogleAdsKeyword' },
-        { name: 'sessionGoogleAdsQuery' },
-        { name: 'landingPagePlusQueryString' },
-      ],
-      metrics: [
-        { name: 'advertiserAdCost' },
-        { name: 'advertiserAdClicks' },
-        { name: 'advertiserAdCostPerClick' },
-        { name: 'returnOnAdSpend' },
-        { name: 'conversions' },
-        { name: 'sessions' },
-      ],
-      orderBys: [
-        { metric: { metricName: 'advertiserAdCost' }, desc: true },
-      ],
-      limit: '500',
-      dimensionFilter: {
-        notExpression: {
-          filter: {
-            fieldName: 'sessionGoogleAdsCampaignName',
-            stringFilter: {
-              matchType: 'EXACT',
-              value: '(not set)',
-            },
-          },
+  const notSetFilter = {
+    notExpression: {
+      filter: {
+        fieldName: 'sessionGoogleAdsCampaignName',
+        stringFilter: {
+          matchType: 'EXACT' as const,
+          value: '(not set)',
         },
       },
     },
-  });
+  };
 
-  const apiRows = response.data.rows || [];
+  const [adsResponse, lpResponse] = await Promise.all([
+    // CALL 1: Ads-Performance
+    analytics.properties.runReport({
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [
+          { name: 'sessionGoogleAdsCampaignName' },
+          { name: 'sessionGoogleAdsAdGroupName' },
+          { name: 'sessionGoogleAdsQuery' },
+        ],
+        metrics: [
+          { name: 'advertiserAdCost' },
+          { name: 'advertiserAdClicks' },
+          { name: 'advertiserAdCostPerClick' },
+          { name: 'returnOnAdSpend' },
+          { name: 'conversions' },
+          { name: 'sessions' },
+        ],
+        orderBys: [
+          { metric: { metricName: 'advertiserAdCost' }, desc: true },
+        ],
+        limit: '500',
+        dimensionFilter: notSetFilter,
+      },
+    }),
+    // CALL 2: Landingpages
+    analytics.properties.runReport({
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [
+          { name: 'sessionGoogleAdsCampaignName' },
+          { name: 'landingPagePlusQueryString' },
+        ],
+        metrics: [
+          { name: 'advertiserAdCost' },
+          { name: 'advertiserAdClicks' },
+          { name: 'conversions' },
+          { name: 'sessions' },
+        ],
+        orderBys: [
+          { metric: { metricName: 'sessions' }, desc: true },
+        ],
+        limit: '500',
+        dimensionFilter: notSetFilter,
+      },
+    }),
+  ]);
 
-  const rows: GoogleAdsRow[] = apiRows.map((row) => {
+  // Call 1 parsen
+  const rows: GoogleAdsRow[] = (adsResponse.data.rows || []).map((row) => {
     const dims = row.dimensionValues || [];
     const mets = row.metricValues || [];
-
     return {
       campaign: dims[0]?.value || '(not set)',
       adGroup: dims[1]?.value || '(not set)',
-      keyword: dims[2]?.value || '(not set)',
-      searchQuery: dims[3]?.value || '(not set)',
-      landingPage: dims[4]?.value || '(not set)',
+      keyword: '–',
+      searchQuery: dims[2]?.value || '(not set)',
+      landingPage: '–',
       cost: parseFloat(mets[0]?.value || '0'),
       clicks: parseInt(mets[1]?.value || '0', 10),
       cpc: parseFloat(mets[2]?.value || '0'),
@@ -1250,7 +1278,26 @@ export async function getGoogleAdsReport(
     };
   });
 
-  // Totals berechnen
+  // Call 2 parsen
+  const landingPageRows: GoogleAdsRow[] = (lpResponse.data.rows || []).map((row) => {
+    const dims = row.dimensionValues || [];
+    const mets = row.metricValues || [];
+    return {
+      campaign: dims[0]?.value || '(not set)',
+      adGroup: '–',
+      keyword: '–',
+      searchQuery: '–',
+      landingPage: dims[1]?.value || '(not set)',
+      cost: parseFloat(mets[0]?.value || '0'),
+      clicks: parseInt(mets[1]?.value || '0', 10),
+      cpc: 0,
+      roas: 0,
+      conversions: parseFloat(mets[2]?.value || '0'),
+      sessions: parseInt(mets[3]?.value || '0', 10),
+    };
+  });
+
+  // Totals aus Call 1
   const totals = rows.reduce(
     (acc, r) => ({
       cost: acc.cost + r.cost,
@@ -1267,5 +1314,5 @@ export async function getGoogleAdsReport(
   const totalRevenue = rows.reduce((sum, r) => sum + r.roas * r.cost, 0);
   totals.roas = totals.cost > 0 ? totalRevenue / totals.cost : 0;
 
-  return { rows, totals };
+  return { rows, landingPageRows, totals };
 }
