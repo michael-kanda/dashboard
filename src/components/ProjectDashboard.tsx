@@ -27,8 +27,11 @@ import AiAnalysisWidget from '@/components/AiAnalysisWidget';
 import LandingPageChart from '@/components/charts/LandingPageChart';
 import { aggregateLandingPages } from '@/lib/utils';
 
-// ✅ NEU: DataMax Chat Import
+// ✅ DataMax Chat Import
 import { DataMaxChat } from '@/components/datamax';
+
+// ✅ NEU: Google Ads Widget
+import GoogleAdsWidget from '@/components/GoogleAdsWidget';
 
 interface ProjectDashboardProps {
   data: ProjectDashboardData;
@@ -48,6 +51,7 @@ interface ProjectDashboardProps {
   userRole?: string; 
   userEmail?: string; 
   showLandingPages?: boolean;
+  showGoogleAds?: boolean;       // ← NEU
   dataMaxEnabled?: boolean;
 }
 
@@ -69,6 +73,7 @@ export default function ProjectDashboard({
   userRole = 'USER', 
   userEmail = '', 
   showLandingPages = false,
+  showGoogleAds = false,          // ← NEU
   dataMaxEnabled = true,
 }: ProjectDashboardProps) {
   
@@ -78,6 +83,7 @@ export default function ProjectDashboard({
 
   const [activeKpi, setActiveKpi] = useState<ActiveKpi>('clicks');
   const [isLandingPagesVisible, setIsLandingPagesVisible] = useState(showLandingPages);
+  const [isGoogleAdsVisible, setIsGoogleAdsVisible] = useState(showGoogleAds);  // ← NEU
   const [isUpdating, setIsUpdating] = useState(false);
   const [showAiTrafficDetail, setShowAiTrafficDetail] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
@@ -145,6 +151,10 @@ export default function ProjectDashboard({
   const safeApiErrors = (apiErrors as any) || {};
 
   const hasAiTraffic = (data.aiTraffic?.totalSessions ?? 0) > 0;
+
+  // ✅ NEU: Google Ads Prüfung
+  const hasGoogleAdsData = (data.googleAdsData?.rows?.length ?? 0) > 0;
+  const shouldRenderGoogleAds = hasGoogleAdsData && (isAdmin || isGoogleAdsVisible);
 
   return (
     <div className="min-h-screen flex flex-col dashboard-gradient relative">
@@ -327,7 +337,38 @@ export default function ProjectDashboard({
             dateRange={dateRange}
           />
         </div>
-        
+
+        {/* ✅ NEU: GOOGLE ADS SEKTION */}
+        {shouldRenderGoogleAds && (
+          <div id="section-google-ads" className={`mt-8 scroll-mt-20 transition-all duration-300 ${!isGoogleAdsVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
+            {isAdmin && (
+              <div className="flex items-center justify-end mb-2 print:hidden">
+                <button
+                  onClick={() => setIsGoogleAdsVisible(!isGoogleAdsVisible)}
+                  className="flex items-center gap-2 text-xs font-medium text-muted hover:text-strong transition-colors"
+                >
+                  {isGoogleAdsVisible ? <EyeSlash size={14} /> : <Eye size={14} />}
+                  {isGoogleAdsVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}
+                </button>
+              </div>
+            )}
+            <div className="relative">
+              <GoogleAdsWidget
+                data={data.googleAdsData!}
+                isLoading={isLoading}
+                dateRange={dateRange}
+              />
+              {!isGoogleAdsVisible && isAdmin && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="overlay-muted-badge backdrop-blur-[1px] px-4 py-2 rounded-lg border text-strong text-xs font-semibold shadow-sm">
+                    🚫 Für Kunden ausgeblendet
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {hasSemrushConfig && (
           <div id="section-semrush" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 scroll-mt-20 print-semrush-grid">
             {hasKampagne1Config && <div className="card-glass p-4 sm:p-6"><SemrushTopKeywords projectId={projectId} /></div>}
