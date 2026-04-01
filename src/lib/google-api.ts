@@ -1147,11 +1147,8 @@ export async function getLandingPageFollowUpPaths(
   }
 }
 
-// ═══════════════════════════════════════════════════════
-// Google Ads Report – ERSETZE alles ab Zeile 1150 in google-api.ts
-// ═══════════════════════════════════════════════════════
+// ── Google Ads Types ──
 
-// ── Types ──
 export interface GoogleAdsRow {
   campaign: string;
   adGroup: string;
@@ -1180,7 +1177,7 @@ export interface GoogleAdsData {
 
 /**
  * Holt Google Ads Performance-Daten über die GA4 Data API.
- * Nutzt dasselbe googleapis + JWT Auth-Pattern wie alle anderen Funktionen.
+ * Nutzt googleapis + JWT Auth (wie alle anderen Funktionen).
  * Voraussetzung: Google Ads ist mit der GA4-Property verlinkt.
  */
 export async function getGoogleAdsReport(
@@ -1219,11 +1216,13 @@ export async function getGoogleAdsReport(
       ],
       limit: '500',
       dimensionFilter: {
-        filter: {
-          fieldName: 'sessionGoogleAdsCampaignName',
-          stringFilter: {
-            matchType: 'FULL_REGEXP',
-            value: '^(?!\\(not set\\)$).+',
+        notExpression: {
+          filter: {
+            fieldName: 'sessionGoogleAdsCampaignName',
+            stringFilter: {
+              matchType: 'EXACT',
+              value: '(not set)',
+            },
           },
         },
       },
