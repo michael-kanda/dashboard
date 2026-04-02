@@ -37,6 +37,15 @@ function formatNumber(value: number): string {
   return new Intl.NumberFormat('de-DE').format(value);
 }
 
+/**
+ * ROAS-Anzeige: Zeigt "–" wenn kein Conversion-Wert in Google Ads
+ * konfiguriert ist (roas = 0). Verhindert irreführende "0.00x"-Anzeige.
+ */
+function formatRoas(value: number): string {
+  if (value <= 0) return '–';
+  return `${value.toFixed(2)}x`;
+}
+
 // ── Aggregations-Logik ──
 
 interface AggregatedRow {
@@ -51,17 +60,34 @@ interface AggregatedRow {
 }
 
 function aggregateBy(rows: GoogleAdsRow[], field: keyof GoogleAdsRow): AggregatedRow[] {
-  const map = new Map<string, { cost: number; clicks: number; conversions: number; sessions: number; revenue: number; subRows: GoogleAdsRow[] }>();
+  const map = new Map<
+    string,
+    {
+      cost: number;
+      clicks: number;
+      conversions: number;
+      sessions: number;
+      revenue: number;
+      subRows: GoogleAdsRow[];
+    }
+  >();
 
   for (const row of rows) {
     const key = String(row[field]) || '(not set)';
     if (key === '–') continue; // Platzhalter überspringen
-    const existing = map.get(key) || { cost: 0, clicks: 0, conversions: 0, sessions: 0, revenue: 0, subRows: [] };
+    const existing = map.get(key) || {
+      cost: 0,
+      clicks: 0,
+      conversions: 0,
+      sessions: 0,
+      revenue: 0,
+      subRows: [],
+    };
     existing.cost += row.cost;
     existing.clicks += row.clicks;
     existing.conversions += row.conversions;
     existing.sessions += row.sessions;
-    existing.revenue += row.roas * row.cost;
+    existing.revenue += row.roas * row.cost; // revenue korrekt pro Row akkumulieren
     existing.subRows.push(row);
     map.set(key, existing);
   }
@@ -144,7 +170,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
     landingpage: 'Landingpages',
   };
 
-  // Welche Spalten im Landingpage-View ausblenden (kein CPC/ROAS aus Call 2)
+  // Im Landingpage-View kein ROAS (GA4 liefert keinen ROAS auf LP-Ebene)
   const isLpView = viewMode === 'landingpage';
 
   const hasAnyData = data.rows.length > 0 || (data.landingPageRows || []).length > 0;
@@ -169,7 +195,8 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
       <div className="card-glass p-6">
         <h3 className="text-base font-semibold text-strong mb-2">Google Ads</h3>
         <p className="text-sm text-muted">
-          Keine Google Ads-Daten für diesen Zeitraum vorhanden. Stelle sicher, dass Google Ads mit GA4 verknüpft ist.
+          Keine Google Ads-Daten für diesen Zeitraum vorhanden. Stelle sicher, dass Google Ads
+          mit GA4 verknüpft ist.
         </p>
       </div>
     );
@@ -184,12 +211,26 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
           Google Ads Performance
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <KpiMini label="Ad Spend" value={formatCurrency(totals.cost)} />
-          <KpiMini label="Klicks" value={formatNumber(totals.clicks)} />
-          <KpiMini label="Ø CPC" value={formatCurrency(totals.avgCpc)} />
-          <KpiMini label="ROAS" value={totals.roas.toFixed(2) + 'x'} highlight={totals.roas >= 3} />
+          <KpiMini label="Ad Spend"    value={formatCurrency(totals.cost)} />
+          <KpiMini label="Klicks"      value={formatNumber(totals.clicks)} />
+          <KpiMini label="Ø CPC"       value={formatCurrency(totals.avgCpc)} />
+          {/*
+            FIX: formatRoas() zeigt "–" statt "0.00x" wenn keine Conversion-Werte
+            in Google Ads hinterlegt sind. highlight nur wenn roas > 0.
+          */}
+          <KpiMini
+            label="ROAS"
+            value={formatRoas(totals.roas)}
+            highlight={totals.roas >= 3}
+            dimmed={totals.roas <= 0}
+            tooltip={
+              totals.roas <= 0
+                ? 'ROAS nicht verfügbar – Conversion-Werte (€) sind in Google Ads nicht konfiguriert'
+                : undefined
+            }
+          />
           <KpiMini label="Conversions" value={formatNumber(totals.conversions)} />
-          <KpiMini label="Sitzungen" value={formatNumber(totals.sessions)} />
+          <KpiMini label="Sitzungen"   value={formatNumber(totals.sessions)} />
         </div>
       </div>
 
@@ -199,7 +240,11 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
           {(Object.keys(viewModeLabels) as ViewMode[]).map((mode) => (
             <button
               key={mode}
-              onClick={() => { setViewMode(mode); setExpandedRow(null); setSearchTerm(''); }}
+              onClick={() => {
+                setViewMode(mode);
+                setExpandedRow(null);
+                setSearchTerm('');
+              }}
               className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                 viewMode === mode
                   ? 'bg-indigo-500/10 text-indigo-500 dark:text-indigo-400'
@@ -235,26 +280,44 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
               <th className="text-left px-4 py-2.5 font-semibold text-muted w-[30%]">
                 {viewModeLabels[viewMode]}
               </th>
-              <th onClick={() => handleSort('cost')} className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap">
+              <th
+                onClick={() => handleSort('cost')}
+                className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
+              >
                 Kosten<SortIcon field="cost" />
               </th>
-              <th onClick={() => handleSort('clicks')} className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap">
+              <th
+                onClick={() => handleSort('clicks')}
+                className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
+              >
                 Klicks<SortIcon field="clicks" />
               </th>
               {!isLpView && (
-                <th onClick={() => handleSort('cpc')} className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap">
+                <th
+                  onClick={() => handleSort('cpc')}
+                  className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
+                >
                   CPC<SortIcon field="cpc" />
                 </th>
               )}
               {!isLpView && (
-                <th onClick={() => handleSort('roas')} className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap">
+                <th
+                  onClick={() => handleSort('roas')}
+                  className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
+                >
                   ROAS<SortIcon field="roas" />
                 </th>
               )}
-              <th onClick={() => handleSort('conversions')} className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap">
+              <th
+                onClick={() => handleSort('conversions')}
+                className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
+              >
                 Conv.<SortIcon field="conversions" />
               </th>
-              <th onClick={() => handleSort('sessions')} className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap">
+              <th
+                onClick={() => handleSort('sessions')}
+                className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
+              >
                 Sitzungen<SortIcon field="sessions" />
               </th>
             </tr>
@@ -265,7 +328,9 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
                 key={row.label}
                 row={row}
                 isExpanded={expandedRow === row.label}
-                onToggle={() => setExpandedRow(expandedRow === row.label ? null : row.label)}
+                onToggle={() =>
+                  setExpandedRow(expandedRow === row.label ? null : row.label)
+                }
                 viewMode={viewMode}
                 isLpView={isLpView}
               />
@@ -273,7 +338,10 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
 
             {tableData.length === 0 && (
               <tr>
-                <td colSpan={isLpView ? 5 : 7} className="px-4 py-8 text-center text-sm text-muted">
+                <td
+                  colSpan={isLpView ? 5 : 7}
+                  className="px-4 py-8 text-center text-sm text-muted"
+                >
                   Keine Ergebnisse für &quot;{searchTerm}&quot;
                 </td>
               </tr>
@@ -287,11 +355,35 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
 
 // ── Sub-Komponenten ──
 
-function KpiMini({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function KpiMini({
+  label,
+  value,
+  highlight,
+  dimmed,
+  tooltip,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+  dimmed?: boolean;
+  tooltip?: string;
+}) {
   return (
-    <div className="bg-surface-secondary/50 rounded-xl px-3 py-2.5">
-      <div className="text-[10px] font-medium text-faint uppercase tracking-wider mb-0.5">{label}</div>
-      <div className={`text-sm font-bold ${highlight ? 'text-emerald-500' : 'text-strong'}`}>{value}</div>
+    <div className="bg-surface-secondary/50 rounded-xl px-3 py-2.5" title={tooltip}>
+      <div className="text-[10px] font-medium text-faint uppercase tracking-wider mb-0.5">
+        {label}
+      </div>
+      <div
+        className={`text-sm font-bold ${
+          highlight
+            ? 'text-emerald-500'
+            : dimmed
+            ? 'text-muted'
+            : 'text-strong'
+        }`}
+      >
+        {value}
+      </div>
     </div>
   );
 }
@@ -326,16 +418,36 @@ function TableRow({
                 {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
               </span>
             )}
-            <span className="truncate" title={row.label}>{row.label}</span>
+            <span className="truncate" title={row.label}>
+              {row.label}
+            </span>
           </div>
         </td>
-        <td className="text-right px-3 py-2.5 text-strong font-semibold">{formatCurrency(row.cost)}</td>
+        <td className="text-right px-3 py-2.5 text-strong font-semibold">
+          {formatCurrency(row.cost)}
+        </td>
         <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.clicks)}</td>
-        {!isLpView && <td className="text-right px-3 py-2.5 text-body">{formatCurrency(row.cpc)}</td>}
+        {!isLpView && (
+          <td className="text-right px-3 py-2.5 text-body">{formatCurrency(row.cpc)}</td>
+        )}
         {!isLpView && (
           <td className="text-right px-3 py-2.5">
-            <span className={`font-semibold ${row.roas >= 3 ? 'text-emerald-500' : row.roas >= 1 ? 'text-amber-500' : 'text-red-500'}`}>
-              {row.roas.toFixed(2)}x
+            {/*
+              FIX: formatRoas() zeigt "–" statt "0.00x" bei fehlendem Conversion-Wert.
+              Farb-Logik nur aktiv wenn roas > 0.
+            */}
+            <span
+              className={`font-semibold ${
+                row.roas >= 3
+                  ? 'text-emerald-500'
+                  : row.roas >= 1
+                  ? 'text-amber-500'
+                  : row.roas > 0
+                  ? 'text-red-500'
+                  : 'text-muted'
+              }`}
+            >
+              {formatRoas(row.roas)}
             </span>
           </td>
         )}
@@ -343,43 +455,64 @@ function TableRow({
         <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.sessions)}</td>
       </tr>
 
-      {isExpanded && hasSubRows && row.subRows?.map((sub, i) => {
-        const subLabel = viewMode === 'campaign'
-          ? sub.adGroup
-          : viewMode === 'adgroup'
-            ? sub.campaign
-            : viewMode === 'landingpage'
+      {isExpanded &&
+        hasSubRows &&
+        row.subRows?.map((sub, i) => {
+          const subLabel =
+            viewMode === 'campaign'
+              ? sub.adGroup
+              : viewMode === 'adgroup'
+              ? sub.campaign
+              : viewMode === 'landingpage'
               ? sub.campaign
               : sub.campaign;
-        const subDimLabel = viewMode === 'campaign'
-          ? 'Anzeigengruppe'
-          : viewMode === 'adgroup'
-            ? 'Kampagne'
-            : viewMode === 'landingpage'
+
+          const subDimLabel =
+            viewMode === 'campaign'
+              ? 'Anzeigengruppe'
+              : viewMode === 'adgroup'
+              ? 'Kampagne'
+              : viewMode === 'landingpage'
               ? 'Kampagne'
               : 'Kampagne';
 
-        return (
-          <tr key={i} className="border-b border-theme-border-subtle bg-surface/30">
-            <td className="pl-10 pr-4 py-2 text-muted">
-              <span className="text-[10px] uppercase tracking-wider text-faint mr-1.5">{subDimLabel}:</span>
-              <span className="truncate" title={subLabel}>{subLabel}</span>
-            </td>
-            <td className="text-right px-3 py-2 text-muted">{formatCurrency(sub.cost)}</td>
-            <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.clicks)}</td>
-            {!isLpView && <td className="text-right px-3 py-2 text-muted">{formatCurrency(sub.cpc)}</td>}
-            {!isLpView && (
-              <td className="text-right px-3 py-2">
-                <span className={`${sub.roas >= 3 ? 'text-emerald-500/70' : sub.roas >= 1 ? 'text-amber-500/70' : 'text-red-500/70'}`}>
-                  {sub.roas.toFixed(2)}x
+          return (
+            <tr key={i} className="border-b border-theme-border-subtle bg-surface/30">
+              <td className="pl-10 pr-4 py-2 text-muted">
+                <span className="text-[10px] uppercase tracking-wider text-faint mr-1.5">
+                  {subDimLabel}:
+                </span>
+                <span className="truncate" title={subLabel}>
+                  {subLabel}
                 </span>
               </td>
-            )}
-            <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.conversions)}</td>
-            <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.sessions)}</td>
-          </tr>
-        );
-      })}
+              <td className="text-right px-3 py-2 text-muted">{formatCurrency(sub.cost)}</td>
+              <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.clicks)}</td>
+              {!isLpView && (
+                <td className="text-right px-3 py-2 text-muted">{formatCurrency(sub.cpc)}</td>
+              )}
+              {!isLpView && (
+                <td className="text-right px-3 py-2">
+                  <span
+                    className={`${
+                      sub.roas >= 3
+                        ? 'text-emerald-500/70'
+                        : sub.roas >= 1
+                        ? 'text-amber-500/70'
+                        : sub.roas > 0
+                        ? 'text-red-500/70'
+                        : 'text-muted'
+                    }`}
+                  >
+                    {formatRoas(sub.roas)}
+                  </span>
+                </td>
+              )}
+              <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.conversions)}</td>
+              <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.sessions)}</td>
+            </tr>
+          );
+        })}
     </>
   );
 }
