@@ -8,7 +8,7 @@ import type { TopQueryData } from '@/types/dashboard';
 // --- Typdefinitionen ---
 
 interface DailyDataPoint {
-  date: number; // ✅ Timestamp
+  date: number; // Timestamp
   value: number;
 }
 
@@ -17,7 +17,6 @@ export interface DateRangeData {
   daily: DailyDataPoint[];
 }
 
-// ✅ NEU: Erweiterte GA4-Response mit paidSearch
 export interface Ga4ExtendedData {
   sessions: DateRangeData;
   totalUsers: DateRangeData;
@@ -28,13 +27,13 @@ export interface Ga4ExtendedData {
   avgEngagementTime: DateRangeData;
   clicks: DateRangeData;
   impressions: DateRangeData;
-  paidSearch: DateRangeData; // ✅ NEU
+  paidSearch: DateRangeData;
 }
 
 export interface AiTrafficData {
   totalSessions: number;
   totalUsers: number;
-  totalSessionsChange?: number; 
+  totalSessionsChange?: number;
   totalUsersChange?: number;
   sessionsBySource: {
     [key: string]: number;
@@ -46,7 +45,7 @@ export interface AiTrafficData {
     percentage: number;
   }>;
   trend: Array<{
-    date: number; 
+    date: number;
     sessions: number;
   }>;
 }
@@ -63,7 +62,7 @@ function createAuth(): JWT {
         scopes: [
           'https://www.googleapis.com/auth/webmasters.readonly',
           'https://www.googleapis.com/auth/analytics.readonly',
-          'https://www.googleapis.com/auth/spreadsheets.readonly'
+          'https://www.googleapis.com/auth/spreadsheets.readonly',
         ],
       });
     } catch (e) {
@@ -71,7 +70,7 @@ function createAuth(): JWT {
       throw new Error('Google Credentials invalid');
     }
   }
-  
+
   // Fallback für alte Env Vars
   const privateKeyBase64 = process.env.GOOGLE_PRIVATE_KEY_BASE64;
   const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
@@ -88,11 +87,11 @@ function createAuth(): JWT {
       scopes: [
         'https://www.googleapis.com/auth/webmasters.readonly',
         'https://www.googleapis.com/auth/analytics.readonly',
-        'https://www.googleapis.com/auth/spreadsheets.readonly', 
+        'https://www.googleapis.com/auth/spreadsheets.readonly',
       ],
     });
   } catch (error) {
-    throw new Error("Fehler beim Initialisieren der Google API Authentifizierung.");
+    throw new Error('Fehler beim Initialisieren der Google API Authentifizierung.');
   }
 }
 
@@ -104,14 +103,14 @@ export async function getGoogleSheetData(sheetId: string): Promise<any[]> {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: 'A1:Z2000', 
+      range: 'A1:Z2000',
     });
 
     const rows = response.data.values;
     if (!rows || rows.length === 0) return [];
 
     const headers = rows[0];
-    const data = rows.slice(1).map(row => {
+    const data = rows.slice(1).map((row) => {
       const obj: Record<string, string> = {};
       headers.forEach((header, index) => {
         const key = header?.trim();
@@ -173,7 +172,7 @@ export async function getSearchConsoleData(
     let totalImpressions = 0;
 
     for (const row of rows) {
-      const dateStr = row.keys?.[0]; 
+      const dateStr = row.keys?.[0];
       if (!dateStr) continue;
 
       const dateTs = parseGscDate(dateStr);
@@ -217,16 +216,18 @@ export async function getTopQueries(
     });
 
     const rows = res.data.rows || [];
-    
-    // ✅ Aggregation Logic (Gruppieren nach Query, Top URL ermitteln)
-    const queryMap = new Map<string, {
-      clicks: number;
-      impressions: number;
-      positionSum: number;
-      count: number;
-      topUrl: string;
-      maxClicksForUrl: number;
-    }>();
+
+    const queryMap = new Map<
+      string,
+      {
+        clicks: number;
+        impressions: number;
+        positionSum: number;
+        count: number;
+        topUrl: string;
+        maxClicksForUrl: number;
+      }
+    >();
 
     for (const row of rows) {
       const query = row.keys?.[0] || '(not set)';
@@ -234,7 +235,7 @@ export async function getTopQueries(
       const clicks = row.clicks || 0;
       const impressions = row.impressions || 0;
       const position = row.position || 0;
-      
+
       if (!queryMap.has(query)) {
         queryMap.set(query, {
           clicks: 0,
@@ -242,39 +243,37 @@ export async function getTopQueries(
           positionSum: 0,
           count: 0,
           topUrl: url,
-          maxClicksForUrl: clicks
+          maxClicksForUrl: clicks,
         });
       }
-      
+
       const entry = queryMap.get(query)!;
       entry.clicks += clicks;
       entry.impressions += impressions;
-      entry.positionSum += (position * impressions); 
-      
+      entry.positionSum += position * impressions;
+
       if (clicks > entry.maxClicksForUrl) {
         entry.maxClicksForUrl = clicks;
         entry.topUrl = url;
       }
     }
-    
+
     const results: TopQueryData[] = [];
     for (const [query, data] of queryMap.entries()) {
-        const avgPosition = data.impressions > 0 ? data.positionSum / data.impressions : 0;
-        const ctr = data.impressions > 0 ? data.clicks / data.impressions : 0;
-        
-        results.push({
-            query,
-            clicks: data.clicks,
-            impressions: data.impressions,
-            ctr,
-            position: avgPosition,
-            url: data.topUrl
-        });
+      const avgPosition = data.impressions > 0 ? data.positionSum / data.impressions : 0;
+      const ctr = data.impressions > 0 ? data.clicks / data.impressions : 0;
+
+      results.push({
+        query,
+        clicks: data.clicks,
+        impressions: data.impressions,
+        ctr,
+        position: avgPosition,
+        url: data.topUrl,
+      });
     }
 
-    return results
-      .sort((a, b) => b.clicks - a.clicks)
-      .slice(0, 100);
+    return results.sort((a, b) => b.clicks - a.clicks).slice(0, 100);
   } catch (error) {
     console.error('Error in getTopQueries:', error);
     return [];
@@ -288,27 +287,26 @@ export async function getAnalyticsData(
   startDate: string,
   endDate: string
 ): Promise<Ga4ExtendedData> {
-  const formattedPropertyId = propertyId.startsWith('properties/') ? propertyId : `properties/${propertyId}`;
+  const formattedPropertyId = propertyId.startsWith('properties/')
+    ? propertyId
+    : `properties/${propertyId}`;
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
-  // Default-Werte
-  const defaultData: DateRangeData = { total: 0, daily: [] };
-const result: Ga4ExtendedData = {
-  sessions: { total: 0, daily: [] },
-  totalUsers: { total: 0, daily: [] },
-  newUsers: { total: 0, daily: [] },
-  conversions: { total: 0, daily: [] },
-  bounceRate: { total: 0, daily: [] },
-  engagementRate: { total: 0, daily: [] },
-  avgEngagementTime: { total: 0, daily: [] },
-  clicks: { total: 0, daily: [] },
-  impressions: { total: 0, daily: [] },
-  paidSearch: { total: 0, daily: [] }
-};
+  const result: Ga4ExtendedData = {
+    sessions: { total: 0, daily: [] },
+    totalUsers: { total: 0, daily: [] },
+    newUsers: { total: 0, daily: [] },
+    conversions: { total: 0, daily: [] },
+    bounceRate: { total: 0, daily: [] },
+    engagementRate: { total: 0, daily: [] },
+    avgEngagementTime: { total: 0, daily: [] },
+    clicks: { total: 0, daily: [] },
+    impressions: { total: 0, daily: [] },
+    paidSearch: { total: 0, daily: [] },
+  };
 
   try {
-    // Report mit Tagesaufteilung
     const response = await analytics.properties.runReport({
       property: formattedPropertyId,
       requestBody: {
@@ -321,14 +319,14 @@ const result: Ga4ExtendedData = {
           { name: 'conversions' },
           { name: 'bounceRate' },
           { name: 'engagementRate' },
-          { name: 'averageSessionDuration' }
+          { name: 'averageSessionDuration' },
         ],
         orderBys: [{ dimension: { dimensionName: 'date' } }],
       },
     });
 
     const rows = response.data.rows || [];
-    
+
     let sessionsTotal = 0;
     let totalUsersTotal = 0;
     let newUsersTotal = 0;
@@ -376,7 +374,7 @@ const result: Ga4ExtendedData = {
     result.engagementRate.total = count > 0 ? engagementRateSum / count : 0;
     result.avgEngagementTime.total = count > 0 ? avgEngagementTimeSum / count : 0;
 
-    // ✅ Paid Search Daten separat laden
+    // Paid Search Daten separat laden
     try {
       const paidResponse = await analytics.properties.runReport({
         property: formattedPropertyId,
@@ -389,9 +387,9 @@ const result: Ga4ExtendedData = {
               fieldName: 'sessionDefaultChannelGroup',
               stringFilter: {
                 matchType: 'EXACT',
-                value: 'Paid Search'
-              }
-            }
+                value: 'Paid Search',
+              },
+            },
           },
           orderBys: [{ dimension: { dimensionName: 'date' } }],
         },
@@ -426,19 +424,26 @@ export async function getAiTrafficData(
   startDate: string,
   endDate: string
 ): Promise<AiTrafficData> {
-  const formattedPropertyId = propertyId.startsWith('properties/') ? propertyId : `properties/${propertyId}`;
+  const formattedPropertyId = propertyId.startsWith('properties/')
+    ? propertyId
+    : `properties/${propertyId}`;
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
   const AI_SOURCES = [
-    'chatgpt.com', 'chat.openai.com', 'openai.com',
-    'claude.ai', 'anthropic.com',
-    'gemini.google.com', 'bard.google.com',
+    'chatgpt.com',
+    'chat.openai.com',
+    'openai.com',
+    'claude.ai',
+    'anthropic.com',
+    'gemini.google.com',
+    'bard.google.com',
     'perplexity.ai',
-    'bing.com/chat', 'copilot.microsoft.com',
+    'bing.com/chat',
+    'copilot.microsoft.com',
     'you.com',
     'poe.com',
-    'character.ai'
+    'character.ai',
   ];
 
   try {
@@ -446,32 +451,24 @@ export async function getAiTrafficData(
       property: formattedPropertyId,
       requestBody: {
         dateRanges: [{ startDate, endDate }],
-        dimensions: [
-          { name: 'sessionSource' },
-          { name: 'date' }
-        ],
-        metrics: [
-          { name: 'sessions' },
-          { name: 'totalUsers' }
-        ],
+        dimensions: [{ name: 'sessionSource' }, { name: 'date' }],
+        metrics: [{ name: 'sessions' }, { name: 'totalUsers' }],
         dimensionFilter: {
           orGroup: {
-            expressions: AI_SOURCES.map(source => ({
+            expressions: AI_SOURCES.map((source) => ({
               filter: {
                 fieldName: 'sessionSource',
                 stringFilter: {
                   matchType: 'CONTAINS',
                   value: source,
-                  caseSensitive: false
-                }
-              }
-            }))
-          }
+                  caseSensitive: false,
+                },
+              },
+            })),
+          },
         },
-        orderBys: [
-          { metric: { metricName: 'sessions' }, desc: true }
-        ],
-        limit: '1000'
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+        limit: '1000',
       },
     });
 
@@ -508,7 +505,7 @@ export async function getAiTrafficData(
         source,
         sessions,
         users: usersBySource[source] || 0,
-        percentage: totalSessions > 0 ? (sessions / totalSessions) * 100 : 0
+        percentage: totalSessions > 0 ? (sessions / totalSessions) * 100 : 0,
       }));
 
     const trend = Array.from(trendMap.entries())
@@ -520,7 +517,7 @@ export async function getAiTrafficData(
       totalUsers,
       sessionsBySource,
       topAiSources,
-      trend
+      trend,
     };
   } catch (error) {
     console.error('Error fetching AI traffic data:', error);
@@ -529,7 +526,7 @@ export async function getAiTrafficData(
       totalUsers: 0,
       sessionsBySource: {},
       topAiSources: [],
-      trend: []
+      trend: [],
     };
   }
 }
@@ -540,10 +537,12 @@ export async function getGa4DimensionReport(
   endDate: string,
   dimensionName: string
 ): Promise<ChartEntry[]> {
-  const formattedPropertyId = propertyId.startsWith('properties/') ? propertyId : `properties/${propertyId}`;
+  const formattedPropertyId = propertyId.startsWith('properties/')
+    ? propertyId
+    : `properties/${propertyId}`;
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
-  
+
   try {
     const response = await analytics.properties.runReport({
       property: formattedPropertyId,
@@ -551,48 +550,53 @@ export async function getGa4DimensionReport(
         dateRanges: [{ startDate, endDate }],
         dimensions: [{ name: dimensionName }],
         metrics: [
-          { name: 'sessions' }, 
-          { name: 'engagementRate' }, 
-          { name: 'conversions' }
+          { name: 'sessions' },
+          { name: 'engagementRate' },
+          { name: 'conversions' },
         ],
         orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
         limit: '10',
       },
     });
-    
+
     const rows = response.data.rows || [];
     const results: ChartEntry[] = [];
-    
+
     for (const row of rows) {
       const name = row.dimensionValues?.[0]?.value || 'Unknown';
       const sessions = parseInt(row.metricValues?.[0]?.value || '0', 10);
-      const rate = parseFloat(row.metricValues?.[1]?.value || '0'); 
+      const rate = parseFloat(row.metricValues?.[1]?.value || '0');
       const conversions = parseInt(row.metricValues?.[2]?.value || '0', 10);
 
-      results.push({ 
-        name, 
+      results.push({
+        name,
         value: sessions,
         subValue: `${(rate * 100).toFixed(1)}%`,
         subLabel: 'Interaktionsrate',
         subValue2: conversions,
-        subLabel2: 'Conversions'
+        subLabel2: 'Conversions',
       });
     }
-    
+
     if (results.length > 6) {
       const top5 = results.slice(0, 5);
       const otherSessions = results.slice(5).reduce((acc, curr) => acc + curr.value, 0);
-      const otherConversions = results.slice(5).reduce((acc, curr) => acc + (curr.subValue2 || 0), 0);
-      
+      const otherConversions = results
+        .slice(5)
+        .reduce((acc, curr) => acc + (curr.subValue2 || 0), 0);
+
       if (otherSessions > 0) {
-        return [...top5, { 
-          name: 'Sonstige', 
-          value: otherSessions, 
-          subValue: '-', 
-          subLabel: 'Interaktionsrate',
-          subValue2: otherConversions,
-          subLabel2: 'Conversions'
-        }];
+        return [
+          ...top5,
+          {
+            name: 'Sonstige',
+            value: otherSessions,
+            subValue: '-',
+            subLabel: 'Interaktionsrate',
+            subValue2: otherConversions,
+            subLabel2: 'Conversions',
+          },
+        ];
       }
       return top5;
     }
@@ -615,7 +619,9 @@ export async function getTopConvertingPages(
   startDate: string,
   endDate: string
 ): Promise<ConvertingPageData[]> {
-  const formattedPropertyId = propertyId.startsWith('properties/') ? propertyId : `properties/${propertyId}`;
+  const formattedPropertyId = propertyId.startsWith('properties/')
+    ? propertyId
+    : `properties/${propertyId}`;
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
@@ -628,12 +634,12 @@ export async function getTopConvertingPages(
         metrics: [
           { name: 'conversions' },
           { name: 'sessions' },
-          { name: 'engagementRate' }, 
-          { name: 'newUsers' } 
+          { name: 'engagementRate' },
+          { name: 'newUsers' },
         ],
         orderBys: [
           { metric: { metricName: 'conversions' }, desc: true },
-          { metric: { metricName: 'sessions' }, desc: true }
+          { metric: { metricName: 'sessions' }, desc: true },
         ],
         limit: '100',
       },
@@ -641,34 +647,32 @@ export async function getTopConvertingPages(
 
     const rows = response.data.rows || [];
 
-    return rows.map(row => {
-      const conversions = parseInt(row.metricValues?.[0]?.value || '0', 10);
-      const sessions = parseInt(row.metricValues?.[1]?.value || '0', 10);
-      const engagementRate = parseFloat(row.metricValues?.[2]?.value || '0');
-      const newUsers = parseInt(row.metricValues?.[3]?.value || '0', 10);
+    return rows
+      .map((row) => {
+        const conversions = parseInt(row.metricValues?.[0]?.value || '0', 10);
+        const sessions = parseInt(row.metricValues?.[1]?.value || '0', 10);
+        const engagementRate = parseFloat(row.metricValues?.[2]?.value || '0');
+        const newUsers = parseInt(row.metricValues?.[3]?.value || '0', 10);
+        const convRate = sessions > 0 ? ((conversions / sessions) * 100).toFixed(2) : '0';
 
-      const convRate = sessions > 0 ? ((conversions / sessions) * 100).toFixed(2) : '0';
-
-      return {
-        path: row.dimensionValues?.[0]?.value || '(not set)',
-        conversions,
-        sessions,
-        newUsers,
-        conversionRate: convRate,
-        engagementRate: parseFloat((engagementRate * 100).toFixed(2))
-      };
-    })
-    .filter(p => p.conversions > 0 || p.sessions > 5)
-    .slice(0, 50);
-
+        return {
+          path: row.dimensionValues?.[0]?.value || '(not set)',
+          conversions,
+          sessions,
+          newUsers,
+          conversionRate: convRate,
+          engagementRate: parseFloat((engagementRate * 100).toFixed(2)),
+        };
+      })
+      .filter((p) => p.conversions > 0 || p.sessions > 5)
+      .slice(0, 50);
   } catch (error) {
     console.error('Error fetching Top Converting Pages:', error);
     return [];
   }
 }
 
-// ✅ GSC Daten für spezifische Pages mit Vergleich
-// Mit BATCHING für große URL-Listen (GSC API Limit umgehen)
+// GSC CTR pro Seite laden (für LandingPageChart)
 
 export interface GscPageData {
   clicks: number;
@@ -679,7 +683,7 @@ export interface GscPageData {
   position_change: number;
 }
 
-const GSC_BATCH_SIZE = 20; // Max URLs pro API-Request (GSC hat Regex-Längenlimit)
+const GSC_BATCH_SIZE = 20;
 
 async function fetchGscBatch(
   searchconsole: any,
@@ -689,7 +693,7 @@ async function fetchGscBatch(
   endDate: string
 ): Promise<Map<string, { clicks: number; impressions: number; position: number }>> {
   const dataMap = new Map<string, { clicks: number; impressions: number; position: number }>();
-  
+
   if (pageUrls.length === 0) return dataMap;
 
   try {
@@ -705,10 +709,12 @@ async function fetchGscBatch(
               {
                 dimension: 'page',
                 operator: 'including_regex',
-                expression: pageUrls.map(url => url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
-              }
-            ]
-          }
+                expression: pageUrls
+                  .map((url) => url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+                  .join('|'),
+              },
+            ],
+          },
         ],
         rowLimit: 25000,
       },
@@ -720,12 +726,11 @@ async function fetchGscBatch(
         dataMap.set(page, {
           clicks: row.clicks || 0,
           impressions: row.impressions || 0,
-          position: row.position || 0
+          position: row.position || 0,
         });
       }
     }
   } catch (error: any) {
-    // Bei Fehler loggen aber nicht abbrechen - andere Batches können noch funktionieren
     console.error(`[GSC Batch] Fehler für ${pageUrls.length} URLs:`, error.message);
   }
 
@@ -740,10 +745,8 @@ export async function getGscDataForPagesWithComparison(
 ): Promise<Map<string, GscPageData>> {
   const auth = createAuth();
   const searchconsole = google.searchconsole({ version: 'v1', auth });
-
   const resultMap = new Map<string, GscPageData>();
 
-  // ✅ URLs in Batches aufteilen
   const batches: string[][] = [];
   for (let i = 0; i < pageUrls.length; i += GSC_BATCH_SIZE) {
     batches.push(pageUrls.slice(i, i + GSC_BATCH_SIZE));
@@ -752,19 +755,32 @@ export async function getGscDataForPagesWithComparison(
   console.log(`[GSC] Verarbeite ${pageUrls.length} URLs in ${batches.length} Batches...`);
 
   try {
-    // Alle Current Period Batches parallel abfragen
     const currentDataMaps = await Promise.all(
-      batches.map(batch => fetchGscBatch(searchconsole, siteUrl, batch, currentRange.startDate, currentRange.endDate))
+      batches.map((batch) =>
+        fetchGscBatch(searchconsole, siteUrl, batch, currentRange.startDate, currentRange.endDate)
+      )
     );
 
-    // Alle Previous Period Batches parallel abfragen
     const previousDataMaps = await Promise.all(
-      batches.map(batch => fetchGscBatch(searchconsole, siteUrl, batch, previousRange.startDate, previousRange.endDate))
+      batches.map((batch) =>
+        fetchGscBatch(
+          searchconsole,
+          siteUrl,
+          batch,
+          previousRange.startDate,
+          previousRange.endDate
+        )
+      )
     );
 
-    // Ergebnisse zusammenführen
-    const currentData = new Map<string, { clicks: number; impressions: number; position: number }>();
-    const previousData = new Map<string, { clicks: number; impressions: number; position: number }>();
+    const currentData = new Map<
+      string,
+      { clicks: number; impressions: number; position: number }
+    >();
+    const previousData = new Map<
+      string,
+      { clicks: number; impressions: number; position: number }
+    >();
 
     for (const map of currentDataMaps) {
       for (const [key, value] of map.entries()) {
@@ -778,23 +794,28 @@ export async function getGscDataForPagesWithComparison(
       }
     }
 
-    // Changes berechnen
     for (const url of pageUrls) {
       const current = currentData.get(url);
       const previous = previousData.get(url);
 
       if (current) {
-        const clicksChange = previous ? 
-          (previous.clicks > 0 ? ((current.clicks - previous.clicks) / previous.clicks) * 100 : 100) 
-          : (current.clicks > 0 ? 100 : 0);
-        
-        const impressionsChange = previous ? 
-          (previous.impressions > 0 ? ((current.impressions - previous.impressions) / previous.impressions) * 100 : 100)
-          : (current.impressions > 0 ? 100 : 0);
-        
-        const positionChange = previous ? 
-          (current.position - previous.position)
+        const clicksChange = previous
+          ? previous.clicks > 0
+            ? ((current.clicks - previous.clicks) / previous.clicks) * 100
+            : 100
+          : current.clicks > 0
+          ? 100
           : 0;
+
+        const impressionsChange = previous
+          ? previous.impressions > 0
+            ? ((current.impressions - previous.impressions) / previous.impressions) * 100
+            : 100
+          : current.impressions > 0
+          ? 100
+          : 0;
+
+        const positionChange = previous ? current.position - previous.position : 0;
 
         resultMap.set(url, {
           clicks: current.clicks,
@@ -802,80 +823,72 @@ export async function getGscDataForPagesWithComparison(
           impressions: current.impressions,
           impressions_change: impressionsChange,
           position: current.position,
-          position_change: positionChange
+          position_change: positionChange,
         });
       }
     }
 
     console.log(`[GSC] ✅ ${resultMap.size} von ${pageUrls.length} URLs erfolgreich abgerufen.`);
     return resultMap;
-
   } catch (error) {
     console.error('Error in getGscDataForPagesWithComparison:', error);
     throw error;
   }
 }
 
-// ✅ NEU: GSC CTR pro Seite laden (für LandingPageChart)
 export async function getGscPageCtr(
   siteUrl: string,
   startDate: string,
   endDate: string
 ): Promise<Map<string, number>> {
   const result = new Map<string, number>();
-  
+
   try {
     const auth = createAuth();
     const searchconsole = google.searchconsole({ version: 'v1', auth });
-    
+
     const response = await searchconsole.searchanalytics.query({
       siteUrl,
       requestBody: {
         startDate,
         endDate,
         dimensions: ['page'],
-        rowLimit: 500
-      }
+        rowLimit: 500,
+      },
     });
-    
-    response.data.rows?.forEach(row => {
+
+    response.data.rows?.forEach((row) => {
       const pageUrl = row.keys?.[0];
       const ctr = row.ctr;
-      
-      // ✅ Explizite Null-Prüfung für beide Werte
+
       if (pageUrl && ctr !== undefined && ctr !== null) {
         try {
           const url = new URL(pageUrl);
-          result.set(url.pathname, ctr * 100); // Als Prozent
+          result.set(url.pathname, ctr * 100);
         } catch {
-          // Fallback: Pfad direkt extrahieren
           const path = pageUrl.replace(/^https?:\/\/[^\/]+/, '') || '/';
           result.set(path, ctr * 100);
         }
       }
     });
-    
+
     console.log(`[GSC] ${result.size} Seiten mit CTR-Daten geladen`);
   } catch (err) {
     console.warn('[GSC] CTR-Daten konnten nicht geladen werden:', err);
   }
-  
+
   return result;
 }
 
 // ============================================================================
-// NEUE FUNKTIONEN: Queries nach Landingpage
+// Queries nach Landingpage
 // ============================================================================
 
-/**
- * Holt die Top-Suchbegriffe (Queries) gruppiert nach Landingpage.
- * Gibt eine Map zurück: URL-Pfad → Array von Queries mit Klicks.
- */
 export async function getQueriesByLandingPage(
   siteUrl: string,
   startDate: string,
   endDate: string,
-  limit: number = 5 // Max Queries pro Seite
+  limit: number = 5
 ): Promise<Map<string, Array<{ query: string; clicks: number; impressions: number }>>> {
   const auth = createAuth();
   const searchconsole = google.searchconsole({ version: 'v1', auth });
@@ -887,14 +900,15 @@ export async function getQueriesByLandingPage(
         startDate,
         endDate,
         dimensions: ['page', 'query'],
-        rowLimit: 5000, // Mehr Daten abrufen für bessere Abdeckung
+        rowLimit: 5000,
       },
     });
 
     const rows = res.data.rows || [];
-    
-    // Gruppiere nach URL (Pfad)
-    const pageQueryMap = new Map<string, Array<{ query: string; clicks: number; impressions: number }>>();
+    const pageQueryMap = new Map<
+      string,
+      Array<{ query: string; clicks: number; impressions: number }>
+    >();
 
     for (const row of rows) {
       const fullUrl = row.keys?.[0] || '';
@@ -902,27 +916,22 @@ export async function getQueriesByLandingPage(
       const clicks = row.clicks || 0;
       const impressions = row.impressions || 0;
 
-      // Extrahiere nur den Pfad aus der URL
       let path = '/';
       try {
         const urlObj = new URL(fullUrl);
         path = urlObj.pathname;
-        // Entferne trailing slash (außer bei root)
         if (path.length > 1 && path.endsWith('/')) {
           path = path.slice(0, -1);
         }
       } catch {
-        // Falls URL-Parsing fehlschlägt, versuche einfache Extraktion via Regex
         const match = fullUrl.match(/https?:\/\/[^\/]+(\/[^?#]*)?/);
         if (match && match[1]) {
           path = match[1];
         }
       }
 
-      // Filtere irrelevante Queries
       if (!query || query === '(not set)' || query === '(not provided)') continue;
-      // Optional: Filter für sehr irrelevante Daten (z.B. 0 Klicks und wenig Impressions)
-      if (clicks === 0 && impressions < 10) continue; 
+      if (clicks === 0 && impressions < 10) continue;
 
       if (!pageQueryMap.has(path)) {
         pageQueryMap.set(path, []);
@@ -931,7 +940,6 @@ export async function getQueriesByLandingPage(
       pageQueryMap.get(path)!.push({ query, clicks, impressions });
     }
 
-    // Sortiere Queries pro Seite nach Klicks und limitiere die Anzahl
     for (const [path, queries] of pageQueryMap.entries()) {
       const sorted = queries
         .sort((a, b) => b.clicks - a.clicks || b.impressions - a.impressions)
@@ -940,16 +948,11 @@ export async function getQueriesByLandingPage(
     }
 
     return pageQueryMap;
-
   } catch (error) {
     console.error('[GSC] Error in getQueriesByLandingPage:', error);
     return new Map();
   }
 }
-
-// ============================================================================
-// ALTERNATIVE: Ausgabe als Object statt Map (besser für JSON-Serialisierung)
-// ============================================================================
 
 export interface LandingPageQueries {
   [path: string]: Array<{ query: string; clicks: number; impressions: number }>;
@@ -961,21 +964,18 @@ export async function getQueriesByLandingPageObject(
   endDate: string,
   limit: number = 5
 ): Promise<LandingPageQueries> {
-  // Ruft die Map-Funktion auf
   const mapResult = await getQueriesByLandingPage(siteUrl, startDate, endDate, limit);
-  
-  // Konvertiert Map zu Plain Object
+
   const result: LandingPageQueries = {};
   for (const [path, queries] of mapResult.entries()) {
     result[path] = queries;
   }
-  
+
   return result;
 }
 
 // ============================================================================
-// NEUE FUNKTION: Folgepfade der Einstiegsseiten (für google-api.ts)
-// Diese Funktion am Ende der google-api.ts Datei hinzufügen
+// Folgepfade der Einstiegsseiten
 // ============================================================================
 
 export interface FollowUpPath {
@@ -987,17 +987,10 @@ export interface FollowUpPath {
 export interface LandingPageFollowUpData {
   landingPage: string;
   totalSessions: number;
-  landingPageSessions: number; // ✅ NEU: Besucher der Landingpage selbst
+  landingPageSessions: number;
   followUpPaths: FollowUpPath[];
 }
 
-/**
- * Holt die Folgepfade (nächste besuchte Seiten) für eine spezifische Einstiegsseite.
- * 
- * Strategie: Wir holen alle Seitenaufrufe (screenPageViews) in Sessions,
- * die mit der angegebenen Landingpage gestartet haben, und filtern die
- * Landingpage selbst heraus.
- */
 export async function getLandingPageFollowUpPaths(
   propertyId: string,
   landingPage: string,
@@ -1005,17 +998,15 @@ export async function getLandingPageFollowUpPaths(
   endDate: string,
   siteUrl?: string
 ): Promise<LandingPageFollowUpData> {
-  const formattedPropertyId = propertyId.startsWith('properties/') 
-    ? propertyId 
+  const formattedPropertyId = propertyId.startsWith('properties/')
+    ? propertyId
     : `properties/${propertyId}`;
-  
+
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
-  // Normalisiere den Landingpage-Pfad
   let normalizedLandingPage = landingPage;
-  
-  // Entferne Domain falls vorhanden
+
   if (landingPage.startsWith('http')) {
     try {
       const url = new URL(landingPage);
@@ -1024,125 +1015,104 @@ export async function getLandingPageFollowUpPaths(
       // Fallback: Behalte Original
     }
   }
-  
-  // Entferne Query-Parameter
+
   const landingPageBase = normalizedLandingPage.split('?')[0];
-  
-  // Stelle sicher dass der Pfad mit / beginnt
-  const cleanLandingPage = landingPageBase.startsWith('/') ? landingPageBase : `/${landingPageBase}`;
+  const cleanLandingPage = landingPageBase.startsWith('/')
+    ? landingPageBase
+    : `/${landingPageBase}`;
 
   console.log(`[GA4 Followup] Property: ${formattedPropertyId}`);
   console.log(`[GA4 Followup] Landing Page: "${cleanLandingPage}"`);
   console.log(`[GA4 Followup] Date Range: ${startDate} - ${endDate}`);
 
   try {
-    // ✅ STRATEGIE: Hole alle Seitenaufrufe in Sessions mit dieser Landingpage
-    // Nutze screenPageViews statt sessions für genauere Daten
     const response = await analytics.properties.runReport({
       property: formattedPropertyId,
       requestBody: {
         dateRanges: [{ startDate, endDate }],
-        dimensions: [
-          { name: 'pagePath' }
-        ],
-        metrics: [
-          { name: 'screenPageViews' },
-          { name: 'activeUsers' }
-        ],
+        dimensions: [{ name: 'pagePath' }],
+        metrics: [{ name: 'screenPageViews' }, { name: 'activeUsers' }],
         dimensionFilter: {
           filter: {
             fieldName: 'landingPagePlusQueryString',
             stringFilter: {
-              // ✅ CONTAINS statt EXACT - da landingPage oft mit/ohne trailing slash variiert
               matchType: 'CONTAINS',
               value: cleanLandingPage,
-              caseSensitive: false
-            }
-          }
+              caseSensitive: false,
+            },
+          },
         },
-        orderBys: [
-          { metric: { metricName: 'screenPageViews' }, desc: true }
-        ],
-        limit: '100'
-      }
+        orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }],
+        limit: '100',
+      },
     });
 
     const rows = response.data.rows || [];
     console.log(`[GA4 Followup] Rows returned: ${rows.length}`);
-    
-    // Debug: Zeige erste paar Ergebnisse
+
     if (rows.length > 0) {
-      console.log(`[GA4 Followup] Sample results:`, rows.slice(0, 3).map(r => ({
-        path: r.dimensionValues?.[0]?.value,
-        views: r.metricValues?.[0]?.value
-      })));
+      console.log(
+        `[GA4 Followup] Sample results:`,
+        rows.slice(0, 3).map((r) => ({
+          path: r.dimensionValues?.[0]?.value,
+          views: r.metricValues?.[0]?.value,
+        }))
+      );
     }
 
     const followUpPaths: FollowUpPath[] = [];
     let totalPageViews = 0;
     let landingPageViews = 0;
-    
+
     for (const row of rows) {
       const pagePath = row.dimensionValues?.[0]?.value || '';
       const pageViews = parseInt(row.metricValues?.[0]?.value || '0', 10);
-      
-      // Skip leere oder (not set) Pfade
+
       if (!pagePath || pagePath === '(not set)' || pagePath === '(not provided)') {
         continue;
       }
-      
-      // Prüfe ob dies die Landingpage selbst ist (verschiedene Varianten)
-      const isLandingPage = 
+
+      const isLandingPage =
         pagePath === cleanLandingPage ||
         pagePath === `${cleanLandingPage}/` ||
         pagePath.replace(/\/$/, '') === cleanLandingPage.replace(/\/$/, '') ||
         (cleanLandingPage === '/' && pagePath === '/');
-      
+
       if (isLandingPage) {
         landingPageViews = pageViews;
-        continue; // Überspringe die Landingpage selbst
+        continue;
       }
-      
+
       totalPageViews += pageViews;
-      followUpPaths.push({
-        path: pagePath,
-        sessions: pageViews,
-        percentage: 0
-      });
+      followUpPaths.push({ path: pagePath, sessions: pageViews, percentage: 0 });
     }
-    
+
     console.log(`[GA4 Followup] Landing page views: ${landingPageViews}`);
     console.log(`[GA4 Followup] Follow-up page views: ${totalPageViews}`);
     console.log(`[GA4 Followup] Unique follow-up paths: ${followUpPaths.length}`);
 
-    // Prozentsätze berechnen (basierend auf Landingpage-Besucher)
     for (const fp of followUpPaths) {
-      fp.percentage = landingPageViews > 0 
-        ? (fp.sessions / landingPageViews) * 100 
-        : 0;
+      fp.percentage =
+        landingPageViews > 0 ? (fp.sessions / landingPageViews) * 100 : 0;
     }
-    
-    // Sortieren nach Views (absteigend) und limitieren
+
     const sortedPaths = followUpPaths
       .sort((a, b) => b.sessions - a.sessions)
       .slice(0, 20);
 
     return {
       landingPage: cleanLandingPage,
-      totalSessions: landingPageViews + totalPageViews, // Gesamt-Seitenaufrufe in diesen Sessions
-      landingPageSessions: landingPageViews, // ✅ NEU: Besucher der Landingpage
-      followUpPaths: sortedPaths
+      totalSessions: landingPageViews + totalPageViews,
+      landingPageSessions: landingPageViews,
+      followUpPaths: sortedPaths,
     };
-
   } catch (error) {
     console.error('[GA4 Followup] Error:', error);
-    
-    // Bei Fehler: Leere Daten zurückgeben statt zu crashen
     return {
       landingPage: cleanLandingPage,
       totalSessions: 0,
       landingPageSessions: 0,
-      followUpPaths: []
+      followUpPaths: [],
     };
   }
 }
@@ -1180,8 +1150,11 @@ export interface GoogleAdsData {
  * Google Ads Performance über GA4 Data API.
  *
  * Call 1: sessionGoogleAds*-Dimensionen + advertiserAd*-Metriken
- * Call 2: pagePath + sessions/conversions, gefiltert auf Paid Search
- *         (komplett getrennt, eigener try/catch – fliegt nie auf)
+ *         → Kampagnen / Anzeigengruppen / Suchanfragen
+ *
+ * Call 2: landingPagePlusQueryString + sessionGoogleAdsCampaignName
+ *         Gleicher Filter wie Call 1 (sessionGoogleAdsCampaignName != not set)
+ *         → echte Ads-Kosten & Klicks pro Landingpage, konsistent mit Totals
  */
 export async function getGoogleAdsReport(
   propertyId: string,
@@ -1196,7 +1169,7 @@ export async function getGoogleAdsReport(
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
   // ═════════════════════════════════════════
-  // CALL 1: Ads-Performance (funktioniert sicher)
+  // CALL 1: Ads-Performance nach Kampagne / AdGroup / Query
   // ═════════════════════════════════════════
   const adsResponse = await analytics.properties.runReport({
     property: formattedPropertyId,
@@ -1215,9 +1188,7 @@ export async function getGoogleAdsReport(
         { name: 'conversions' },
         { name: 'sessions' },
       ],
-      orderBys: [
-        { metric: { metricName: 'advertiserAdCost' }, desc: true },
-      ],
+      orderBys: [{ metric: { metricName: 'advertiserAdCost' }, desc: true }],
       limit: '500',
       dimensionFilter: {
         notExpression: {
@@ -1249,9 +1220,13 @@ export async function getGoogleAdsReport(
   });
 
   // ═════════════════════════════════════════
-  // CALL 2: Paid Search Landingpages (optional, fängt sich selbst)
-  // Keine Google-Ads-Dimensionen, keine Ads-Metriken
-  // Nur Standard-GA4: pagePath + sessions/conversions
+  // CALL 2: Landingpages mit echten Ads-Metriken
+  //
+  // FIX: Nutzt denselben sessionGoogleAdsCampaignName-Filter wie Call 1.
+  // Vorher: pagePath + sessionDefaultChannelGroup = Paid Search
+  //   → andere Attribution, cost/clicks immer 0, Conversions inkonsistent
+  // Jetzt: landingPagePlusQueryString + sessionGoogleAdsCampaignName
+  //   → echte Ads-Kosten & Klicks, gleiche Datenbasis wie Kampagnen-Tab
   // ═════════════════════════════════════════
   let landingPageRows: GoogleAdsRow[] = [];
 
@@ -1261,20 +1236,24 @@ export async function getGoogleAdsReport(
       requestBody: {
         dateRanges: [{ startDate, endDate }],
         dimensions: [
-          { name: 'pagePath' },
+          { name: 'landingPagePlusQueryString' },
+          { name: 'sessionGoogleAdsCampaignName' },
         ],
         metrics: [
-          { name: 'sessions' },
+          { name: 'advertiserAdCost' },
+          { name: 'advertiserAdClicks' },
+          { name: 'advertiserAdCostPerClick' },
           { name: 'conversions' },
+          { name: 'sessions' },
         ],
-        orderBys: [
-          { metric: { metricName: 'sessions' }, desc: true },
-        ],
-        limit: '100',
+        orderBys: [{ metric: { metricName: 'advertiserAdCost' }, desc: true }],
+        limit: '200',
         dimensionFilter: {
-          filter: {
-            fieldName: 'sessionDefaultChannelGroup',
-            stringFilter: { matchType: 'EXACT', value: 'Paid Search' },
+          notExpression: {
+            filter: {
+              fieldName: 'sessionGoogleAdsCampaignName',
+              stringFilter: { matchType: 'EXACT', value: '(not set)' },
+            },
           },
         },
       },
@@ -1283,43 +1262,64 @@ export async function getGoogleAdsReport(
     landingPageRows = (lpResponse.data.rows || []).map((row) => {
       const dims = row.dimensionValues || [];
       const mets = row.metricValues || [];
+      const cost = parseFloat(mets[0]?.value || '0');
+      const clicks = parseInt(mets[1]?.value || '0', 10);
       return {
-        campaign: '–',
+        campaign: dims[1]?.value || '(not set)', // Kampagnenname für Drill-down
         adGroup: '–',
         keyword: '–',
         searchQuery: '–',
         landingPage: dims[0]?.value || '(not set)',
-        cost: 0,
-        clicks: 0,
-        cpc: 0,
-        roas: 0,
-        sessions: parseInt(mets[0]?.value || '0', 10),
-        conversions: parseFloat(mets[1]?.value || '0'),
+        cost,
+        clicks,
+        cpc: parseFloat(mets[2]?.value || '0'),
+        roas: 0, // GA4 liefert keinen ROAS auf LP-Ebene
+        conversions: parseFloat(mets[3]?.value || '0'),
+        sessions: parseInt(mets[4]?.value || '0', 10),
       };
     });
 
-    console.log(`[Google Ads] LP-Call: ${landingPageRows.length} Paid Search Landingpages`);
+    console.log(
+      `[Google Ads] LP-Call: ${landingPageRows.length} Landingpages mit echten Ads-Metriken`
+    );
   } catch (e) {
     console.warn('[Google Ads] Landingpage-Call fehlgeschlagen (ignoriert):', e);
-    // landingPageRows bleibt [] – Widget zeigt den Tab trotzdem nicht
   }
 
+  // ═════════════════════════════════════════
   // Totals aus Call 1
-  const totals = rows.reduce(
-    (acc, r) => ({
-      cost: acc.cost + r.cost,
-      clicks: acc.clicks + r.clicks,
-      avgCpc: 0,
-      roas: 0,
-      conversions: acc.conversions + r.conversions,
-      sessions: acc.sessions + r.sessions,
-    }),
-    { cost: 0, clicks: 0, avgCpc: 0, roas: 0, conversions: 0, sessions: 0 }
-  );
+  //
+  // FIX: revenue wird korrekt pro Row akkumuliert, bevor roas berechnet wird.
+  // returnOnAdSpend aus GA4 ist 0, wenn in Google Ads keine Conversion-Werte
+  // (€-Beträge) hinterlegt sind – das ist ein Google Ads Setup-Problem,
+  // kein Code-Fehler. In diesem Fall bleibt roas = 0, das Widget zeigt "–".
+  // ═════════════════════════════════════════
+  let totalCost = 0;
+  let totalClicks = 0;
+  let totalConversions = 0;
+  let totalSessions = 0;
+  let totalRevenue = 0;
 
-  totals.avgCpc = totals.clicks > 0 ? totals.cost / totals.clicks : 0;
-  const totalRevenue = rows.reduce((sum, r) => sum + r.roas * r.cost, 0);
-  totals.roas = totals.cost > 0 ? totalRevenue / totals.cost : 0;
+  for (const r of rows) {
+    totalCost += r.cost;
+    totalClicks += r.clicks;
+    totalConversions += r.conversions;
+    totalSessions += r.sessions;
+    totalRevenue += r.roas * r.cost; // revenue = roas × cost pro Row
+  }
+
+  const totals = {
+    cost: totalCost,
+    clicks: totalClicks,
+    avgCpc: totalClicks > 0 ? totalCost / totalClicks : 0,
+    roas: totalCost > 0 ? totalRevenue / totalCost : 0,
+    conversions: totalConversions,
+    sessions: totalSessions,
+  };
+
+  console.log(
+    `[Google Ads] Totals → Spend: €${totals.cost.toFixed(2)} | Klicks: ${totals.clicks} | ROAS: ${totals.roas.toFixed(2)}x | Conv.: ${totals.conversions} | Sessions: ${totals.sessions}`
+  );
 
   return { rows, landingPageRows, totals };
 }
