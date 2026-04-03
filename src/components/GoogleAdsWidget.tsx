@@ -553,8 +553,10 @@ function TableRow({
                 {formatInteractionRate(sub.interactionRate)}
               </span>
             </td>
-            {!hideConv && !hideSubConv && (
-            <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.conversions)}</td>
+            {!hideConv && (
+            <td className="text-right px-3 py-2 text-muted">
+              {hideSubConv ? '–' : formatNumber(sub.conversions)}
+            </td>
             )}
             <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.sessions)}</td>
           </tr>
