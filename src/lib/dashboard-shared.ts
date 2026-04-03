@@ -108,7 +108,7 @@ export interface GoogleAdsRow {
 export interface GoogleAdsData {
   /** Kampagne + Anzeigengruppe + Suchanfrage (GA4 Call 1) */
   rows: GoogleAdsRow[];
-  /** Landingpages pro Kampagne (GA4 Call 2 – separate Abfrage wegen Inkompatibilität) */
+  /** Landingpages pro Kampagne (GA4 Call 2) */
   landingPageRows: GoogleAdsRow[];
   totals: {
     cost: number;
@@ -119,6 +119,10 @@ export interface GoogleAdsData {
     sessions: number;
     engagedSessions: number;
   };
+  /** Echte Conversions pro Kampagne (1-Dimension-Call, kein Thresholding) */
+  conversionsByCampaign?: Record<string, number>;
+  /** Echte Conversions pro Anzeigengruppe (1-Dimension-Call, kein Thresholding) */
+  conversionsByAdGroup?: Record<string, number>;
 }
 
 export interface ProjectDashboardData {
