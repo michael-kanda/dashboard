@@ -1131,6 +1131,7 @@ export interface GoogleAdsRow {
   roas: number;
   conversions: number;
   sessions: number;
+  engagedSessions: number;
 }
 
 export interface GoogleAdsData {
@@ -1143,6 +1144,7 @@ export interface GoogleAdsData {
     roas: number;
     conversions: number;
     sessions: number;
+    engagedSessions: number;
   };
 }
 
@@ -1187,7 +1189,9 @@ export async function getGoogleAdsReport(
         { name: 'returnOnAdSpend' },
         { name: 'conversions' },
         { name: 'sessions' },
+        { name: 'engagedSessions' },
       ],
+      metricAggregations: ['TOTAL'],
       orderBys: [{ metric: { metricName: 'advertiserAdCost' }, desc: true }],
       limit: '500',
       dimensionFilter: {
@@ -1216,6 +1220,7 @@ export async function getGoogleAdsReport(
       roas: parseFloat(mets[3]?.value || '0'),
       conversions: parseFloat(mets[4]?.value || '0'),
       sessions: parseInt(mets[5]?.value || '0', 10),
+      engagedSessions: parseInt(mets[6]?.value || '0', 10),
     };
   });
 
@@ -1245,6 +1250,7 @@ export async function getGoogleAdsReport(
           { name: 'advertiserAdCostPerClick' },
           { name: 'conversions' },
           { name: 'sessions' },
+          { name: 'engagedSessions' },
         ],
         orderBys: [{ metric: { metricName: 'advertiserAdCost' }, desc: true }],
         limit: '200',
@@ -1276,6 +1282,7 @@ export async function getGoogleAdsReport(
         roas: 0, // GA4 liefert keinen ROAS auf LP-Ebene
         conversions: parseFloat(mets[3]?.value || '0'),
         sessions: parseInt(mets[4]?.value || '0', 10),
+        engagedSessions: parseInt(mets[5]?.value || '0', 10),
       };
     });
 
@@ -1289,23 +1296,49 @@ export async function getGoogleAdsReport(
   // ═════════════════════════════════════════
   // Totals aus Call 1
   //
-  // FIX: revenue wird korrekt pro Row akkumuliert, bevor roas berechnet wird.
-  // returnOnAdSpend aus GA4 ist 0, wenn in Google Ads keine Conversion-Werte
-  // (€-Beträge) hinterlegt sind – das ist ein Google Ads Setup-Problem,
-  // kein Code-Fehler. In diesem Fall bleibt roas = 0, das Widget zeigt "–".
+  // FIX: Nutze metricAggregations: ['TOTAL'] aus der API-Antwort.
+  // Vorher: manuelle Summierung der Rows → falsche Totals weil GA4
+  // bei vielen Dimensions Rows wegen Thresholding / Row-Limit unterdrückt.
+  // Jetzt: API berechnet Totals über ALLE Daten, unabhängig vom Limit.
+  //
+  // ROAS wird weiterhin manuell berechnet (revenue = roas × cost pro Row),
+  // da die API den Durchschnitt-ROAS nicht korrekt gewichtet zurückgibt.
   // ═════════════════════════════════════════
-  let totalCost = 0;
-  let totalClicks = 0;
-  let totalConversions = 0;
-  let totalSessions = 0;
+  const apiTotals = adsResponse.data.totals?.[0]?.metricValues;
+
+  let totalCost: number;
+  let totalClicks: number;
+  let totalConversions: number;
+  let totalSessions: number;
+  let totalEngagedSessions: number;
   let totalRevenue = 0;
 
-  for (const r of rows) {
-    totalCost += r.cost;
-    totalClicks += r.clicks;
-    totalConversions += r.conversions;
-    totalSessions += r.sessions;
-    totalRevenue += r.roas * r.cost; // revenue = roas × cost pro Row
+  if (apiTotals && apiTotals.length >= 7) {
+    // API-Totals verwenden (genauer als Row-Summierung)
+    totalCost = parseFloat(apiTotals[0]?.value || '0');
+    totalClicks = parseInt(apiTotals[1]?.value || '0', 10);
+    totalConversions = parseFloat(apiTotals[4]?.value || '0');
+    totalSessions = parseInt(apiTotals[5]?.value || '0', 10);
+    totalEngagedSessions = parseInt(apiTotals[6]?.value || '0', 10);
+    // Revenue muss aus Rows kommen (ROAS × Cost pro Row)
+    for (const r of rows) {
+      totalRevenue += r.roas * r.cost;
+    }
+  } else {
+    // Fallback: manuelle Summierung
+    totalCost = 0;
+    totalClicks = 0;
+    totalConversions = 0;
+    totalSessions = 0;
+    totalEngagedSessions = 0;
+    for (const r of rows) {
+      totalCost += r.cost;
+      totalClicks += r.clicks;
+      totalConversions += r.conversions;
+      totalSessions += r.sessions;
+      totalEngagedSessions += r.engagedSessions;
+      totalRevenue += r.roas * r.cost;
+    }
   }
 
   const totals = {
@@ -1315,10 +1348,11 @@ export async function getGoogleAdsReport(
     roas: totalCost > 0 ? totalRevenue / totalCost : 0,
     conversions: totalConversions,
     sessions: totalSessions,
+    engagedSessions: totalEngagedSessions,
   };
 
   console.log(
-    `[Google Ads] Totals → Spend: €${totals.cost.toFixed(2)} | Klicks: ${totals.clicks} | ROAS: ${totals.roas.toFixed(2)}x | Conv.: ${totals.conversions} | Sessions: ${totals.sessions}`
+    `[Google Ads] Totals → Spend: €${totals.cost.toFixed(2)} | Klicks: ${totals.clicks} | ROAS: ${totals.roas.toFixed(2)}x | Conv.: ${totals.conversions} | Sessions: ${totals.sessions} | Engaged: ${totals.engagedSessions}`
   );
 
   return { rows, landingPageRows, totals };
