@@ -117,6 +117,21 @@ function aggregateBy(rows: GoogleAdsRow[], field: keyof GoogleAdsRow): Aggregate
   }));
 }
 
+/**
+ * Bestimmt die nächste Drill-Down-Dimension und das zugehörige Label.
+ */
+function getNextDimension(viewMode: ViewMode): { field: keyof GoogleAdsRow; label: string } | null {
+  switch (viewMode) {
+    case 'campaign':
+      return { field: 'adGroup', label: 'Anzeigengruppe' };
+    case 'adgroup':
+      return { field: 'searchQuery', label: 'Suchanfrage' };
+    default:
+      // Suchanfragen haben kein weiteres Drill-Down
+      return null;
+  }
+}
+
 // ── Hauptkomponente ──
 
 export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAdsWidgetProps) {
@@ -438,22 +453,15 @@ function TableRow({
   viewMode: ViewMode;
   hideConv: boolean;
 }) {
-  const hasSubRows = (row.subRows?.length || 0) > 1;
+  // ── FIX: SubRows nach der nächsten Dimension aggregieren ──
+  const nextDim = getNextDimension(viewMode);
 
-  // NEU: Wir aggregieren die rohen Sub-Rows jetzt sauber, bevor wir sie rendern!
   const aggregatedSubRows = useMemo(() => {
-    if (!isExpanded || !row.subRows) return [];
-    
-    // Wonach soll aggregiert werden, wenn aufgeklappt wird?
-    let subField: keyof GoogleAdsRow = 'adGroup';
-    if (viewMode === 'campaign') subField = 'adGroup';
-    else if (viewMode === 'adgroup') subField = 'searchQuery';
-    else if (viewMode === 'searchquery') subField = 'campaign';
-    else if (viewMode === 'landingpage') subField = 'campaign';
+    if (!nextDim || !row.subRows || row.subRows.length <= 1) return [];
+    return aggregateBy(row.subRows, nextDim.field);
+  }, [row.subRows, nextDim]);
 
-    // Nutze unsere bestehende Aggregations-Funktion und sortiere nach Kosten
-    return aggregateBy(row.subRows, subField).sort((a, b) => b.cost - a.cost);
-  }, [isExpanded, row.subRows, viewMode]);
+  const hasSubRows = aggregatedSubRows.length > 1;
 
   return (
     <>
@@ -463,7 +471,7 @@ function TableRow({
           hasSubRows ? 'cursor-pointer hover:bg-surface-secondary/50' : ''
         } ${isExpanded ? 'bg-surface-secondary/30' : ''}`}
       >
-        <td className="px-4 py-2.5 font-medium text-strong max-w-[250px]">
+        <td className="px-4 py-2.5 font-medium text-strong max-w-[300px]">
           <div className="flex items-center gap-2">
             {hasSubRows && (
               <span className="text-faint flex-shrink-0">
@@ -475,52 +483,76 @@ function TableRow({
             </span>
           </div>
         </td>
-        <td className="text-right px-3 py-2.5 text-strong font-semibold">{formatCurrency(row.cost)}</td>
-        <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.clicks)}</td>
-        <td className="text-right px-3 py-2.5 text-body">{formatCurrency(row.cpc)}</td>
-        <td className="text-right px-3 py-2.5 text-body">{row.roas > 0 ? row.roas.toFixed(2) : '–'}</td>
-        {!hideConv && <td className="text-right px-3 py-2.5 text-body">{row.cpa > 0 ? formatCurrency(row.cpa) : '–'}</td>}
-        {!hideConv && <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.conversions)}</td>}
-        <td className="text-right px-3 py-2.5">
-          <span className={`font-semibold ${row.interactionRate >= 80 ? 'text-emerald-500' : row.interactionRate >= 50 ? 'text-amber-500' : row.interactionRate > 0 ? 'text-red-500' : 'text-muted'}`}>
-            {formatInteractionRate(row.interactionRate)}
-          </span>
+        <td className="text-right px-3 py-2.5 text-strong font-semibold">
+          {formatCurrency(row.cost)}
         </td>
+        <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.clicks)}</td>
+        {(
+          <td className="text-right px-3 py-2.5 text-body">{formatCurrency(row.cpc)}</td>
+        )}
+        {(
+          <td className="text-right px-3 py-2.5">
+            <span
+              className={`font-semibold ${
+                row.interactionRate >= 80
+                  ? 'text-emerald-500'
+                  : row.interactionRate >= 50
+                  ? 'text-amber-500'
+                  : row.interactionRate > 0
+                  ? 'text-red-500'
+                  : 'text-muted'
+              }`}
+            >
+              {formatInteractionRate(row.interactionRate)}
+            </span>
+          </td>
+        )}
+        {!hideConv && (
+        <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.conversions)}</td>
+        )}
+        <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.sessions)}</td>
       </tr>
 
-      {/* Geändert: Wir iterieren über 'aggregatedSubRows' statt über die unsauberen 'row.subRows' */}
       {isExpanded &&
         hasSubRows &&
-        aggregatedSubRows.map((sub, i) => {
-          const subDimLabel =
-            viewMode === 'campaign' ? 'Anzeigengruppe' :
-            viewMode === 'adgroup' ? 'Suchanfrage' :
-            'Kampagne';
-
-          return (
-            <tr key={i} className="border-b border-theme-border-subtle bg-surface/30">
-              <td className="pl-10 pr-4 py-2 text-muted">
-                <span className="text-[10px] uppercase tracking-wider text-faint mr-1.5">
-                  {subDimLabel}:
-                </span>
-                <span className="truncate" title={sub.label}>
-                  {sub.label}
-                </span>
-              </td>
-              <td className="text-right px-3 py-2 text-muted">{formatCurrency(sub.cost)}</td>
-              <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.clicks)}</td>
+        aggregatedSubRows.map((sub) => (
+          <tr key={sub.label} className="border-b border-theme-border-subtle bg-surface/30">
+            <td className="pl-10 pr-4 py-2 text-muted">
+              <span className="text-[10px] uppercase tracking-wider text-faint mr-1.5">
+                {nextDim!.label}:
+              </span>
+              <span className="truncate" title={sub.label}>
+                {sub.label}
+              </span>
+            </td>
+            <td className="text-right px-3 py-2 text-muted">{formatCurrency(sub.cost)}</td>
+            <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.clicks)}</td>
+            {(
               <td className="text-right px-3 py-2 text-muted">{formatCurrency(sub.cpc)}</td>
-              <td className="text-right px-3 py-2 text-muted">{sub.roas > 0 ? sub.roas.toFixed(2) : '–'}</td>
-              {!hideConv && <td className="text-right px-3 py-2 text-muted">{sub.cpa > 0 ? formatCurrency(sub.cpa) : '–'}</td>}
-              {!hideConv && <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.conversions)}</td>}
+            )}
+            {(
               <td className="text-right px-3 py-2">
-                <span className={`${sub.interactionRate >= 80 ? 'text-emerald-500/70' : sub.interactionRate >= 50 ? 'text-amber-500/70' : sub.interactionRate > 0 ? 'text-red-500/70' : 'text-muted'}`}>
+                <span
+                  className={`${
+                    sub.interactionRate >= 80
+                      ? 'text-emerald-500/70'
+                      : sub.interactionRate >= 50
+                      ? 'text-amber-500/70'
+                      : sub.interactionRate > 0
+                      ? 'text-red-500/70'
+                      : 'text-muted'
+                  }`}
+                >
                   {formatInteractionRate(sub.interactionRate)}
                 </span>
               </td>
-            </tr>
-          );
-        })}
+            )}
+            {!hideConv && (
+            <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.conversions)}</td>
+            )}
+            <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.sessions)}</td>
+          </tr>
+        ))}
     </>
   );
 }
