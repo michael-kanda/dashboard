@@ -1329,63 +1329,116 @@ export async function getGoogleAdsReport(
   }
 
   // ═════════════════════════════════════════
-  // CALL 2: Landingpages (1 Dimension)
+  // CALL 2: Landingpages
   //
-  // WICHTIG: advertiserAdCost/Clicks/CPC sind INKOMPATIBEL mit
-  // landingPagePlusQueryString (GA4 API Einschränkung).
-  // Deshalb nur sessions/conversions/engagedSessions.
-  // Filter: sessionDefaultChannelGroup = 'Paid Search'
+  // Versuch A: Mit Ad-Metriken (Kosten/Klicks) — benötigt Google-Ads-Dimension.
+  //            Kann wegen Thresholding bei wenig Daten 0 Rows liefern.
+  // Versuch B: Fallback ohne Ad-Metriken — nur Sessions/Conv./EngagedSessions.
+  //            Funktioniert immer, aber ohne Kosten/Klicks.
   // ═════════════════════════════════════════
   let landingPageRows: GoogleAdsRow[] = [];
 
+  // Versuch A: Mit Kosten (2 Dimensionen + Ad-Metriken)
   try {
-    const lpResponse = await analytics.properties.runReport({
+    const lpFullResponse = await analytics.properties.runReport({
       property: formattedPropertyId,
       requestBody: {
         dateRanges: [{ startDate, endDate }],
         dimensions: [
           { name: 'landingPagePlusQueryString' },
+          { name: 'sessionGoogleAdsCampaignName' },
         ],
         metrics: [
-          { name: 'sessions' },
+          { name: 'advertiserAdCost' },
+          { name: 'advertiserAdClicks' },
+          { name: 'advertiserAdCostPerClick' },
           { name: 'conversions' },
+          { name: 'sessions' },
           { name: 'engagedSessions' },
         ],
         orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
         limit: '200',
-        dimensionFilter: {
-          filter: {
-            fieldName: 'sessionDefaultChannelGroup',
-            stringFilter: { matchType: 'EXACT' as const, value: 'Paid Search' },
-          },
-        },
+        dimensionFilter: adsFilter,
       },
     });
 
-    landingPageRows = (lpResponse.data.rows || []).map((row) => {
-      const dims = row.dimensionValues || [];
-      const mets = row.metricValues || [];
-      return {
-        campaign: '–',
-        adGroup: '–',
-        keyword: '–',
-        searchQuery: '–',
-        landingPage: dims[0]?.value || '(not set)',
-        cost: 0,
-        clicks: 0,
-        cpc: 0,
-        roas: 0,
-        conversions: parseFloat(mets[1]?.value || '0'),
-        sessions: parseInt(mets[0]?.value || '0', 10),
-        engagedSessions: parseInt(mets[2]?.value || '0', 10),
-      };
-    });
-
-    console.log(
-      `[Google Ads] LP-Call: ${landingPageRows.length} Landingpages`
-    );
+    const fullRows = lpFullResponse.data.rows || [];
+    if (fullRows.length > 0) {
+      landingPageRows = fullRows.map((row) => {
+        const dims = row.dimensionValues || [];
+        const mets = row.metricValues || [];
+        return {
+          campaign: dims[1]?.value || '(not set)',
+          adGroup: '–',
+          keyword: '–',
+          searchQuery: '–',
+          landingPage: dims[0]?.value || '(not set)',
+          cost: parseFloat(mets[0]?.value || '0'),
+          clicks: parseInt(mets[1]?.value || '0', 10),
+          cpc: parseFloat(mets[2]?.value || '0'),
+          roas: 0,
+          conversions: parseFloat(mets[3]?.value || '0'),
+          sessions: parseInt(mets[4]?.value || '0', 10),
+          engagedSessions: parseInt(mets[5]?.value || '0', 10),
+        };
+      });
+      console.log(`[Google Ads] LP-Call A (mit Kosten): ${landingPageRows.length} Landingpages ✅`);
+    } else {
+      console.log('[Google Ads] LP-Call A: 0 Rows (Thresholding) → Fallback B');
+    }
   } catch (e) {
-    console.warn('[Google Ads] Landingpage-Call fehlgeschlagen (ignoriert):', e);
+    console.log('[Google Ads] LP-Call A fehlgeschlagen → Fallback B');
+  }
+
+  // Versuch B: Fallback ohne Ad-Metriken (falls A leer)
+  if (landingPageRows.length === 0) {
+    try {
+      const lpResponse = await analytics.properties.runReport({
+        property: formattedPropertyId,
+        requestBody: {
+          dateRanges: [{ startDate, endDate }],
+          dimensions: [
+            { name: 'landingPagePlusQueryString' },
+          ],
+          metrics: [
+            { name: 'sessions' },
+            { name: 'conversions' },
+            { name: 'engagedSessions' },
+          ],
+          orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+          limit: '200',
+          dimensionFilter: {
+            filter: {
+              fieldName: 'sessionDefaultChannelGroup',
+              stringFilter: { matchType: 'EXACT' as const, value: 'Paid Search' },
+            },
+          },
+        },
+      });
+
+      landingPageRows = (lpResponse.data.rows || []).map((row) => {
+        const dims = row.dimensionValues || [];
+        const mets = row.metricValues || [];
+        return {
+          campaign: '–',
+          adGroup: '–',
+          keyword: '–',
+          searchQuery: '–',
+          landingPage: dims[0]?.value || '(not set)',
+          cost: 0,
+          clicks: 0,
+          cpc: 0,
+          roas: 0,
+          conversions: parseFloat(mets[1]?.value || '0'),
+          sessions: parseInt(mets[0]?.value || '0', 10),
+          engagedSessions: parseInt(mets[2]?.value || '0', 10),
+        };
+      });
+
+      console.log(`[Google Ads] LP-Call B (ohne Kosten): ${landingPageRows.length} Landingpages`);
+    } catch (e) {
+      console.warn('[Google Ads] LP-Call B fehlgeschlagen (ignoriert):', e);
+    }
   }
 
   // ═════════════════════════════════════════
