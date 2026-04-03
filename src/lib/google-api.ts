@@ -1150,6 +1150,8 @@ export interface GoogleAdsData {
   conversionsByCampaign?: Record<string, number>;
   /** Echte Conversions pro Anzeigengruppe (1-Dimension-Call, kein Thresholding) */
   conversionsByAdGroup?: Record<string, number>;
+  /** Echte Conversions pro Suchanfrage (1-Dimension-Call, kein Thresholding) */
+  conversionsByQuery?: Record<string, number>;
 }
 
 /**
@@ -1268,16 +1270,17 @@ export async function getGoogleAdsReport(
   });
 
   // ═════════════════════════════════════════
-  // CALL 1b + 1c: Echte Conversions pro Dimension (je 1 Dimension)
+  // CALL 1b/1c/1d: Echte Conversions pro Dimension (je 1 Dimension)
   //
   // Call 1 (3 Dimensionen) liefert wegen GA4 Thresholding 0 Conversions.
   // Separate 1-Dimension-Calls liefern die echten, unverfälschten Werte.
   // ═════════════════════════════════════════
   const conversionsByCampaign: Record<string, number> = {};
   const conversionsByAdGroup: Record<string, number> = {};
+  const conversionsByQuery: Record<string, number> = {};
 
   try {
-    const [convByCamp, convByAg] = await Promise.all([
+    const [convByCamp, convByAg, convByQuery] = await Promise.all([
       analytics.properties.runReport({
         property: formattedPropertyId,
         requestBody: {
@@ -1296,6 +1299,15 @@ export async function getGoogleAdsReport(
           dimensionFilter: adsFilter,
         },
       }),
+      analytics.properties.runReport({
+        property: formattedPropertyId,
+        requestBody: {
+          dateRanges: [{ startDate, endDate }],
+          dimensions: [{ name: 'sessionGoogleAdsQuery' }],
+          metrics: [{ name: 'conversions' }],
+          dimensionFilter: adsFilter,
+        },
+      }),
     ]);
 
     for (const row of convByCamp.data.rows || []) {
@@ -1306,8 +1318,12 @@ export async function getGoogleAdsReport(
       const name = row.dimensionValues?.[0]?.value || '(not set)';
       conversionsByAdGroup[name] = parseFloat(row.metricValues?.[0]?.value || '0');
     }
+    for (const row of convByQuery.data.rows || []) {
+      const name = row.dimensionValues?.[0]?.value || '(not set)';
+      conversionsByQuery[name] = parseFloat(row.metricValues?.[0]?.value || '0');
+    }
 
-    console.log(`[Google Ads] Call 1b/1c → Conv. by Campaign: ${JSON.stringify(conversionsByCampaign)} | by AdGroup: ${JSON.stringify(conversionsByAdGroup)}`);
+    console.log(`[Google Ads] Conv-Lookups → Campaigns: ${Object.keys(conversionsByCampaign).length} | AdGroups: ${Object.keys(conversionsByAdGroup).length} | Queries: ${Object.keys(conversionsByQuery).length}`);
   } catch (e) {
     console.warn('[Google Ads] Conv-Lookup fehlgeschlagen (ignoriert):', e);
   }
@@ -1315,9 +1331,8 @@ export async function getGoogleAdsReport(
   // ═════════════════════════════════════════
   // CALL 2: Landingpages (1 Dimension)
   //
-  // Filter: sessionMedium = 'cpc' statt sessionGoogleAdsCampaignName,
-  // da GA4 bei Kombination von Ads-Kampagnen-Filter + LP-Dimension
-  // oft 0 Ergebnisse liefert.
+  // Filter: sessionDefaultChannelGroup = 'Paid Search'
+  // (nachweislich funktional — die Channel-Chart nutzt dieselbe Dimension)
   // ═════════════════════════════════════════
   let landingPageRows: GoogleAdsRow[] = [];
 
@@ -1341,8 +1356,8 @@ export async function getGoogleAdsReport(
         limit: '200',
         dimensionFilter: {
           filter: {
-            fieldName: 'sessionMedium',
-            stringFilter: { matchType: 'EXACT' as const, value: 'cpc' },
+            fieldName: 'sessionDefaultChannelGroup',
+            stringFilter: { matchType: 'EXACT' as const, value: 'Paid Search' },
           },
         },
       },
@@ -1387,5 +1402,5 @@ export async function getGoogleAdsReport(
     engagedSessions: totalEngagedSessions,
   };
 
-  return { rows, landingPageRows, totals, conversionsByCampaign, conversionsByAdGroup };
+  return { rows, landingPageRows, totals, conversionsByCampaign, conversionsByAdGroup, conversionsByQuery };
 }
