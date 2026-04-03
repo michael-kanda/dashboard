@@ -1331,8 +1331,10 @@ export async function getGoogleAdsReport(
   // ═════════════════════════════════════════
   // CALL 2: Landingpages (1 Dimension)
   //
+  // WICHTIG: advertiserAdCost/Clicks/CPC sind INKOMPATIBEL mit
+  // landingPagePlusQueryString (GA4 API Einschränkung).
+  // Deshalb nur sessions/conversions/engagedSessions.
   // Filter: sessionDefaultChannelGroup = 'Paid Search'
-  // (nachweislich funktional — die Channel-Chart nutzt dieselbe Dimension)
   // ═════════════════════════════════════════
   let landingPageRows: GoogleAdsRow[] = [];
 
@@ -1345,11 +1347,8 @@ export async function getGoogleAdsReport(
           { name: 'landingPagePlusQueryString' },
         ],
         metrics: [
-          { name: 'advertiserAdCost' },
-          { name: 'advertiserAdClicks' },
-          { name: 'advertiserAdCostPerClick' },
-          { name: 'conversions' },
           { name: 'sessions' },
+          { name: 'conversions' },
           { name: 'engagedSessions' },
         ],
         orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
@@ -1372,13 +1371,13 @@ export async function getGoogleAdsReport(
         keyword: '–',
         searchQuery: '–',
         landingPage: dims[0]?.value || '(not set)',
-        cost: parseFloat(mets[0]?.value || '0'),
-        clicks: parseInt(mets[1]?.value || '0', 10),
-        cpc: parseFloat(mets[2]?.value || '0'),
+        cost: 0,
+        clicks: 0,
+        cpc: 0,
         roas: 0,
-        conversions: parseFloat(mets[3]?.value || '0'),
-        sessions: parseInt(mets[4]?.value || '0', 10),
-        engagedSessions: parseInt(mets[5]?.value || '0', 10),
+        conversions: parseFloat(mets[1]?.value || '0'),
+        sessions: parseInt(mets[0]?.value || '0', 10),
+        engagedSessions: parseInt(mets[2]?.value || '0', 10),
       };
     });
 
