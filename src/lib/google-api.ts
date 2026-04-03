@@ -1264,12 +1264,50 @@ export async function getGoogleAdsReport(
   });
 
   // ═════════════════════════════════════════
-  // CALL 2: Landingpages (nur 1 Dimension)
+  // CALL 1b: Conversions pro Kampagne (1 Dimension)
   //
-  // FIX: Nur landingPage als Dimension, OHNE sessionGoogleAdsCampaignName.
-  // Vorher: 2 Dimensionen → GA4 Thresholding → 0 Ergebnisse bei wenig Daten.
-  // Der Kampagnenname-Filter bleibt als dimensionFilter aktiv,
-  // d.h. es werden nur Ads-Sessions gezählt.
+  // Call 1 (3 Dimensionen) liefert wegen GA4 Thresholding oft 0 Conversions.
+  // Mit nur 1 Dimension kommen die echten Werte durch.
+  // Conversions werden anschließend proportional (nach Sessions) auf die
+  // Rows verteilt, damit Kampagnen-/Anzeigengruppen-Aggregation stimmt.
+  // ═════════════════════════════════════════
+  try {
+    const convResponse = await analytics.properties.runReport({
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [{ name: 'sessionGoogleAdsCampaignName' }],
+        metrics: [{ name: 'conversions' }],
+        dimensionFilter: adsFilter,
+      },
+    });
+
+    const campaignConv = new Map<string, number>();
+    for (const row of convResponse.data.rows || []) {
+      const campaign = row.dimensionValues?.[0]?.value || '(not set)';
+      const conv = parseFloat(row.metricValues?.[0]?.value || '0');
+      campaignConv.set(campaign, conv);
+    }
+
+    // Conversions proportional nach Sessions auf Rows verteilen
+    for (const [campaign, conv] of campaignConv) {
+      const campaignRows = rows.filter(r => r.campaign === campaign);
+      const totalSess = campaignRows.reduce((s, r) => s + r.sessions, 0);
+      for (const r of campaignRows) {
+        r.conversions = totalSess > 0 ? (r.sessions / totalSess) * conv : 0;
+      }
+    }
+
+    console.log(`[Google Ads] Call 1b → Conversions pro Kampagne: ${JSON.stringify(Object.fromEntries(campaignConv))}`);
+  } catch (e) {
+    console.warn('[Google Ads] Call 1b fehlgeschlagen (ignoriert):', e);
+  }
+
+  // ═════════════════════════════════════════
+  // CALL 2: Landingpages (1 Dimension)
+  //
+  // Nutzt landingPagePlusQueryString als einzige Dimension.
+  // Der Kampagnenname-Filter bleibt als dimensionFilter aktiv.
   // ═════════════════════════════════════════
   let landingPageRows: GoogleAdsRow[] = [];
 
@@ -1279,7 +1317,7 @@ export async function getGoogleAdsReport(
       requestBody: {
         dateRanges: [{ startDate, endDate }],
         dimensions: [
-          { name: 'landingPage' },
+          { name: 'landingPagePlusQueryString' },
         ],
         metrics: [
           { name: 'advertiserAdCost' },
@@ -1289,7 +1327,7 @@ export async function getGoogleAdsReport(
           { name: 'sessions' },
           { name: 'engagedSessions' },
         ],
-        orderBys: [{ metric: { metricName: 'advertiserAdCost' }, desc: true }],
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
         limit: '200',
         dimensionFilter: adsFilter,
       },
