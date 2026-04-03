@@ -165,6 +165,12 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
           row.conversions = data.conversionsByAdGroup[row.label];
         }
       }
+    } else if (viewMode === 'searchquery' && data.conversionsByQuery) {
+      for (const row of aggregated) {
+        if (data.conversionsByQuery[row.label] !== undefined) {
+          row.conversions = data.conversionsByQuery[row.label];
+        }
+      }
     }
 
     if (searchTerm.trim()) {
@@ -181,7 +187,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
     });
 
     return aggregated;
-  }, [data.rows, data.landingPageRows, data.conversionsByCampaign, data.conversionsByAdGroup, viewMode, sortField, sortAsc, searchTerm]);
+  }, [data.rows, data.landingPageRows, data.conversionsByCampaign, data.conversionsByAdGroup, data.conversionsByQuery, viewMode, sortField, sortAsc, searchTerm]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
