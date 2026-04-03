@@ -123,6 +123,8 @@ export interface GoogleAdsData {
   conversionsByCampaign?: Record<string, number>;
   /** Echte Conversions pro Anzeigengruppe (1-Dimension-Call, kein Thresholding) */
   conversionsByAdGroup?: Record<string, number>;
+  /** Echte Conversions pro Suchanfrage */
+  conversionsByQuery?: Record<string, number>;
 }
 
 export interface ProjectDashboardData {
