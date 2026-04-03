@@ -1151,12 +1151,11 @@ export interface GoogleAdsData {
 /**
  * Google Ads Performance über GA4 Data API.
  *
- * Call 1: sessionGoogleAds*-Dimensionen + advertiserAd*-Metriken
- *         → Kampagnen / Anzeigengruppen / Suchanfragen
+ * Call 0: Totals OHNE Dimensionen → kein Thresholding, echte Conversions
+ * Call 1: sessionGoogleAds*-Dimensionen → Kampagnen / Anzeigengruppen / Suchanfragen
+ * Call 2: landingPage (nur 1 Dimension) → Landingpages
  *
- * Call 2: landingPagePlusQueryString + sessionGoogleAdsCampaignName
- *         Gleicher Filter wie Call 1 (sessionGoogleAdsCampaignName != not set)
- *         → echte Ads-Kosten & Klicks pro Landingpage, konsistent mit Totals
+ * Alle Calls filtern auf sessionGoogleAdsCampaignName != (not set).
  */
 export async function getGoogleAdsReport(
   propertyId: string,
@@ -1169,6 +1168,54 @@ export async function getGoogleAdsReport(
 
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
+
+  // Gemeinsamer Filter: nur Google Ads Traffic
+  const adsFilter = {
+    notExpression: {
+      filter: {
+        fieldName: 'sessionGoogleAdsCampaignName',
+        stringFilter: { matchType: 'EXACT' as const, value: '(not set)' },
+      },
+    },
+  };
+
+  // ═════════════════════════════════════════
+  // CALL 0: Totals OHNE Dimensionen
+  //
+  // GA4 unterdrückt Conversions bei Multi-Dimension-Queries
+  // (Data Thresholding). Ohne Dimensionen liefert die API
+  // die echten, ungekürzten Totals.
+  // ═════════════════════════════════════════
+  const totalsResponse = await analytics.properties.runReport({
+    property: formattedPropertyId,
+    requestBody: {
+      dateRanges: [{ startDate, endDate }],
+      dimensions: [],
+      metrics: [
+        { name: 'advertiserAdCost' },
+        { name: 'advertiserAdClicks' },
+        { name: 'advertiserAdCostPerClick' },
+        { name: 'returnOnAdSpend' },
+        { name: 'conversions' },
+        { name: 'sessions' },
+        { name: 'engagedSessions' },
+      ],
+      dimensionFilter: adsFilter,
+    },
+  });
+
+  const totalsRow = totalsResponse.data.rows?.[0]?.metricValues || [];
+  const totalCost = parseFloat(totalsRow[0]?.value || '0');
+  const totalClicks = parseInt(totalsRow[1]?.value || '0', 10);
+  const totalAvgCpc = parseFloat(totalsRow[2]?.value || '0');
+  const totalRoas = parseFloat(totalsRow[3]?.value || '0');
+  const totalConversions = parseFloat(totalsRow[4]?.value || '0');
+  const totalSessions = parseInt(totalsRow[5]?.value || '0', 10);
+  const totalEngagedSessions = parseInt(totalsRow[6]?.value || '0', 10);
+
+  console.log(
+    `[Google Ads] Call 0 Totals → Spend: €${totalCost.toFixed(2)} | Klicks: ${totalClicks} | Conv.: ${totalConversions} | Sessions: ${totalSessions} | Engaged: ${totalEngagedSessions}`
+  );
 
   // ═════════════════════════════════════════
   // CALL 1: Ads-Performance nach Kampagne / AdGroup / Query
@@ -1193,14 +1240,7 @@ export async function getGoogleAdsReport(
       ],
       orderBys: [{ metric: { metricName: 'advertiserAdCost' }, desc: true }],
       limit: '500',
-      dimensionFilter: {
-        notExpression: {
-          filter: {
-            fieldName: 'sessionGoogleAdsCampaignName',
-            stringFilter: { matchType: 'EXACT', value: '(not set)' },
-          },
-        },
-      },
+      dimensionFilter: adsFilter,
     },
   });
 
@@ -1224,13 +1264,12 @@ export async function getGoogleAdsReport(
   });
 
   // ═════════════════════════════════════════
-  // CALL 2: Landingpages mit echten Ads-Metriken
+  // CALL 2: Landingpages (nur 1 Dimension)
   //
-  // FIX: Nutzt denselben sessionGoogleAdsCampaignName-Filter wie Call 1.
-  // Vorher: pagePath + sessionDefaultChannelGroup = Paid Search
-  //   → andere Attribution, cost/clicks immer 0, Conversions inkonsistent
-  // Jetzt: landingPagePlusQueryString + sessionGoogleAdsCampaignName
-  //   → echte Ads-Kosten & Klicks, gleiche Datenbasis wie Kampagnen-Tab
+  // FIX: Nur landingPage als Dimension, OHNE sessionGoogleAdsCampaignName.
+  // Vorher: 2 Dimensionen → GA4 Thresholding → 0 Ergebnisse bei wenig Daten.
+  // Der Kampagnenname-Filter bleibt als dimensionFilter aktiv,
+  // d.h. es werden nur Ads-Sessions gezählt.
   // ═════════════════════════════════════════
   let landingPageRows: GoogleAdsRow[] = [];
 
@@ -1240,8 +1279,7 @@ export async function getGoogleAdsReport(
       requestBody: {
         dateRanges: [{ startDate, endDate }],
         dimensions: [
-          { name: 'landingPagePlusQueryString' },
-          { name: 'sessionGoogleAdsCampaignName' },
+          { name: 'landingPage' },
         ],
         metrics: [
           { name: 'advertiserAdCost' },
@@ -1253,32 +1291,23 @@ export async function getGoogleAdsReport(
         ],
         orderBys: [{ metric: { metricName: 'advertiserAdCost' }, desc: true }],
         limit: '200',
-        dimensionFilter: {
-          notExpression: {
-            filter: {
-              fieldName: 'sessionGoogleAdsCampaignName',
-              stringFilter: { matchType: 'EXACT', value: '(not set)' },
-            },
-          },
-        },
+        dimensionFilter: adsFilter,
       },
     });
 
     landingPageRows = (lpResponse.data.rows || []).map((row) => {
       const dims = row.dimensionValues || [];
       const mets = row.metricValues || [];
-      const cost = parseFloat(mets[0]?.value || '0');
-      const clicks = parseInt(mets[1]?.value || '0', 10);
       return {
-        campaign: dims[1]?.value || '(not set)', // Kampagnenname für Drill-down
+        campaign: '–',
         adGroup: '–',
         keyword: '–',
         searchQuery: '–',
         landingPage: dims[0]?.value || '(not set)',
-        cost,
-        clicks,
+        cost: parseFloat(mets[0]?.value || '0'),
+        clicks: parseInt(mets[1]?.value || '0', 10),
         cpc: parseFloat(mets[2]?.value || '0'),
-        roas: 0, // GA4 liefert keinen ROAS auf LP-Ebene
+        roas: 0,
         conversions: parseFloat(mets[3]?.value || '0'),
         sessions: parseInt(mets[4]?.value || '0', 10),
         engagedSessions: parseInt(mets[5]?.value || '0', 10),
@@ -1286,49 +1315,24 @@ export async function getGoogleAdsReport(
     });
 
     console.log(
-      `[Google Ads] LP-Call: ${landingPageRows.length} Landingpages mit echten Ads-Metriken`
+      `[Google Ads] LP-Call: ${landingPageRows.length} Landingpages`
     );
   } catch (e) {
     console.warn('[Google Ads] Landingpage-Call fehlgeschlagen (ignoriert):', e);
   }
 
   // ═════════════════════════════════════════
-  // Totals aus Call 1
-  //
-  // FIX: revenue wird korrekt pro Row akkumuliert, bevor roas berechnet wird.
-  // returnOnAdSpend aus GA4 ist 0, wenn in Google Ads keine Conversion-Werte
-  // (€-Beträge) hinterlegt sind – das ist ein Google Ads Setup-Problem,
-  // kein Code-Fehler. In diesem Fall bleibt roas = 0, das Widget zeigt "–".
+  // Totals aus Call 0 (dimensionsfrei = kein Thresholding)
   // ═════════════════════════════════════════
-  let totalCost = 0;
-  let totalClicks = 0;
-  let totalConversions = 0;
-  let totalSessions = 0;
-  let totalRevenue = 0;
-  let totalEngagedSessions = 0;
-
-  for (const r of rows) {
-    totalCost += r.cost;
-    totalClicks += r.clicks;
-    totalConversions += r.conversions;
-    totalSessions += r.sessions;
-    totalEngagedSessions += r.engagedSessions;
-    totalRevenue += r.roas * r.cost; // revenue = roas × cost pro Row
-  }
-
   const totals = {
     cost: totalCost,
     clicks: totalClicks,
-    avgCpc: totalClicks > 0 ? totalCost / totalClicks : 0,
-    roas: totalCost > 0 ? totalRevenue / totalCost : 0,
+    avgCpc: totalAvgCpc,
+    roas: totalRoas,
     conversions: totalConversions,
     sessions: totalSessions,
     engagedSessions: totalEngagedSessions,
   };
-
-  console.log(
-    `[Google Ads] Totals → Spend: €${totals.cost.toFixed(2)} | Klicks: ${totals.clicks} | ROAS: ${totals.roas.toFixed(2)}x | Conv.: ${totals.conversions} | Sessions: ${totals.sessions}`
-  );
 
   return { rows, landingPageRows, totals };
 }
