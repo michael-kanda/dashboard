@@ -38,19 +38,8 @@ function formatNumber(value: number): string {
 }
 
 /**
- * Conversions mit Dezimalstellen anzeigen.
- * GA4 liefert häufig Bruchzahlen bei datengetriebener Attribution.
- */
-function formatConversions(value: number): string {
-  return new Intl.NumberFormat('de-DE', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-/**
- * Interaktionsrate = engagedSessions / sessions × 100
- * Das ist die echte GA4-Interaktionsrate (Engagement Rate).
+ * Interaktionsrate = engagedSessions / sessions × 100.
+ * Zeigt "–" wenn keine Daten vorhanden.
  */
 function formatInteractionRate(value: number): string {
   if (value <= 0 || !isFinite(value)) return '–';
@@ -58,32 +47,16 @@ function formatInteractionRate(value: number): string {
 }
 
 /**
- * Zeitraum aus DateRangeOption berechnen (DD.MM.YYYY – DD.MM.YYYY).
+ * Zeitraum aus DateRangeOption berechnen.
  */
 function formatDateRange(dateRange?: DateRangeOption): string {
   if (!dateRange) return '';
-  try {
-    const fmt = new Intl.DateTimeFormat('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-
-    const to = new Date();
-    const from = new Date();
-
-    if (dateRange.endsWith('d')) {
-      const days = parseInt(dateRange, 10);
-      from.setDate(from.getDate() - days);
-    } else if (dateRange.endsWith('m')) {
-      const months = parseInt(dateRange, 10);
-      from.setMonth(from.getMonth() - months);
-    }
-
-    return `${fmt.format(from)} – ${fmt.format(to)}`;
-  } catch {
-    return '';
-  }
+  const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const to = new Date();
+  const from = new Date();
+  if (dateRange.endsWith('d')) from.setDate(from.getDate() - parseInt(dateRange, 10));
+  else if (dateRange.endsWith('m')) from.setMonth(from.getMonth() - parseInt(dateRange, 10));
+  return `${fmt.format(from)} – ${fmt.format(to)}`;
 }
 
 // ── Aggregations-Logik ──
@@ -137,7 +110,6 @@ function aggregateBy(rows: GoogleAdsRow[], field: keyof GoogleAdsRow): Aggregate
     cost: agg.cost,
     clicks: agg.clicks,
     cpc: agg.clicks > 0 ? agg.cost / agg.clicks : 0,
-    // Interaktionsrate = engagedSessions / sessions × 100
     interactionRate: agg.sessions > 0 ? (agg.engagedSessions / agg.sessions) * 100 : 0,
     conversions: agg.conversions,
     sessions: agg.sessions,
@@ -156,9 +128,12 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
 
   const { totals } = data;
 
-  // Interaktionsrate für Totals: engagedSessions / sessions × 100
+  // Interaktionsrate für Totals
   const totalsInteractionRate =
-    totals.sessions > 0 ? ((totals.engagedSessions ?? 0) / totals.sessions) * 100 : 0;
+    totals.sessions > 0 ? ((totals as any).engagedSessions ?? 0) / totals.sessions * 100 : 0;
+
+  // Zeitraum-String
+  const dateRangeStr = formatDateRange(dateRange);
 
   // View-Mode → welche Rows + welches Feld
   const viewConfig: Record<ViewMode, { source: 'ads' | 'lp'; field: keyof GoogleAdsRow }> = {
@@ -215,13 +190,10 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
     landingpage: 'Landingpages',
   };
 
-  // Im Landingpage-View keine Interaktionsrate / CPC
+  // Im Landingpage-View kein ROAS (GA4 liefert keinen ROAS auf LP-Ebene)
   const isLpView = viewMode === 'landingpage';
 
   const hasAnyData = data.rows.length > 0 || (data.landingPageRows || []).length > 0;
-
-  // Zeitraum-String
-  const dateRangeStr = formatDateRange(dateRange);
 
   // Skeleton
   if (isLoading) {
@@ -258,12 +230,9 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
           <CurrencyDollar size={18} className="text-amber-500" />
           Google Ads Performance
         </h3>
-
-        {/* Quelle und Zeitraum */}
         <p className="text-xs text-muted mb-4">
           Quelle: GA4{dateRangeStr && <> &nbsp;·&nbsp; {dateRangeStr}</>}
         </p>
-
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <KpiMini label="Ad Spend"    value={formatCurrency(totals.cost)} />
           <KpiMini label="Klicks"      value={formatNumber(totals.clicks)} />
@@ -273,9 +242,9 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
             value={formatInteractionRate(totalsInteractionRate)}
             highlight={totalsInteractionRate >= 80}
             dimmed={totalsInteractionRate <= 0}
-            tooltip="Engagierte Sitzungen / Sitzungen × 100 (GA4 Engagement Rate)"
+            tooltip="Engagierte Sitzungen / Sitzungen × 100"
           />
-          <KpiMini label="Conversions" value={formatConversions(totals.conversions)} />
+          <KpiMini label="Conversions" value={formatNumber(totals.conversions)} />
           <KpiMini label="Sitzungen"   value={formatNumber(totals.sessions)} />
         </div>
       </div>
@@ -388,7 +357,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
                   colSpan={isLpView ? 5 : 7}
                   className="px-4 py-8 text-center text-sm text-muted"
                 >
-                  Keine Ergebnisse{searchTerm ? <> für &quot;{searchTerm}&quot;</> : ''}
+                  Keine Ergebnisse für &quot;{searchTerm}&quot;
                 </td>
               </tr>
             )}
@@ -449,10 +418,6 @@ function TableRow({
 }) {
   const hasSubRows = (row.subRows?.length || 0) > 1;
 
-  // Interaktionsrate pro Sub-Row
-  const getSubInteractionRate = (sub: GoogleAdsRow): number =>
-    sub.sessions > 0 ? ((sub.engagedSessions ?? 0) / sub.sessions) * 100 : 0;
-
   return (
     <>
       <tr
@@ -497,28 +462,20 @@ function TableRow({
             </span>
           </td>
         )}
-        <td className="text-right px-3 py-2.5 text-body">{formatConversions(row.conversions)}</td>
+        <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.conversions)}</td>
         <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.sessions)}</td>
       </tr>
 
       {isExpanded &&
         hasSubRows &&
         row.subRows?.map((sub, i) => {
-          /**
-           * Sub-Row Labels je nach View-Mode:
-           *
-           * Kampagnen       → Anzeigengruppe (sub.adGroup)
-           * Anzeigengruppen → Suchanfrage (sub.searchQuery)
-           *   Hinweis: GA4 Data API liefert keine Anzeigen-Namen,
-           *   Suchanfragen sind die nächstbeste Aufschlüsselung
-           * Suchanfragen    → Kampagne (sub.campaign)
-           * Landingpages    → Kampagne (sub.campaign)
-           */
           const subLabel =
             viewMode === 'campaign'
               ? sub.adGroup
               : viewMode === 'adgroup'
               ? sub.searchQuery
+              : viewMode === 'landingpage'
+              ? sub.campaign
               : sub.campaign;
 
           const subDimLabel =
@@ -526,9 +483,11 @@ function TableRow({
               ? 'Anzeigengruppe'
               : viewMode === 'adgroup'
               ? 'Suchanfrage'
+              : viewMode === 'landingpage'
+              ? 'Kampagne'
               : 'Kampagne';
 
-          const subIR = getSubInteractionRate(sub);
+          const subIR = sub.sessions > 0 ? ((sub.engagedSessions ?? 0) / sub.sessions) * 100 : 0;
 
           return (
             <tr key={i} className="border-b border-theme-border-subtle bg-surface/30">
@@ -562,7 +521,7 @@ function TableRow({
                   </span>
                 </td>
               )}
-              <td className="text-right px-3 py-2 text-muted">{formatConversions(sub.conversions)}</td>
+              <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.conversions)}</td>
               <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.sessions)}</td>
             </tr>
           );
