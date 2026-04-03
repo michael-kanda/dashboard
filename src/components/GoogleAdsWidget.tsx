@@ -20,7 +20,7 @@ interface GoogleAdsWidgetProps {
 }
 
 type SortField = 'cost' | 'clicks' | 'cpc' | 'interactionRate' | 'conversions' | 'sessions';
-type ViewMode = 'campaign' | 'adgroup' | 'searchquery' | 'landingpage';
+type ViewMode = 'campaign' | 'adgroup' | 'searchquery';
 
 // ── Hilfsfunktionen ──
 
@@ -140,7 +140,6 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
     campaign:    { source: 'ads', field: 'campaign' },
     adgroup:     { source: 'ads', field: 'adGroup' },
     searchquery: { source: 'ads', field: 'searchQuery' },
-    landingpage: { source: 'lp',  field: 'landingPage' },
   };
 
   const tableData = useMemo(() => {
@@ -209,11 +208,10 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
     campaign: 'Kampagnen',
     adgroup: 'Anzeigengruppen',
     searchquery: 'Suchanfragen',
-    landingpage: 'Landingpages',
   };
 
-  // Im Landingpage-View kein ROAS (GA4 liefert keinen ROAS auf LP-Ebene)
-  const isLpView = viewMode === 'landingpage';
+  // Conversions bei Suchanfragen ausblenden (GA4 Thresholding)
+  const hideConv = viewMode === 'searchquery';
 
   const hasAnyData = data.rows.length > 0 || (data.landingPageRows || []).length > 0;
 
@@ -329,7 +327,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
               >
                 Klicks<SortIcon field="clicks" />
               </th>
-              {!isLpView && (
+              {(
                 <th
                   onClick={() => handleSort('cpc')}
                   className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
@@ -337,7 +335,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
                   CPC<SortIcon field="cpc" />
                 </th>
               )}
-              {!isLpView && (
+              {(
                 <th
                   onClick={() => handleSort('interactionRate')}
                   className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
@@ -345,12 +343,14 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
                   Inter.-Rate<SortIcon field="interactionRate" />
                 </th>
               )}
+              {!hideConv && (
               <th
                 onClick={() => handleSort('conversions')}
                 className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
               >
                 Conv.<SortIcon field="conversions" />
               </th>
+              )}
               <th
                 onClick={() => handleSort('sessions')}
                 className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
@@ -369,14 +369,14 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
                   setExpandedRow(expandedRow === row.label ? null : row.label)
                 }
                 viewMode={viewMode}
-                isLpView={isLpView}
+                hideConv={hideConv}
               />
             ))}
 
             {tableData.length === 0 && (
               <tr>
                 <td
-                  colSpan={isLpView ? 5 : 7}
+                  colSpan={hideConv ? 6 : 7}
                   className="px-4 py-8 text-center text-sm text-muted"
                 >
                   Keine Ergebnisse für &quot;{searchTerm}&quot;
@@ -430,13 +430,13 @@ function TableRow({
   isExpanded,
   onToggle,
   viewMode,
-  isLpView,
+  hideConv,
 }: {
   row: AggregatedRow;
   isExpanded: boolean;
   onToggle: () => void;
   viewMode: ViewMode;
-  isLpView: boolean;
+  hideConv: boolean;
 }) {
   const hasSubRows = (row.subRows?.length || 0) > 1;
 
@@ -464,10 +464,10 @@ function TableRow({
           {formatCurrency(row.cost)}
         </td>
         <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.clicks)}</td>
-        {!isLpView && (
+        {(
           <td className="text-right px-3 py-2.5 text-body">{formatCurrency(row.cpc)}</td>
         )}
-        {!isLpView && (
+        {(
           <td className="text-right px-3 py-2.5">
             <span
               className={`font-semibold ${
@@ -484,7 +484,9 @@ function TableRow({
             </span>
           </td>
         )}
+        {!hideConv && (
         <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.conversions)}</td>
+        )}
         <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.sessions)}</td>
       </tr>
 
@@ -496,7 +498,7 @@ function TableRow({
               ? sub.adGroup
               : viewMode === 'adgroup'
               ? sub.searchQuery
-              : viewMode === 'landingpage'
+              : false
               ? sub.campaign
               : sub.campaign;
 
@@ -505,7 +507,7 @@ function TableRow({
               ? 'Anzeigengruppe'
               : viewMode === 'adgroup'
               ? 'Suchanfrage'
-              : viewMode === 'landingpage'
+              : false
               ? 'Kampagne'
               : 'Kampagne';
 
@@ -523,10 +525,10 @@ function TableRow({
               </td>
               <td className="text-right px-3 py-2 text-muted">{formatCurrency(sub.cost)}</td>
               <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.clicks)}</td>
-              {!isLpView && (
+              {(
                 <td className="text-right px-3 py-2 text-muted">{formatCurrency(sub.cpc)}</td>
               )}
-              {!isLpView && (
+              {(
                 <td className="text-right px-3 py-2">
                   <span
                     className={`${
@@ -543,7 +545,9 @@ function TableRow({
                   </span>
                 </td>
               )}
+              {!hideConv && (
               <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.conversions)}</td>
+              )}
               <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.sessions)}</td>
             </tr>
           );
