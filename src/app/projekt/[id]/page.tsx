@@ -15,7 +15,8 @@ interface ExtendedUser extends User {
   assigned_admins?: string;
   creator_email?: string;
   data_max_enabled?: boolean; 
-  settings_show_google_ads?: boolean;  // ← NEU
+  settings_show_google_ads?: boolean;
+  google_ads_sheet_id?: string;  // ← NEU
 }
 
 async function loadData(projectId: string, dateRange: string) {
@@ -31,6 +32,7 @@ async function loadData(projectId: string, dateRange: string) {
         u.semrush_project_id, 
         u.semrush_tracking_id, 
         u.semrush_tracking_id_02,
+        u.google_ads_sheet_id,
         u.favicon_url, 
         u.project_timeline_active, 
         u.project_start_date, 
