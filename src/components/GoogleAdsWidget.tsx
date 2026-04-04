@@ -88,7 +88,7 @@ function aggregateBy(rows: GoogleAdsRow[], field: keyof GoogleAdsRow): Aggregate
 
   for (const row of rows) {
     const key = String(row[field]) || '(not set)';
-    if (key === '–') continue; // Platzhalter überspringen
+    if (key === '–' || key === 'undefined' || key === '') continue; // Platzhalter/fehlende Felder überspringen
     const existing = map.get(key) || {
       cost: 0,
       clicks: 0,
@@ -151,6 +151,11 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
   const [sortAsc, setSortAsc] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Safety: falls data undefined/null → Skeleton zeigen
+  if (!data || !data.totals) {
+    return null;
+  }
 
   const { totals } = data;
   const isSheet = data.source === 'sheet';
