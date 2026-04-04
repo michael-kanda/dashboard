@@ -93,11 +93,13 @@ export interface ConvertingPageData {
 export interface GoogleAdsRow {
   campaign: string;
   adGroup: string;
+  adName: string;
   keyword: string;
   searchQuery: string;
   landingPage: string;
   cost: number;
   clicks: number;
+  impressions: number;
   cpc: number;
   roas: number;
   conversions: number;
@@ -118,6 +120,10 @@ export interface GoogleAdsData {
     conversions: number;
     sessions: number;
     engagedSessions: number;
+    /** Nur bei Sheet-Daten vorhanden */
+    impressions?: number;
+    /** Nur bei Sheet-Daten vorhanden (Klicks/Impressionen × 100) */
+    interactionRate?: number;
   };
   /** Echte Conversions pro Kampagne (1-Dimension-Call, kein Thresholding) */
   conversionsByCampaign?: Record<string, number>;
@@ -125,6 +131,17 @@ export interface GoogleAdsData {
   conversionsByAdGroup?: Record<string, number>;
   /** Echte Conversions pro Suchanfrage */
   conversionsByQuery?: Record<string, number>;
+  /** Alle Metriken pro Kampagne (1-Dimension-Call, kein Thresholding) */
+  metricsByCampaign?: Record<string, { cost: number; clicks: number; sessions: number; engagedSessions: number }>;
+  /** Alle Metriken pro Anzeigengruppe (1-Dimension-Call, kein Thresholding) */
+  metricsByAdGroup?: Record<string, { cost: number; clicks: number; sessions: number; engagedSessions: number }>;
+  /** Sheet-basierte Daten (pro Ebene separat) */
+  campaignRows?: GoogleAdsRow[];
+  adGroupRows?: GoogleAdsRow[];
+  adRows?: GoogleAdsRow[];
+  searchQueryRows?: GoogleAdsRow[];
+  /** Datenquelle: 'ga4' oder 'sheet' (Google Ads Script Export) */
+  source?: 'ga4' | 'sheet';
 }
 
 export interface ProjectDashboardData {

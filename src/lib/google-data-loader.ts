@@ -11,6 +11,7 @@ import {
   getGscPageCtr, 
   getQueriesByLandingPageObject,
   getGoogleAdsReport,
+  getGoogleAdsFromSheet,
   type AiTrafficData,
   type Ga4ExtendedData,
   type GoogleAdsData
@@ -268,18 +269,29 @@ export async function getOrFetchGoogleData(
         console.error('[GA4 Dimensions Error]', e); 
       }
 
-      // ✅ NEU: Google Ads Report
-      try {
-        googleAdsData = await getGoogleAdsReport(propertyId, startDateStr, endDateStr);
-        console.log(`[Google Ads] ✅ ${googleAdsData.rows.length} Zeilen geladen, Spend: €${googleAdsData.totals.cost.toFixed(2)}`);
-      } catch (e) {
-        console.warn('[Google Ads] Keine Ads-Daten verfügbar (ignoriert):', e);
-        // Kein apiErrors-Eintrag – wenn keine Ads verknüpft sind, ist das kein Fehler
+      // ✅ Google Ads via GA4 (nur wenn KEIN Sheet konfiguriert ist)
+      if (!user.google_ads_sheet_id) {
+        try {
+          googleAdsData = await getGoogleAdsReport(propertyId, startDateStr, endDateStr);
+          console.log(`[Google Ads] ✅ GA4: ${googleAdsData.rows.length} Zeilen, Spend: €${googleAdsData.totals.cost.toFixed(2)}`);
+        } catch (e) {
+          console.warn('[Google Ads] Keine GA4-Ads-Daten verfügbar (ignoriert):', e);
+        }
       }
 
     } catch (e: any) {
       console.error('[GA4 Error]', e);
       apiErrors.ga4 = e.message || 'GA4 Fehler';
+    }
+  }
+
+  // --- GOOGLE ADS VIA SHEET (unabhängig von GA4) ---
+  if (user.google_ads_sheet_id) {
+    try {
+      googleAdsData = await getGoogleAdsFromSheet(user.google_ads_sheet_id, startDateStr, endDateStr);
+      console.log(`[Google Ads] ✅ Sheet: Kampagnen=${googleAdsData.campaignRows?.length ?? 0}, Spend: €${googleAdsData.totals.cost.toFixed(2)}`);
+    } catch (e) {
+      console.warn('[Google Ads Sheet] Fehler beim Laden der Sheet-Daten:', e);
     }
   }
 

@@ -1122,11 +1122,13 @@ export async function getLandingPageFollowUpPaths(
 export interface GoogleAdsRow {
   campaign: string;
   adGroup: string;
+  adName: string;
   keyword: string;
   searchQuery: string;
   landingPage: string;
   cost: number;
   clicks: number;
+  impressions: number;
   cpc: number;
   roas: number;
   conversions: number;
@@ -1152,6 +1154,17 @@ export interface GoogleAdsData {
   conversionsByAdGroup?: Record<string, number>;
   /** Echte Conversions pro Suchanfrage (1-Dimension-Call, kein Thresholding) */
   conversionsByQuery?: Record<string, number>;
+  /** Alle Metriken pro Kampagne (1-Dimension-Call, kein Thresholding) */
+  metricsByCampaign?: Record<string, { cost: number; clicks: number; sessions: number; engagedSessions: number }>;
+  /** Alle Metriken pro Anzeigengruppe (1-Dimension-Call, kein Thresholding) */
+  metricsByAdGroup?: Record<string, { cost: number; clicks: number; sessions: number; engagedSessions: number }>;
+  /** Sheet-basierte Daten (pro Ebene separat, keine Thresholding-Probleme) */
+  campaignRows?: GoogleAdsRow[];
+  adGroupRows?: GoogleAdsRow[];
+  adRows?: GoogleAdsRow[];
+  searchQueryRows?: GoogleAdsRow[];
+  /** Datenquelle: 'ga4' (Standard, via GA4 Data API) oder 'sheet' (via Google Ads Script Export) */
+  source?: 'ga4' | 'sheet';
 }
 
 /**
@@ -1256,11 +1269,13 @@ export async function getGoogleAdsReport(
     return {
       campaign: dims[0]?.value || '(not set)',
       adGroup: dims[1]?.value || '(not set)',
+      adName: '–',
       keyword: '–',
       searchQuery: dims[2]?.value || '(not set)',
       landingPage: '–',
       cost: parseFloat(mets[0]?.value || '0'),
       clicks: parseInt(mets[1]?.value || '0', 10),
+      impressions: 0,
       cpc: parseFloat(mets[2]?.value || '0'),
       roas: parseFloat(mets[3]?.value || '0'),
       conversions: parseFloat(mets[4]?.value || '0'),
@@ -1275,12 +1290,20 @@ export async function getGoogleAdsReport(
   // Call 1 (3 Dimensionen) liefert wegen GA4 Thresholding 0 Conversions.
   // Separate 1-Dimension-Calls liefern die echten, unverfälschten Werte.
   // ═════════════════════════════════════════
+  // CALL 1e/1f: Alle Metriken pro Kampagne / Anzeigengruppe (je 1 Dimension)
+  //
+  // Call 1 (3 Dimensionen) verliert durch Thresholding auch Zeilen
+  // bei Kosten, Klicks, Sessions etc. 1-Dimension-Calls liefern
+  // die echten Werte für die Hauptzeilen der Tabelle.
+  // ═════════════════════════════════════════
   const conversionsByCampaign: Record<string, number> = {};
   const conversionsByAdGroup: Record<string, number> = {};
   const conversionsByQuery: Record<string, number> = {};
+  const metricsByCampaign: Record<string, { cost: number; clicks: number; sessions: number; engagedSessions: number }> = {};
+  const metricsByAdGroup: Record<string, { cost: number; clicks: number; sessions: number; engagedSessions: number }> = {};
 
   try {
-    const [convByCamp, convByAg, convByQuery] = await Promise.all([
+    const [convByCamp, convByAg, convByQuery, metsByCamp, metsByAg] = await Promise.all([
       analytics.properties.runReport({
         property: formattedPropertyId,
         requestBody: {
@@ -1308,6 +1331,36 @@ export async function getGoogleAdsReport(
           dimensionFilter: adsFilter,
         },
       }),
+      // CALL 1e: Alle Metriken pro Kampagne (1 Dimension)
+      analytics.properties.runReport({
+        property: formattedPropertyId,
+        requestBody: {
+          dateRanges: [{ startDate, endDate }],
+          dimensions: [{ name: 'sessionGoogleAdsCampaignName' }],
+          metrics: [
+            { name: 'advertiserAdCost' },
+            { name: 'advertiserAdClicks' },
+            { name: 'sessions' },
+            { name: 'engagedSessions' },
+          ],
+          dimensionFilter: adsFilter,
+        },
+      }),
+      // CALL 1f: Alle Metriken pro Anzeigengruppe (1 Dimension)
+      analytics.properties.runReport({
+        property: formattedPropertyId,
+        requestBody: {
+          dateRanges: [{ startDate, endDate }],
+          dimensions: [{ name: 'sessionGoogleAdsAdGroupName' }],
+          metrics: [
+            { name: 'advertiserAdCost' },
+            { name: 'advertiserAdClicks' },
+            { name: 'sessions' },
+            { name: 'engagedSessions' },
+          ],
+          dimensionFilter: adsFilter,
+        },
+      }),
     ]);
 
     for (const row of convByCamp.data.rows || []) {
@@ -1323,9 +1376,34 @@ export async function getGoogleAdsReport(
       conversionsByQuery[name] = parseFloat(row.metricValues?.[0]?.value || '0');
     }
 
+    // Metriken-Lookups für Kampagnen
+    for (const row of metsByCamp.data.rows || []) {
+      const name = row.dimensionValues?.[0]?.value || '(not set)';
+      const mets = row.metricValues || [];
+      metricsByCampaign[name] = {
+        cost: parseFloat(mets[0]?.value || '0'),
+        clicks: parseInt(mets[1]?.value || '0', 10),
+        sessions: parseInt(mets[2]?.value || '0', 10),
+        engagedSessions: parseInt(mets[3]?.value || '0', 10),
+      };
+    }
+
+    // Metriken-Lookups für Anzeigengruppen
+    for (const row of metsByAg.data.rows || []) {
+      const name = row.dimensionValues?.[0]?.value || '(not set)';
+      const mets = row.metricValues || [];
+      metricsByAdGroup[name] = {
+        cost: parseFloat(mets[0]?.value || '0'),
+        clicks: parseInt(mets[1]?.value || '0', 10),
+        sessions: parseInt(mets[2]?.value || '0', 10),
+        engagedSessions: parseInt(mets[3]?.value || '0', 10),
+      };
+    }
+
     console.log(`[Google Ads] Conv-Lookups → Campaigns: ${Object.keys(conversionsByCampaign).length} | AdGroups: ${Object.keys(conversionsByAdGroup).length} | Queries: ${Object.keys(conversionsByQuery).length}`);
+    console.log(`[Google Ads] Metrics-Lookups → Campaigns: ${Object.keys(metricsByCampaign).length} | AdGroups: ${Object.keys(metricsByAdGroup).length}`);
   } catch (e) {
-    console.warn('[Google Ads] Conv-Lookup fehlgeschlagen (ignoriert):', e);
+    console.warn('[Google Ads] Conv/Metrics-Lookup fehlgeschlagen (ignoriert):', e);
   }
 
   // ═════════════════════════════════════════
@@ -1370,11 +1448,13 @@ export async function getGoogleAdsReport(
         return {
           campaign: dims[1]?.value || '(not set)',
           adGroup: '–',
+          adName: '–',
           keyword: '–',
           searchQuery: '–',
           landingPage: dims[0]?.value || '(not set)',
           cost: parseFloat(mets[0]?.value || '0'),
           clicks: parseInt(mets[1]?.value || '0', 10),
+          impressions: 0,
           cpc: parseFloat(mets[2]?.value || '0'),
           roas: 0,
           conversions: parseFloat(mets[3]?.value || '0'),
@@ -1422,11 +1502,13 @@ export async function getGoogleAdsReport(
         return {
           campaign: '–',
           adGroup: '–',
+          adName: '–',
           keyword: '–',
           searchQuery: '–',
           landingPage: dims[0]?.value || '(not set)',
           cost: 0,
           clicks: 0,
+          impressions: 0,
           cpc: 0,
           roas: 0,
           conversions: parseFloat(mets[1]?.value || '0'),
@@ -1454,5 +1536,195 @@ export async function getGoogleAdsReport(
     engagedSessions: totalEngagedSessions,
   };
 
-  return { rows, landingPageRows, totals, conversionsByCampaign, conversionsByAdGroup, conversionsByQuery };
+  return { rows, landingPageRows, totals, conversionsByCampaign, conversionsByAdGroup, conversionsByQuery, metricsByCampaign, metricsByAdGroup };
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Google Ads Daten aus Google Sheet (via Ads-Script-Export)
+//
+// Liest die 4 Tabs (Kampagnen, Anzeigengruppen, Anzeigen,
+// Suchanfragen) aus dem Sheet und aggregiert die Tagesdaten
+// für den gewählten Zeitraum.
+//
+// Vorteile gegenüber GA4:
+//   • Echte Google-Ads-Metriken (keine GA4-Attribution)
+//   • Kein Data Thresholding
+//   • Conversions stimmen mit Google Ads überein
+//   • Anzeigen-Ebene verfügbar
+// ═══════════════════════════════════════════════════════════════
+
+interface SheetRowRaw {
+  [key: string]: string;
+}
+
+function parseSheetNumber(val: string | undefined): number {
+  if (!val) return 0;
+  // Handles both "1.234,56" (DE) and "1234.56" (EN) formats
+  const cleaned = val.replace(/[^\d,.\-]/g, '');
+  // If contains comma as decimal separator (DE format)
+  if (cleaned.includes(',') && cleaned.indexOf(',') > cleaned.lastIndexOf('.')) {
+    return parseFloat(cleaned.replace(/\./g, '').replace(',', '.')) || 0;
+  }
+  return parseFloat(cleaned) || 0;
+}
+
+function parseSheetDate(val: string | undefined): Date | null {
+  if (!val) return null;
+  // Handles YYYY-MM-DD (from Ads Script)
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function isInDateRange(dateStr: string | undefined, startDate: string, endDate: string): boolean {
+  const d = parseSheetDate(dateStr);
+  if (!d) return false;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999); // inclusive
+  return d >= start && d <= end;
+}
+
+async function readSheetTab(
+  sheets: ReturnType<typeof google.sheets>,
+  sheetId: string,
+  tabName: string
+): Promise<SheetRowRaw[]> {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: `${tabName}!A1:Z50000`,
+    });
+
+    const rows = response.data.values;
+    if (!rows || rows.length < 2) return [];
+
+    const headers = rows[0];
+    return rows.slice(1).map((row) => {
+      const obj: SheetRowRaw = {};
+      headers.forEach((header, index) => {
+        const key = header?.trim();
+        if (key) obj[key] = row[index]?.toString().trim() || '';
+      });
+      return obj;
+    });
+  } catch (e) {
+    console.warn(`[Google Ads Sheet] Tab "${tabName}" nicht lesbar:`, e);
+    return [];
+  }
+}
+
+function sheetRowToAdsRow(
+  raw: SheetRowRaw,
+  mapping: {
+    campaign?: string;
+    adGroup?: string;
+    adName?: string;
+    searchQuery?: string;
+  }
+): GoogleAdsRow {
+  const impressions = parseSheetNumber(raw['Impressionen']);
+  const clicks = parseSheetNumber(raw['Klicks']);
+  const cost = parseSheetNumber(raw['Kosten']);
+  return {
+    campaign: raw[mapping.campaign || 'Kampagne'] || '(not set)',
+    adGroup: raw[mapping.adGroup || 'Anzeigengruppe'] || '–',
+    adName: raw[mapping.adName || 'AnzeigenName'] || '–',
+    keyword: '–',
+    searchQuery: raw[mapping.searchQuery || 'Suchanfrage'] || '–',
+    landingPage: '–',
+    cost,
+    clicks,
+    impressions,
+    cpc: clicks > 0 ? cost / clicks : 0,
+    roas: 0,
+    conversions: parseSheetNumber(raw['Conversions']),
+    sessions: 0,
+    engagedSessions: 0,
+  };
+}
+
+export async function getGoogleAdsFromSheet(
+  sheetId: string,
+  startDate: string,
+  endDate: string
+): Promise<GoogleAdsData> {
+  const auth = createAuth();
+  const sheets = google.sheets({ version: 'v4', auth });
+
+  console.log(`[Google Ads Sheet] Lese Sheet ${sheetId} für ${startDate} – ${endDate}`);
+
+  // ── Alle Tabs parallel lesen ──
+  const [rawCampaigns, rawAdGroups, rawAds, rawQueries] = await Promise.all([
+    readSheetTab(sheets, sheetId, 'Kampagnen'),
+    readSheetTab(sheets, sheetId, 'Anzeigengruppen'),
+    readSheetTab(sheets, sheetId, 'Anzeigen'),
+    readSheetTab(sheets, sheetId, 'Suchanfragen'),
+  ]);
+
+  // ── Nach Datum filtern ──
+  const filteredCampaigns = rawCampaigns.filter((r) => isInDateRange(r['Datum'], startDate, endDate));
+  const filteredAdGroups = rawAdGroups.filter((r) => isInDateRange(r['Datum'], startDate, endDate));
+  const filteredAds = rawAds.filter((r) => isInDateRange(r['Datum'], startDate, endDate));
+  const filteredQueries = rawQueries.filter((r) => isInDateRange(r['Datum'], startDate, endDate));
+
+  console.log(`[Google Ads Sheet] Gefiltert → Kampagnen: ${filteredCampaigns.length} | AG: ${filteredAdGroups.length} | Anzeigen: ${filteredAds.length} | SQ: ${filteredQueries.length}`);
+
+  // ── In GoogleAdsRow[] konvertieren ──
+  const campaignRows: GoogleAdsRow[] = filteredCampaigns.map((r) =>
+    sheetRowToAdsRow(r, { campaign: 'Kampagne' })
+  );
+
+  const adGroupRows: GoogleAdsRow[] = filteredAdGroups.map((r) =>
+    sheetRowToAdsRow(r, { campaign: 'Kampagne', adGroup: 'Anzeigengruppe' })
+  );
+
+  const adRows: GoogleAdsRow[] = filteredAds.map((r) =>
+    sheetRowToAdsRow(r, { campaign: 'Kampagne', adGroup: 'Anzeigengruppe', adName: 'AnzeigenName' })
+  );
+
+  const searchQueryRows: GoogleAdsRow[] = filteredQueries.map((r) =>
+    sheetRowToAdsRow(r, { campaign: 'Kampagne', adGroup: 'Anzeigengruppe', searchQuery: 'Suchanfrage' })
+  );
+
+  // ── Totals aus Kampagnen-Tab berechnen (höchste Ebene = kein Doppelzählen) ──
+  let totalCost = 0;
+  let totalClicks = 0;
+  let totalImpressions = 0;
+  let totalConversions = 0;
+
+  for (const row of campaignRows) {
+    totalCost += row.cost;
+    totalClicks += row.clicks;
+    totalImpressions += row.impressions;
+    totalConversions += row.conversions;
+  }
+
+  const totals = {
+    cost: totalCost,
+    clicks: totalClicks,
+    avgCpc: totalClicks > 0 ? totalCost / totalClicks : 0,
+    roas: 0,
+    conversions: totalConversions,
+    sessions: 0,
+    engagedSessions: 0,
+    impressions: totalImpressions,
+    interactionRate: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0,
+  };
+
+  console.log(
+    `[Google Ads Sheet] Totals → Spend: €${totalCost.toFixed(2)} | Klicks: ${totalClicks} | Conv.: ${totalConversions}`
+  );
+
+  // rows = adGroupRows als Fallback für Legacy-Kompatibilität (aggregateBy funktioniert damit)
+  return {
+    rows: adGroupRows,
+    landingPageRows: [],
+    totals,
+    campaignRows,
+    adGroupRows,
+    adRows,
+    searchQueryRows,
+    source: 'sheet',
+  };
+}
+
