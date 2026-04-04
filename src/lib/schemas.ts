@@ -21,6 +21,7 @@ export const UserSchema = z.object({
   semrush_project_id: z.string().nullable().optional(),
   semrush_tracking_id: z.string().nullable().optional(),
   semrush_tracking_id_02: z.string().nullable().optional(),
+  google_ads_sheet_id: z.string().nullable().optional(),
   
   // Metadaten für Dashboard/Admin
   assigned_admins: z.string().nullable().optional(),
