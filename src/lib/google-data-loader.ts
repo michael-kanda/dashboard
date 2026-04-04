@@ -80,6 +80,9 @@ export async function getOrFetchGoogleData(
   if (!user.id) return null;
   const userId = user.id;
 
+  // Debug: Sheet-ID prüfen
+  console.log(`[Google Data Loader] User: ${user.email} | google_ads_sheet_id: ${user.google_ads_sheet_id || '(nicht gesetzt)'}`);
+
   // ==========================================
   // ✅ DEMO-MODUS CHECK - GANZ OBEN!
   // ==========================================
