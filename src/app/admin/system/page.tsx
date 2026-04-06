@@ -153,15 +153,17 @@ export default function SystemHealthPage() {
     const nonSuperadmins = kiToolUsers.filter(u => u.role !== 'SUPERADMIN' && u.ki_tool_enabled !== false);
     if (nonSuperadmins.length === 0) return alert('Keine User zum Sperren vorhanden.');
     if (!confirm(`KI-Tool für ${nonSuperadmins.length} User deaktivieren? (Superadmins ausgenommen)`)) return;
-    setIsLoadingKiTool(true);
+    // Optimistisches Update
+    setKiToolUsers(prev => prev.map(u => u.role === 'SUPERADMIN' ? u : { ...u, ki_tool_enabled: false }));
+    setKiToolDisabledCount(kiToolUsers.filter(u => u.role !== 'SUPERADMIN').length);
     try {
-      await fetch('/api/admin/ki-tool-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch('/api/admin/ki-tool-settings', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bulkDisable: true })
       });
+      if (!res.ok) throw new Error('Fehler');
       await fetchKiToolStatus();
-    } catch (e) { alert('Fehler'); } finally { setIsLoadingKiTool(false); }
+    } catch (e) { alert('Fehler beim Sperren'); await fetchKiToolStatus(); }
   };
 
   // NEU: Alle KI-Tool freigeben
@@ -169,15 +171,16 @@ export default function SystemHealthPage() {
     const disabled = kiToolUsers.filter(u => u.ki_tool_enabled === false);
     if (disabled.length === 0) return alert('Alle User haben bereits Zugriff.');
     if (!confirm(`KI-Tool für ${disabled.length} User wieder aktivieren?`)) return;
-    setIsLoadingKiTool(true);
+    setKiToolUsers(prev => prev.map(u => ({ ...u, ki_tool_enabled: true })));
+    setKiToolDisabledCount(0);
     try {
-      await fetch('/api/admin/ki-tool-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch('/api/admin/ki-tool-settings', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bulkEnable: true })
       });
+      if (!res.ok) throw new Error('Fehler');
       await fetchKiToolStatus();
-    } catch (e) { alert('Fehler'); } finally { setIsLoadingKiTool(false); }
+    } catch (e) { alert('Fehler beim Freigeben'); await fetchKiToolStatus(); }
   };
 
   // NEU: Alle DataMax sperren (außer SUPERADMIN)
@@ -185,15 +188,16 @@ export default function SystemHealthPage() {
     const nonSuperadmins = dataMaxUsers.filter(u => u.role !== 'SUPERADMIN' && u.data_max_enabled !== false);
     if (nonSuperadmins.length === 0) return alert('Keine User zum Sperren vorhanden.');
     if (!confirm(`DataMax Chat für ${nonSuperadmins.length} User deaktivieren? (Superadmins ausgenommen)`)) return;
-    setIsLoadingDataMax(true);
+    setDataMaxUsers(prev => prev.map(u => u.role === 'SUPERADMIN' ? u : { ...u, data_max_enabled: false }));
+    setDataMaxDisabledCount(dataMaxUsers.filter(u => u.role !== 'SUPERADMIN').length);
     try {
-      await fetch('/api/admin/datamax-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch('/api/admin/datamax-settings', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bulkDisable: true })
       });
+      if (!res.ok) throw new Error('Fehler');
       await fetchDataMaxStatus();
-    } catch (e) { alert('Fehler'); } finally { setIsLoadingDataMax(false); }
+    } catch (e) { alert('Fehler beim Sperren'); await fetchDataMaxStatus(); }
   };
 
   // NEU: Alle DataMax freigeben
@@ -201,15 +205,16 @@ export default function SystemHealthPage() {
     const disabled = dataMaxUsers.filter(u => u.data_max_enabled === false);
     if (disabled.length === 0) return alert('Alle User haben bereits Zugriff.');
     if (!confirm(`DataMax Chat für ${disabled.length} User wieder aktivieren?`)) return;
-    setIsLoadingDataMax(true);
+    setDataMaxUsers(prev => prev.map(u => ({ ...u, data_max_enabled: true })));
+    setDataMaxDisabledCount(0);
     try {
-      await fetch('/api/admin/datamax-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch('/api/admin/datamax-settings', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bulkEnable: true })
       });
+      if (!res.ok) throw new Error('Fehler');
       await fetchDataMaxStatus();
-    } catch (e) { alert('Fehler'); } finally { setIsLoadingDataMax(false); }
+    } catch (e) { alert('Fehler beim Freigeben'); await fetchDataMaxStatus(); }
   };
 
   const handleClearCache = async () => {
