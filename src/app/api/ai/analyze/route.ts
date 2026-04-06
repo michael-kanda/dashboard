@@ -183,12 +183,13 @@ export async function POST(req: NextRequest) {
     if (googleAdsData?.totals) {
       const adsTotals = googleAdsData.totals;
       const fmtCur = (v: number) => v?.toFixed(2).replace('.', ',') + ' €';
+      const adsCpc = adsTotals.clicks > 0 ? adsTotals.cost / adsTotals.clicks : 0;
       
       googleAdsSection = `
       ===== GOOGLE ADS (Bezahlte Werbung) =====
       Gesamtkosten: ${fmtCur(adsTotals.cost || 0)}
       Klicks (Ads): ${fmt(adsTotals.clicks || 0)}
-      Ø CPC: ${fmtCur(adsTotals.cpc || 0)}
+      Ø CPC: ${fmtCur(adsCpc)}
       Conversions (Ads): ${fmt(adsTotals.conversions || 0)}
       CTR/Interaktionsrate: ${(adsTotals.interactionRate || 0).toFixed(1)}%`;
       
