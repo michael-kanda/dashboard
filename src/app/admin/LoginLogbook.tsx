@@ -2,7 +2,8 @@
 'use client';
 
 import useSWR from 'swr';
-import { ClockHistory, PersonCircle, ShieldLock } from 'react-bootstrap-icons';
+import { useState, useMemo } from 'react';
+import { ClockHistory, PersonCircle, ShieldLock, Search } from 'react-bootstrap-icons';
 import { cn } from '@/lib/utils'; // Importiere cn für bedingte Klassen
 
 // Interface für die Log-Daten
@@ -23,6 +24,18 @@ export default function LoginLogbook() {
     fetcher,
     { refreshInterval: 60000 } // Alle 60 Sekunden nach neuen Logs suchen
   );
+
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredLogs = useMemo(() => {
+    if (!logs) return [];
+    if (!searchTerm.trim()) return logs;
+    const term = searchTerm.toLowerCase();
+    return logs.filter(log =>
+      (log.user_email && log.user_email.toLowerCase().includes(term)) ||
+      (log.user_role && log.user_role.toLowerCase().includes(term))
+    );
+  }, [logs, searchTerm]);
 
   // Formatiert den Zeitstempel
   const formatTimestamp = (ts: string) => {
@@ -56,20 +69,32 @@ export default function LoginLogbook() {
         <ShieldLock size={20} /> Login-Protokoll (Superadmin)
       </h2>
       
+      {/* Suchfeld */}
+      <div className="mb-3 relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+        <input
+          type="text"
+          placeholder="E-Mail oder Rolle suchen..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+
       {/* Container mit Scrollbalken */}
       <div className="border rounded-lg max-h-96 overflow-y-auto">
         {isLoading && <p className="p-4 text-sm text-gray-500">Lade Login-Logs...</p>}
         {error && <p className="p-4 text-sm text-red-600">Fehler beim Laden der Logs.</p>}
-        {logs && logs.length === 0 && (
+        {filteredLogs.length === 0 && !isLoading && !error && (
           <p className="p-4 text-sm text-gray-500 italic">
-            Bisher keine Login-Ereignisse protokolliert.
+            {searchTerm ? 'Keine Ergebnisse gefunden.' : 'Bisher keine Login-Ereignisse protokolliert.'}
           </p>
         )}
         
         {/* Log-Liste */}
-        {logs && logs.length > 0 && (
+        {filteredLogs.length > 0 && (
           <ul className="divide-y divide-gray-200">
-            {logs.map((log) => (
+            {filteredLogs.map((log) => (
               <li key={log.id} className="p-3 space-y-2">
                 {/* Benutzer und Rolle */}
                 <div className="flex items-center justify-between">
