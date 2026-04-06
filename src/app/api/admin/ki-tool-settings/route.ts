@@ -39,7 +39,6 @@ export async function GET(req: Request) {
     const { rows } = await sql`
       SELECT id::text as id, email, role, domain, ki_tool_enabled
       FROM users
-      WHERE role IN ('BENUTZER', 'ADMIN')
       ORDER BY role ASC, email ASC
     `;
     
@@ -68,7 +67,19 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { userId, isEnabled } = body;
+    const { userId, isEnabled, bulkDisable, bulkEnable } = body;
+
+    // NEU: Bulk-Aktionen (alle außer SUPERADMIN)
+    if (bulkDisable || bulkEnable) {
+      const newState = bulkEnable === true;
+      await sql`
+        UPDATE users 
+        SET ki_tool_enabled = ${newState}
+        WHERE role != 'SUPERADMIN'
+      `;
+      console.log(`[KI-Tool] Bulk ${newState ? 'aktiviert' : 'deaktiviert'} für alle Non-Superadmins`);
+      return NextResponse.json({ success: true, bulk: true, isEnabled: newState });
+    }
 
     if (!userId) {
       return NextResponse.json({ message: 'userId ist erforderlich' }, { status: 400 });
