@@ -302,7 +302,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
   }
 
   return (
-    <div className="card-glass overflow-hidden shadow-md">
+    <div className="card-glass overflow-hidden shadow-sm">
       {/* ── KPI-Header ── */}
       <div className="p-4 sm:p-6 border-b border-theme-border-subtle">
         <h3 className="text-lg font-semibold text-strong mb-1 flex items-center gap-2">
