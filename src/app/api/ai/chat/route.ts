@@ -9,7 +9,7 @@ import type { ProjectDashboardData } from '@/lib/dashboard-shared';
 import { getAiTrafficDetailWithComparison } from '@/lib/ai-traffic-extended';
 import Holidays from 'date-holidays';
 import type { DailyWeather } from '@/lib/weather';
-
+export const maxDuration = 60;
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
