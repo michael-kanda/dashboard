@@ -1758,8 +1758,44 @@ function countWords(s: string): number {
 }
 
 /**
- * Brand-Erkennung: prüft Liste konfigurierter Brand-Keywords zuerst,
- * fällt auf Domain-Wurzel zurück wenn keine Keywords gesetzt sind.
+ * Generische Begriffe, die alleine NICHT als Brand-Treffer zählen sollen.
+ * Sonst würde "anwalt-hofer.at" jede Anwalt-Query als Brand markieren.
+ */
+const GENERIC_TERMS = new Set([
+  // Service-Kategorien
+  'anwalt', 'kanzlei', 'praxis', 'firma', 'agentur', 'shop',
+  'store', 'online', 'web', 'site', 'page', 'service', 'dienst',
+  'consulting', 'marketing', 'werbung', 'design',
+  // Branchen
+  'datenrettung', 'rechtsanwalt', 'ehescheidungsanwalt',
+  'carwash', 'autowäsche', 'uhren', 'schmuck',
+  // Geo
+  'wien', 'graz', 'linz', 'salzburg', 'innsbruck', 'klagenfurt',
+  'austria', 'österreich', 'germany', 'deutschland',
+  'berlin', 'münchen', 'hamburg', 'köln',
+  // Häufige Modifier
+  'mein', 'dein', 'sein', 'unser', 'für', 'with', 'the',
+  '4you', '4me', '24', 'pro', 'plus', 'best', 'top',
+]);
+
+/**
+ * Helper: Escape Regex-Metazeichen in einem String.
+ */
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Brand-Erkennung: prüft konfigurierte Brand-Keywords zuerst,
+ * fällt auf intelligente Domain-Tokenisierung zurück.
+ *
+ * Erkennt jetzt auch:
+ *   "anwalt-hofer.at"     → ["hofer"]                  (anwalt = generisch raus)
+ *   "uhren-schoeller.at"  → ["schoeller"]              (uhren = generisch raus)
+ *   "max-online.at"       → ["max", "maxonline"]       (online = generisch raus)
+ *   "trefalt-walch.at"    → ["trefalt", "walch"]
+ *   "carwash4you.at"      → ["carwash4you"]            (4you allein zu kurz)
+ *   "aichelin.at"         → ["aichelin"]               (unverändert)
  *
  * @param query     Die zu prüfende Suchanfrage
  * @param domain    Optionale Domain für Heuristik-Fallback
@@ -1772,7 +1808,7 @@ function isBrandedQuery(
 ): boolean {
   const q = query.toLowerCase();
 
-  // Konfigurierte Keywords haben Vorrang
+  // 1. Konfigurierte Keywords haben Vorrang
   if (keywords && keywords.length > 0) {
     return keywords.some((kw) => {
       const k = kw.trim().toLowerCase();
@@ -1780,16 +1816,50 @@ function isBrandedQuery(
     });
   }
 
-  // Heuristik-Fallback: Domain-Wurzel
+  // 2. Heuristik aus Domain
   if (!domain) return false;
-  const brand = domain
+
+  const cleaned = domain
     .replace(/^https?:\/\//, '')
     .replace(/^www\./, '')
-    .split('.')[0]
     .toLowerCase();
 
-  if (brand.length < 3) return false;
-  return q.includes(brand);
+  const baseDomain = cleaned.split('.')[0]; // z.B. "anwalt-hofer"
+  if (baseDomain.length < 3) return false;
+
+  const tokens = new Set<string>();
+
+  // Variante A: ganze Base-Domain mit Bindestrich
+  tokens.add(baseDomain);
+
+  // Variante B: Bindestriche entfernt (z.B. "anwalthofer")
+  if (baseDomain.includes('-')) {
+    tokens.add(baseDomain.replace(/-/g, ''));
+  }
+
+  // Variante C: Bindestriche zu Leerzeichen (häufigste Schreibweise!)
+  if (baseDomain.includes('-')) {
+    tokens.add(baseDomain.replace(/-/g, ' '));
+  }
+
+  // Variante D: Einzelteile, sofern lang genug UND nicht generisch
+  baseDomain.split('-').forEach((part) => {
+    if (part.length >= 4 && !GENERIC_TERMS.has(part)) {
+      tokens.add(part);
+    }
+  });
+
+  // Edge-Case: Wenn Composite-Token selbst generisch ist (z.B. "wien.at")
+  if (GENERIC_TERMS.has(baseDomain)) tokens.delete(baseDomain);
+
+  if (tokens.size === 0) return false;
+
+  // 3. Match prüfen — Wortgrenze schützt vor Fehltreffern
+  return Array.from(tokens).some((token) => {
+    if (token.length < 3) return false;
+    const re = new RegExp(`\\b${escapeRegex(token)}\\b`, 'i');
+    return re.test(q);
+  });
 }
 
 /**
