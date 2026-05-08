@@ -1728,3 +1728,227 @@ export async function getGoogleAdsFromSheet(
   };
 }
 
+// ════════════════════════════════════════════════════════════════════
+// PROMPT TRACKING – am Ende von src/lib/google-api.ts einfügen
+//
+// Methodik nach Seybold (2026):
+// https://seybold.de/prompt-tracking-in-google-search-console/
+//
+// Lädt prompt-ähnliche, konversationsartige Queries (≥10 Wörter)
+// direkt aus der GSC API via Regex-Filter (server-seitig, effizient).
+// ════════════════════════════════════════════════════════════════════
+
+import type {
+  PromptTrackingResult,
+  PromptQueryData,
+} from '@/lib/dashboard-shared';
+
+// Re-export für bequemen Import an anderen Stellen
+export type { PromptTrackingResult, PromptQueryData };
+
+/**
+ * Hilfsfunktion: Wortzahl in Query
+ */
+function countWords(s: string): number {
+  return s.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/**
+ * Hilfsfunktion: Brand-Erkennung (simple Heuristik – Domain-Wurzel ohne TLD/www).
+ * Beispiel: domain="https://www.beispiel.de" → Brand-Term "beispiel"
+ *
+ * Für robustere Erkennung später durch konfigurierbare brand_keywords-Spalte
+ * im User/Project-Schema ersetzen.
+ */
+function isBrandedQuery(query: string, domain?: string): boolean {
+  if (!domain) return false;
+
+  const brand = domain
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .split('.')[0]
+    .toLowerCase();
+
+  if (brand.length < 3) return false;
+  return query.toLowerCase().includes(brand);
+}
+
+/**
+ * Lädt alle Suchanfragen mit mindestens `minWords` Wörtern aus der
+ * Google Search Console (server-seitiger Regex-Filter).
+ *
+ * @param siteUrl    GSC Property URL (z.B. "sc-domain:beispiel.de")
+ * @param startDate  YYYY-MM-DD
+ * @param endDate    YYYY-MM-DD
+ * @param domain     User-Domain für Brand-Erkennung (optional)
+ * @param minWords   Mindestwortzahl, default 10 (Seybold-Empfehlung)
+ */
+export async function getPromptLikeQueries(
+  siteUrl: string,
+  startDate: string,
+  endDate: string,
+  domain?: string,
+  minWords: number = 10
+): Promise<PromptTrackingResult> {
+  const auth = createAuth();
+  const searchconsole = google.searchconsole({ version: 'v1', auth });
+
+  // Regex laut Seybold-Artikel:
+  //   ^(?:\S+\s+){9,}\S+$   → mindestens 10 "Wörter"
+  // Dynamisch aus minWords gebaut. Backslashes für JS-String doppelt escapen.
+  const regex = `^(?:\\S+\\s+){${minWords - 1},}\\S+$`;
+
+  try {
+    // ── 1. Hauptabfrage: query + page mit Regex-Filter ────────────
+    const res = await searchconsole.searchanalytics.query({
+      siteUrl,
+      requestBody: {
+        startDate,
+        endDate,
+        dimensions: ['query', 'page'],
+        rowLimit: 5000,
+        dimensionFilterGroups: [
+          {
+            filters: [
+              {
+                dimension: 'query',
+                operator: 'includingRegex',
+                expression: regex,
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const rows = res.data.rows || [];
+
+    // ── 2. Aggregation pro Query (1 Query → ggf. mehrere Pages) ──
+    const queryMap = new Map<
+      string,
+      {
+        clicks: number;
+        impressions: number;
+        positionSum: number;
+        topUrl: string;
+        maxClicksForUrl: number;
+      }
+    >();
+
+    for (const row of rows) {
+      const query = row.keys?.[0] || '(not set)';
+      const url = row.keys?.[1] || '';
+      const clicks = row.clicks || 0;
+      const impressions = row.impressions || 0;
+      const position = row.position || 0;
+
+      if (!queryMap.has(query)) {
+        queryMap.set(query, {
+          clicks: 0,
+          impressions: 0,
+          positionSum: 0,
+          topUrl: url,
+          maxClicksForUrl: clicks,
+        });
+      }
+
+      const entry = queryMap.get(query)!;
+      entry.clicks += clicks;
+      entry.impressions += impressions;
+      entry.positionSum += position * impressions;
+
+      if (clicks > entry.maxClicksForUrl) {
+        entry.maxClicksForUrl = clicks;
+        entry.topUrl = url;
+      }
+    }
+
+    // ── 3. In Output-Format konvertieren ──────────────────────────
+    const queries: PromptQueryData[] = [];
+    let brandedCount = 0;
+
+    for (const [query, data] of queryMap.entries()) {
+      const ctr = data.impressions > 0 ? data.clicks / data.impressions : 0;
+      const position = data.impressions > 0 ? data.positionSum / data.impressions : 0;
+      const branded = isBrandedQuery(query, domain);
+      if (branded) brandedCount++;
+
+      queries.push({
+        query,
+        clicks: data.clicks,
+        impressions: data.impressions,
+        ctr,
+        position,
+        url: data.topUrl,
+        wordCount: countWords(query),
+        isBranded: branded,
+      });
+    }
+
+    // Sortierung: nach Impressions (Visibility-Fokus)
+    queries.sort((a, b) => b.impressions - a.impressions);
+
+    // ── 4. Totals ─────────────────────────────────────────────────
+    const totalClicks = queries.reduce((sum, q) => sum + q.clicks, 0);
+    const totalImpressions = queries.reduce((sum, q) => sum + q.impressions, 0);
+    const avgCtr = totalImpressions > 0 ? totalClicks / totalImpressions : 0;
+    const positionSum = queries.reduce((sum, q) => sum + q.position * q.impressions, 0);
+    const avgPosition = totalImpressions > 0 ? positionSum / totalImpressions : 0;
+    const totalQueries = queries.length;
+    const brandedShare = totalQueries > 0 ? (brandedCount / totalQueries) * 100 : 0;
+
+    // ── 5. Tagestrend (zweite Abfrage, dimension: date) ──────────
+    let trend: { date: number; clicks: number; impressions: number }[] = [];
+    try {
+      const trendRes = await searchconsole.searchanalytics.query({
+        siteUrl,
+        requestBody: {
+          startDate,
+          endDate,
+          dimensions: ['date'],
+          rowLimit: 25000,
+          dimensionFilterGroups: [
+            {
+              filters: [
+                {
+                  dimension: 'query',
+                  operator: 'includingRegex',
+                  expression: regex,
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const trendRows = trendRes.data.rows || [];
+      trendRows.sort((a, b) => (a.keys?.[0] || '').localeCompare(b.keys?.[0] || ''));
+
+      trend = trendRows.map((row) => ({
+        date: parseGscDate(row.keys?.[0] || ''),
+        clicks: row.clicks || 0,
+        impressions: row.impressions || 0,
+      }));
+    } catch (e) {
+      console.warn('[Prompt Tracking] Trend-Abfrage fehlgeschlagen (ignoriert):', e);
+    }
+
+    return {
+      queries: queries.slice(0, 500), // Cap, falls extrem viele
+      totals: {
+        totalQueries,
+        totalClicks,
+        totalImpressions,
+        avgCtr,
+        avgPosition,
+        brandedShare,
+        nonBrandedShare: 100 - brandedShare,
+      },
+      trend,
+      minWords,
+    };
+  } catch (error) {
+    console.error('[Prompt Tracking] Error:', error);
+    throw error;
+  }
+}
