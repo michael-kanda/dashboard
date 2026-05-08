@@ -28,7 +28,7 @@ import LandingPageChart from '@/components/charts/LandingPageChart';
 import { aggregateLandingPages } from '@/lib/utils';
 import { DataMaxChat } from '@/components/datamax';
 import GoogleAdsWidget from '@/components/GoogleAdsWidget';
-import PromptTrackingCard from '@/components/PromptTrackingCard';   // ✅ NEU
+import PromptTrackingCard from '@/components/PromptTrackingCard';
 
 // 🔍 DIAGNOSTIK – nur Server-Side ausführen, später wieder entfernen
 if (typeof window === 'undefined') {
@@ -37,7 +37,7 @@ if (typeof window === 'undefined') {
     AiTrafficDetailWidgetV2, TopQueriesList, SemrushTopKeywords,
     SemrushTopKeywords02, GlobalHeader, ProjectTimelineWidget,
     AiAnalysisWidget, LandingPageChart, DataMaxChat, GoogleAdsWidget,
-    PromptTrackingCard,                                            // ✅ NEU
+    PromptTrackingCard,
   };
   for (const [name, comp] of Object.entries(_components)) {
     if (typeof comp === 'undefined') {
@@ -75,7 +75,7 @@ interface ProjectDashboardProps {
   userEmail?: string;
   showLandingPages?: boolean;
   showGoogleAds?: boolean;
-  showPromptTracking?: boolean;        // ✅ NEU
+  showPromptTracking?: boolean;
   dataMaxEnabled?: boolean;
 }
 
@@ -98,7 +98,7 @@ export default function ProjectDashboard({
   userEmail = '',
   showLandingPages = false,
   showGoogleAds = false,
-  showPromptTracking = false,           // ✅ NEU
+  showPromptTracking = false,
   dataMaxEnabled = true,
 }: ProjectDashboardProps) {
 
@@ -109,7 +109,7 @@ export default function ProjectDashboard({
   const [activeKpi, setActiveKpi] = useState<ActiveKpi>('clicks');
   const [isLandingPagesVisible, setIsLandingPagesVisible] = useState(showLandingPages);
   const [isGoogleAdsVisible, setIsGoogleAdsVisible] = useState(showGoogleAds);
-  const [isPromptTrackingVisible, setIsPromptTrackingVisible] = useState(showPromptTracking); // ✅ NEU
+  const [isPromptTrackingVisible, setIsPromptTrackingVisible] = useState(showPromptTracking);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showAiTrafficDetail, setShowAiTrafficDetail] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
@@ -183,7 +183,7 @@ export default function ProjectDashboard({
     || (data.googleAdsData?.campaignRows?.length ?? 0) > 0;
   const shouldRenderGoogleAds = hasGoogleAdsData && (isAdmin || isGoogleAdsVisible);
 
-  // ✅ NEU: Prompt Tracking Prüfung (nur rendern wenn GSC-Daten vorhanden)
+  // ✅ Prompt Tracking Prüfung (nur rendern wenn GSC-Daten vorhanden)
   const hasPromptTracking = !!data.promptTracking;
   const shouldRenderPromptTracking = hasPromptTracking && (isAdmin || isPromptTrackingVisible);
 
@@ -320,7 +320,7 @@ export default function ProjectDashboard({
           </div>
         )}
 
-        {/* ✅ NEU: PROMPT TRACKING SEKTION (GSC Proxy für AI-Mode-Queries) */}
+        {/* PROMPT TRACKING SEKTION (GSC Proxy für AI-Mode-Queries) */}
         <Trace at="PromptTrackingCard?" />
         {shouldRenderPromptTracking && (
           <div
@@ -341,7 +341,11 @@ export default function ProjectDashboard({
               </div>
             )}
             <div className="relative">
-              <PromptTrackingCard data={data.promptTracking} />
+              <PromptTrackingCard
+                data={data.promptTracking}
+                domain={domain}
+                dateRange={dateRange}
+              />
               {!isPromptTrackingVisible && isAdmin && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="overlay-muted-badge backdrop-blur-[1px] px-4 py-2 rounded-lg border text-strong text-xs font-semibold shadow-sm">
@@ -413,7 +417,7 @@ export default function ProjectDashboard({
           />
         </div>
 
-        {/* ✅ GOOGLE ADS SEKTION */}
+        {/* GOOGLE ADS SEKTION */}
         <Trace at="GoogleAdsWidget?" />
         {shouldRenderGoogleAds && (
           <div id="section-google-ads" className={`mt-8 scroll-mt-20 transition-all duration-300 ${!isGoogleAdsVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
