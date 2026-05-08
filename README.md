@@ -17,11 +17,14 @@
 
 - **Alles auf einen Blick:** Search Console, Analytics und KI-Traffic in einem einzigen Dashboard — statt 5 offene Google-Tabs.
 - **KI-Traffic sichtbar:** Sieh zum ersten Mal, wie viele Besucher über ChatGPT, Claude, Perplexity oder Google Gemini auf deine Website kommen.
+- **Prompt Tracking:** Erkenne lange, konversationsartige Suchanfragen direkt in der Google Search Console — ein erster Proxy für AI-Mode-Queries, bevor Google offizielle Daten dazu liefert.
 - **Verstehen statt rätseln:** Der KI-Assistent **DataMax** erklärt deine Daten in Klartext und liefert konkrete Empfehlungen.
 
 ### Was ist DataPeak?
 
 DataPeak bündelt deine wichtigsten Daten aus Google Search Console und Google Analytics 4 an einem Ort und sagt dir in Klartext, was funktioniert und was nicht. Zusätzlich erkennt es einen Kanal, den die meisten noch gar nicht auf dem Radar haben: **KI-Traffic**. Immer mehr Besucher kommen über ChatGPT, Claude, Perplexity und Google Gemini auf Websites — DataPeak misst diese Quellen automatisch.
+
+Mit dem neuen **Prompt Tracking** geht DataPeak einen Schritt weiter: Es filtert prompt-ähnliche Suchanfragen (≥10 Wörter) direkt aus der Search Console heraus und macht so sichtbar, wie Nutzer in Zeiten von ChatGPT & Co. ihre Fragen formulieren — lange, bevor Google offizielle AI-Mode-Daten liefert.
 
 ### Features
 
@@ -29,6 +32,8 @@ DataPeak bündelt deine wichtigsten Daten aus Google Search Console und Google A
 - **Top 100 Suchanfragen mit Landingpage-Zuordnung:** Erkenne sofort, welche Seite für welches Keyword rankt.
 - **Traffic-Segmentierung:** Nach Channel (Organic, Direct, Referral, Social), Land und Endgerät (Desktop, Mobile, Tablet).
 - **KI-Traffic-Analyse:** ChatGPT, Claude, Perplexity und Google Gemini werden automatisch erkannt — inkl. Sitzungen, Nutzer, Folgepfade und Interaktionsrate.
+- **Prompt Tracking (GSC Proxy):** Konversationsartige Suchanfragen mit ≥10 Wörtern werden automatisch isoliert und nach Brand vs. Non-Brand klassifiziert.
+- **KI-Cluster-Analyse der Prompts:** Auf Knopfdruck gruppiert Gemini deine Prompt-Queries in thematische Cluster, erkennt dominante Intents (informational, transactional, comparative …) und identifiziert konkrete Content-Lücken.
 - **Intent-Kategorisierung & User-Journey:** Welche Seiten besuchen KI-Nutzer nach dem Einstieg?
 - **Wetter- & Feiertagsanzeige:** Verstehe Traffic-Einbrüche und -Spitzen im Kontext.
 - **DataMax KI-Assistent:** Erklärt Trends in Klartext und empfiehlt nächste Schritte.
@@ -38,7 +43,7 @@ DataPeak bündelt deine wichtigsten Daten aus Google Search Console und Google A
 
 - **Framework:** Next.js 14
 - **Sprache:** TypeScript
-- **KI:** Vercel AI SDK + Google Gemini
+- **KI:** Vercel AI SDK + Google Gemini (für DataMax und Prompt-Cluster-Analyse)
 - **Datenbank:** Vercel Postgres
 - **APIs:** Google Search Console API, Google Analytics 4 Data API (via OAuth2)
 - **Hosting:** Vercel
@@ -63,11 +68,14 @@ Testzugang anfragen auf [designare.at/data-peak-dashboard](https://designare.at/
 
 - **Everything at a glance:** Search Console, Analytics, and AI traffic in a single dashboard — instead of five open Google tabs.
 - **AI traffic made visible:** See for the first time how many visitors come to your website from ChatGPT, Claude, Perplexity, or Google Gemini.
+- **Prompt Tracking:** Identify long, conversational search queries straight from Google Search Console — an early proxy for AI-Mode queries, well before Google releases official data on this.
 - **Understand instead of guessing:** The AI assistant **DataMax** explains your data in plain language and delivers concrete recommendations.
 
 ### What is DataPeak?
 
 DataPeak consolidates your most important data from Google Search Console and Google Analytics 4 in one place and tells you in plain language what is working and what is not. On top of that, it surfaces a channel most people are not yet tracking: **AI traffic**. More and more visitors reach websites via ChatGPT, Claude, Perplexity, and Google Gemini — DataPeak detects these sources automatically.
+
+With the new **Prompt Tracking** feature, DataPeak goes one step further: it filters prompt-like search queries (≥10 words) directly from Search Console and reveals how users actually phrase their questions in the age of ChatGPT & Co. — long before Google delivers official AI-Mode data.
 
 ### Features
 
@@ -75,6 +83,8 @@ DataPeak consolidates your most important data from Google Search Console and Go
 - **Top 100 search queries with landing page mapping:** See instantly which page ranks for which keyword.
 - **Traffic segmentation:** By channel (Organic, Direct, Referral, Social), country, and device (Desktop, Mobile, Tablet).
 - **AI traffic analysis:** ChatGPT, Claude, Perplexity, and Google Gemini are detected automatically — including sessions, users, follow-up paths, and engagement rate.
+- **Prompt Tracking (GSC proxy):** Conversational search queries with ≥10 words are isolated automatically and classified into Brand vs. Non-Brand.
+- **AI cluster analysis of prompts:** With one click, Gemini groups your prompt queries into thematic clusters, detects dominant intents (informational, transactional, comparative …) and surfaces concrete content gaps.
 - **Intent categorization & user journey:** See which pages AI-referred visitors go to next.
 - **Weather & holiday overlay:** Understand traffic drops and spikes in context.
 - **DataMax AI assistant:** Explains trends in plain language and recommends next steps.
@@ -84,7 +94,7 @@ DataPeak consolidates your most important data from Google Search Console and Go
 
 - **Framework:** Next.js 14
 - **Language:** TypeScript
-- **AI:** Vercel AI SDK + Google Gemini
+- **AI:** Vercel AI SDK + Google Gemini (powers DataMax and prompt cluster analysis)
 - **Database:** Vercel Postgres
 - **APIs:** Google Search Console API, Google Analytics 4 Data API (via OAuth2)
 - **Hosting:** Vercel
