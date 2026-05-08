@@ -1729,156 +1729,46 @@ export async function getGoogleAdsFromSheet(
 }
 
 // ════════════════════════════════════════════════════════════════════
-// PROMPT TRACKING (v2) – am Ende von src/lib/google-api.ts einfügen
-// ERSETZT die bisherige getPromptLikeQueries-Implementierung.
+// PROMPT TRACKING v4 – ANFÜGEN/ERSETZEN in src/lib/google-api.ts
 //
-// Methodik nach Seybold (2026):
-// https://seybold.de/prompt-tracking-in-google-search-console/
+// Dieser Block ersetzt den bestehenden Prompt-Tracking-Block.
+// Klassifikation (Brand/Geo/Frage-Typ) ist nach query-classifier.ts ausgelagert.
 //
-// Neu in v2:
-// • Konfigurierbare Brand-Keywords (Fallback: Domain-Wurzel-Heuristik)
-// • Wortzahl-Distribution (für Histogramm)
-// • Nimmt totalImpressionsAll als Parameter (für Anteils-Kalkulation)
-// • Alles was schon vorher da war: Regex-Filter, Trend, Brand-Erkennung
+// Wenn der Block schon einmal eingefügt wurde, alten Block KOMPLETT löschen
+// und durch diesen ersetzen.
 // ════════════════════════════════════════════════════════════════════
 
 import type {
   PromptTrackingResult,
   PromptQueryData,
   PromptWordCountBucket,
+  QuestionTypeDistribution,
 } from '@/lib/dashboard-shared';
+
+import {
+  isBrandedQuery,
+  hasGeoReference,
+  detectQuestionType,
+  type QuestionType,
+} from '@/lib/prompt-tracking/query-classifier';
 
 export type { PromptTrackingResult, PromptQueryData };
 
-/**
- * Hilfsfunktion: Wortzahl in Query
- */
+// ─── Helpers ────────────────────────────────────────────────────────
+
 function countWords(s: string): number {
   return s.trim().split(/\s+/).filter(Boolean).length;
 }
 
-/**
- * Generische Begriffe, die alleine NICHT als Brand-Treffer zählen sollen.
- * Sonst würde "anwalt-hofer.at" jede Anwalt-Query als Brand markieren.
- */
-const GENERIC_TERMS = new Set([
-  // Service-Kategorien
-  'anwalt', 'kanzlei', 'praxis', 'firma', 'agentur', 'shop',
-  'store', 'online', 'web', 'site', 'page', 'service', 'dienst',
-  'consulting', 'marketing', 'werbung', 'design',
-  // Branchen
-  'datenrettung', 'rechtsanwalt', 'ehescheidungsanwalt',
-  'carwash', 'autowäsche', 'uhren', 'schmuck',
-  // Geo
-  'wien', 'graz', 'linz', 'salzburg', 'innsbruck', 'klagenfurt',
-  'austria', 'österreich', 'germany', 'deutschland',
-  'berlin', 'münchen', 'hamburg', 'köln',
-  // Häufige Modifier
-  'mein', 'dein', 'sein', 'unser', 'für', 'with', 'the',
-  '4you', '4me', '24', 'pro', 'plus', 'best', 'top',
-]);
-
-/**
- * Helper: Escape Regex-Metazeichen in einem String.
- */
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/**
- * Brand-Erkennung: prüft konfigurierte Brand-Keywords zuerst,
- * fällt auf intelligente Domain-Tokenisierung zurück.
- *
- * Erkennt jetzt auch:
- *   "anwalt-hofer.at"     → ["hofer"]                  (anwalt = generisch raus)
- *   "uhren-schoeller.at"  → ["schoeller"]              (uhren = generisch raus)
- *   "max-online.at"       → ["max", "maxonline"]       (online = generisch raus)
- *   "trefalt-walch.at"    → ["trefalt", "walch"]
- *   "carwash4you.at"      → ["carwash4you"]            (4you allein zu kurz)
- *   "aichelin.at"         → ["aichelin"]               (unverändert)
- *
- * @param query     Die zu prüfende Suchanfrage
- * @param domain    Optionale Domain für Heuristik-Fallback
- * @param keywords  Optionale konfigurierte Brand-Begriffe
- */
-function isBrandedQuery(
-  query: string,
-  domain?: string,
-  keywords?: string[]
-): boolean {
-  const q = query.toLowerCase();
-
-  // 1. Konfigurierte Keywords haben Vorrang
-  if (keywords && keywords.length > 0) {
-    return keywords.some((kw) => {
-      const k = kw.trim().toLowerCase();
-      return k.length >= 2 && q.includes(k);
-    });
-  }
-
-  // 2. Heuristik aus Domain
-  if (!domain) return false;
-
-  const cleaned = domain
-    .replace(/^https?:\/\//, '')
-    .replace(/^www\./, '')
-    .toLowerCase();
-
-  const baseDomain = cleaned.split('.')[0]; // z.B. "anwalt-hofer"
-  if (baseDomain.length < 3) return false;
-
-  const tokens = new Set<string>();
-
-  // Variante A: ganze Base-Domain mit Bindestrich
-  tokens.add(baseDomain);
-
-  // Variante B: Bindestriche entfernt (z.B. "anwalthofer")
-  if (baseDomain.includes('-')) {
-    tokens.add(baseDomain.replace(/-/g, ''));
-  }
-
-  // Variante C: Bindestriche zu Leerzeichen (häufigste Schreibweise!)
-  if (baseDomain.includes('-')) {
-    tokens.add(baseDomain.replace(/-/g, ' '));
-  }
-
-  // Variante D: Einzelteile, sofern lang genug UND nicht generisch
-  baseDomain.split('-').forEach((part) => {
-    if (part.length >= 4 && !GENERIC_TERMS.has(part)) {
-      tokens.add(part);
-    }
-  });
-
-  // Edge-Case: Wenn Composite-Token selbst generisch ist (z.B. "wien.at")
-  if (GENERIC_TERMS.has(baseDomain)) tokens.delete(baseDomain);
-
-  if (tokens.size === 0) return false;
-
-  // 3. Match prüfen — Wortgrenze schützt vor Fehltreffern
-  return Array.from(tokens).some((token) => {
-    if (token.length < 3) return false;
-    const re = new RegExp(`\\b${escapeRegex(token)}\\b`, 'i');
-    return re.test(q);
-  });
-}
-
-/**
- * Berechnet die Wortzahl-Verteilung (für Histogramm-Visualisierung)
- */
-function buildWordCountDistribution(
-  queries: PromptQueryData[]
-): PromptWordCountBucket[] {
+function buildWordCountDistribution(queries: PromptQueryData[]): PromptWordCountBucket[] {
   const ranges = [
     { range: '10–11', minWords: 10, max: 11 },
     { range: '12–14', minWords: 12, max: 14 },
     { range: '15–19', minWords: 15, max: 19 },
     { range: '20+',   minWords: 20, max: Infinity },
   ];
-
   return ranges.map(({ range, minWords, max }) => {
-    const matching = queries.filter(
-      (q) => q.wordCount >= minWords && q.wordCount <= max
-    );
+    const matching = queries.filter(q => q.wordCount >= minWords && q.wordCount <= max);
     return {
       range,
       minWords,
@@ -1888,17 +1778,29 @@ function buildWordCountDistribution(
   });
 }
 
+function buildQuestionTypeDistribution(queries: PromptQueryData[]): QuestionTypeDistribution {
+  const dist: QuestionTypeDistribution = {
+    what: 0, how: 0, why: 0, who: 0, where: 0, when: 0,
+    compare: 0, price: 0, recommendation: 0, other: 0,
+  };
+  for (const q of queries) dist[q.questionType]++;
+  return dist;
+}
+
+function dominantQuestionType(dist: QuestionTypeDistribution): QuestionType {
+  let max: QuestionType = 'other';
+  let maxCount = 0;
+  for (const [k, c] of Object.entries(dist)) {
+    if (c > maxCount) { max = k as QuestionType; maxCount = c; }
+  }
+  return max;
+}
+
+// ─── Hauptfunktion ──────────────────────────────────────────────────
+
 /**
- * Lädt alle Suchanfragen mit mindestens `minWords` Wörtern aus der GSC.
- *
- * @param siteUrl              GSC Property URL
- * @param startDate            YYYY-MM-DD
- * @param endDate              YYYY-MM-DD
- * @param domain               Domain für Brand-Heuristik (optional)
- * @param brandKeywords        Konfigurierte Brand-Begriffe (optional, hat Vorrang)
- * @param totalImpressionsAll  Gesamtimpressionen ALLER Queries im Zeitraum
- *                             (für Anteils-Berechnung – wenn nicht übergeben: 0)
- * @param minWords             Mindestwortzahl, default 10
+ * Lädt alle Suchanfragen mit ≥ minWords Wörtern aus der GSC und
+ * klassifiziert sie nach Brand, Geo und Frage-Typ.
  */
 export async function getPromptLikeQueries(
   siteUrl: string,
@@ -1915,7 +1817,7 @@ export async function getPromptLikeQueries(
   const regex = `^(?:\\S+\\s+){${minWords - 1},}\\S+$`;
 
   try {
-    // ── 1. Hauptabfrage: query + page mit Regex-Filter ────────────
+    // 1. Hauptabfrage
     const res = await searchconsole.searchanalytics.query({
       siteUrl,
       requestBody: {
@@ -1923,33 +1825,23 @@ export async function getPromptLikeQueries(
         endDate,
         dimensions: ['query', 'page'],
         rowLimit: 5000,
-        dimensionFilterGroups: [
-          {
-            filters: [
-              {
-                dimension: 'query',
-                operator: 'includingRegex',
-                expression: regex,
-              },
-            ],
-          },
-        ],
+        dimensionFilterGroups: [{
+          filters: [{
+            dimension: 'query',
+            operator: 'includingRegex',
+            expression: regex,
+          }],
+        }],
       },
     });
 
     const rows = res.data.rows || [];
 
-    // ── 2. Aggregation pro Query ──────────────────────────────────
-    const queryMap = new Map<
-      string,
-      {
-        clicks: number;
-        impressions: number;
-        positionSum: number;
-        topUrl: string;
-        maxClicksForUrl: number;
-      }
-    >();
+    // 2. Aggregation pro Query
+    const queryMap = new Map<string, {
+      clicks: number; impressions: number; positionSum: number;
+      topUrl: string; maxClicksForUrl: number;
+    }>();
 
     for (const row of rows) {
       const query = row.keys?.[0] || '(not set)';
@@ -1960,38 +1852,36 @@ export async function getPromptLikeQueries(
 
       if (!queryMap.has(query)) {
         queryMap.set(query, {
-          clicks: 0,
-          impressions: 0,
-          positionSum: 0,
-          topUrl: url,
-          maxClicksForUrl: clicks,
+          clicks: 0, impressions: 0, positionSum: 0,
+          topUrl: url, maxClicksForUrl: clicks,
         });
       }
-
-      const entry = queryMap.get(query)!;
-      entry.clicks += clicks;
-      entry.impressions += impressions;
-      entry.positionSum += position * impressions;
-
-      if (clicks > entry.maxClicksForUrl) {
-        entry.maxClicksForUrl = clicks;
-        entry.topUrl = url;
+      const e = queryMap.get(query)!;
+      e.clicks += clicks;
+      e.impressions += impressions;
+      e.positionSum += position * impressions;
+      if (clicks > e.maxClicksForUrl) {
+        e.maxClicksForUrl = clicks;
+        e.topUrl = url;
       }
     }
 
-    // ── 3. In Output-Format konvertieren ──────────────────────────
-    const keywordsForBrand = brandKeywords && brandKeywords.length > 0
-      ? brandKeywords
-      : undefined;
+    // 3. In Output-Format + Klassifikation
+    const keywordsForBrand = brandKeywords && brandKeywords.length > 0 ? brandKeywords : undefined;
 
     const queries: PromptQueryData[] = [];
     let brandedCount = 0;
+    let geoCount = 0;
 
     for (const [query, data] of queryMap.entries()) {
       const ctr = data.impressions > 0 ? data.clicks / data.impressions : 0;
       const position = data.impressions > 0 ? data.positionSum / data.impressions : 0;
       const branded = isBrandedQuery(query, domain, keywordsForBrand);
+      const hasGeo = hasGeoReference(query);
+      const qType = detectQuestionType(query);
+
       if (branded) brandedCount++;
+      if (hasGeo) geoCount++;
 
       queries.push({
         query,
@@ -2002,56 +1892,50 @@ export async function getPromptLikeQueries(
         url: data.topUrl,
         wordCount: countWords(query),
         isBranded: branded,
+        hasGeoReference: hasGeo,
+        questionType: qType,
       });
     }
 
     queries.sort((a, b) => b.impressions - a.impressions);
 
-    // ── 4. Totals ─────────────────────────────────────────────────
-    const totalClicks = queries.reduce((sum, q) => sum + q.clicks, 0);
-    const totalImpressions = queries.reduce((sum, q) => sum + q.impressions, 0);
+    // 4. Totals
+    const totalClicks = queries.reduce((s, q) => s + q.clicks, 0);
+    const totalImpressions = queries.reduce((s, q) => s + q.impressions, 0);
     const avgCtr = totalImpressions > 0 ? totalClicks / totalImpressions : 0;
-    const positionSum = queries.reduce((sum, q) => sum + q.position * q.impressions, 0);
+    const positionSum = queries.reduce((s, q) => s + q.position * q.impressions, 0);
     const avgPosition = totalImpressions > 0 ? positionSum / totalImpressions : 0;
     const totalQueries = queries.length;
     const brandedShare = totalQueries > 0 ? (brandedCount / totalQueries) * 100 : 0;
-
-    // Anteil an allen GSC-Impressionen
+    const geoShare = totalQueries > 0 ? (geoCount / totalQueries) * 100 : 0;
     const sharePercent = totalImpressionsAll > 0
-      ? (totalImpressions / totalImpressionsAll) * 100
-      : 0;
+      ? (totalImpressions / totalImpressionsAll) * 100 : 0;
 
-    // ── 5. Wortzahl-Distribution ──────────────────────────────────
     const wordCountDistribution = buildWordCountDistribution(queries);
+    const questionTypeDistribution = buildQuestionTypeDistribution(queries);
+    const domQType = dominantQuestionType(questionTypeDistribution);
 
-    // ── 6. Tagestrend (zweite Abfrage) ────────────────────────────
+    let brandKeywordsSource: 'configured' | 'auto-detected' | 'domain-heuristic' | 'none' = 'none';
+    if (keywordsForBrand && keywordsForBrand.length > 0) brandKeywordsSource = 'configured';
+    else if (domain) brandKeywordsSource = 'domain-heuristic';
+
+    // 5. Tagestrend (best effort)
     let trend: { date: number; clicks: number; impressions: number }[] = [];
     try {
       const trendRes = await searchconsole.searchanalytics.query({
         siteUrl,
         requestBody: {
-          startDate,
-          endDate,
+          startDate, endDate,
           dimensions: ['date'],
           rowLimit: 25000,
-          dimensionFilterGroups: [
-            {
-              filters: [
-                {
-                  dimension: 'query',
-                  operator: 'includingRegex',
-                  expression: regex,
-                },
-              ],
-            },
-          ],
+          dimensionFilterGroups: [{
+            filters: [{ dimension: 'query', operator: 'includingRegex', expression: regex }],
+          }],
         },
       });
-
       const trendRows = trendRes.data.rows || [];
       trendRows.sort((a, b) => (a.keys?.[0] || '').localeCompare(b.keys?.[0] || ''));
-
-      trend = trendRows.map((row) => ({
+      trend = trendRows.map(row => ({
         date: parseGscDate(row.keys?.[0] || ''),
         clicks: row.clicks || 0,
         impressions: row.impressions || 0,
@@ -2072,12 +1956,16 @@ export async function getPromptLikeQueries(
         nonBrandedShare: 100 - brandedShare,
         sharePercent,
         totalImpressionsAll,
+        geoShare,
+        questionTypeDistribution,
+        dominantQuestionType: domQType,
       },
       trend,
-      shareTrend: [],            // Wird im Loader befüllt (braucht ALL-Queries-Tagestrend)
+      shareTrend: [],   // wird im Loader befüllt
       wordCountDistribution,
       minWords,
       brandKeywordsUsed: keywordsForBrand,
+      brandKeywordsSource,
     };
   } catch (error) {
     console.error('[Prompt Tracking] Error:', error);
