@@ -5,22 +5,20 @@
 // strukturierte thematische Cluster + Insights zurück.
 //
 // Modell: Gemini 2.5 Flash (günstig, schnell, strukturierter Output)
-// Auth:   next-auth v5 Session-Check (passe `auth`-Import bei Bedarf an)
+// Auth:   getToken aus next-auth/jwt (universell – funktioniert mit
+//         jedem NextAuth v4/v5 Setup, ohne dass wir den auth-Config-
+//         Pfad kennen müssen)
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateObject } from 'ai';
 import { google } from '@ai-sdk/google';
+import { getToken } from 'next-auth/jwt';
 
 import {
   PromptClusterRequestSchema,
   PromptClusterResultSchema,
   type PromptClusterApiResponse,
 } from '@/lib/prompt-cluster-schema';
-
-// ⚠ Falls dein Auth-Import anders heißt (z.B. '@/lib/auth' oder
-// '../auth'), passe diese Zeile an. NextAuth v5 liefert `auth()` aus
-// der zentralen Konfigurationsdatei.
-import { auth } from '@/auth';
 
 // Verhindert Prerendering – diese Route ist immer dynamisch
 export const dynamic = 'force-dynamic';
@@ -59,19 +57,21 @@ Wichtig:
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
 
-  // ── 1. Auth-Check ───────────────────────────────────────────────
+  // ── 1. Auth-Check via JWT-Cookie ────────────────────────────────
+  // Funktioniert mit NextAuth v4 UND v5, egal wo deine auth-Config liegt.
+  // NextAuth v5 nutzt AUTH_SECRET, v4 nutzt NEXTAUTH_SECRET – wir checken beide.
   try {
-    const session = await auth();
-    if (!session?.user) {
+    const token = await getToken({
+      req,
+      secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    });
+
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   } catch (e) {
-    // Falls auth() nicht verfügbar oder anders implementiert: 503
     console.error('[Prompt Cluster] Auth-Fehler:', e);
-    return NextResponse.json(
-      { error: 'Auth-Konfiguration fehlerhaft – siehe Server-Log' },
-      { status: 503 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   // ── 2. ENV-Check ────────────────────────────────────────────────
@@ -105,7 +105,6 @@ export async function POST(req: NextRequest) {
   const { domain, dateRange, queries } = parsed.data;
 
   // ── 4. Prompt zusammenbauen ─────────────────────────────────────
-  // Kompakte Repräsentation: Index, Query-Text, Klicks, Impressions
   const queryListText = queries
     .map((q, i) => `${i}: "${q.query}" (clicks=${q.clicks}, impressions=${q.impressions})`)
     .join('\n');
@@ -126,17 +125,18 @@ export async function POST(req: NextRequest) {
       schema: PromptClusterResultSchema,
       system: SYSTEM_PROMPT,
       prompt: userPrompt,
-      temperature: 0.3, // wenig Kreativität, mehr Konsistenz
+      temperature: 0.3,
     });
 
     // ── 6. Sanity-Check der queryIndices ─────────────────────────
-    // Filtert ungültige Indizes raus, falls das Modell halluziniert
-    const validatedClusters = result.object.clusters.map((cluster) => ({
-      ...cluster,
-      queryIndices: cluster.queryIndices.filter(
-        (i) => Number.isInteger(i) && i >= 0 && i < queries.length
-      ),
-    })).filter((cluster) => cluster.queryIndices.length > 0);
+    const validatedClusters = result.object.clusters
+      .map((cluster) => ({
+        ...cluster,
+        queryIndices: cluster.queryIndices.filter(
+          (i) => Number.isInteger(i) && i >= 0 && i < queries.length
+        ),
+      }))
+      .filter((cluster) => cluster.queryIndices.length > 0);
 
     if (validatedClusters.length === 0) {
       return NextResponse.json(
