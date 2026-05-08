@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Eye, EyeSlash } from 'react-bootstrap-icons';
@@ -28,16 +29,29 @@ import LandingPageChart from '@/components/charts/LandingPageChart';
 import { aggregateLandingPages } from '@/lib/utils';
 import { DataMaxChat } from '@/components/datamax';
 import GoogleAdsWidget from '@/components/GoogleAdsWidget';
-import PromptTrackingCard from '@/components/PromptTrackingCard';
+
+// PromptTrackingCard dynamisch nur Client-Side laden – verhindert
+// Hydration-Mismatches bei den Number-Formatierungen / shareTrend-Visuals.
+const PromptTrackingCard = dynamic(
+  () => import('@/components/PromptTrackingCard'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="card-glass p-6">
+        <div className="animate-pulse text-muted text-sm">Prompt-Tracking lädt…</div>
+      </div>
+    ),
+  }
+);
 
 // 🔍 DIAGNOSTIK – nur Server-Side ausführen, später wieder entfernen
+// PromptTrackingCard wird via dynamic() geladen → kein direkter Check mehr nötig
 if (typeof window === 'undefined') {
   const _components = {
     TableauKpiGrid, TableauPieChart, KpiTrendChart, AiTrafficCard,
     AiTrafficDetailWidgetV2, TopQueriesList, SemrushTopKeywords,
     SemrushTopKeywords02, GlobalHeader, ProjectTimelineWidget,
     AiAnalysisWidget, LandingPageChart, DataMaxChat, GoogleAdsWidget,
-    PromptTrackingCard,
   };
   for (const [name, comp] of Object.entries(_components)) {
     if (typeof comp === 'undefined') {
