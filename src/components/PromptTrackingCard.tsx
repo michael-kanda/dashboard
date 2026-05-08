@@ -463,7 +463,7 @@ function ClassificationRow({
           <MapPin className="w-3.5 h-3.5" />
           <span>Geo-Bezug</span>
           <span
-            title="Anteil Queries mit Stadt-, Bundesland- oder Lokalbezug („wien", „in der nähe", PLZ etc.). Hoch = lokale Relevanz."
+            title='Anteil Queries mit Stadt-, Bundesland- oder Lokalbezug (z.B. "wien", "in der nähe", PLZ etc.). Hoch = lokale Relevanz.'
             className="cursor-help ml-auto"
           >
             <Info className="w-3 h-3 opacity-60" />
