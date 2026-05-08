@@ -15,8 +15,12 @@ declare module 'next-auth' {
     mandant_id?: string | null;
     permissions?: string[];
     logo_url?: string | null;
+    domain?: string | null;                  // <--- NEU
     gsc_site_url?: string | null;
-    is_demo?: boolean; // <--- NEU
+    ga4_property_id?: string | null;         // <--- NEU
+    google_ads_sheet_id?: string | null;     // <--- NEU
+    brand_keywords?: string[] | null;        // <--- NEU (Prompt-Tracking v3)
+    is_demo?: boolean;
   }
 
   /**
@@ -34,8 +38,12 @@ declare module 'next-auth' {
       mandant_id?: string | null;
       permissions?: string[];
       logo_url?: string | null;
-      gsc_site_url?: string | null; // ✅ HINZUGEFÜGT
-      is_demo?: boolean; // <--- NEU
+      domain?: string | null;                  // <--- NEU
+      gsc_site_url?: string | null;
+      ga4_property_id?: string | null;         // <--- NEU
+      google_ads_sheet_id?: string | null;     // <--- NEU
+      brand_keywords?: string[] | null;        // <--- NEU (Prompt-Tracking v3)
+      is_demo?: boolean;
     } & DefaultSession['user'];
   }
 }
@@ -52,7 +60,11 @@ declare module 'next-auth/jwt' {
     mandant_id?: string | null;
     permissions?: string[];
     logo_url?: string | null;
-    gsc_site_url?: string | null; // ✅ HINZUGEFÜGT
-    is_demo?: boolean; // <--- NEU
+    domain?: string | null;                  // <--- NEU
+    gsc_site_url?: string | null;
+    ga4_property_id?: string | null;         // <--- NEU
+    google_ads_sheet_id?: string | null;     // <--- NEU
+    brand_keywords?: string[] | null;        // <--- NEU (Prompt-Tracking v3)
+    is_demo?: boolean;
   }
 }
