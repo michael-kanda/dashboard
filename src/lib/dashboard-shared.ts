@@ -10,8 +10,8 @@ import type {
 
 import type { AiTrafficData } from '@/types/ai-traffic';
 import type { DailyWeather } from '@/lib/weather';
+import type { QuestionType } from '@/lib/prompt-tracking/query-classifier';
 
-// Re-exportiere die Basis-Typen
 export type { KpiDatum, ChartPoint, TopQueryData, AiTrafficData };
 
 export type ActiveKpi =
@@ -38,93 +38,44 @@ export const KPI_TAB_META: Record<string, { label: string; color: string }> = {
 };
 
 export interface ChartEntry {
-  name: string;
-  value: number;
-  fill?: string;
-  subValue?: string;
-  subLabel?: string;
-  subValue2?: number;
-  subLabel2?: string;
+  name: string; value: number; fill?: string;
+  subValue?: string; subLabel?: string;
+  subValue2?: number; subLabel2?: string;
 }
 
-export interface BingDataPoint {
-  date: string;
-  clicks: number;
-  impressions: number;
-}
+export interface BingDataPoint { date: string; clicks: number; impressions: number; }
 
 export interface ApiErrorStatus {
-  gsc?: string;
-  ga4?: string;
-  semrush?: string;
-  bing?: string;
+  gsc?: string; ga4?: string; semrush?: string; bing?: string;
 }
 
-// ── Landing Page Query Interfaces ──────────────────────────────────
-export interface LandingPageQueryData {
-  query: string;
-  clicks: number;
-  impressions: number;
-}
+export interface LandingPageQueryData { query: string; clicks: number; impressions: number; }
+export interface LandingPageQueries { [path: string]: LandingPageQueryData[]; }
 
-export interface LandingPageQueries {
-  [path: string]: LandingPageQueryData[];
-}
-
-// ── Folgepfade Interfaces ─────────────────────────────────────────
-export interface FollowUpPath {
-  path: string;
-  sessions: number;
-  percentage: number;
-}
-
+export interface FollowUpPath { path: string; sessions: number; percentage: number; }
 export interface LandingPageFollowUpData {
-  landingPage: string;
-  totalSessions: number;
-  followUpPaths: FollowUpPath[];
+  landingPage: string; totalSessions: number; followUpPaths: FollowUpPath[];
 }
 
 export interface ConvertingPageData {
-  path: string;
-  conversions: number;
-  conversionRate: number;
-  engagementRate?: number;
-  sessions?: number;
-  newUsers?: number;
-  ctr?: number;
+  path: string; conversions: number; conversionRate: number;
+  engagementRate?: number; sessions?: number; newUsers?: number; ctr?: number;
 }
 
-// ── Google Ads Types ──────────────────────────────────────────────
 export interface GoogleAdsRow {
-  campaign: string;
-  adGroup: string;
-  adName: string;
-  keyword: string;
-  searchQuery: string;
-  landingPage: string;
-  cost: number;
-  clicks: number;
-  impressions: number;
-  cpc: number;
-  roas: number;
-  conversions: number;
-  sessions: number;
-  engagedSessions: number;
+  campaign: string; adGroup: string; adName: string; keyword: string;
+  searchQuery: string; landingPage: string; cost: number; clicks: number;
+  impressions: number; cpc: number; roas: number; conversions: number;
+  sessions: number; engagedSessions: number;
 }
 
 export interface GoogleAdsData {
   rows: GoogleAdsRow[];
   landingPageRows: GoogleAdsRow[];
   totals: {
-    cost: number;
-    clicks: number;
-    avgCpc: number;
-    roas: number;
-    conversions: number;
-    sessions: number;
-    engagedSessions: number;
-    impressions?: number;
-    interactionRate?: number;
+    cost: number; clicks: number; avgCpc: number; roas: number;
+    conversions: number; sessions: number; engagedSessions: number;
+    impressions?: number; interactionRate?: number;
   };
   conversionsByCampaign?: Record<string, number>;
   conversionsByAdGroup?: Record<string, number>;
@@ -139,8 +90,6 @@ export interface GoogleAdsData {
 }
 
 // ── Prompt Tracking Types ─────────────────────────────────────────
-// Methodik nach Seybold (2026):
-// https://seybold.de/prompt-tracking-in-google-search-console/
 
 export interface PromptQueryData {
   query: string;
@@ -151,57 +100,38 @@ export interface PromptQueryData {
   url: string;
   wordCount: number;
   isBranded: boolean;
+  hasGeoReference: boolean;          // NEU v4
+  questionType: QuestionType;        // NEU v4
 }
 
 export interface PromptTrackingTrendPoint {
-  date: number; // Timestamp
-  clicks: number;
-  impressions: number;
+  date: number; clicks: number; impressions: number;
 }
 
-/**
- * Aggregierter Trend des prompt-Anteils über die Zeit
- * (z.B. wochen- oder monatsweise – je nach Date Range)
- */
 export interface PromptTrackingShareBucket {
-  /** ISO-Date des Bucket-Starts (z.B. '2026-01' bei monatlicher Aggregation) */
-  bucket: string;
-  /** Lesbares Label (z.B. 'Jan 2026' oder 'KW 03') */
-  label: string;
-  /** Impressionen aller Queries in diesem Bucket */
-  totalImpressions: number;
-  /** Impressionen nur prompt-artiger Queries */
-  promptImpressions: number;
-  /** Anteil in Prozent (0–100) */
-  sharePercent: number;
+  bucket: string; label: string;
+  totalImpressions: number; promptImpressions: number; sharePercent: number;
 }
 
-/** Wortzahl-Distribution für Histogramm */
 export interface PromptWordCountBucket {
-  /** Wortzahl-Range, z.B. '10-12' oder '20+' */
-  range: string;
-  /** Min-Wortzahl der Range (für Sortierung) */
-  minWords: number;
-  /** Anzahl Queries in dieser Range */
-  count: number;
-  /** Impressionen-Summe in dieser Range */
-  impressions: number;
+  range: string; minWords: number; count: number; impressions: number;
 }
 
-/** Vergleichsdaten Vorperiode */
 export interface PromptTrackingPrevious {
-  totalQueries: number;
-  totalImpressions: number;
-  totalClicks: number;
-  sharePercent: number;
+  totalQueries: number; totalImpressions: number;
+  totalClicks: number; sharePercent: number;
 }
 
-/** Confidence-Bewertung für die UI */
 export type PromptTrackingSignal = 'strong' | 'weak' | 'insufficient';
+
+export interface QuestionTypeDistribution {
+  what: number; how: number; why: number; who: number;
+  where: number; when: number; compare: number; price: number;
+  recommendation: number; other: number;
+}
 
 export interface PromptTrackingResult {
   queries: PromptQueryData[];
-
   totals: {
     totalQueries: number;
     totalClicks: number;
@@ -210,32 +140,21 @@ export interface PromptTrackingResult {
     avgPosition: number;
     brandedShare: number;
     nonBrandedShare: number;
-    /** Anteil der prompt-Impressionen an allen GSC-Impressionen (%) */
     sharePercent: number;
-    /** Gesamtimpressionen ALLER Queries im Zeitraum (für Anteils-Kalkulation) */
     totalImpressionsAll: number;
+    geoShare: number;                                // NEU v4
+    questionTypeDistribution: QuestionTypeDistribution; // NEU v4
+    dominantQuestionType: QuestionType;              // NEU v4
   };
-
-  /** Tagestrend aller Prompt-Queries (existing) */
   trend: PromptTrackingTrendPoint[];
-
-  /** Aggregierter Anteils-Trend über Wochen oder Monate */
   shareTrend: PromptTrackingShareBucket[];
-
-  /** Wortzahl-Verteilung */
   wordCountDistribution: PromptWordCountBucket[];
-
-  /** Vergleichswerte zur Vorperiode (gleichlanger Zeitraum davor) */
   previous?: PromptTrackingPrevious;
-
-  /** Mindestwortzahl, die gefiltert wurde */
   minWords: number;
-
-  /** Tatsächlich verwendete Brand-Keywords (für UI-Anzeige) */
-  brandKeywordsUsed?: string[];
+  brandKeywordsUsed?: string[] | null;
+  brandKeywordsSource?: 'configured' | 'auto-detected' | 'domain-heuristic' | 'none';
 }
 
-// ── Hauptinterface: Dashboard Data ────────────────────────────────
 export interface ProjectDashboardData {
   kpis?: {
     clicks?: KpiDatum;
@@ -277,7 +196,6 @@ export interface ProjectDashboardData {
   fromCache?: boolean;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────
 export const ZERO_KPI: KpiDatum = { value: 0, change: 0 };
 
 export function normalizeFlatKpis(input?: ProjectDashboardData['kpis']) {
@@ -303,9 +221,7 @@ export function hasDashboardData(data: ProjectDashboardData): boolean {
   ) {
     return false;
   }
-
   const k = normalizeFlatKpis(data.kpis);
-
   if (
     k.clicks.value > 0 ||
     k.sessions.value > 0 ||
@@ -313,16 +229,9 @@ export function hasDashboardData(data: ProjectDashboardData): boolean {
   ) {
     return true;
   }
-
   return false;
 }
 
-// ──────────────────────────────────────────────────────────────────
-// Confidence-Signal-Berechnung (clientseitig)
-//
-// Schwellen bewusst konservativ – wir wollen nicht zu schnell
-// "starkes Signal" anzeigen, weil das die Glaubwürdigkeit kostet.
-// ──────────────────────────────────────────────────────────────────
 export function calculatePromptTrackingSignal(
   pt: PromptTrackingResult
 ): { signal: PromptTrackingSignal; reasons: string[] } {
@@ -330,24 +239,20 @@ export function calculatePromptTrackingSignal(
   const total = pt.totals.totalQueries;
   const share = pt.totals.sharePercent;
 
-  // Insufficient data – brauchen Mindestmenge
   if (total < 30) {
     reasons.push(`Nur ${total} prompt-artige Queries (< 30) – Aussagekraft begrenzt`);
     return { signal: 'insufficient', reasons };
   }
 
-  // Trend-Vergleich (falls Vorperiode verfügbar)
   let isRising = false;
   let isSignificantTrend = false;
   if (pt.previous && pt.previous.sharePercent > 0) {
     const prevShare = pt.previous.sharePercent;
     const change = share - prevShare;
     isRising = change > 0;
-    // Anstieg um relativ ≥ 20%
     isSignificantTrend = prevShare > 0 && Math.abs(change / prevShare) >= 0.2;
   }
 
-  // Strong Signal: hoher Anteil + viele absolute + steigender Trend
   if (share >= 10 && total >= 50 && isRising && isSignificantTrend) {
     reasons.push(`Hoher Anteil (${share.toFixed(1)} %)`);
     reasons.push(`Viele Treffer (${total})`);
@@ -355,14 +260,12 @@ export function calculatePromptTrackingSignal(
     return { signal: 'strong', reasons };
   }
 
-  // Strong Signal alternative: sehr hoher Anteil ohne Trend-Vergleich
   if (share >= 15 && total >= 80) {
     reasons.push(`Sehr hoher Anteil (${share.toFixed(1)} %)`);
     reasons.push(`Viele Treffer (${total})`);
     return { signal: 'strong', reasons };
   }
 
-  // Weak Signal
   if (share < 3) {
     reasons.push(`Niedriger Anteil (${share.toFixed(1)} %)`);
   }
