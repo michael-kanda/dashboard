@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import {
   Sparkles, Download, Search, ExternalLink, Wand2, Loader2, X,
   ChevronDown, ChevronUp, Lightbulb, AlertCircle, Info, TrendingUp,
-  TrendingDown, Minus, EyeOff, Eye, FileText, MapPin, MessageCircleQuestion,
+  TrendingDown, Minus, FileText, MapPin, MessageCircleQuestion,
 } from 'lucide-react';
 import type {
   PromptTrackingResult,
@@ -42,7 +42,6 @@ export default function PromptTrackingCard({
   const [sortMode, setSortMode] = useState<SortMode>('impressions');
   const [questionTypeFilter, setQuestionTypeFilter] = useState<QuestionType | 'all'>('all');
   const [limit, setLimit] = useState(25);
-  const [anonymized, setAnonymized] = useState(false);
 
   const [isClustering, setIsClustering] = useState(false);
   const [clusterResult, setClusterResult] = useState<PromptClusterApiResponse | null>(null);
@@ -83,12 +82,8 @@ export default function PromptTrackingCard({
       }
     });
 
-    if (anonymized) {
-      list = list.map((q) => ({ ...q, query: anonymizeQuery(q.query) }));
-    }
-
     return list;
-  }, [data, filterMode, sortMode, questionTypeFilter, search, anonymized]);
+  }, [data, filterMode, sortMode, questionTypeFilter, search]);
 
   if (!data || data.totals.totalQueries === 0) {
     return (
@@ -122,7 +117,7 @@ export default function PromptTrackingCard({
       q.impressions,
       (q.ctr * 100).toFixed(2) + '%',
       q.position.toFixed(1),
-      anonymized ? '(anonymisiert)' : q.url,
+      q.url,
     ]);
     const csv = [header.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -201,14 +196,6 @@ export default function PromptTrackingCard({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setAnonymized((v) => !v)}
-            className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-border hover:bg-muted/50 transition print:hidden"
-            title={anonymized ? 'Originale Queries anzeigen' : 'Queries anonymisieren'}
-          >
-            {anonymized ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            {anonymized ? 'Original' : 'Demo'}
-          </button>
           <button
             onClick={handleCluster}
             disabled={!canCluster || isClustering}
@@ -301,7 +288,6 @@ export default function PromptTrackingCard({
           expandedIdx={expandedClusterIdx}
           onToggleExpand={(idx) => setExpandedClusterIdx((c) => (c === idx ? null : idx))}
           onClose={handleClearCluster}
-          anonymized={anonymized}
         />
       )}
 
@@ -371,7 +357,7 @@ export default function PromptTrackingCard({
           </thead>
           <tbody>
             {filtered.slice(0, limit).map((q, idx) => (
-              <PromptRow key={`${q.query}-${idx}`} q={q} anonymized={anonymized} />
+              <PromptRow key={`${q.query}-${idx}`} q={q} />
             ))}
             {filtered.length === 0 && (
               <tr>
@@ -614,16 +600,15 @@ interface ClusterDisplayProps {
   expandedIdx: number | null;
   onToggleExpand: (idx: number) => void;
   onClose: () => void;
-  anonymized: boolean;
 }
 
 function ClusterDisplay({
-  result, allQueries, expandedIdx, onToggleExpand, onClose, anonymized,
+  result, allQueries, expandedIdx, onToggleExpand, onClose,
 }: ClusterDisplayProps) {
   const { clusters, insights, meta } = result;
 
   const handleMarkdownExport = () => {
-    const md = buildMarkdown(result, allQueries, anonymized);
+    const md = buildMarkdown(result, allQueries);
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -689,7 +674,6 @@ function ClusterDisplay({
             allQueries={allQueries}
             isExpanded={expandedIdx === idx}
             onToggleExpand={() => onToggleExpand(idx)}
-            anonymized={anonymized}
           />
         ))}
       </div>
@@ -697,12 +681,11 @@ function ClusterDisplay({
   );
 }
 
-function ClusterCard({ cluster, allQueries, isExpanded, onToggleExpand, anonymized }: {
+function ClusterCard({ cluster, allQueries, isExpanded, onToggleExpand }: {
   cluster: PromptClusterEntry;
   allQueries: PromptQueryData[];
   isExpanded: boolean;
   onToggleExpand: () => void;
-  anonymized: boolean;
 }) {
   const intentMeta = INTENT_LABELS[cluster.intent];
   const clusterQueries = cluster.queryIndices
@@ -749,7 +732,7 @@ function ClusterCard({ cluster, allQueries, isExpanded, onToggleExpand, anonymiz
             .map((q, i) => (
               <li key={i} className="text-xs flex items-start gap-2">
                 <span className="text-muted-foreground tabular-nums shrink-0">{q.impressions.toLocaleString('de-DE')}</span>
-                <span className="text-foreground/90 leading-snug">{anonymized ? anonymizeQuery(q.query) : q.query}</span>
+                <span className="text-foreground/90 leading-snug">{q.query}</span>
               </li>
             ))}
         </ul>
@@ -779,7 +762,7 @@ function KpiTile({ label, value, sub, delta, deltaSuffix = '', tooltip, highligh
   );
 }
 
-function PromptRow({ q, anonymized }: { q: PromptQueryData; anonymized: boolean }) {
+function PromptRow({ q }: { q: PromptQueryData }) {
   const qtMeta = QUESTION_TYPE_LABELS[q.questionType];
   return (
     <tr className="border-b border-border/50 hover:bg-muted/30 transition">
@@ -807,7 +790,7 @@ function PromptRow({ q, anonymized }: { q: PromptQueryData; anonymized: boolean 
       <td className="px-2 py-2 text-right tabular-nums">{(q.ctr * 100).toFixed(1)}%</td>
       <td className="px-2 py-2 text-right tabular-nums">{q.position.toFixed(1)}</td>
       <td className="px-2 py-2">
-        {q.url && !anonymized && (
+        {q.url && (
           <a href={q.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground" title={q.url}>
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
@@ -822,35 +805,9 @@ function calcChange(current: number, previous: number): number {
   return ((current - previous) / previous) * 100;
 }
 
-function anonymizeQuery(query: string): string {
-  const stopwords = new Set([
-    'der','die','das','den','dem','des','ein','eine','einer','einen','eines',
-    'und','oder','aber','wenn','dass','weil','als','wie','was','wer','wo',
-    'wann','warum','welche','welcher','welches','gibt','es','ist','sind',
-    'war','waren','hat','haben','hatte','hatten','wird','werden','wurde',
-    'in','an','auf','für','mit','von','zu','nach','bei','aus','um','über',
-    'unter','vor','hinter','neben','zwischen','seit','bis','durch','gegen',
-    'ohne','statt','während','wegen','trotz','noch','nicht','kein','keine',
-    'auch','nur','schon','doch','ja','nein','sehr','mehr','weniger','viel',
-    'wenig','alle','viele','einige','manche','jede','jeder','jedes',
-    'mein','meine','dein','deine','sein','seine','ihr','ihre','unser',
-    'einfach','besser','beste','gut','gute','am','to','for','with','of',
-    'a','an','the','is','are','was','what','how','which','where','when',
-  ]);
-  return query
-    .split(/\s+/)
-    .map((w) => {
-      const clean = w.toLowerCase().replace(/[^\wäöüß]/g, '');
-      if (stopwords.has(clean) || w.length <= 2) return w;
-      return '█'.repeat(Math.max(3, Math.min(w.length, 8)));
-    })
-    .join(' ');
-}
-
 function buildMarkdown(
   result: PromptClusterApiResponse,
-  allQueries: PromptQueryData[],
-  anonymized: boolean
+  allQueries: PromptQueryData[]
 ): string {
   const { clusters, insights, meta } = result;
   const lines: string[] = [];
@@ -888,8 +845,7 @@ function buildMarkdown(
     lines.push('**Beispiel-Queries (Top 10):**');
     lines.push('');
     queries.sort((a, b) => b.impressions - a.impressions).slice(0, 10).forEach((q) => {
-      const text = anonymized ? anonymizeQuery(q.query) : q.query;
-      lines.push(`- _${text}_ (${q.impressions} Impr., ${q.clicks} Klicks)`);
+      lines.push(`- _${q.query}_ (${q.impressions} Impr., ${q.clicks} Klicks)`);
     });
     lines.push('');
   });
