@@ -1,12 +1,11 @@
 // src/lib/auth.ts
-import NextAuth from 'next-auth'; // Standard-Import
+import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
 import { unstable_noStore as noStore } from 'next/cache';
-import type { NextAuthConfig } from 'next-auth'; // Wichtig: NextAuthConfig importieren
+import type { NextAuthConfig } from 'next-auth';
 
-// Die Konfiguration wird jetzt als reines Objekt definiert
 export const authConfig = {
   providers: [
     CredentialsProvider({
@@ -27,11 +26,12 @@ export const authConfig = {
 
         let user;
         try {
-          // 1. Benutzerdaten holen
+          // 1. Benutzerdaten holen — alle Felder, die wir in der App brauchen
           const { rows } = await sql`
             SELECT
-              id, email, password, role, mandant_id, permissions,
-              gsc_site_url
+              id, email, password, role, mandant_id, permissions, domain,
+              gsc_site_url, ga4_property_id, google_ads_sheet_id,
+              brand_keywords
             FROM users
             WHERE email = ${normalizedEmail}
           `;
@@ -70,12 +70,10 @@ export const authConfig = {
 
         // Login-Ereignis protokollieren
         try {
-          console.log('[Authorize] Versuche, Login-Ereignis zu protokollieren...');
           await sql`
             INSERT INTO login_logs (user_id, user_email, user_role)
             VALUES (${user.id}, ${user.email}, ${user.role});
           `;
-          console.log('[Authorize] Login-Ereignis erfolgreich protokolliert.');
         } catch (logError) {
           console.error('[Authorize] FEHLER beim Protokollieren des Logins (nicht-fatal):', logError);
         }
@@ -95,8 +93,7 @@ export const authConfig = {
           }
         }
 
-        // 3. Auth-Objekt zurückgeben
-        // ✅ id explizit als String – verhindert TS-Probleme im jwt-Callback
+        // 3. Auth-Objekt zurückgeben — alle App-relevanten Felder mitgeben
         return {
           id: String(user.id),
           email: user.email,
@@ -104,7 +101,11 @@ export const authConfig = {
           mandant_id: user.mandant_id,
           permissions: user.permissions || [],
           logo_url: logo_url,
+          domain: user.domain || null,
           gsc_site_url: user.gsc_site_url || null,
+          ga4_property_id: user.ga4_property_id || null,
+          google_ads_sheet_id: user.google_ads_sheet_id || null,
+          brand_keywords: user.brand_keywords || null,
         };
       }
     })
@@ -121,14 +122,17 @@ export const authConfig = {
     // 4. JWT mit Benutzerdaten anreichern
     async jwt({ token, user }) {
       if (user) {
-        // ✅ Defensiver Check – user.id ist im NextAuth-Type optional (string | undefined)
         if (user.id) token.id = user.id;
         token.role = user.role as 'BENUTZER' | 'ADMIN' | 'SUPERADMIN';
         token.mandant_id = user.mandant_id;
         token.permissions = user.permissions;
         token.logo_url = user.logo_url;
+        token.domain = user.domain;
         token.gsc_site_url = user.gsc_site_url;
-        token.is_demo = user.email?.includes('demo');
+        token.ga4_property_id = user.ga4_property_id;
+        token.google_ads_sheet_id = user.google_ads_sheet_id;
+        token.brand_keywords = user.brand_keywords;
+        token.is_demo = user.email?.includes('demo') || user.domain?.includes('demo-shop');
       }
       return token;
     },
@@ -141,13 +145,16 @@ export const authConfig = {
         session.user.mandant_id = token.mandant_id as string | null | undefined;
         session.user.permissions = token.permissions as string[] | undefined;
         session.user.logo_url = token.logo_url as string | null | undefined;
+        session.user.domain = token.domain as string | null | undefined;
         session.user.gsc_site_url = token.gsc_site_url as string | null | undefined;
+        session.user.ga4_property_id = token.ga4_property_id as string | null | undefined;
+        session.user.google_ads_sheet_id = token.google_ads_sheet_id as string | null | undefined;
+        session.user.brand_keywords = token.brand_keywords as string[] | null | undefined;
         session.user.is_demo = token.is_demo as boolean | undefined;
       }
       return session;
     },
   },
-} satisfies NextAuthConfig; // 'satisfies' stellt Typsicherheit her
+} satisfies NextAuthConfig;
 
-// Hiermit exportieren wir die Handler und die auth-Funktion
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
