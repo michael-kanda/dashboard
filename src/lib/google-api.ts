@@ -1729,21 +1729,25 @@ export async function getGoogleAdsFromSheet(
 }
 
 // ════════════════════════════════════════════════════════════════════
-// PROMPT TRACKING – am Ende von src/lib/google-api.ts einfügen
+// PROMPT TRACKING (v2) – am Ende von src/lib/google-api.ts einfügen
+// ERSETZT die bisherige getPromptLikeQueries-Implementierung.
 //
 // Methodik nach Seybold (2026):
 // https://seybold.de/prompt-tracking-in-google-search-console/
 //
-// Lädt prompt-ähnliche, konversationsartige Queries (≥10 Wörter)
-// direkt aus der GSC API via Regex-Filter (server-seitig, effizient).
+// Neu in v2:
+// • Konfigurierbare Brand-Keywords (Fallback: Domain-Wurzel-Heuristik)
+// • Wortzahl-Distribution (für Histogramm)
+// • Nimmt totalImpressionsAll als Parameter (für Anteils-Kalkulation)
+// • Alles was schon vorher da war: Regex-Filter, Trend, Brand-Erkennung
 // ════════════════════════════════════════════════════════════════════
 
 import type {
   PromptTrackingResult,
   PromptQueryData,
+  PromptWordCountBucket,
 } from '@/lib/dashboard-shared';
 
-// Re-export für bequemen Import an anderen Stellen
 export type { PromptTrackingResult, PromptQueryData };
 
 /**
@@ -1754,15 +1758,30 @@ function countWords(s: string): number {
 }
 
 /**
- * Hilfsfunktion: Brand-Erkennung (simple Heuristik – Domain-Wurzel ohne TLD/www).
- * Beispiel: domain="https://www.beispiel.de" → Brand-Term "beispiel"
+ * Brand-Erkennung: prüft Liste konfigurierter Brand-Keywords zuerst,
+ * fällt auf Domain-Wurzel zurück wenn keine Keywords gesetzt sind.
  *
- * Für robustere Erkennung später durch konfigurierbare brand_keywords-Spalte
- * im User/Project-Schema ersetzen.
+ * @param query     Die zu prüfende Suchanfrage
+ * @param domain    Optionale Domain für Heuristik-Fallback
+ * @param keywords  Optionale konfigurierte Brand-Begriffe
  */
-function isBrandedQuery(query: string, domain?: string): boolean {
-  if (!domain) return false;
+function isBrandedQuery(
+  query: string,
+  domain?: string,
+  keywords?: string[]
+): boolean {
+  const q = query.toLowerCase();
 
+  // Konfigurierte Keywords haben Vorrang
+  if (keywords && keywords.length > 0) {
+    return keywords.some((kw) => {
+      const k = kw.trim().toLowerCase();
+      return k.length >= 2 && q.includes(k);
+    });
+  }
+
+  // Heuristik-Fallback: Domain-Wurzel
+  if (!domain) return false;
   const brand = domain
     .replace(/^https?:\/\//, '')
     .replace(/^www\./, '')
@@ -1770,32 +1789,59 @@ function isBrandedQuery(query: string, domain?: string): boolean {
     .toLowerCase();
 
   if (brand.length < 3) return false;
-  return query.toLowerCase().includes(brand);
+  return q.includes(brand);
 }
 
 /**
- * Lädt alle Suchanfragen mit mindestens `minWords` Wörtern aus der
- * Google Search Console (server-seitiger Regex-Filter).
+ * Berechnet die Wortzahl-Verteilung (für Histogramm-Visualisierung)
+ */
+function buildWordCountDistribution(
+  queries: PromptQueryData[]
+): PromptWordCountBucket[] {
+  const ranges = [
+    { range: '10–11', minWords: 10, max: 11 },
+    { range: '12–14', minWords: 12, max: 14 },
+    { range: '15–19', minWords: 15, max: 19 },
+    { range: '20+',   minWords: 20, max: Infinity },
+  ];
+
+  return ranges.map(({ range, minWords, max }) => {
+    const matching = queries.filter(
+      (q) => q.wordCount >= minWords && q.wordCount <= max
+    );
+    return {
+      range,
+      minWords,
+      count: matching.length,
+      impressions: matching.reduce((sum, q) => sum + q.impressions, 0),
+    };
+  });
+}
+
+/**
+ * Lädt alle Suchanfragen mit mindestens `minWords` Wörtern aus der GSC.
  *
- * @param siteUrl    GSC Property URL (z.B. "sc-domain:beispiel.de")
- * @param startDate  YYYY-MM-DD
- * @param endDate    YYYY-MM-DD
- * @param domain     User-Domain für Brand-Erkennung (optional)
- * @param minWords   Mindestwortzahl, default 10 (Seybold-Empfehlung)
+ * @param siteUrl              GSC Property URL
+ * @param startDate            YYYY-MM-DD
+ * @param endDate              YYYY-MM-DD
+ * @param domain               Domain für Brand-Heuristik (optional)
+ * @param brandKeywords        Konfigurierte Brand-Begriffe (optional, hat Vorrang)
+ * @param totalImpressionsAll  Gesamtimpressionen ALLER Queries im Zeitraum
+ *                             (für Anteils-Berechnung – wenn nicht übergeben: 0)
+ * @param minWords             Mindestwortzahl, default 10
  */
 export async function getPromptLikeQueries(
   siteUrl: string,
   startDate: string,
   endDate: string,
   domain?: string,
+  brandKeywords?: string[] | null,
+  totalImpressionsAll: number = 0,
   minWords: number = 10
 ): Promise<PromptTrackingResult> {
   const auth = createAuth();
   const searchconsole = google.searchconsole({ version: 'v1', auth });
 
-  // Regex laut Seybold-Artikel:
-  //   ^(?:\S+\s+){9,}\S+$   → mindestens 10 "Wörter"
-  // Dynamisch aus minWords gebaut. Backslashes für JS-String doppelt escapen.
   const regex = `^(?:\\S+\\s+){${minWords - 1},}\\S+$`;
 
   try {
@@ -1823,7 +1869,7 @@ export async function getPromptLikeQueries(
 
     const rows = res.data.rows || [];
 
-    // ── 2. Aggregation pro Query (1 Query → ggf. mehrere Pages) ──
+    // ── 2. Aggregation pro Query ──────────────────────────────────
     const queryMap = new Map<
       string,
       {
@@ -1864,13 +1910,17 @@ export async function getPromptLikeQueries(
     }
 
     // ── 3. In Output-Format konvertieren ──────────────────────────
+    const keywordsForBrand = brandKeywords && brandKeywords.length > 0
+      ? brandKeywords
+      : undefined;
+
     const queries: PromptQueryData[] = [];
     let brandedCount = 0;
 
     for (const [query, data] of queryMap.entries()) {
       const ctr = data.impressions > 0 ? data.clicks / data.impressions : 0;
       const position = data.impressions > 0 ? data.positionSum / data.impressions : 0;
-      const branded = isBrandedQuery(query, domain);
+      const branded = isBrandedQuery(query, domain, keywordsForBrand);
       if (branded) brandedCount++;
 
       queries.push({
@@ -1885,7 +1935,6 @@ export async function getPromptLikeQueries(
       });
     }
 
-    // Sortierung: nach Impressions (Visibility-Fokus)
     queries.sort((a, b) => b.impressions - a.impressions);
 
     // ── 4. Totals ─────────────────────────────────────────────────
@@ -1897,7 +1946,15 @@ export async function getPromptLikeQueries(
     const totalQueries = queries.length;
     const brandedShare = totalQueries > 0 ? (brandedCount / totalQueries) * 100 : 0;
 
-    // ── 5. Tagestrend (zweite Abfrage, dimension: date) ──────────
+    // Anteil an allen GSC-Impressionen
+    const sharePercent = totalImpressionsAll > 0
+      ? (totalImpressions / totalImpressionsAll) * 100
+      : 0;
+
+    // ── 5. Wortzahl-Distribution ──────────────────────────────────
+    const wordCountDistribution = buildWordCountDistribution(queries);
+
+    // ── 6. Tagestrend (zweite Abfrage) ────────────────────────────
     let trend: { date: number; clicks: number; impressions: number }[] = [];
     try {
       const trendRes = await searchconsole.searchanalytics.query({
@@ -1934,7 +1991,7 @@ export async function getPromptLikeQueries(
     }
 
     return {
-      queries: queries.slice(0, 500), // Cap, falls extrem viele
+      queries: queries.slice(0, 500),
       totals: {
         totalQueries,
         totalClicks,
@@ -1943,9 +2000,14 @@ export async function getPromptLikeQueries(
         avgPosition,
         brandedShare,
         nonBrandedShare: 100 - brandedShare,
+        sharePercent,
+        totalImpressionsAll,
       },
       trend,
+      shareTrend: [],            // Wird im Loader befüllt (braucht ALL-Queries-Tagestrend)
+      wordCountDistribution,
       minWords,
+      brandKeywordsUsed: keywordsForBrand,
     };
   } catch (error) {
     console.error('[Prompt Tracking] Error:', error);
