@@ -16,7 +16,7 @@
 import React, { useState } from 'react';
 import {
   Plus, X, Save, Loader2, AlertCircle, CheckCircle, Info, Zap,
-  Globe, FileText, MousePointerClick,
+  Globe, FileText,
 } from 'lucide-react';
 
 interface DetectionPreview {
@@ -24,11 +24,9 @@ interface DetectionPreview {
   sources: {
     domain: string[];
     pageTitle: string[];
-    topQueries: string[];
   };
   pageTitle?: string | null;
   pageTitleFetched: boolean;
-  topQueriesAnalyzed: number;
 }
 
 interface PromptTrackingSettingsProps {
@@ -187,8 +185,9 @@ export default function PromptTrackingSettings({
               Brand-Keywords automatisch erkennen
             </div>
             <p className="text-xs text-fuchsia-800/80 dark:text-fuchsia-300/80 mt-0.5 leading-relaxed">
-              Aus drei Quellen: Domain, Page-Title der Homepage und GSC Top-Klick-Queries (1–3 Wörter).
-              Generika werden gefiltert.
+              Aus zwei zuverlässigen Quellen: Domain-Tokenisierung und Page-Title der Homepage.
+              Generika werden gefiltert. (GSC-Top-Klick-Queries werden bewusst nicht genutzt —
+              die sind bei Content-Sites themenbezogen, nicht markenbezogen.)
             </p>
           </div>
         </div>
@@ -256,11 +255,6 @@ export default function PromptTrackingSettings({
               label={preview.pageTitleFetched ? 'Page-Title' : 'Page-Title (nicht erreichbar)'}
               tokens={preview.sources.pageTitle}
               meta={preview.pageTitle ? `„${preview.pageTitle}"` : undefined}
-            />
-            <SourceLine
-              icon={<MousePointerClick className="w-3.5 h-3.5" />}
-              label={`Top-Klick-Queries (${preview.topQueriesAnalyzed} analysiert)`}
-              tokens={preview.sources.topQueries}
             />
           </div>
         )}
