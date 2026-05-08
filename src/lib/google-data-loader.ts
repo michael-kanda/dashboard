@@ -206,7 +206,7 @@ export async function getOrFetchGoogleData(
           user.gsc_site_url,
           startDateStr,
           endDateStr,
-          user.domain,
+          user.domain ?? undefined,   // ✅ null → undefined
           10 // Mindestwortzahl
         );
         console.log(
