@@ -16,7 +16,7 @@ export const authConfig = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        noStore(); 
+        noStore();
 
         if (!credentials?.email || !credentials.password) {
           throw new Error('E-Mail oder Passwort fehlt');
@@ -29,10 +29,10 @@ export const authConfig = {
         try {
           // 1. Benutzerdaten holen
           const { rows } = await sql`
-            SELECT 
+            SELECT
               id, email, password, role, mandant_id, permissions,
               gsc_site_url
-            FROM users 
+            FROM users
             WHERE email = ${normalizedEmail}
           `;
           user = rows[0];
@@ -62,12 +62,12 @@ export const authConfig = {
         } catch (authError) {
           if (authError instanceof Error) {
             console.warn(`[Authorize] Authentifizierungsfehler: ${authError.message}`);
-            throw authError; 
+            throw authError;
           }
           console.error("[Authorize] Unerwarteter Authentifizierungsfehler:", authError);
           throw new Error('Authentifizierungsfehler');
         }
-        
+
         // Login-Ereignis protokollieren
         try {
           console.log('[Authorize] Versuche, Login-Ereignis zu protokollieren...');
@@ -96,8 +96,9 @@ export const authConfig = {
         }
 
         // 3. Auth-Objekt zurückgeben
+        // ✅ id explizit als String – verhindert TS-Probleme im jwt-Callback
         return {
-          id: user.id,
+          id: String(user.id),
           email: user.email,
           role: user.role,
           mandant_id: user.mandant_id,
@@ -120,7 +121,8 @@ export const authConfig = {
     // 4. JWT mit Benutzerdaten anreichern
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        // ✅ Defensiver Check – user.id ist im NextAuth-Type optional (string | undefined)
+        if (user.id) token.id = user.id;
         token.role = user.role as 'BENUTZER' | 'ADMIN' | 'SUPERADMIN';
         token.mandant_id = user.mandant_id;
         token.permissions = user.permissions;
@@ -130,7 +132,7 @@ export const authConfig = {
       }
       return token;
     },
-    
+
     // 5. Session mit den Daten aus dem JWT anreichern
     async session({ session, token }) {
       if (session.user) {
