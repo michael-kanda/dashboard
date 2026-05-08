@@ -1,23 +1,22 @@
 // src/lib/prompt-tracking/brand-detector.ts
 //
-// Auto-Detection von brand_keywords pro User aus drei Quellen:
+// Auto-Detection von brand_keywords pro User aus zwei zuverlässigen Quellen:
 //   1. Domain-Tokenisierung
 //   2. Page-Title (HTTP-Fetch)
-//   3. GSC Top-Klick-Queries 1-3 Wörter (rekurrierende Tokens)
+//
+// GSC Top-Klick-Queries werden bewusst NICHT genutzt: Bei Content-/Service-Sites
+// (Anwalt, Berater, B2B) sind die Top-Klick-Kurzqueries themenbezogen, nicht
+// markenbezogen. Beispiel anwalt-hofer.at: Top-Klicks sind "vignette strafe",
+// "hundesteuer" — daraus "Brand-Keywords" zu machen führt zu falschen Treffern
+// in der Brand/Non-Brand-Klassifikation.
 
 import { GENERIC_TERMS } from './query-classifier';
 
 export interface DetectedBrandKeywords {
   keywords: string[];
-  sources: { domain: string[]; pageTitle: string[]; topQueries: string[]; };
+  sources: { domain: string[]; pageTitle: string[]; };
   pageTitleRaw?: string;
   pageTitleFetched: boolean;
-  topQueriesAnalyzed: number;
-}
-
-export interface TopQueryInput {
-  query: string;
-  clicks: number;
 }
 
 function normalize(s: string): string {
@@ -138,55 +137,10 @@ function extractTitleTokens(title: string): string[] {
   return Array.from(candidates);
 }
 
-function extractRecurringTokens(topQueries: TopQueryInput[]): string[] {
-  const shortQueries = topQueries
-    .filter(q => {
-      const words = q.query.trim().split(/\s+/).length;
-      return words >= 1 && words <= 3;
-    })
-    .sort((a, b) => b.clicks - a.clicks)
-    .slice(0, 30);
-
-  if (shortQueries.length === 0) return [];
-
-  const tokenCounts = new Map<string, number>();
-  const phraseCounts = new Map<string, number>();
-
-  for (const sq of shortQueries) {
-    const normalized = normalize(sq.query);
-    if (!isGenericOrTooShort(normalized)) {
-      phraseCounts.set(normalized, (phraseCounts.get(normalized) || 0) + 1);
-    }
-    for (const word of normalized.split(/\s+/)) {
-      if (!isGenericOrTooShort(word)) {
-        tokenCounts.set(word, (tokenCounts.get(word) || 0) + 1);
-      }
-    }
-  }
-
-  const result = new Set<string>();
-  for (const [token, count] of tokenCounts.entries()) {
-    if (count >= 2) result.add(token);
-  }
-  for (const [phrase, count] of phraseCounts.entries()) {
-    if (count >= 2 && phrase.includes(' ')) result.add(phrase);
-  }
-
-  if (result.size === 0 && shortQueries.length > 0) {
-    const top = normalize(shortQueries[0].query);
-    for (const word of top.split(/\s+/)) {
-      if (!isGenericOrTooShort(word)) result.add(word);
-    }
-  }
-
-  return Array.from(result);
-}
-
 export async function detectBrandKeywords(params: {
   domain?: string | null;
-  topQueries?: TopQueryInput[];
 }): Promise<DetectedBrandKeywords> {
-  const { domain, topQueries = [] } = params;
+  const { domain } = params;
 
   const domainTokens = extractDomainTokens(domain);
 
@@ -206,12 +160,14 @@ export async function detectBrandKeywords(params: {
     }
   }
 
-  const queryTokens = extractRecurringTokens(topQueries);
+  // Hinweis: GSC Top-Klick-Queries werden bewusst NICHT als Brand-Quelle genutzt.
+  // Bei Content-/Service-Sites (Anwalt, Berater, B2B) sind Top-Klick-Kurzqueries
+  // themenbezogen, nicht markenbezogen. Z.B. "vignette strafe" auf einer
+  // Anwalts-Site → kein Brand. Daher nur Domain + Page-Title als zuverlässige Quellen.
 
   const all = new Set<string>();
   domainTokens.forEach(t => all.add(t));
   titleTokens.forEach(t => all.add(t));
-  queryTokens.forEach(t => all.add(t));
 
   const final = Array.from(all)
     .filter(t => !isGenericOrTooShort(t))
@@ -223,10 +179,8 @@ export async function detectBrandKeywords(params: {
     sources: {
       domain: domainTokens,
       pageTitle: titleTokens,
-      topQueries: queryTokens,
     },
     pageTitleRaw,
     pageTitleFetched,
-    topQueriesAnalyzed: topQueries.length,
   };
 }
