@@ -147,26 +147,7 @@ async function getBrandKeywordsForUser(
 
   console.log(`[Brand Auto-Detect] Starte für ${user.email}...`);
   try {
-    // Top-Queries aus GSC holen für die Recurring-Token-Analyse
-    let topQueries: { query: string; clicks: number }[] = [];
-    if (user.gsc_site_url) {
-      try {
-        const top = await getTopQueries(user.gsc_site_url, startDate, endDate);
-        topQueries = (top as any[])
-          .map((q) => ({
-            query: q.query || q.keys?.[0] || '',
-            clicks: q.clicks ?? 0,
-          }))
-          .filter((q) => q.query.length > 0);
-      } catch (gscErr) {
-        console.warn('[Brand Auto-Detect] GSC Top-Queries Fetch fehlgeschlagen:', gscErr);
-      }
-    }
-
-    const result = await detectBrandKeywords({
-      domain: user.domain,
-      topQueries,
-    });
+    const result = await detectBrandKeywords({ domain: user.domain });
 
     console.log(
       `[Brand Auto-Detect] ✅ ${result.keywords.length} Keywords erkannt für ${user.email}: ` +
