@@ -4,10 +4,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Eye, EyeSlash } from 'react-bootstrap-icons'; 
-import { 
-  ProjectDashboardData, 
-  ActiveKpi, 
+import { Eye, EyeSlash } from 'react-bootstrap-icons';
+import {
+  ProjectDashboardData,
+  ActiveKpi,
   ChartEntry,
   KpiDatum
 } from '@/lib/dashboard-shared';
@@ -22,12 +22,13 @@ import TopQueriesList from '@/components/TopQueriesList';
 import SemrushTopKeywords from '@/components/SemrushTopKeywords';
 import SemrushTopKeywords02 from '@/components/SemrushTopKeywords02';
 import GlobalHeader from '@/components/GlobalHeader';
-import ProjectTimelineWidget from '@/components/ProjectTimelineWidget'; 
+import ProjectTimelineWidget from '@/components/ProjectTimelineWidget';
 import AiAnalysisWidget from '@/components/AiAnalysisWidget';
 import LandingPageChart from '@/components/charts/LandingPageChart';
 import { aggregateLandingPages } from '@/lib/utils';
 import { DataMaxChat } from '@/components/datamax';
 import GoogleAdsWidget from '@/components/GoogleAdsWidget';
+import PromptTrackingCard from '@/components/PromptTrackingCard';   // ✅ NEU
 
 // 🔍 DIAGNOSTIK – nur Server-Side ausführen, später wieder entfernen
 if (typeof window === 'undefined') {
@@ -36,6 +37,7 @@ if (typeof window === 'undefined') {
     AiTrafficDetailWidgetV2, TopQueriesList, SemrushTopKeywords,
     SemrushTopKeywords02, GlobalHeader, ProjectTimelineWidget,
     AiAnalysisWidget, LandingPageChart, DataMaxChat, GoogleAdsWidget,
+    PromptTrackingCard,                                            // ✅ NEU
   };
   for (const [name, comp] of Object.entries(_components)) {
     if (typeof comp === 'undefined') {
@@ -69,10 +71,11 @@ interface ProjectDashboardProps {
   channelData?: ChartEntry[];
   deviceData?: ChartEntry[];
   bingData?: any[];
-  userRole?: string; 
-  userEmail?: string; 
+  userRole?: string;
+  userEmail?: string;
   showLandingPages?: boolean;
-  showGoogleAds?: boolean;       // ← NEU
+  showGoogleAds?: boolean;
+  showPromptTracking?: boolean;        // ✅ NEU
   dataMaxEnabled?: boolean;
 }
 
@@ -84,31 +87,33 @@ export default function ProjectDashboard({
   data,
   isLoading,
   dateRange,
-  onDateRangeChange, 
+  onDateRangeChange,
   projectId,
   domain,
   faviconUrl,
   semrushTrackingId,
   semrushTrackingId02,
   projectTimelineActive = false,
-  userRole = 'USER', 
-  userEmail = '', 
+  userRole = 'USER',
+  userEmail = '',
   showLandingPages = false,
-  showGoogleAds = false,          // ← NEU
+  showGoogleAds = false,
+  showPromptTracking = false,           // ✅ NEU
   dataMaxEnabled = true,
 }: ProjectDashboardProps) {
-  
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const [activeKpi, setActiveKpi] = useState<ActiveKpi>('clicks');
   const [isLandingPagesVisible, setIsLandingPagesVisible] = useState(showLandingPages);
-  const [isGoogleAdsVisible, setIsGoogleAdsVisible] = useState(showGoogleAds);  // ← NEU
+  const [isGoogleAdsVisible, setIsGoogleAdsVisible] = useState(showGoogleAds);
+  const [isPromptTrackingVisible, setIsPromptTrackingVisible] = useState(showPromptTracking); // ✅ NEU
   const [isUpdating, setIsUpdating] = useState(false);
   const [showAiTrafficDetail, setShowAiTrafficDetail] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     setIsUpdating(false);
   }, [dateRange, data, isLoading]);
@@ -142,7 +147,7 @@ export default function ProjectDashboard({
 
   const exportKpis = useMemo(() => {
     if (!extendedKpis) return [];
-    
+
     return [
       { label: 'Impressionen', value: extendedKpis.impressions.value.toLocaleString('de-DE'), change: extendedKpis.impressions.change },
       { label: 'Klicks', value: extendedKpis.clicks.value.toLocaleString('de-DE'), change: extendedKpis.clicks.change },
@@ -150,7 +155,7 @@ export default function ProjectDashboard({
       { label: 'Sitzungen', value: extendedKpis.sessions.value.toLocaleString('de-DE'), change: extendedKpis.sessions.change },
       { label: 'Engagement', value: extendedKpis.engagementRate.value.toFixed(1), change: extendedKpis.engagementRate.change, unit: '%' },
       { label: 'Conversions', value: extendedKpis.conversions.value.toLocaleString('de-DE'), change: extendedKpis.conversions.change },
-      { label: 'KI-Traffic', value: (data.aiTraffic?.totalUsers || 0).toLocaleString('de-DE'), change: data.aiTraffic?.totalUsersChange || 0 }, 
+      { label: 'KI-Traffic', value: (data.aiTraffic?.totalUsers || 0).toLocaleString('de-DE'), change: data.aiTraffic?.totalUsersChange || 0 },
       { label: 'Ø Zeit', value: extendedKpis.avgEngagementTime.value.toLocaleString('de-DE'), change: extendedKpis.avgEngagementTime.change },
     ];
   }, [extendedKpis, data.aiTraffic]);
@@ -178,18 +183,22 @@ export default function ProjectDashboard({
     || (data.googleAdsData?.campaignRows?.length ?? 0) > 0;
   const shouldRenderGoogleAds = hasGoogleAdsData && (isAdmin || isGoogleAdsVisible);
 
+  // ✅ NEU: Prompt Tracking Prüfung (nur rendern wenn GSC-Daten vorhanden)
+  const hasPromptTracking = !!data.promptTracking;
+  const shouldRenderPromptTracking = hasPromptTracking && (isAdmin || isPromptTrackingVisible);
+
   return (
     <div className="min-h-screen flex flex-col dashboard-gradient relative">
-      
+
       {/* Lightbox Spinner */}
       {isUpdating && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-surface/70 backdrop-blur-md transition-all animate-in fade-in duration-300">
            <div className="bg-surface p-8 rounded-3xl shadow-2xl border border-theme-border-subtle flex flex-col items-center gap-6 max-w-md w-full text-center transform scale-100 animate-in zoom-in-95 duration-300">
               <div className="relative w-full flex justify-center">
-                 <Image 
-                   src="/data-max-arbeitet.webp" 
-                   alt="Data Max arbeitet" 
-                   width={400} 
+                 <Image
+                   src="/data-max-arbeitet.webp"
+                   alt="Data Max arbeitet"
+                   width={400}
                    height={400}
                    className="h-[200px] w-auto object-contain"
                    priority
@@ -207,10 +216,10 @@ export default function ProjectDashboard({
            </div>
         </div>
       )}
-      
+
       <div className="flex-grow w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Trace at="GlobalHeader" />
-        <GlobalHeader 
+        <GlobalHeader
           domain={domain}
           projectId={projectId}
           dateRange={dateRange}
@@ -218,7 +227,7 @@ export default function ProjectDashboard({
           userRole={userRole}
           userEmail={userEmail}
         />
-        
+
         <Trace at="ProjectTimelineWidget?" />
         {projectId && projectTimelineActive && (
           <div className="mb-6 print-timeline">
@@ -230,7 +239,7 @@ export default function ProjectDashboard({
         <Trace at="AiAnalysisWidget?" />
         {projectId && (
           <div id="section-ai-analyse" className="mt-8 scroll-mt-20 print:hidden">
-            <AiAnalysisWidget 
+            <AiAnalysisWidget
               projectId={projectId}
               domain={domain}
               dateRange={dateRange}
@@ -247,29 +256,29 @@ export default function ProjectDashboard({
           {extendedKpis && (
             <TableauKpiGrid
               kpis={extendedKpis}
-              isLoading={isLoading} 
-              allChartData={data.charts as any} 
+              isLoading={isLoading}
+              allChartData={data.charts as any}
               apiErrors={safeApiErrors}
-              dateRange={dateRange} 
+              dateRange={dateRange}
             />
           )}
         </div>
 
         <Trace at="KpiTrendChart" />
         <div id="section-verlauf" className="mt-8 scroll-mt-20 print-trend-chart" ref={chartRef}>
-          <KpiTrendChart 
+          <KpiTrendChart
             activeKpi={activeKpi}
             onKpiChange={(kpi) => setActiveKpi(kpi as ActiveKpi)}
             allChartData={allChartData}
             weatherData={data.weatherData}
           />
         </div>
-        
+
         {/* KI-Traffic Sektion mit Toggle für Detail-Ansicht */}
         <Trace at="AiTrafficCard" />
         <div id="section-ki-traffic" className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-8 scroll-mt-20 print-traffic-grid">
           <div className="xl:col-span-1 print-ai-card">
-            <AiTrafficCard 
+            <AiTrafficCard
               totalSessions={data.aiTraffic?.totalSessions ?? 0}
               totalUsers={data.aiTraffic?.totalUsers ?? 0}
               percentage={data.kpis?.sessions?.value ? ((data.aiTraffic?.totalSessions ?? 0) / data.kpis.sessions.value * 100) : 0}
@@ -287,11 +296,11 @@ export default function ProjectDashboard({
               onDetailClick={() => setShowAiTrafficDetail(!showAiTrafficDetail)}
             />
           </div>
-          
+
           <Trace at="TopQueriesList" />
           <div className="xl:col-span-2 print-queries-list">
-            <TopQueriesList 
-              queries={data.topQueries ?? []} 
+            <TopQueriesList
+              queries={data.topQueries ?? []}
               isLoading={isLoading}
               className="h-full"
               dateRange={dateRange}
@@ -304,10 +313,43 @@ export default function ProjectDashboard({
         <Trace at="AiTrafficDetailWidgetV2?" />
         {showAiTrafficDetail && hasAiTraffic && (
           <div className="mt-8 animate-in slide-in-from-top-4 duration-300 print:hidden">
-            <AiTrafficDetailWidgetV2 
+            <AiTrafficDetailWidgetV2
               projectId={projectId}
               dateRange={dateRange}
             />
+          </div>
+        )}
+
+        {/* ✅ NEU: PROMPT TRACKING SEKTION (GSC Proxy für AI-Mode-Queries) */}
+        <Trace at="PromptTrackingCard?" />
+        {shouldRenderPromptTracking && (
+          <div
+            id="section-prompt-tracking"
+            className={`mt-8 scroll-mt-20 transition-all duration-300 print-prompt-tracking ${
+              !isPromptTrackingVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''
+            }`}
+          >
+            {isAdmin && (
+              <div className="flex items-center justify-end mb-2 print:hidden">
+                <button
+                  onClick={() => setIsPromptTrackingVisible(!isPromptTrackingVisible)}
+                  className="flex items-center gap-2 text-xs font-medium text-muted hover:text-strong transition-colors"
+                >
+                  {isPromptTrackingVisible ? <EyeSlash size={14} /> : <Eye size={14} />}
+                  {isPromptTrackingVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}
+                </button>
+              </div>
+            )}
+            <div className="relative">
+              <PromptTrackingCard data={data.promptTracking} />
+              {!isPromptTrackingVisible && isAdmin && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="overlay-muted-badge backdrop-blur-[1px] px-4 py-2 rounded-lg border text-strong text-xs font-semibold shadow-sm">
+                    🚫 Für Kunden ausgeblendet
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -316,7 +358,7 @@ export default function ProjectDashboard({
           <div id="section-landingpages" className={`mt-8 scroll-mt-20 transition-all duration-300 ${!isLandingPagesVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
             {isAdmin && (
                <div className="flex items-center justify-end mb-2 print:hidden">
-                 <button 
+                 <button
                     onClick={() => setIsLandingPagesVisible(!isLandingPagesVisible)}
                     className="flex items-center gap-2 text-xs font-medium text-muted hover:text-strong transition-colors"
                  >
@@ -326,8 +368,8 @@ export default function ProjectDashboard({
                </div>
             )}
             <div className="print-landing-chart relative">
-               <LandingPageChart 
-                 data={cleanLandingPages} 
+               <LandingPageChart
+                 data={cleanLandingPages}
                  isLoading={isLoading}
                  title="Top Landingpages"
                  dateRange={dateRange}
@@ -348,30 +390,30 @@ export default function ProjectDashboard({
         {/* PIE CHARTS */}
         <Trace at="TableauPieCharts" />
         <div id="section-zugriffe" className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8 scroll-mt-20 print-pie-grid">
-          <TableauPieChart 
-            data={data.channelData} 
-            title="Zugriffe nach Channel" 
-            isLoading={isLoading} 
-            error={safeApiErrors?.ga4} 
+          <TableauPieChart
+            data={data.channelData}
+            title="Zugriffe nach Channel"
+            isLoading={isLoading}
+            error={safeApiErrors?.ga4}
             dateRange={dateRange}
           />
-          <TableauPieChart 
-            data={data.countryData} 
-            title="Zugriffe nach Land" 
-            isLoading={isLoading} 
-            error={safeApiErrors?.ga4} 
+          <TableauPieChart
+            data={data.countryData}
+            title="Zugriffe nach Land"
+            isLoading={isLoading}
+            error={safeApiErrors?.ga4}
             dateRange={dateRange}
           />
-          <TableauPieChart 
-            data={data.deviceData} 
-            title="Zugriffe nach Endgerät" 
-            isLoading={isLoading} 
-            error={safeApiErrors?.ga4} 
+          <TableauPieChart
+            data={data.deviceData}
+            title="Zugriffe nach Endgerät"
+            isLoading={isLoading}
+            error={safeApiErrors?.ga4}
             dateRange={dateRange}
           />
         </div>
 
-        {/* ✅ NEU: GOOGLE ADS SEKTION */}
+        {/* ✅ GOOGLE ADS SEKTION */}
         <Trace at="GoogleAdsWidget?" />
         {shouldRenderGoogleAds && (
           <div id="section-google-ads" className={`mt-8 scroll-mt-20 transition-all duration-300 ${!isGoogleAdsVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
