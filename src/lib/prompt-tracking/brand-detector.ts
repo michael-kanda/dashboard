@@ -106,35 +106,39 @@ export async function fetchPageTitle(domain: string): Promise<string | null> {
   return null;
 }
 
-function extractTitleTokens(title: string): string[] {
-  if (!title) return [];
+function extractTitleTokens(title: string, domainTokens: string[]): string[] {
+  if (!title || domainTokens.length === 0) return [];
+
+  // Domain-Tokens normalisieren für Substring-Vergleich
+  const lowerDomainTokens = domainTokens
+    .map((t) => t.toLowerCase().trim())
+    .filter((t) => t.length > 0);
 
   const segments = title
     .split(/\s*[|\u2013\u2014\u2022\-:·]\s*/)
     .map(normalize)
-    .filter(s => s.length > 0)
-    .filter(s => !isGenericOrTooShort(s));
+    .filter((s) => s.length >= 3 && s.length <= 60)
+    .filter((s) => !isGenericOrTooShort(s));
 
-  const candidates = new Set<string>();
+  const result = new Set<string>();
 
-  if (segments.length > 0) {
-    const first = segments[0];
-    if (first.length >= 3 && first.length <= 50) candidates.add(first);
-  }
-  if (segments.length > 1) {
-    const last = segments[segments.length - 1];
-    if (last.length >= 3 && last.length <= 30 && !isGenericOrTooShort(last)) {
-      candidates.add(last);
+  // Pro Segment: nur behalten, wenn es mit einem Domain-Token überlappt.
+  // "Überlappt" = Domain-Token ist Substring vom Segment (typischer Fall:
+  // "Aichelin Group" enthält "aichelin"), oder Segment ist Substring vom
+  // Domain-Token. Min. 4 Zeichen Überlappung, damit kurze Tokens wie "max"
+  // oder "geo" keine zufälligen Treffer erzeugen.
+  for (const segment of segments) {
+    const hasOverlap = lowerDomainTokens.some((dt) => {
+      if (dt.length >= 4 && segment.includes(dt)) return true;
+      if (segment.length >= 4 && dt.includes(segment)) return true;
+      return false;
+    });
+    if (hasOverlap) {
+      result.add(segment);
     }
   }
 
-  if (segments.length > 0) {
-    const words = segments[0].split(/\s+/).filter(w => !isGenericOrTooShort(w));
-    if (words.length >= 1) candidates.add(words[0]);
-    if (words.length >= 2) candidates.add(`${words[0]} ${words[1]}`);
-  }
-
-  return Array.from(candidates);
+  return Array.from(result);
 }
 
 export async function detectBrandKeywords(params: {
@@ -153,7 +157,7 @@ export async function detectBrandKeywords(params: {
       if (title) {
         pageTitleRaw = title;
         pageTitleFetched = true;
-        titleTokens = extractTitleTokens(title);
+        titleTokens = extractTitleTokens(title, domainTokens);
       }
     } catch (e) {
       console.warn('[brand-detector] page-title fetch failed:', e);
