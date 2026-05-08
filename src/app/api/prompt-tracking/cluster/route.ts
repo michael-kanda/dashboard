@@ -1,16 +1,15 @@
 // src/app/api/prompt-tracking/cluster/route.ts
 //
 // API Route: KI-basierte Cluster-Analyse von Prompt-Tracking-Queries.
-// Nimmt eine Liste von langen GSC-Queries entgegen und gibt
-// strukturierte thematische Cluster + Insights zurück.
-//
-// Modell: Gemini 2.5 Flash (günstig, schnell, strukturierter Output)
-// Auth:   auth() aus @/lib/auth (NextAuth v5 Standard)
+// Speichert Ergebnisse zusätzlich in prompt_cluster_history für
+// Vergleiche über Zeit ("Vor 3 Monaten dominierte Cluster X").
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateObject } from 'ai';
 import { google } from '@ai-sdk/google';
 import { auth } from '@/lib/auth';
+import { sql } from '@vercel/postgres';
+import crypto from 'crypto';
 
 import {
   PromptClusterRequestSchema,
@@ -18,19 +17,11 @@ import {
   type PromptClusterApiResponse,
 } from '@/lib/prompt-cluster-schema';
 
-// Verhindert Prerendering – diese Route ist immer dynamisch
 export const dynamic = 'force-dynamic';
-// Erlaubt längere LLM-Calls (Vercel: max 60s im Hobby-Plan, 300s Pro)
 export const maxDuration = 60;
 
-// ──────────────────────────────────────────────────────────────────
-// Modell-Konfiguration
-// ──────────────────────────────────────────────────────────────────
 const MODEL_ID = 'gemini-2.5-flash';
 
-// ──────────────────────────────────────────────────────────────────
-// System Prompt
-// ──────────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `Du bist ein erfahrener SEO- und Suchintention-Analyst.
 
 Du analysierst lange, konversationsartige Suchanfragen aus der Google Search Console.
@@ -49,13 +40,18 @@ Wichtig:
 - Cluster-Themen sollen prägnant und konkret sein (max 5 Wörter).
 - "Sonstiges" oder "Verschiedenes" als Cluster vermeiden – lieber kleinere thematische Gruppen.`;
 
-// ──────────────────────────────────────────────────────────────────
-// Handler
-// ──────────────────────────────────────────────────────────────────
+/**
+ * Hash für die Eingabe-Queries (Cache-Key + Idempotenz)
+ */
+function hashQueries(queries: { query: string }[]): string {
+  const sorted = [...queries].map((q) => q.query.toLowerCase().trim()).sort();
+  return crypto.createHash('sha256').update(sorted.join('|')).digest('hex').slice(0, 16);
+}
+
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
 
-  // ── 1. Auth-Check via NextAuth v5 ──────────────────────────────
+  // ── 1. Auth-Check ───────────────────────────────────────────────
   let session;
   try {
     session = await auth();
@@ -64,11 +60,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!session?.user) {
-    console.warn('[Prompt Cluster] Keine Session – Auth fehlgeschlagen');
+  if (!session?.user || !(session.user as any).id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const userId = (session.user as any).id as string;
   console.log(`[Prompt Cluster] Auth OK für ${session.user.email}`);
 
   // ── 2. ENV-Check ────────────────────────────────────────────────
@@ -100,8 +96,28 @@ export async function POST(req: NextRequest) {
   }
 
   const { domain, dateRange, queries } = parsed.data;
+  const queriesHash = hashQueries(queries);
 
-  // ── 4. Prompt zusammenbauen ─────────────────────────────────────
+  // ── 4. Cache-Check: gleicher Hash innerhalb von 7 Tagen? ────────
+  try {
+    const { rows } = await sql`
+      SELECT result, created_at
+      FROM prompt_cluster_history
+      WHERE user_id = ${userId}::uuid
+        AND queries_hash = ${queriesHash}
+        AND created_at > NOW() - INTERVAL '7 days'
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
+    if (rows.length > 0) {
+      console.log(`[Prompt Cluster] ✅ Cache HIT (Hash ${queriesHash})`);
+      return NextResponse.json(rows[0].result);
+    }
+  } catch (e) {
+    console.warn('[Prompt Cluster] Cache-Lookup fehlgeschlagen (ignoriert):', e);
+  }
+
+  // ── 5. Prompt zusammenbauen ─────────────────────────────────────
   const queryListText = queries
     .map((q, i) => `${i}: "${q.query}" (clicks=${q.clicks}, impressions=${q.impressions})`)
     .join('\n');
@@ -115,7 +131,7 @@ export async function POST(req: NextRequest) {
     queryListText,
   ].join('\n');
 
-  // ── 5. LLM-Aufruf ───────────────────────────────────────────────
+  // ── 6. LLM-Aufruf ───────────────────────────────────────────────
   try {
     const result = await generateObject({
       model: google(MODEL_ID),
@@ -125,7 +141,6 @@ export async function POST(req: NextRequest) {
       temperature: 0.3,
     });
 
-    // ── 6. Sanity-Check der queryIndices ─────────────────────────
     const validatedClusters = result.object.clusters
       .map((cluster) => ({
         ...cluster,
@@ -152,6 +167,24 @@ export async function POST(req: NextRequest) {
         elapsedMs: Date.now() - startedAt,
       },
     };
+
+    // ── 7. In History speichern (für spätere Vergleiche) ─────────
+    try {
+      await sql`
+        INSERT INTO prompt_cluster_history (
+          user_id, date_range, queries_hash, result, query_count
+        )
+        VALUES (
+          ${userId}::uuid,
+          ${dateRange || 'unknown'},
+          ${queriesHash},
+          ${JSON.stringify(response)}::jsonb,
+          ${queries.length}
+        )
+      `;
+    } catch (e) {
+      console.warn('[Prompt Cluster] History-Save fehlgeschlagen (ignoriert):', e);
+    }
 
     console.log(
       `[Prompt Cluster] ✅ ${validatedClusters.length} Cluster aus ${queries.length} Queries ` +
