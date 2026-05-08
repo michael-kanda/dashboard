@@ -12,7 +12,7 @@ import {
   getQueriesByLandingPageObject,
   getGoogleAdsReport,
   getGoogleAdsFromSheet,
-  getPromptLikeQueries,                  // ✅ NEU
+  getPromptLikeQueries,
   type AiTrafficData,
   type Ga4ExtendedData,
   type GoogleAdsData,
@@ -24,23 +24,21 @@ import {
   ApiErrorStatus,
   ConvertingPageData,
   LandingPageQueries,
-  PromptTrackingResult,                  // ✅ NEU
+  PromptTrackingResult,
+  PromptTrackingShareBucket,
+  PromptTrackingPrevious,
 } from '@/lib/dashboard-shared';
 import type { TopQueryData, ChartPoint } from '@/types/dashboard';
 
-// ✅ DEMO-DATEN IMPORT
 import { getDemoAnalyticsData } from '@/lib/demo-data';
-
-// ✅ Weather Import
 import { fetchWeatherData, weatherMapToObject } from '@/lib/weather';
 
 function getCacheDuration(dateRange: string): number {
-  if (dateRange === '18m' || dateRange === '24m') return 72; // 3 Tage
+  if (dateRange === '18m' || dateRange === '24m') return 72;
   if (dateRange === '12m') return 48;
-  return 24; // kürzere Zeiträume öfter aktualisieren
+  return 24;
 }
 
-// Interface für interne Datenhaltung - kompatibel mit Ga4ExtendedData
 interface RawApiData {
   clicks: { total: number; daily: ChartPoint[] };
   impressions: { total: number; daily: ChartPoint[] };
@@ -54,13 +52,11 @@ interface RawApiData {
   paidSearch: { total: number; daily: ChartPoint[] };
 }
 
-// Hilfsfunktion: Berechnet Veränderung sicher
 function calculateChange(current: number, previous: number): number {
   if (!previous || previous === 0) return current > 0 ? 100 : 0;
   return ((current - previous) / previous) * 100;
 }
 
-// Initialer State für leere Daten
 const INITIAL_DATA: RawApiData = {
   clicks: { total: 0, daily: [] },
   impressions: { total: 0, daily: [] },
@@ -74,6 +70,92 @@ const INITIAL_DATA: RawApiData = {
   paidSearch: { total: 0, daily: [] }
 };
 
+// ════════════════════════════════════════════════════════════════════
+// Hilfsfunktion: Aggregiere Tagesdaten zu Wochen- oder Monats-Buckets
+// ════════════════════════════════════════════════════════════════════
+function buildShareTrend(
+  allDaily: ChartPoint[],
+  promptDaily: { date: number; impressions: number }[],
+  days: number
+): PromptTrackingShareBucket[] {
+  // Bucket-Strategie:
+  // - <= 60 Tage: wöchentlich
+  // - > 60 Tage: monatlich
+  const useMonthly = days > 60;
+
+  // Nach Bucket gruppieren
+  const allByBucket = new Map<string, number>();
+  const promptByBucket = new Map<string, number>();
+
+  function bucketKey(ts: number): { key: string; label: string } {
+    const d = new Date(ts);
+    if (useMonthly) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+      return { key: `${y}-${m}`, label: `${monthNames[d.getMonth()]} '${String(y).slice(2)}` };
+    }
+    // Wöchentlich: ISO-Woche
+    const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = tmp.getUTCDay() || 7;
+    tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+    const week = Math.ceil((((tmp.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return { key: `${tmp.getUTCFullYear()}-W${String(week).padStart(2, '0')}`, label: `KW ${week}` };
+  }
+
+  // ALL impressions
+  for (const point of allDaily) {
+    const ts = typeof point.date === 'number' ? point.date : new Date(point.date as any).getTime();
+    if (!ts) continue;
+    const { key } = bucketKey(ts);
+    const value = (point as any).value ?? 0;
+    allByBucket.set(key, (allByBucket.get(key) || 0) + value);
+  }
+
+  // PROMPT impressions
+  for (const point of promptDaily) {
+    if (!point.date) continue;
+    const { key } = bucketKey(point.date);
+    promptByBucket.set(key, (promptByBucket.get(key) || 0) + point.impressions);
+  }
+
+  // Buckets sortieren und Result bauen
+  const allKeys = Array.from(new Set([
+    ...Array.from(allByBucket.keys()),
+    ...Array.from(promptByBucket.keys()),
+  ])).sort();
+
+  const result: PromptTrackingShareBucket[] = allKeys.map((key) => {
+    const totalImpressions = allByBucket.get(key) || 0;
+    const promptImpressions = promptByBucket.get(key) || 0;
+    const sharePercent = totalImpressions > 0
+      ? (promptImpressions / totalImpressions) * 100
+      : 0;
+
+    // Label rekonstruieren
+    let label = key;
+    if (useMonthly) {
+      const [y, m] = key.split('-');
+      const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+      label = `${monthNames[parseInt(m, 10) - 1]} '${y.slice(2)}`;
+    } else {
+      const week = key.split('-W')[1];
+      label = `KW ${week}`;
+    }
+
+    return {
+      bucket: key,
+      label,
+      totalImpressions,
+      promptImpressions,
+      sharePercent,
+    };
+  });
+
+  return result;
+}
+
 export async function getOrFetchGoogleData(
   user: User,
   dateRange: string,
@@ -82,23 +164,16 @@ export async function getOrFetchGoogleData(
   if (!user.id) return null;
   const userId = user.id;
 
-  // Debug: Sheet-ID prüfen
   console.log(
     `[Google Data Loader] User: ${user.email} | google_ads_sheet_id: ${user.google_ads_sheet_id || '(nicht gesetzt)'}`
   );
 
-  // ==========================================
-  // ✅ DEMO-MODUS CHECK - GANZ OBEN!
-  // ==========================================
   const isDemo = user.email?.includes('demo') || user.domain?.includes('demo-shop');
 
   if (isDemo) {
     console.log('[Google Data Loader] Demo-User erkannt. Lade Demo-Daten...');
     return getDemoAnalyticsData(dateRange);
   }
-  // ==========================================
-  // ENDE DEMO-MODUS
-  // ==========================================
 
   // 1. Cache prüfen
   if (!forceRefresh) {
@@ -124,10 +199,9 @@ export async function getOrFetchGoogleData(
     }
   }
 
-  // 2. Daten frisch holen
   console.log(`[Google Cache] 🔄 Lade frische Daten für ${user.email}...`);
 
-  // End-Datum = gestern (damit nur vollständige Tage angezeigt werden)
+  // ── Datumberechnungen ────────────────────────────────────────────
   const end = new Date();
   end.setDate(end.getDate() - 1);
 
@@ -151,7 +225,7 @@ export async function getOrFetchGoogleData(
   const prevStartStr = prevStart.toISOString().split('T')[0];
   const prevEndStr = prevEnd.toISOString().split('T')[0];
 
-  // Datencontainer mit Default-Werten initialisieren
+  // ── Container init ───────────────────────────────────────────────
   let currentData: RawApiData = { ...INITIAL_DATA };
   let prevData: RawApiData = { ...INITIAL_DATA };
 
@@ -165,9 +239,9 @@ export async function getOrFetchGoogleData(
   let apiErrors: ApiErrorStatus = {};
   let landingPageQueries: LandingPageQueries = {};
   let googleAdsData: GoogleAdsData | undefined;
-  let promptTracking: PromptTrackingResult | undefined;   // ✅ NEU
+  let promptTracking: PromptTrackingResult | undefined;
 
-  // --- GSC FETCH ---
+  // ── GSC FETCH ────────────────────────────────────────────────────
   if (user.gsc_site_url) {
     try {
       const gscRaw = await getSearchConsoleData(user.gsc_site_url, startDateStr, endDateStr);
@@ -199,31 +273,70 @@ export async function getOrFetchGoogleData(
         5
       );
 
-      // ✅ NEU: Prompt-ähnliche Queries (≥10 Wörter)
-      // Methodik: https://seybold.de/prompt-tracking-in-google-search-console/
+      // ──────────────────────────────────────────────────────────
+      // Prompt Tracking (current + previous Period)
+      // ──────────────────────────────────────────────────────────
       try {
+        const brandKeywords: string[] | null = (user as any).brand_keywords || null;
+        const totalImpressionsAll = gscRaw.impressions?.total || 0;
+        const totalImpressionsAllPrev = gscPrevRaw.impressions?.total || 0;
+
+        // 1. Current period
         promptTracking = await getPromptLikeQueries(
           user.gsc_site_url,
           startDateStr,
           endDateStr,
-          user.domain ?? undefined,   // ✅ null → undefined
-          10 // Mindestwortzahl
+          user.domain ?? undefined,
+          brandKeywords,
+          totalImpressionsAll,
+          10
         );
+
+        // 2. Vorperiode (für Δ-Berechnung)
+        try {
+          const prevPt = await getPromptLikeQueries(
+            user.gsc_site_url,
+            prevStartStr,
+            prevEndStr,
+            user.domain ?? undefined,
+            brandKeywords,
+            totalImpressionsAllPrev,
+            10
+          );
+          const previous: PromptTrackingPrevious = {
+            totalQueries: prevPt.totals.totalQueries,
+            totalImpressions: prevPt.totals.totalImpressions,
+            totalClicks: prevPt.totals.totalClicks,
+            sharePercent: prevPt.totals.sharePercent,
+          };
+          promptTracking = { ...promptTracking, previous };
+        } catch (e) {
+          console.warn('[Prompt Tracking] Vorperioden-Fetch fehlgeschlagen (ignoriert):', e);
+        }
+
+        // 3. Share-Trend (aus existierenden Daten aggregieren – kein extra API-Call)
+        const shareTrend = buildShareTrend(
+          gscRaw.impressions?.daily || [],
+          promptTracking.trend || [],
+          days
+        );
+        promptTracking = { ...promptTracking, shareTrend };
+
         console.log(
-          `[Prompt Tracking] ✅ ${promptTracking.totals.totalQueries} prompt-ähnliche Queries ` +
-          `(${promptTracking.totals.brandedShare.toFixed(1)}% Brand)`
+          `[Prompt Tracking] ✅ ${promptTracking.totals.totalQueries} Queries ` +
+          `(${promptTracking.totals.sharePercent.toFixed(1)} % Anteil, ` +
+          `${promptTracking.totals.brandedShare.toFixed(1)} % Brand)`
         );
       } catch (e) {
         console.warn('[Prompt Tracking] Fehler (ignoriert):', e);
       }
-
     } catch (e: any) {
       console.error('[GSC Error]', e);
       apiErrors.gsc = e.message || 'GSC Fehler';
     }
   }
 
-  // --- GA4 FETCH ---
+  // ── GA4 FETCH ────────────────────────────────────────────────────
   if (user.ga4_property_id) {
     try {
       const propertyId = user.ga4_property_id.trim();
@@ -255,14 +368,12 @@ export async function getOrFetchGoogleData(
         paidSearch: gaPrevious.paidSearch
       };
 
-      // AI Traffic
       try {
         aiTraffic = await getAiTrafficData(propertyId, startDateStr, endDateStr);
       } catch (e) {
         console.warn('[AI Traffic] Fehler (ignoriert):', e);
       }
 
-      // Top Converting Pages + GSC CTR
       try {
         const rawPages = await getTopConvertingPages(propertyId, startDateStr, endDateStr);
 
@@ -286,7 +397,6 @@ export async function getOrFetchGoogleData(
         console.warn('[GA4] Konnte Top-Pages nicht laden:', e);
       }
 
-      // Dimensionen (Charts)
       try {
         const rawCountry = await getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'country');
         countryData = rawCountry.map((item, index) => ({
@@ -294,23 +404,13 @@ export async function getOrFetchGoogleData(
           fill: `hsl(var(--chart-${(index % 5) + 1}))`
         }));
 
-        const rawChannel = await getGa4DimensionReport(
-          propertyId,
-          startDateStr,
-          endDateStr,
-          'sessionDefaultChannelGroup'
-        );
+        const rawChannel = await getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'sessionDefaultChannelGroup');
         channelData = rawChannel.map((item, index) => ({
           ...item,
           fill: `hsl(var(--chart-${(index % 5) + 1}))`
         }));
 
-        const rawDevice = await getGa4DimensionReport(
-          propertyId,
-          startDateStr,
-          endDateStr,
-          'deviceCategory'
-        );
+        const rawDevice = await getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'deviceCategory');
         deviceData = rawDevice.map((item, index) => ({
           ...item,
           fill: `hsl(var(--chart-${(index % 5) + 1}))`
@@ -319,7 +419,6 @@ export async function getOrFetchGoogleData(
         console.error('[GA4 Dimensions Error]', e);
       }
 
-      // ✅ Google Ads via GA4 (nur wenn KEIN Sheet konfiguriert ist)
       if (!user.google_ads_sheet_id) {
         try {
           googleAdsData = await getGoogleAdsReport(propertyId, startDateStr, endDateStr);
@@ -330,14 +429,12 @@ export async function getOrFetchGoogleData(
           console.warn('[Google Ads] Keine GA4-Ads-Daten verfügbar (ignoriert):', e);
         }
       }
-
     } catch (e: any) {
       console.error('[GA4 Error]', e);
       apiErrors.ga4 = e.message || 'GA4 Fehler';
     }
   }
 
-  // --- GOOGLE ADS VIA SHEET (unabhängig von GA4) ---
   if (user.google_ads_sheet_id) {
     try {
       googleAdsData = await getGoogleAdsFromSheet(user.google_ads_sheet_id, startDateStr, endDateStr);
@@ -349,7 +446,6 @@ export async function getOrFetchGoogleData(
     }
   }
 
-  // --- BING FETCH ---
   if (user.gsc_site_url) {
     try {
       bingData = await getBingData(user.gsc_site_url);
@@ -360,7 +456,6 @@ export async function getOrFetchGoogleData(
     }
   }
 
-  // --- WETTER FETCH (parallel-safe, Fehler werden ignoriert) ---
   let weatherData: Record<string, import('@/lib/weather').DailyWeather> = {};
   try {
     const weatherMap = await fetchWeatherData(user.domain, startDateStr, endDateStr);
@@ -369,12 +464,10 @@ export async function getOrFetchGoogleData(
     console.warn('[Weather] Fetch fehlgeschlagen (ignoriert):', e);
   }
 
-  // AI Anteil berechnen
   const aiTrafficPercentage = (aiTraffic && currentData.sessions.total > 0)
     ? (aiTraffic.totalSessions / currentData.sessions.total) * 100
     : 0;
 
-  // --- DATEN ZUSAMMENBAUEN ---
   const freshData: ProjectDashboardData = {
     kpis: {
       clicks: {
@@ -421,7 +514,6 @@ export async function getOrFetchGoogleData(
         change: calculateChange(currentData.paidSearch.total, prevData.paidSearch.total)
       }
     },
-
     charts: {
       clicks: currentData.clicks.daily || [],
       impressions: currentData.impressions.daily || [],
@@ -444,11 +536,10 @@ export async function getOrFetchGoogleData(
     bingData,
     weatherData,
     googleAdsData,
-    promptTracking,                                          // ✅ NEU
+    promptTracking,
     apiErrors: Object.keys(apiErrors).length > 0 ? apiErrors : undefined
   };
 
-  // Cache speichern
   try {
     await sql`
       INSERT INTO google_data_cache (user_id, date_range, data, last_fetched)
