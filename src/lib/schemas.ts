@@ -34,8 +34,12 @@ export const UserSchema = z.object({
   project_duration_months: z.number().nullable().optional(),
   createdAt: z.date().nullable().optional(),
   
-  // Einstellungen
+// Einstellungen
   settings_show_landingpages: z.boolean().nullable().optional().default(false),
+
+  // Prompt-Tracking: konfigurierbare Brand-Keywords (Migration 001)
+  // null = Heuristik (Domain-Wurzel) wird verwendet
+  brand_keywords: z.array(z.string()).nullable().optional(),
 });
 
 // Schema für die Projekt-Übersicht (User + KPIs)
