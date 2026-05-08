@@ -5,14 +5,12 @@
 // strukturierte thematische Cluster + Insights zurück.
 //
 // Modell: Gemini 2.5 Flash (günstig, schnell, strukturierter Output)
-// Auth:   getToken aus next-auth/jwt (universell – funktioniert mit
-//         jedem NextAuth v4/v5 Setup, ohne dass wir den auth-Config-
-//         Pfad kennen müssen)
+// Auth:   auth() aus @/lib/auth (NextAuth v5 Standard)
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateObject } from 'ai';
 import { google } from '@ai-sdk/google';
-import { getToken } from 'next-auth/jwt';
+import { auth } from '@/lib/auth';
 
 import {
   PromptClusterRequestSchema,
@@ -57,22 +55,21 @@ Wichtig:
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
 
-  // ── 1. Auth-Check via JWT-Cookie ────────────────────────────────
-  // Funktioniert mit NextAuth v4 UND v5, egal wo deine auth-Config liegt.
-  // NextAuth v5 nutzt AUTH_SECRET, v4 nutzt NEXTAUTH_SECRET – wir checken beide.
+  // ── 1. Auth-Check via NextAuth v5 ──────────────────────────────
+  let session;
   try {
-    const token = await getToken({
-      req,
-      secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
-    });
-
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    session = await auth();
   } catch (e) {
     console.error('[Prompt Cluster] Auth-Fehler:', e);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  if (!session?.user) {
+    console.warn('[Prompt Cluster] Keine Session – Auth fehlgeschlagen');
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  console.log(`[Prompt Cluster] Auth OK für ${session.user.email}`);
 
   // ── 2. ENV-Check ────────────────────────────────────────────────
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
