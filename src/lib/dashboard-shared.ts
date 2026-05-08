@@ -24,7 +24,6 @@ export type ActiveKpi =
   | 'aiTraffic'
   | 'paidSearch';
 
-// Metadaten für KPI Tabs (Farben & Labels)
 export const KPI_TAB_META: Record<string, { label: string; color: string }> = {
   clicks:            { label: 'Klicks',          color: '#3b82f6' },
   impressions:       { label: 'Impressionen',    color: '#8b5cf6' },
@@ -48,7 +47,6 @@ export interface ChartEntry {
   subLabel2?: string;
 }
 
-// Bing Datenstruktur
 export interface BingDataPoint {
   date: string;
   clicks: number;
@@ -115,9 +113,7 @@ export interface GoogleAdsRow {
 }
 
 export interface GoogleAdsData {
-  /** Kampagne + Anzeigengruppe + Suchanfrage (GA4 Call 1) */
   rows: GoogleAdsRow[];
-  /** Landingpages pro Kampagne (GA4 Call 2) */
   landingPageRows: GoogleAdsRow[];
   totals: {
     cost: number;
@@ -127,34 +123,24 @@ export interface GoogleAdsData {
     conversions: number;
     sessions: number;
     engagedSessions: number;
-    /** Nur bei Sheet-Daten vorhanden */
     impressions?: number;
-    /** Nur bei Sheet-Daten vorhanden (Klicks/Impressionen × 100) */
     interactionRate?: number;
   };
-  /** Echte Conversions pro Kampagne (1-Dimension-Call, kein Thresholding) */
   conversionsByCampaign?: Record<string, number>;
-  /** Echte Conversions pro Anzeigengruppe (1-Dimension-Call, kein Thresholding) */
   conversionsByAdGroup?: Record<string, number>;
-  /** Echte Conversions pro Suchanfrage */
   conversionsByQuery?: Record<string, number>;
-  /** Alle Metriken pro Kampagne (1-Dimension-Call, kein Thresholding) */
   metricsByCampaign?: Record<string, { cost: number; clicks: number; sessions: number; engagedSessions: number }>;
-  /** Alle Metriken pro Anzeigengruppe (1-Dimension-Call, kein Thresholding) */
   metricsByAdGroup?: Record<string, { cost: number; clicks: number; sessions: number; engagedSessions: number }>;
-  /** Sheet-basierte Daten (pro Ebene separat) */
   campaignRows?: GoogleAdsRow[];
   adGroupRows?: GoogleAdsRow[];
   adRows?: GoogleAdsRow[];
   searchQueryRows?: GoogleAdsRow[];
-  /** Datenquelle: 'ga4' oder 'sheet' (Google Ads Script Export) */
   source?: 'ga4' | 'sheet';
 }
 
-// ── Prompt Tracking Types (NEU) ───────────────────────────────────
+// ── Prompt Tracking Types ─────────────────────────────────────────
 // Methodik nach Seybold (2026):
 // https://seybold.de/prompt-tracking-in-google-search-console/
-// Lange Suchanfragen (≥10 Wörter) aus der GSC als Proxy für AI-Mode-/LLM-Queries.
 
 export interface PromptQueryData {
   query: string;
@@ -173,23 +159,80 @@ export interface PromptTrackingTrendPoint {
   impressions: number;
 }
 
+/**
+ * Aggregierter Trend des prompt-Anteils über die Zeit
+ * (z.B. wochen- oder monatsweise – je nach Date Range)
+ */
+export interface PromptTrackingShareBucket {
+  /** ISO-Date des Bucket-Starts (z.B. '2026-01' bei monatlicher Aggregation) */
+  bucket: string;
+  /** Lesbares Label (z.B. 'Jan 2026' oder 'KW 03') */
+  label: string;
+  /** Impressionen aller Queries in diesem Bucket */
+  totalImpressions: number;
+  /** Impressionen nur prompt-artiger Queries */
+  promptImpressions: number;
+  /** Anteil in Prozent (0–100) */
+  sharePercent: number;
+}
+
+/** Wortzahl-Distribution für Histogramm */
+export interface PromptWordCountBucket {
+  /** Wortzahl-Range, z.B. '10-12' oder '20+' */
+  range: string;
+  /** Min-Wortzahl der Range (für Sortierung) */
+  minWords: number;
+  /** Anzahl Queries in dieser Range */
+  count: number;
+  /** Impressionen-Summe in dieser Range */
+  impressions: number;
+}
+
+/** Vergleichsdaten Vorperiode */
+export interface PromptTrackingPrevious {
+  totalQueries: number;
+  totalImpressions: number;
+  totalClicks: number;
+  sharePercent: number;
+}
+
+/** Confidence-Bewertung für die UI */
+export type PromptTrackingSignal = 'strong' | 'weak' | 'insufficient';
+
 export interface PromptTrackingResult {
   queries: PromptQueryData[];
+
   totals: {
     totalQueries: number;
     totalClicks: number;
     totalImpressions: number;
     avgCtr: number;
     avgPosition: number;
-    /** Anteil Brand-Queries in % (0–100) */
     brandedShare: number;
-    /** Anteil Non-Brand-Queries in % (0–100) */
     nonBrandedShare: number;
+    /** Anteil der prompt-Impressionen an allen GSC-Impressionen (%) */
+    sharePercent: number;
+    /** Gesamtimpressionen ALLER Queries im Zeitraum (für Anteils-Kalkulation) */
+    totalImpressionsAll: number;
   };
-  /** Tagestrend aller Prompt-Queries aggregiert (für Mini-Sparkline) */
+
+  /** Tagestrend aller Prompt-Queries (existing) */
   trend: PromptTrackingTrendPoint[];
-  /** Welche Mindestwortzahl wurde gefiltert? (für UI-Anzeige) */
+
+  /** Aggregierter Anteils-Trend über Wochen oder Monate */
+  shareTrend: PromptTrackingShareBucket[];
+
+  /** Wortzahl-Verteilung */
+  wordCountDistribution: PromptWordCountBucket[];
+
+  /** Vergleichswerte zur Vorperiode (gleichlanger Zeitraum davor) */
+  previous?: PromptTrackingPrevious;
+
+  /** Mindestwortzahl, die gefiltert wurde */
   minWords: number;
+
+  /** Tatsächlich verwendete Brand-Keywords (für UI-Anzeige) */
+  brandKeywordsUsed?: string[];
 }
 
 // ── Hauptinterface: Dashboard Data ────────────────────────────────
@@ -226,7 +269,6 @@ export interface ProjectDashboardData {
   landingPageQueries?: LandingPageQueries;
   weatherData?: Record<string, DailyWeather>;
   googleAdsData?: GoogleAdsData;
-  /** Prompt-ähnliche, konversationsartige GSC-Queries (≥10 Wörter) */
   promptTracking?: PromptTrackingResult;
   countryData?: ChartEntry[];
   channelData?: ChartEntry[];
@@ -273,4 +315,63 @@ export function hasDashboardData(data: ProjectDashboardData): boolean {
   }
 
   return false;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Confidence-Signal-Berechnung (clientseitig)
+//
+// Schwellen bewusst konservativ – wir wollen nicht zu schnell
+// "starkes Signal" anzeigen, weil das die Glaubwürdigkeit kostet.
+// ──────────────────────────────────────────────────────────────────
+export function calculatePromptTrackingSignal(
+  pt: PromptTrackingResult
+): { signal: PromptTrackingSignal; reasons: string[] } {
+  const reasons: string[] = [];
+  const total = pt.totals.totalQueries;
+  const share = pt.totals.sharePercent;
+
+  // Insufficient data – brauchen Mindestmenge
+  if (total < 30) {
+    reasons.push(`Nur ${total} prompt-artige Queries (< 30) – Aussagekraft begrenzt`);
+    return { signal: 'insufficient', reasons };
+  }
+
+  // Trend-Vergleich (falls Vorperiode verfügbar)
+  let isRising = false;
+  let isSignificantTrend = false;
+  if (pt.previous && pt.previous.sharePercent > 0) {
+    const prevShare = pt.previous.sharePercent;
+    const change = share - prevShare;
+    isRising = change > 0;
+    // Anstieg um relativ ≥ 20%
+    isSignificantTrend = prevShare > 0 && Math.abs(change / prevShare) >= 0.2;
+  }
+
+  // Strong Signal: hoher Anteil + viele absolute + steigender Trend
+  if (share >= 10 && total >= 50 && isRising && isSignificantTrend) {
+    reasons.push(`Hoher Anteil (${share.toFixed(1)} %)`);
+    reasons.push(`Viele Treffer (${total})`);
+    reasons.push(`Anstieg vs. Vorperiode`);
+    return { signal: 'strong', reasons };
+  }
+
+  // Strong Signal alternative: sehr hoher Anteil ohne Trend-Vergleich
+  if (share >= 15 && total >= 80) {
+    reasons.push(`Sehr hoher Anteil (${share.toFixed(1)} %)`);
+    reasons.push(`Viele Treffer (${total})`);
+    return { signal: 'strong', reasons };
+  }
+
+  // Weak Signal
+  if (share < 3) {
+    reasons.push(`Niedriger Anteil (${share.toFixed(1)} %)`);
+  }
+  if (pt.previous && !isRising) {
+    reasons.push(`Anteil sinkt oder stagniert vs. Vorperiode`);
+  }
+  if (reasons.length === 0) {
+    reasons.push(`Erkennbare Tendenz, aber kein klares Signal`);
+  }
+
+  return { signal: 'weak', reasons };
 }
