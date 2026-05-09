@@ -16,7 +16,7 @@ interface ExtendedUser extends User {
   creator_email?: string;
   data_max_enabled?: boolean; 
   settings_show_google_ads?: boolean;
-  settings_show_prompt_tracking?: boolean;
+  settings_show_prompt_tracking: boolean | null;
   google_ads_sheet_id?: string;  // ← NEU
 }
 
