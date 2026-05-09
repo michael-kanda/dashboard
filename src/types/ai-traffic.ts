@@ -42,4 +42,6 @@ export interface AiTrafficCardProps {
   isLoading?: boolean;
   dateRange?: string;
   error?: string;
+  onDetailClick?: () => void;
+  onPromptTrackingClick?: () => void;
 }

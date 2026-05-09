@@ -36,8 +36,9 @@ export default function AiTrafficCard({
   dateRange = '30d',
   className,
   error,
-  onDetailClick 
-}: AiTrafficCardProps & { onDetailClick?: () => void }) {
+  onDetailClick,
+  onPromptTrackingClick,
+}: AiTrafficCardProps) {
 
   const safePercentage = typeof percentage === 'number' && !isNaN(percentage) ? percentage : 0;
   const safeTotalSessions = typeof totalSessions === 'number' && !isNaN(totalSessions) ? totalSessions : 0;
@@ -268,15 +269,25 @@ export default function AiTrafficCard({
           KI-Traffic umfasst Besuche von bekannten KI-Bots wie ChatGPT, Claude, Perplexity und Google Gemini.
         </p>
         
-        {/* Neuer Detail Button (groß, transparent, lila Rahmen) */}
-        <button 
-          type="button"
-          onClick={onDetailClick}
-          className="w-full py-2.5 px-4 bg-transparent border border-purple-200 text-purple-700 text-sm font-medium rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center group cursor-pointer"
-        >
-          Details anzeigen
-          <ChevronRight size={12} className="ml-1 text-purple-400 group-hover:text-purple-600 transition-colors" />
-        </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={onDetailClick}
+            className="w-full py-2.5 px-4 bg-transparent border border-purple-200 text-purple-700 text-sm font-medium rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center group cursor-pointer"
+          >
+            KI-Traffic Analyse
+            <ChevronRight size={12} className="ml-1 text-purple-400 group-hover:text-purple-600 transition-colors" />
+          </button>
+          <button
+            type="button"
+            onClick={onPromptTrackingClick}
+            disabled={!onPromptTrackingClick}
+            className="w-full py-2.5 px-4 bg-transparent border border-sky-200 text-sky-700 text-sm font-medium rounded-lg hover:bg-sky-50 transition-colors flex items-center justify-center group cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+          >
+            Prompt Tracking
+            <ChevronRight size={12} className="ml-1 text-sky-400 group-hover:text-sky-600 transition-colors" />
+          </button>
+        </div>
       </div>
     </div>
   );

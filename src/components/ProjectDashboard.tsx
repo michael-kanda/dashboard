@@ -183,6 +183,16 @@ export default function ProjectDashboard({
     if (onDateRangeChange) onDateRangeChange(range);
   };
 
+  const handlePromptTrackingClick = () => {
+    setIsPromptTrackingVisible(true);
+    window.setTimeout(() => {
+      document.getElementById('section-prompt-tracking')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 0);
+  };
+
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
   const shouldRenderChart = isAdmin || isLandingPagesVisible;
   const hasSemrushConfig = !!semrushTrackingId || !!semrushTrackingId02;
@@ -308,6 +318,7 @@ export default function ProjectDashboard({
               dateRange={dateRange}
               error={safeApiErrors?.ga4}
               onDetailClick={() => setShowAiTrafficDetail(!showAiTrafficDetail)}
+              onPromptTrackingClick={shouldRenderPromptTracking ? handlePromptTrackingClick : undefined}
             />
           </div>
 
