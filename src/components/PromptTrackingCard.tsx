@@ -252,9 +252,9 @@ export default function PromptTrackingCard({
 
       {/* Klassifikations-Row: Brand klein + Geo + Frage-Typ */}
       <ClassificationRow
-        brandShare={t.brandedShare}
+        brandShare={t.brandedImpressionShare ?? t.brandedShare}
         brandKeywordsSource={data.brandKeywordsSource}
-        geoShare={t.geoShare}
+        geoShare={t.geoImpressionShare ?? t.geoShare}
         questionTypeDistribution={t.questionTypeDistribution}
         dominantQuestionType={t.dominantQuestionType}
         totalQueries={t.totalQueries}
@@ -416,7 +416,7 @@ function ClassificationRow({
 
   const sourceTooltip =
     brandKeywordsSource === 'configured'      ? 'Brand-Keywords manuell konfiguriert' :
-    brandKeywordsSource === 'auto-detected'   ? 'Brand-Keywords automatisch erkannt (Domain + Page-Title + GSC Top-Queries)' :
+    brandKeywordsSource === 'auto-detected'   ? 'Brand-Keywords automatisch erkannt (Domain + Page-Title)' :
     brandKeywordsSource === 'domain-heuristic'? 'Heuristik aus Domain-Wurzel. Brand-Keywords im Settings setzen für bessere Erkennung.' :
                                                 'Keine Brand-Erkennung möglich';
 
@@ -426,7 +426,7 @@ function ClassificationRow({
       <div className="rounded-md border border-border bg-background/40 p-3">
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Brand-Anteil</span>
+          <span>Brand-Impressions</span>
           <span title={sourceTooltip} className="cursor-help ml-auto">
             <Info className="w-3 h-3 opacity-60" />
           </span>
@@ -447,9 +447,9 @@ function ClassificationRow({
       <div className="rounded-md border border-border bg-background/40 p-3">
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1">
           <MapPin className="w-3.5 h-3.5" />
-          <span>Geo-Bezug</span>
+          <span>Geo-Impressions</span>
           <span
-            title='Anteil Queries mit Stadt-, Bundesland- oder Lokalbezug (z.B. "wien", "in der nähe", PLZ etc.). Hoch = lokale Relevanz.'
+            title='Anteil der Prompt-Impressions mit Stadt-, Bundesland- oder Lokalbezug (z.B. "wien", "in der nähe", PLZ etc.). Hoch = lokale Relevanz.'
             className="cursor-help ml-auto"
           >
             <Info className="w-3 h-3 opacity-60" />

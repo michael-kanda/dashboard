@@ -40,6 +40,7 @@ export const UserSchema = z.object({
   // Prompt-Tracking: konfigurierbare Brand-Keywords (Migration 001)
   // null = Heuristik (Domain-Wurzel) wird verwendet
   brand_keywords: z.array(z.string()).nullable().optional(),
+  settings_show_prompt_tracking: z.boolean().nullable().optional().default(false),
 });
 
 // Schema für die Projekt-Übersicht (User + KPIs)

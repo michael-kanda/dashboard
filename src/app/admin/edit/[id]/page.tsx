@@ -47,7 +47,9 @@ async function getUserData(id: string): Promise<UserWithAssignments | null> {
         favicon_url,
         project_start_date,
         project_duration_months,
-        project_timeline_active::boolean as project_timeline_active
+        project_timeline_active::boolean as project_timeline_active,
+        settings_show_prompt_tracking::boolean as settings_show_prompt_tracking,
+        brand_keywords
       FROM users
       WHERE id::text = ${id}`;
       

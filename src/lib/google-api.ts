@@ -1872,6 +1872,8 @@ export async function getPromptLikeQueries(
     const queries: PromptQueryData[] = [];
     let brandedCount = 0;
     let geoCount = 0;
+    let brandedImpressions = 0;
+    let geoImpressions = 0;
 
     for (const [query, data] of queryMap.entries()) {
       const ctr = data.impressions > 0 ? data.clicks / data.impressions : 0;
@@ -1882,6 +1884,8 @@ export async function getPromptLikeQueries(
 
       if (branded) brandedCount++;
       if (hasGeo) geoCount++;
+      if (branded) brandedImpressions += data.impressions;
+      if (hasGeo) geoImpressions += data.impressions;
 
       queries.push({
         query,
@@ -1908,6 +1912,8 @@ export async function getPromptLikeQueries(
     const totalQueries = queries.length;
     const brandedShare = totalQueries > 0 ? (brandedCount / totalQueries) * 100 : 0;
     const geoShare = totalQueries > 0 ? (geoCount / totalQueries) * 100 : 0;
+    const brandedImpressionShare = totalImpressions > 0 ? (brandedImpressions / totalImpressions) * 100 : 0;
+    const geoImpressionShare = totalImpressions > 0 ? (geoImpressions / totalImpressions) * 100 : 0;
     const sharePercent = totalImpressionsAll > 0
       ? (totalImpressions / totalImpressionsAll) * 100 : 0;
 
@@ -1954,9 +1960,12 @@ export async function getPromptLikeQueries(
         avgPosition,
         brandedShare,
         nonBrandedShare: 100 - brandedShare,
+        brandedImpressionShare,
+        nonBrandedImpressionShare: 100 - brandedImpressionShare,
         sharePercent,
         totalImpressionsAll,
         geoShare,
+        geoImpressionShare,
         questionTypeDistribution,
         dominantQuestionType: domQType,
       },

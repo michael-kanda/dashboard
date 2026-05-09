@@ -49,6 +49,7 @@ interface ApiPayload {
   project_start_date: string | null; 
   project_duration_months: number | null; 
   project_timeline_active: boolean;
+  settings_show_prompt_tracking: boolean;
   maintenance_mode: boolean; // NEU
   password?: string; 
 }
@@ -70,6 +71,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
     project_start_date: '',    
     project_duration_months: '6', 
     project_timeline_active: false,
+    settings_show_prompt_tracking: false,
     maintenance_mode: false, // NEU
   });
 
@@ -98,6 +100,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         project_start_date: formatDateForInput(user.project_start_date), 
         project_duration_months: String(user.project_duration_months || 6),
         project_timeline_active: Boolean(user.project_timeline_active),
+        settings_show_prompt_tracking: Boolean(user.settings_show_prompt_tracking),
         maintenance_mode: Boolean(user.maintenance_mode), // NEU
       };
       
@@ -152,6 +155,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         project_start_date: formData.project_start_date || null,
         project_duration_months: parseInt(formData.project_duration_months, 10) || 6,
         project_timeline_active: formData.project_timeline_active,
+        settings_show_prompt_tracking: formData.settings_show_prompt_tracking,
         maintenance_mode: formData.maintenance_mode, // NEU
       };
       
@@ -197,6 +201,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         project_start_date: formatDateForInput(updatedUser.project_start_date),
         project_duration_months: String(updatedUser.project_duration_months || 6),
         project_timeline_active: Boolean(updatedUser.project_timeline_active),
+        settings_show_prompt_tracking: Boolean(updatedUser.settings_show_prompt_tracking),
         maintenance_mode: Boolean(updatedUser.maintenance_mode), // NEU
       });
       setPassword('');
@@ -481,6 +486,35 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
                   </div>
                 </div>
               )}
+            </fieldset>
+
+            {/* --- Prompt Tracking --- */}
+            <fieldset className="border-t pt-4 mt-4">
+              <legend className="text-sm font-medium text-gray-700 mb-2">Prompt Tracking</legend>
+
+              <label
+                htmlFor="settings_show_prompt_tracking"
+                className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  id="settings_show_prompt_tracking"
+                  name="settings_show_prompt_tracking"
+                  checked={formData.settings_show_prompt_tracking}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+                  className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                />
+                {formData.settings_show_prompt_tracking ? (
+                  <ToggleOn size={20} className="text-green-500" />
+                ) : (
+                  <ToggleOff size={20} className="text-gray-400" />
+                )}
+                Prompt-Tracking Widget im Kunden-Dashboard anzeigen
+              </label>
+              <p className="mt-1 text-xs text-gray-400">
+                Admins sehen Prompt Tracking weiterhin, wenn GSC-Daten vorhanden sind. Diese Einstellung steuert die Kundenansicht.
+              </p>
             </fieldset>
 
             {/* --- Konfiguration --- */}

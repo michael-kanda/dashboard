@@ -16,6 +16,7 @@ interface ExtendedUser extends User {
   creator_email?: string;
   data_max_enabled?: boolean; 
   settings_show_google_ads?: boolean;
+  settings_show_prompt_tracking?: boolean;
   google_ads_sheet_id?: string;  // ← NEU
 }
 
@@ -39,7 +40,9 @@ async function loadData(projectId: string, dateRange: string) {
         u.project_duration_months,
         u.settings_show_landingpages,
         u.settings_show_google_ads,
+        u.settings_show_prompt_tracking,
         u.data_max_enabled, 
+        u.brand_keywords,
         
         -- E-Mail des Erstellers holen
         creator.email as creator_email,
@@ -143,6 +146,7 @@ export default async function ProjectPage({
         userEmail={supportEmail}
         showLandingPages={projectUser.settings_show_landingpages !== false}
         showGoogleAds={projectUser.settings_show_google_ads === true}
+        showPromptTracking={projectUser.settings_show_prompt_tracking === true}
         dataMaxEnabled={isDataMaxEnabled}
       />
     );

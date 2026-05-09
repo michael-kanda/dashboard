@@ -26,15 +26,38 @@ export const authConfig = {
 
         let user;
         try {
-          // 1. Benutzerdaten holen — alle Felder, die wir in der App brauchen
-          const { rows } = await sql`
-            SELECT
-              id, email, password, role, mandant_id, permissions, domain,
-              gsc_site_url, ga4_property_id, google_ads_sheet_id,
-              brand_keywords
-            FROM users
-            WHERE email = ${normalizedEmail}
-          `;
+          // 1. Benutzerdaten holen — mit Fallback, falls Prompt-Tracking-Spalten
+          // in einer bestehenden DB noch nicht migriert wurden.
+          let rows;
+          try {
+            const result = await sql`
+              SELECT
+                id, email, password, role, mandant_id, permissions, domain,
+                gsc_site_url, ga4_property_id, google_ads_sheet_id,
+                brand_keywords, settings_show_prompt_tracking
+              FROM users
+              WHERE email = ${normalizedEmail}
+            `;
+            rows = result.rows;
+          } catch (dbError) {
+            const message = dbError instanceof Error ? dbError.message : String(dbError);
+            if (!message.includes('brand_keywords') && !message.includes('settings_show_prompt_tracking')) {
+              throw dbError;
+            }
+
+            console.warn('[Authorize] Prompt-Tracking-Spalten fehlen noch, nutze Login-Fallback.');
+            const fallback = await sql`
+              SELECT
+                id, email, password, role, mandant_id, permissions, domain,
+                gsc_site_url, ga4_property_id,
+                NULL::varchar as google_ads_sheet_id,
+                NULL::text[] as brand_keywords,
+                FALSE as settings_show_prompt_tracking
+              FROM users
+              WHERE email = ${normalizedEmail}
+            `;
+            rows = fallback.rows;
+          }
           user = rows[0];
 
           if (!user) {
@@ -106,6 +129,7 @@ export const authConfig = {
           ga4_property_id: user.ga4_property_id || null,
           google_ads_sheet_id: user.google_ads_sheet_id || null,
           brand_keywords: user.brand_keywords || null,
+          settings_show_prompt_tracking: user.settings_show_prompt_tracking ?? false,
         };
       }
     })
@@ -132,6 +156,7 @@ export const authConfig = {
         token.ga4_property_id = user.ga4_property_id;
         token.google_ads_sheet_id = user.google_ads_sheet_id;
         token.brand_keywords = user.brand_keywords;
+        token.settings_show_prompt_tracking = user.settings_show_prompt_tracking;
         token.is_demo = user.email?.includes('demo') || user.domain?.includes('demo-shop');
       }
       return token;
@@ -150,6 +175,7 @@ export const authConfig = {
         session.user.ga4_property_id = token.ga4_property_id as string | null | undefined;
         session.user.google_ads_sheet_id = token.google_ads_sheet_id as string | null | undefined;
         session.user.brand_keywords = token.brand_keywords as string[] | null | undefined;
+        session.user.settings_show_prompt_tracking = token.settings_show_prompt_tracking as boolean | null | undefined;
         session.user.is_demo = token.is_demo as boolean | undefined;
       }
       return session;

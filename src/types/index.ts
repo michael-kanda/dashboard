@@ -30,6 +30,8 @@ export interface User {
   project_duration_months?: number | null;
   project_timeline_active?: boolean | null;
   maintenance_mode?: boolean; 
+  brand_keywords?: string[] | null;
+  settings_show_prompt_tracking?: boolean | null;
 
   // Landingpage Statistiken
   landingpages_count?: number;

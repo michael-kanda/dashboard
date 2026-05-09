@@ -143,6 +143,9 @@ export interface PromptTrackingResult {
     sharePercent: number;
     totalImpressionsAll: number;
     geoShare: number;                                // NEU v4
+    brandedImpressionShare: number;
+    nonBrandedImpressionShare: number;
+    geoImpressionShare: number;
     questionTypeDistribution: QuestionTypeDistribution; // NEU v4
     dominantQuestionType: QuestionType;              // NEU v4
   };

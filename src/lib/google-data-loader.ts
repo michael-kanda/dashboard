@@ -322,9 +322,9 @@ export async function getOrFetchGoogleData(
         console.log(
           `[Prompt Tracking] ✅ ${promptTracking.totals.totalQueries} Queries ` +
           `(${promptTracking.totals.sharePercent.toFixed(1)} % Anteil, ` +
-          `${promptTracking.totals.brandedShare.toFixed(1)} % Brand` +
+          `${promptTracking.totals.brandedImpressionShare.toFixed(1)} % Brand-Impressions` +
           `${autoDetected ? ' – auto-detected' : ''}, ` +
-          `Geo ${promptTracking.totals.geoShare.toFixed(1)} %, ` +
+          `Geo ${promptTracking.totals.geoImpressionShare.toFixed(1)} % Impressions, ` +
           `Top-Frage: ${promptTracking.totals.dominantQuestionType})`
         );
       } catch (e) {

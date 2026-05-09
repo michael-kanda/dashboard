@@ -242,7 +242,8 @@ export async function POST(req: NextRequest) {
     const { 
       email, password, role, mandant_id, permissions, domain, gsc_site_url, ga4_property_id, 
       semrush_project_id, semrush_tracking_id, semrush_tracking_id_02, favicon_url,
-      project_start_date, project_duration_months, project_timeline_active
+      project_start_date, project_duration_months, project_timeline_active,
+      settings_show_prompt_tracking
     } = body;
 
     if (!email || !password || !role) {
@@ -276,6 +277,9 @@ export async function POST(req: NextRequest) {
     const duration = project_duration_months ? parseInt(String(project_duration_months), 10) : 6;
     const startDate = project_start_date ? new Date(project_start_date).toISOString() : new Date().toISOString();
     const timelineActive = typeof project_timeline_active === 'boolean' ? project_timeline_active : false;
+    const promptTrackingVisible = typeof settings_show_prompt_tracking === 'boolean'
+      ? settings_show_prompt_tracking
+      : false;
 
     const { rows: newUsers } = await sql<User>`
       INSERT INTO users (
@@ -284,6 +288,7 @@ export async function POST(req: NextRequest) {
         semrush_project_id, semrush_tracking_id, semrush_tracking_id_02,
         favicon_url,
         project_start_date, project_duration_months, project_timeline_active,
+        settings_show_prompt_tracking,
         "createdByAdminId"
       )
       VALUES (
@@ -294,6 +299,7 @@ export async function POST(req: NextRequest) {
         ${semrush_project_id || null}, ${semrush_tracking_id || null}, ${semrush_tracking_id_02 || null},
         ${favicon_url || null},
         ${startDate}, ${duration}, ${timelineActive},
+        ${promptTrackingVisible},
         ${createdByAdminId}
       )
       RETURNING id, email, role, domain, mandant_id, permissions, favicon_url`; 

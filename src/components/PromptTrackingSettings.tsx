@@ -4,9 +4,9 @@
 // + manuelle Pflege.
 //
 // Erwartete API-Routen:
-//   POST /api/user/brand-keywords                  → manuelles Save
-//   GET  /api/user/auto-detect-brand-keywords      → Vorschau ohne speichern
-//   POST /api/user/auto-detect-brand-keywords      → Detection + Save + Cache-Invalidate
+//   POST /api/users/brand-keywords                  → manuelles Save
+//   GET  /api/users/auto-detect-brand-keywords      → Vorschau ohne speichern
+//   POST /api/users/auto-detect-brand-keywords      → Detection + Save + Cache-Invalidate
 //
 // Wenn der eingeloggte User Admin/Superadmin ist, kann er per `targetUserId`
 // auch für andere User detecten (Param wird im URL/Body übergeben — siehe API-Route).
@@ -32,9 +32,9 @@ interface DetectionPreview {
 interface PromptTrackingSettingsProps {
   /** Aktuell gespeicherte Brand-Keywords (oder null = Heuristik) */
   initialKeywords?: string[] | null;
-  /** API-Endpoint für manuelles Save (default: /api/user/brand-keywords) */
+  /** API-Endpoint für manuelles Save (default: /api/users/brand-keywords) */
   apiEndpoint?: string;
-  /** API-Endpoint für Auto-Detect (default: /api/user/auto-detect-brand-keywords) */
+  /** API-Endpoint für Auto-Detect (default: /api/users/auto-detect-brand-keywords) */
   autoDetectEndpoint?: string;
   /** Optional: für Admins, um für anderen User zu detecten */
   targetUserId?: string;
@@ -44,8 +44,8 @@ interface PromptTrackingSettingsProps {
 
 export default function PromptTrackingSettings({
   initialKeywords,
-  apiEndpoint = '/api/user/brand-keywords',
-  autoDetectEndpoint = '/api/user/auto-detect-brand-keywords',
+  apiEndpoint = '/api/users/brand-keywords',
+  autoDetectEndpoint = '/api/users/auto-detect-brand-keywords',
   targetUserId,
   domain,
 }: PromptTrackingSettingsProps) {

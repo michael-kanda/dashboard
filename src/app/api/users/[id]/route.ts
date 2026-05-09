@@ -53,7 +53,9 @@ export async function GET(
         project_start_date,      
         project_duration_months,
         project_timeline_active::boolean as project_timeline_active,
-        maintenance_mode::boolean as maintenance_mode
+        maintenance_mode::boolean as maintenance_mode,
+        brand_keywords,
+        settings_show_prompt_tracking::boolean as settings_show_prompt_tracking
       FROM users
       WHERE id = ${targetUserId}::uuid;
     `;
@@ -125,7 +127,8 @@ export async function PUT(
         project_start_date,
         project_duration_months,
         project_timeline_active,
-        maintenance_mode // NEU
+        maintenance_mode, // NEU
+        settings_show_prompt_tracking
     } = body;
 
     if (!email) {
@@ -133,7 +136,9 @@ export async function PUT(
     }
 
     const { rows: existingUsers } = await sql`
-      SELECT role, mandant_id FROM users WHERE id = ${targetUserId}::uuid
+      SELECT role, mandant_id, settings_show_prompt_tracking
+      FROM users
+      WHERE id = ${targetUserId}::uuid
     `;
     if (existingUsers.length === 0) {
       return NextResponse.json({ message: "Benutzer nicht gefunden" }, { status: 404 });
@@ -197,6 +202,9 @@ export async function PUT(
     const timelineActive = typeof project_timeline_active === 'boolean' ? project_timeline_active : false;
     // NEU: maintenance_mode
     const maintenanceActive = typeof maintenance_mode === 'boolean' ? maintenance_mode : false;
+    const promptTrackingVisible = typeof settings_show_prompt_tracking === 'boolean'
+      ? settings_show_prompt_tracking
+      : targetUser.settings_show_prompt_tracking === true;
 
     const { rows } = password && password.trim().length > 0
       ? // Query MIT Passwort
@@ -218,6 +226,7 @@ export async function PUT(
             project_duration_months = ${duration},
             project_timeline_active = ${timelineActive},
             maintenance_mode = ${maintenanceActive},
+            settings_show_prompt_tracking = ${promptTrackingVisible},
             password = ${await bcrypt.hash(password, 10)}
           WHERE id = ${targetUserId}::uuid
           RETURNING
@@ -227,7 +236,7 @@ export async function PUT(
             google_ads_sheet_id,
             mandant_id, permissions, favicon_url,
             project_start_date, project_duration_months, project_timeline_active,
-            maintenance_mode;
+            maintenance_mode, brand_keywords, settings_show_prompt_tracking;
         `
       : // Query OHNE Passwort
         await sql<User>`
@@ -247,7 +256,8 @@ export async function PUT(
             project_start_date = ${startDate},
             project_duration_months = ${duration},
             project_timeline_active = ${timelineActive},
-            maintenance_mode = ${maintenanceActive}
+            maintenance_mode = ${maintenanceActive},
+            settings_show_prompt_tracking = ${promptTrackingVisible}
           WHERE id = ${targetUserId}::uuid
           RETURNING
             id::text as id, email, role, domain, 
@@ -256,7 +266,7 @@ export async function PUT(
             google_ads_sheet_id,
             mandant_id, permissions, favicon_url,
             project_start_date, project_duration_months, project_timeline_active,
-            maintenance_mode;
+            maintenance_mode, brand_keywords, settings_show_prompt_tracking;
         `;
 
     if (rows.length === 0) {

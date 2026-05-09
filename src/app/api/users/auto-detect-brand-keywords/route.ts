@@ -1,4 +1,4 @@
-// src/app/api/user/auto-detect-brand-keywords/route.ts
+// src/app/api/users/auto-detect-brand-keywords/route.ts
 //
 // GET: Vorschau ohne zu speichern.
 // POST: Detection + speichern + Cache invalidieren.
@@ -95,9 +95,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const keywordsToSave = result.keywords.length > 0 ? result.keywords : null;
     await sql`
       UPDATE users
-      SET brand_keywords = ${result.keywords as any}
+      SET brand_keywords = ${keywordsToSave as any}
       WHERE id = ${ctx.userId}::uuid
     `;
     await sql`DELETE FROM google_data_cache WHERE user_id = ${ctx.userId}::uuid`;

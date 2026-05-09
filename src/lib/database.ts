@@ -28,7 +28,10 @@ export async function createTables() {
         semrush_project_id VARCHAR(255),
         semrush_tracking_id VARCHAR(255),       -- KORREKTUR: Für Kampagne 1
         semrush_tracking_id_02 VARCHAR(255),    -- KORREKTUR: Für Kampagne 2
+        google_ads_sheet_id VARCHAR(255),
         favicon_url TEXT NULL,
+        brand_keywords TEXT[] DEFAULT NULL,
+        settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
         
         "createdByAdminId" UUID REFERENCES users(id),
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -36,6 +39,14 @@ export async function createTables() {
       );
     `;
     console.log('Tabelle "users" erfolgreich geprüft/erstellt.');
+
+    await sql`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS google_ads_sheet_id VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS brand_keywords TEXT[] DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE;
+    `;
+    console.log('Prompt-Tracking-Spalten in "users" erfolgreich geprüft/erstellt.');
 
     // 2. Landingpages-Tabelle
     // Speichert die zu überwachenden URLs und deren aktuelle GSC-Daten
@@ -131,6 +142,19 @@ export async function createTables() {
     `;
     console.log('Tabelle "google_data_cache" erfolgreich geprüft/erstellt.');
 
+    await sql`
+      CREATE TABLE IF NOT EXISTS prompt_cluster_history (
+        id SERIAL PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        date_range VARCHAR(20) NOT NULL,
+        queries_hash VARCHAR(64) NOT NULL,
+        result JSONB NOT NULL,
+        query_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+    console.log('Tabelle "prompt_cluster_history" erfolgreich geprüft/erstellt.');
+
     // 8. Mandanten/Label Logo-Tabelle
     // Speichert Custom Branding Logos für White-Labeling
     await sql`
@@ -157,6 +181,8 @@ export async function createTables() {
     await sql`CREATE INDEX IF NOT EXISTS idx_landingpages_user_id ON landingpages(user_id);`;
     await sql`CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);`;
     await sql`CREATE INDEX IF NOT EXISTS idx_google_data_cache_user_id ON google_data_cache(user_id);`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_prompt_cluster_history_user_created ON prompt_cluster_history(user_id, created_at DESC);`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_prompt_cluster_history_hash ON prompt_cluster_history(user_id, queries_hash, created_at DESC);`;
 
     console.log('Alle Indizes geprüft/erstellt.');
 
