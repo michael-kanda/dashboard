@@ -448,6 +448,147 @@ html.dark .dashboard-gradient {
   box-shadow: 0 15px 35px -5px rgba(79, 70, 229, 0.1);
 }
 
+/* Prompt Tracking: explicit contrast tokens for light mode */
+.prompt-tracking-card .prompt-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.prompt-tracking-card .prompt-pill-purple {
+  background: #f3e8ff;
+  border-color: #a855f7;
+  color: #6b21a8;
+}
+
+.prompt-tracking-card .prompt-pill-slate {
+  background: #e2e8f0;
+  border-color: #64748b;
+  color: #334155;
+}
+
+.prompt-tracking-card .prompt-pill-blue {
+  background: #dbeafe;
+  border-color: #60a5fa;
+  color: #1d4ed8;
+}
+
+.prompt-tracking-card .prompt-signal {
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid;
+  padding: 0.75rem 0.875rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.prompt-tracking-card .prompt-signal-strong {
+  background: #ecfdf5;
+  border-color: #10b981;
+  color: #065f46;
+}
+
+.prompt-tracking-card .prompt-signal-weak {
+  background: #fff7ed;
+  border-color: #f97316;
+  color: #9a3412;
+}
+
+.prompt-tracking-card .prompt-signal-insufficient {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.prompt-tracking-card .prompt-table-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.prompt-tracking-card .prompt-table-pill-count {
+  min-width: 28px;
+  background: #cbd5e1;
+  border-color: #94a3b8;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+
+.prompt-tracking-card .prompt-table-pill-brand {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.prompt-tracking-card .prompt-table-pill-nonbrand {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #334155;
+}
+
+html.dark .prompt-tracking-card .prompt-pill-purple {
+  background: rgba(88, 28, 135, 0.45);
+  border-color: rgba(168, 85, 247, 0.65);
+  color: #d8b4fe;
+}
+
+html.dark .prompt-tracking-card .prompt-pill-slate {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: #64748b;
+  color: #cbd5e1;
+}
+
+html.dark .prompt-tracking-card .prompt-pill-blue {
+  background: rgba(30, 58, 138, 0.45);
+  border-color: rgba(96, 165, 250, 0.65);
+  color: #93c5fd;
+}
+
+html.dark .prompt-tracking-card .prompt-signal-strong {
+  background: rgba(6, 78, 59, 0.32);
+  border-color: #047857;
+  color: #6ee7b7;
+}
+
+html.dark .prompt-tracking-card .prompt-signal-weak {
+  background: rgba(120, 53, 15, 0.35);
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+
+html.dark .prompt-tracking-card .prompt-signal-insufficient {
+  background: rgba(30, 41, 59, 0.55);
+  border-color: #475569;
+  color: #cbd5e1;
+}
+
+html.dark .prompt-tracking-card .prompt-table-pill-count,
+html.dark .prompt-tracking-card .prompt-table-pill-nonbrand {
+  background: #334155;
+  border-color: #64748b;
+  color: #e2e8f0;
+}
+
+html.dark .prompt-tracking-card .prompt-table-pill-brand {
+  background: rgba(30, 58, 138, 0.45);
+  border-color: #3b82f6;
+  color: #bfdbfe;
+}
+
 /* 6. Sidebar Background */
 .sidebar-bg {
   background-color: var(--dp-surface-sidebar);

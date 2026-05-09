@@ -87,7 +87,7 @@ export default function PromptTrackingCard({
 
   if (!data || data.totals.totalQueries === 0) {
     return (
-      <div className="card-glass p-6">
+      <div className="card-glass prompt-tracking-card p-6">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="w-5 h-5 text-purple-500" />
           <h3 className="text-lg font-semibold">Prompt Tracking (GSC)</h3>
@@ -167,22 +167,22 @@ export default function PromptTrackingCard({
   };
 
   return (
-    <div className="card-glass p-6">
+    <div className="card-glass prompt-tracking-card p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <Sparkles className="w-5 h-5 text-purple-500" />
             <h3 className="text-lg font-semibold">Prompt Tracking</h3>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full border bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800">
+            <span className="prompt-pill prompt-pill-purple">
               GSC Proxy
             </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/70 dark:text-slate-300 dark:border-slate-700">
+            <span className="prompt-pill prompt-pill-slate">
               ≥{data.minWords} Wörter
             </span>
             {data.brandKeywordsUsed && data.brandKeywordsUsed.length > 0 && (
               <span
-                className="text-xs font-semibold px-2 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800"
+                className="prompt-pill prompt-pill-blue"
                 title={`Brand-Keywords: ${data.brandKeywordsUsed.join(', ')}`}
               >
                 {data.brandKeywordsUsed.length} Brand-Keywords
@@ -497,13 +497,13 @@ function ClassificationRow({
 
 function SignalBadge({ signal, reasons }: { signal: 'strong' | 'weak' | 'insufficient'; reasons: string[] }) {
   const cfg = {
-    strong:       { label: 'Starkes Signal',  color: 'text-emerald-800 bg-emerald-50 border-emerald-300 dark:text-green-400 dark:bg-green-900/20 dark:border-green-700', icon: '🟢' },
-    weak:         { label: 'Schwaches Signal', color: 'text-amber-900 bg-amber-50 border-amber-300 dark:text-amber-400 dark:bg-amber-900/20 dark:border-amber-700', icon: '🟡' },
-    insufficient: { label: 'Zu wenig Daten',   color: 'text-slate-700 bg-slate-50 border-slate-300 dark:text-gray-400 dark:bg-gray-900/30 dark:border-gray-700', icon: '⚪' },
+    strong:       { label: 'Starkes Signal', icon: '🟢' },
+    weak:         { label: 'Schwaches Signal', icon: '🟡' },
+    insufficient: { label: 'Zu wenig Daten', icon: '⚪' },
   }[signal];
 
   return (
-    <div className={`mb-4 rounded-md border px-3 py-2 shadow-sm ${cfg.color}`}>
+    <div className={`prompt-signal prompt-signal-${signal}`}>
       <div className="flex items-start gap-2 text-sm">
         <span className="shrink-0 leading-5">{cfg.icon}</span>
         <div className="flex-1">
@@ -773,12 +773,12 @@ function PromptRow({ q }: { q: PromptQueryData }) {
         </div>
       </td>
       <td className="px-2 py-2 text-center">
-        <span className="inline-block min-w-[28px] text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 tabular-nums dark:bg-slate-700 dark:text-slate-200">{q.wordCount}</span>
+        <span className="prompt-table-pill prompt-table-pill-count">{q.wordCount}</span>
       </td>
       <td className="px-2 py-2 text-center">
         {q.isBranded
-          ? <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">Brand</span>
-          : <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 border border-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600">Non-Brand</span>}
+          ? <span className="prompt-table-pill prompt-table-pill-brand">Brand</span>
+          : <span className="prompt-table-pill prompt-table-pill-nonbrand">Non-Brand</span>}
       </td>
       <td className="px-2 py-2 text-center">
         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border whitespace-nowrap ${qtMeta.color}`} title={qtMeta.label}>
