@@ -126,6 +126,7 @@ export default function ProjectDashboard({
   const [isPromptTrackingVisible, setIsPromptTrackingVisible] = useState(showPromptTracking);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showAiTrafficDetail, setShowAiTrafficDetail] = useState(false);
+  const [showPromptTrackingDetail, setShowPromptTrackingDetail] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -185,12 +186,18 @@ export default function ProjectDashboard({
 
   const handlePromptTrackingClick = () => {
     setIsPromptTrackingVisible(true);
-    window.setTimeout(() => {
-      document.getElementById('section-prompt-tracking')?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    }, 0);
+    setShowPromptTrackingDetail((current) => {
+      const next = !current;
+      if (next) {
+        window.setTimeout(() => {
+          document.getElementById('section-prompt-tracking')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        }, 0);
+      }
+      return next;
+    });
   };
 
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
@@ -345,9 +352,9 @@ export default function ProjectDashboard({
           </div>
         )}
 
-        {/* PROMPT TRACKING SEKTION (GSC Proxy für AI-Mode-Queries) */}
+        {/* PROMPT TRACKING Detail-Ansicht (ausklappbar) */}
         <Trace at="PromptTrackingCard?" />
-        {shouldRenderPromptTracking && (
+        {showPromptTrackingDetail && shouldRenderPromptTracking && (
           <div
             id="section-prompt-tracking"
             className={`mt-8 scroll-mt-20 transition-all duration-300 print-prompt-tracking ${
