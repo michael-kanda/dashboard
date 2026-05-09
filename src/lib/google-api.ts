@@ -1754,6 +1754,8 @@ import {
 
 export type { PromptTrackingResult, PromptQueryData };
 
+export const DEFAULT_PROMPT_TRACKING_MIN_WORDS = 6;
+
 // ─── Helpers ────────────────────────────────────────────────────────
 
 function countWords(s: string): number {
@@ -1762,10 +1764,10 @@ function countWords(s: string): number {
 
 function buildWordCountDistribution(queries: PromptQueryData[]): PromptWordCountBucket[] {
   const ranges = [
-    { range: '10–11', minWords: 10, max: 11 },
-    { range: '12–14', minWords: 12, max: 14 },
-    { range: '15–19', minWords: 15, max: 19 },
-    { range: '20+',   minWords: 20, max: Infinity },
+    { range: '6–7',   minWords: 6, max: 7 },
+    { range: '8–9',   minWords: 8, max: 9 },
+    { range: '10–14', minWords: 10, max: 14 },
+    { range: '15+',   minWords: 15, max: Infinity },
   ];
   return ranges.map(({ range, minWords, max }) => {
     const matching = queries.filter(q => q.wordCount >= minWords && q.wordCount <= max);
@@ -1809,7 +1811,7 @@ export async function getPromptLikeQueries(
   domain?: string,
   brandKeywords?: string[] | null,
   totalImpressionsAll: number = 0,
-  minWords: number = 10
+  minWords: number = DEFAULT_PROMPT_TRACKING_MIN_WORDS
 ): Promise<PromptTrackingResult> {
   const auth = createAuth();
   const searchconsole = google.searchconsole({ version: 'v1', auth });

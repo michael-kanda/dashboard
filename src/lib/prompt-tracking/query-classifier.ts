@@ -36,15 +36,33 @@ function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function compactForBrandMatch(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
 export function isBrandedQuery(query: string, domain?: string, keywords?: string[] | null): boolean {
   const q = query.toLowerCase();
+  const compactQuery = compactForBrandMatch(q);
 
   if (keywords && keywords.length > 0) {
     return keywords.some((kw) => {
       const k = kw.trim().toLowerCase();
       if (k.length < 2) return false;
       const re = new RegExp(`\\b${escapeRegex(k)}\\b`, 'i');
-      return re.test(q);
+      if (re.test(q)) return true;
+
+      const compactKeyword = compactForBrandMatch(k);
+      if (compactKeyword.length >= 4 && compactQuery.includes(compactKeyword)) return true;
+
+      return false;
     });
   }
 
@@ -68,7 +86,10 @@ export function isBrandedQuery(query: string, domain?: string, keywords?: string
   return Array.from(tokens).some((token) => {
     if (token.length < 3) return false;
     const re = new RegExp(`\\b${escapeRegex(token)}\\b`, 'i');
-    return re.test(q);
+    if (re.test(q)) return true;
+
+    const compactToken = compactForBrandMatch(token);
+    return compactToken.length >= 4 && compactQuery.includes(compactToken);
   });
 }
 

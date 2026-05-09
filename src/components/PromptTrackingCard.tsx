@@ -39,7 +39,7 @@ export default function PromptTrackingCard({
 }: PromptTrackingCardProps) {
   const [search, setSearch] = useState('');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
-  const [sortMode, setSortMode] = useState<SortMode>('impressions');
+  const [sortMode, setSortMode] = useState<SortMode>('clicks');
   const [questionTypeFilter, setQuestionTypeFilter] = useState<QuestionType | 'all'>('all');
   const [limit, setLimit] = useState(25);
 
@@ -96,7 +96,7 @@ export default function PromptTrackingCard({
           </span>
         </div>
         <p className="text-muted text-sm">
-          Keine prompt-ähnlichen Suchanfragen (≥10 Wörter) im gewählten Zeitraum gefunden.
+          Keine prompt-ähnlichen Suchanfragen im gewählten Zeitraum gefunden.
         </p>
       </div>
     );
@@ -229,7 +229,7 @@ export default function PromptTrackingCard({
         />
         <KpiTile
           label="Prompts gefunden"
-          tooltip="Anzahl unterschiedlicher Suchanfragen mit ≥10 Wörtern."
+          tooltip={`Anzahl unterschiedlicher Suchanfragen mit ≥${data.minWords} Wörtern.`}
           value={t.totalQueries.toLocaleString('de-DE')}
           delta={prev ? calcChange(t.totalQueries, prev.totalQueries) : undefined}
           deltaSuffix=" %"
@@ -382,7 +382,7 @@ export default function PromptTrackingCard({
       )}
 
       <p className="text-xs text-muted mt-4 leading-relaxed">
-        💡 <strong>Hinweis:</strong> Lange Queries deuten auf konversationsartige Suchen hin und sind ein
+        💡 <strong>Hinweis:</strong> Längere Queries deuten auf konversationsartige Suchen hin und sind ein
         möglicher Indikator für AI-Mode-/LLM-Anfragen. Methodik nach{' '}
         <a
           href="https://seybold.de/prompt-tracking-in-google-search-console/"

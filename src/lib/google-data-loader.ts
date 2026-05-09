@@ -14,6 +14,7 @@ import {
   getGoogleAdsReport,
   getGoogleAdsFromSheet,
   getPromptLikeQueries,
+  DEFAULT_PROMPT_TRACKING_MIN_WORDS,
   type AiTrafficData,
   type GoogleAdsData,
 } from '@/lib/google-api';
@@ -203,9 +204,17 @@ export async function getOrFetchGoogleData(
         const cacheEntry = rows[0];
         const lastFetched = new Date(cacheEntry.last_fetched).getTime();
         const now = Date.now();
-        if ((now - lastFetched) / (1000 * 60 * 60) < getCacheDuration(dateRange)) {
+        const cachedPromptMinWords = cacheEntry.data?.promptTracking?.minWords;
+        const promptCacheIsCurrent =
+          !cacheEntry.data?.promptTracking ||
+          cachedPromptMinWords === DEFAULT_PROMPT_TRACKING_MIN_WORDS;
+
+        if ((now - lastFetched) / (1000 * 60 * 60) < getCacheDuration(dateRange) && promptCacheIsCurrent) {
           console.log(`[Google Cache] ✅ HIT für ${user.email}`);
           return { ...cacheEntry.data, fromCache: true };
+        }
+        if (!promptCacheIsCurrent) {
+          console.log(`[Google Cache] 🔄 MISS wegen Prompt-Tracking-Schwelle (${cachedPromptMinWords} → ${DEFAULT_PROMPT_TRACKING_MIN_WORDS})`);
         }
       }
     } catch (error) {
@@ -283,7 +292,7 @@ export async function getOrFetchGoogleData(
           user.gsc_site_url, startDateStr, endDateStr,
           user.domain ?? undefined,
           brandKeywords,
-          totalImpressionsAll, 10
+          totalImpressionsAll, DEFAULT_PROMPT_TRACKING_MIN_WORDS
         );
 
         try {
@@ -291,7 +300,7 @@ export async function getOrFetchGoogleData(
             user.gsc_site_url, prevStartStr, prevEndStr,
             user.domain ?? undefined,
             brandKeywords,
-            totalImpressionsAllPrev, 10
+            totalImpressionsAllPrev, DEFAULT_PROMPT_TRACKING_MIN_WORDS
           );
           const previous: PromptTrackingPrevious = {
             totalQueries: prevPt.totals.totalQueries,
