@@ -111,7 +111,7 @@ export default function TopQueriesList({
     
     if (rounded === 1) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-50 text-yellow-700 border border-yellow-200 shadow-sm">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700/50 shadow-sm">
           <Trophy size={10} className="text-yellow-600" />
           {position.toFixed(1)}
         </span>
@@ -119,7 +119,7 @@ export default function TopQueriesList({
     }
     if (rounded <= 3) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-surface-tertiary text-body border border-theme-border-default shadow-sm">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-surface-tertiary text-body border border-border shadow-sm">
           <Award size={10} className="text-muted" />
           {position.toFixed(1)}
         </span>
@@ -127,7 +127,7 @@ export default function TopQueriesList({
     }
     if (rounded <= 10) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-700/50">
           <CheckCircleFill size={10} className="text-emerald-500 opacity-60" />
           {position.toFixed(1)}
         </span>
@@ -143,7 +143,7 @@ export default function TopQueriesList({
 
   if (isLoading) {
     return (
-      <div className={cn("bg-surface rounded-lg shadow-sm border border-theme-border-default card-glass", className)}>
+      <div className={cn("bg-surface rounded-lg shadow-sm border border-border card-glass", className)}>
         <div className="p-4 bg-[#188BDB] rounded-t-lg">
           <div className="flex items-center gap-2 text-white">
             <ClockHistory size={20} />
@@ -159,7 +159,7 @@ export default function TopQueriesList({
 
   if (error) {
     return (
-      <div className={cn("bg-surface rounded-lg shadow-sm border border-theme-border-default card-glass", className)}>
+      <div className={cn("bg-surface rounded-lg shadow-sm border border-border card-glass", className)}>
         <div className="p-4 bg-[#188BDB] rounded-t-lg">
           <div className="flex items-center gap-2 text-white">
             <ClockHistory size={20} />
@@ -176,7 +176,7 @@ export default function TopQueriesList({
   }
 
   return (
-    <div className={cn("bg-surface rounded-lg shadow-sm border border-theme-border-default flex flex-col card-glass", className)}>
+    <div className={cn("bg-surface rounded-lg shadow-sm border border-border flex flex-col card-glass", className)}>
       
       {/* Header */}
       <div className="p-4 bg-[#188BDB] rounded-t-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -241,9 +241,9 @@ export default function TopQueriesList({
                   return (
                     <tr 
                       key={`${query.query}-${index}`}
-                      className={cn("border-b border-theme-border-default hover:bg-blue-50 transition-colors", index % 2 === 0 ? "bg-surface" : "bg-surface-secondary")}
+                      className={cn("border-b border-border hover:bg-surface-tertiary transition-colors", index % 2 === 0 ? "bg-surface" : "bg-surface-secondary")}
                     >
-                      <td className="px-4 py-3 text-sm text-heading border-r border-theme-border-default">
+                      <td className="px-4 py-3 text-sm text-heading border-r border-border">
                         <div className="break-words max-w-md">
                           {/* ✅ Suchanfrage */}
                           <span className="font-medium">{query.query}</span>
@@ -252,7 +252,7 @@ export default function TopQueriesList({
                           {formattedPath && (
                             <div className="mt-1">
                               <span 
-                                className="inline-flex items-center text-xs text-rose-400 font-mono px-1.5 py-0.5 bg-surface-secondary rounded border border-theme-border-default/50"
+                                className="inline-flex items-center text-xs text-rose-400 font-mono px-1.5 py-0.5 bg-surface-secondary rounded border border-border/50"
                                 title={query.url}
                               >
                                 {formattedPath}
@@ -261,9 +261,9 @@ export default function TopQueriesList({
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-heading text-right border-r border-theme-border-default whitespace-nowrap">{query.clicks.toLocaleString('de-DE')}</td>
-                      <td className="px-4 py-3 text-sm text-heading text-right border-r border-theme-border-default whitespace-nowrap">{query.impressions.toLocaleString('de-DE')}</td>
-                      <td className="px-4 py-3 text-sm text-heading text-right border-r border-theme-border-default whitespace-nowrap">{(query.ctr * 100).toFixed(1)}%</td>
+                      <td className="px-4 py-3 text-sm text-heading text-right border-r border-border whitespace-nowrap">{query.clicks.toLocaleString('de-DE')}</td>
+                      <td className="px-4 py-3 text-sm text-heading text-right border-r border-border whitespace-nowrap">{query.impressions.toLocaleString('de-DE')}</td>
+                      <td className="px-4 py-3 text-sm text-heading text-right border-r border-border whitespace-nowrap">{(query.ctr * 100).toFixed(1)}%</td>
                       
                       <td className="px-4 py-3 text-right whitespace-nowrap">
                         <div className="flex justify-end">
@@ -280,7 +280,7 @@ export default function TopQueriesList({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 bg-surface-secondary border-t border-theme-border-default rounded-b-lg">
+      <div className="px-4 py-3 bg-surface-secondary border-t border-border rounded-b-lg">
         <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-secondary">
           <div className="flex items-center gap-4">
             <span>Klicks: <span className="font-semibold text-heading">{displayedQueries.reduce((sum, q) => sum + q.clicks, 0).toLocaleString('de-DE')}</span></span>
