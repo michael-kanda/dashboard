@@ -6,9 +6,10 @@ import {
   Sparkles, Download, Search, ExternalLink, Wand2, Loader2, X,
   ChevronDown, ChevronUp, Lightbulb, AlertCircle, Info, TrendingUp,
   TrendingDown, Minus, FileText, MapPin, MessageCircleQuestion,
-  Copy, ClipboardCheck, Target, RefreshCw,
+  Copy, ClipboardCheck, Target,
 } from 'lucide-react';
 import type {
+  ProjectDashboardData,
   PromptTrackingResult,
   PromptQueryData,
   PromptTrackingShareBucket,
@@ -25,6 +26,7 @@ import {
 
 interface PromptTrackingCardProps {
   data?: PromptTrackingResult;
+  dashboardData?: ProjectDashboardData;
   domain?: string;
   dateRange?: string;
   isAdmin?: boolean;
@@ -32,13 +34,12 @@ interface PromptTrackingCardProps {
 
 type FilterMode = 'all' | 'branded' | 'nonBranded' | 'geo' | 'noGeo';
 type SortMode = 'impressions' | 'clicks' | 'ctr' | 'position' | 'wordCount';
-type ResearchIntent = 'all' | 'recommendation' | 'comparison' | 'commercial' | 'informational' | 'local' | 'brand';
 
 const MAX_QUERIES_FOR_AI = 200;
 const MIN_QUERIES_FOR_AI = 5;
 
 export default function PromptTrackingCard({
-  data, domain, dateRange, isAdmin = false,
+  data, dashboardData, domain, dateRange, isAdmin = false,
 }: PromptTrackingCardProps) {
   const [search, setSearch] = useState('');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
@@ -102,7 +103,7 @@ export default function PromptTrackingCard({
           Keine prompt-ähnlichen Suchanfragen im gewählten Zeitraum gefunden.
         </p>
         {isAdmin && (
-          <PromptResearchTool data={data} domain={domain} />
+          <PromptResearchTool data={data} dashboardData={dashboardData} domain={domain} />
         )}
       </div>
     );
@@ -298,7 +299,7 @@ export default function PromptTrackingCard({
       )}
 
       {isAdmin && (
-        <PromptResearchTool data={data} domain={domain} />
+        <PromptResearchTool data={data} dashboardData={dashboardData} domain={domain} />
       )}
 
       {/* Filter */}
@@ -409,51 +410,53 @@ export default function PromptTrackingCard({
 // Admin-only Prompt Research Tool
 // ════════════════════════════════════════════════════════════════════
 
-const RESEARCH_INTENTS: Array<{ value: ResearchIntent; label: string }> = [
-  { value: 'all', label: 'Alle Intents' },
-  { value: 'recommendation', label: 'Empfehlung' },
-  { value: 'comparison', label: 'Vergleich' },
-  { value: 'commercial', label: 'Kosten/Kauf' },
-  { value: 'informational', label: 'Erklaerung' },
-  { value: 'local', label: 'Lokal' },
-  { value: 'brand', label: 'Brand' },
-];
-
-interface PromptResearchIdea {
-  intent: Exclude<ResearchIntent, 'all'>;
+interface ResearchOpportunity {
+  rank: number;
+  score: number;
   topic: string;
   prompt: string;
-  why: string;
+  source: 'GSC' | 'GA4' | 'GSC + GA4';
+  intent: 'Quick Win' | 'Buy Intent' | 'Optimierung';
+  reason: string;
+  action: string;
+}
+
+interface ResearchSetup {
+  domainLabel: string;
+  industry: string;
+  region: string;
+  projectName: string;
+  isLegal: boolean;
 }
 
 function PromptResearchTool({
   data,
+  dashboardData,
   domain,
 }: {
   data?: PromptTrackingResult;
+  dashboardData?: ProjectDashboardData;
   domain?: string;
 }) {
-  const [intent, setIntent] = useState<ResearchIntent>('all');
-  const [customTopic, setCustomTopic] = useState('');
-  const [includeBrand, setIncludeBrand] = useState(true);
-  const [offset, setOffset] = useState(0);
   const [copied, setCopied] = useState(false);
 
-  const projectName = getProjectName(domain, data?.brandKeywordsUsed);
-  const seeds = useMemo(() => buildResearchSeeds(data, domain), [data, domain]);
-  const activeSeeds = useMemo(() => {
-    const custom = customTopic.trim();
-    const base = custom ? [custom, ...seeds] : seeds;
-    return rotateList(base, offset).slice(0, 4);
-  }, [customTopic, seeds, offset]);
-
-  const ideas = useMemo(
-    () => buildResearchIdeas(activeSeeds, projectName, intent, includeBrand).slice(0, 12),
-    [activeSeeds, projectName, intent, includeBrand]
+  const setup = useMemo(
+    () => buildResearchSetup(data, dashboardData, domain),
+    [data, dashboardData, domain]
+  );
+  const summary = useMemo(
+    () => buildResearchDataSummary(data, dashboardData),
+    [data, dashboardData]
+  );
+  const opportunities = useMemo(
+    () => buildResearchOpportunities(data, dashboardData, setup),
+    [data, dashboardData, setup]
   );
 
   const handleCopy = async () => {
-    const text = ideas.map((idea, idx) => `${idx + 1}. ${idea.prompt}`).join('\n');
+    const text = opportunities
+      .map((item) => `${item.rank}. [${item.intent} | Score ${item.score}] ${item.prompt}`)
+      .join('\n');
     await navigator.clipboard.writeText(text);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
@@ -471,18 +474,10 @@ function PromptResearchTool({
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-            Projektbezogene Prompt-Ideen für {projectName}. Basis: Themen aus GSC-Queries, Domain und Brand-Kontext.
+            Research-Workflow aus Projekt-Setup, GA4/GSC-Signalen, Quick-Wins und gerankten Decision-Prompts.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setOffset((value) => value + 1)}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border bg-background/70 hover:bg-background transition"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Varianten
-          </button>
           <button
             type="button"
             onClick={handleCopy}
@@ -494,64 +489,121 @@ function PromptResearchTool({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_180px_150px] gap-2 mb-4">
-        <input
-          type="text"
-          value={customTopic}
-          onChange={(e) => setCustomTopic(e.target.value)}
-          placeholder="Optionales Fokus-Thema, z.B. Scheidungsanwalt Wien"
-          className="px-3 py-2 text-sm rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-3 mb-4">
+        <ResearchStep
+          step="01"
+          title="Setup"
+          lines={[
+            `Domain: ${setup.domainLabel}`,
+            `Branche: ${setup.industry}`,
+            `Region: ${setup.region}`,
+          ]}
         />
-        <select
-          value={intent}
-          onChange={(e) => setIntent(e.target.value as ResearchIntent)}
-          className="px-3 py-2 text-sm rounded-md border border-border bg-background"
-        >
-          {RESEARCH_INTENTS.map((item) => (
-            <option key={item.value} value={item.value}>{item.label}</option>
-          ))}
-        </select>
-        <label className="flex items-center gap-2 px-3 py-2 text-sm rounded-md border border-border bg-background cursor-pointer">
-          <input
-            type="checkbox"
-            checked={includeBrand}
-            onChange={(e) => setIncludeBrand(e.target.checked)}
-            className="rounded border-border"
-          />
-          mit Brand
-        </label>
+        <ResearchStep
+          step="02"
+          title="Daten"
+          lines={[
+            `GSC: ${summary.gscQueries} Prompt-Queries, ${summary.gscImpressions} Impr., ${summary.gscClicks} Klicks`,
+            `GA4: ${summary.ga4Sessions} Sessions, ${summary.ga4Conversions} Conversions`,
+            `KI-Traffic: ${summary.aiSessions} Sessions`,
+          ]}
+        />
+        <ResearchStep
+          step="03"
+          title="Analyse"
+          lines={[
+            `${summary.quickWins} Quick-Win-Kandidaten`,
+            `${summary.buyIntent} Buy-Intent-Queries`,
+            `${summary.optimizationCandidates} Optimierungskandidaten`,
+          ]}
+        />
+        <ResearchStep
+          step="04"
+          title="Prompts"
+          lines={[
+            `${opportunities.length} Decision-Prompts`,
+            'Ranking nach Potenzial, Intent und GA4-Signal',
+            'Direkt kopierbar für LLM-Tests',
+          ]}
+        />
       </div>
 
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        {activeSeeds.map((seed) => (
-          <button
-            type="button"
-            key={seed}
-            onClick={() => setCustomTopic(seed)}
-            className="text-[11px] px-2 py-1 rounded-full bg-background/80 border border-border text-muted-foreground hover:text-foreground hover:border-amber-300 transition"
-            title="Als Fokus-Thema verwenden"
-          >
-            {seed}
-          </button>
-        ))}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+        <ResearchInsight
+          label="Quick Wins"
+          items={opportunities.filter((item) => item.intent === 'Quick Win').slice(0, 3)}
+        />
+        <ResearchInsight
+          label="Buy-Intent"
+          items={opportunities.filter((item) => item.intent === 'Buy Intent').slice(0, 3)}
+        />
+        <ResearchInsight
+          label="Optimierung"
+          items={opportunities.filter((item) => item.intent === 'Optimierung').slice(0, 3)}
+        />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-        {ideas.map((idea, idx) => (
-          <div key={`${idea.intent}-${idea.topic}-${idx}`} className="rounded-md border border-border bg-background/70 p-3">
-            <div className="flex items-center gap-2 mb-2 min-w-0">
-              <span className="text-[10px] uppercase tracking-wide font-semibold text-amber-700 dark:text-amber-300 shrink-0">
-                {researchIntentLabel(idea.intent)}
-              </span>
-              <span className="text-[10px] text-muted-foreground shrink-0">·</span>
-              <span className="text-[10px] text-muted-foreground truncate">{idea.topic}</span>
+      <div className="space-y-2">
+        {opportunities.map((item) => (
+          <div key={`${item.rank}-${item.topic}-${item.intent}`} className="grid grid-cols-[44px_1fr] lg:grid-cols-[44px_120px_1fr_110px] gap-3 rounded-md border border-border bg-background/75 p-3">
+            <div className="text-lg font-bold tabular-nums text-amber-700 dark:text-amber-300">#{item.rank}</div>
+            <div className="hidden lg:block">
+              <div className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">{item.intent}</div>
+              <div className="text-xs font-medium tabular-nums">Score {item.score}</div>
+              <div className="text-[10px] text-muted-foreground">{item.source}</div>
             </div>
-            <p className="text-sm leading-relaxed text-foreground">{idea.prompt}</p>
-            <p className="text-[11px] leading-relaxed text-muted-foreground mt-2">{idea.why}</p>
+            <div>
+              <div className="flex items-center gap-2 mb-1 lg:hidden">
+                <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">{item.intent}</span>
+                <span className="text-xs font-medium tabular-nums">Score {item.score}</span>
+                <span className="text-[10px] text-muted-foreground">{item.source}</span>
+              </div>
+              <div className="text-[11px] text-muted-foreground mb-1">{item.topic}</div>
+              <p className="text-sm leading-relaxed text-foreground">{item.prompt}</p>
+              <p className="text-[11px] leading-relaxed text-muted-foreground mt-1">{item.reason}</p>
+            </div>
+            <div className="col-span-2 lg:col-span-1 text-[11px] leading-relaxed text-muted-foreground lg:text-right">
+              {item.action}
+            </div>
           </div>
         ))}
       </div>
     </section>
+  );
+}
+
+function ResearchStep({ step, title, lines }: { step: string; title: string; lines: string[] }) {
+  return (
+    <div className="rounded-md border border-border bg-background/75 p-3">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 tabular-nums">{step}</span>
+        <span className="text-sm font-semibold">{title}</span>
+      </div>
+      <ul className="space-y-1">
+        {lines.map((line) => (
+          <li key={line} className="text-xs leading-relaxed text-muted-foreground">{line}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ResearchInsight({ label, items }: { label: string; items: ResearchOpportunity[] }) {
+  return (
+    <div className="rounded-md border border-border bg-background/60 p-3">
+      <div className="text-xs font-semibold text-foreground mb-2">{label}</div>
+      {items.length > 0 ? (
+        <ul className="space-y-1.5">
+          {items.map((item) => (
+            <li key={`${item.rank}-${item.topic}`} className="text-xs text-muted-foreground leading-snug">
+              <span className="font-medium text-foreground">#{item.rank}</span> {item.topic}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-muted-foreground">Keine klaren Kandidaten im aktuellen Zeitraum.</p>
+      )}
+    </div>
   );
 }
 
@@ -965,28 +1017,138 @@ function calcChange(current: number, previous: number): number {
   return ((current - previous) / previous) * 100;
 }
 
+function buildResearchSetup(
+  data?: PromptTrackingResult,
+  dashboardData?: ProjectDashboardData,
+  domain?: string
+): ResearchSetup {
+  const corpus = [
+    domain,
+    ...(data?.brandKeywordsUsed ?? []),
+    ...(data?.queries ?? []).slice(0, 30).map((q) => q.query),
+    ...(dashboardData?.topQueries ?? []).slice(0, 20).map((q) => q.query),
+    ...(dashboardData?.topConvertingPages ?? []).slice(0, 10).map((p) => p.path),
+  ].filter(Boolean).join(' ');
+  const isLegal = /\b(anwalt|rechtsanwalt|kanzlei|jurist|recht|scheidung|strafrecht|arbeitsrecht|erbrecht)\b/i.test(corpus);
+  const projectName = getProjectName(domain, data?.brandKeywordsUsed);
+
+  return {
+    domainLabel: normalizeDomain(domain),
+    industry: isLegal ? 'Rechtsanwalt / Kanzlei' : inferIndustry(corpus),
+    region: inferRegion(corpus, domain),
+    projectName,
+    isLegal,
+  };
+}
+
+function buildResearchDataSummary(data?: PromptTrackingResult, dashboardData?: ProjectDashboardData) {
+  const opportunities = buildResearchOpportunities(data, dashboardData, buildResearchSetup(data, dashboardData));
+  return {
+    gscQueries: (data?.totals.totalQueries ?? 0).toLocaleString('de-DE'),
+    gscImpressions: (data?.totals.totalImpressions ?? 0).toLocaleString('de-DE'),
+    gscClicks: (data?.totals.totalClicks ?? 0).toLocaleString('de-DE'),
+    ga4Sessions: (dashboardData?.kpis?.sessions?.value ?? 0).toLocaleString('de-DE'),
+    ga4Conversions: (dashboardData?.kpis?.conversions?.value ?? 0).toLocaleString('de-DE'),
+    aiSessions: (dashboardData?.aiTraffic?.totalSessions ?? 0).toLocaleString('de-DE'),
+    quickWins: opportunities.filter((item) => item.intent === 'Quick Win').length,
+    buyIntent: opportunities.filter((item) => item.intent === 'Buy Intent').length,
+    optimizationCandidates: opportunities.filter((item) => item.intent === 'Optimierung').length,
+  };
+}
+
+function buildResearchOpportunities(
+  data?: PromptTrackingResult,
+  dashboardData?: ProjectDashboardData,
+  setup?: ResearchSetup
+): ResearchOpportunity[] {
+  const resolvedSetup = setup ?? buildResearchSetup(data, dashboardData);
+  const conversionPaths = new Set(
+    (dashboardData?.topConvertingPages ?? [])
+      .filter((page) => (page.conversions ?? 0) > 0)
+      .map((page) => normalizePath(page.path))
+  );
+
+  const queryCandidates = (data?.queries ?? [])
+    .map((query) => {
+      const topic = queryToResearchTopic(query.query, resolvedSetup.projectName, data?.brandKeywordsUsed, resolvedSetup.isLegal);
+      if (!topic) return null;
+      const hasConversionPath = query.url ? conversionPaths.has(normalizePath(query.url)) : false;
+      const buyIntent = hasBuyIntent(query.query, topic, resolvedSetup.isLegal);
+      const weakCtr = query.impressions >= 10 && query.ctr < 0.025;
+      const rankablePosition = query.position >= 4 && query.position <= 18;
+      const score = scoreOpportunity(query, buyIntent, rankablePosition, weakCtr, hasConversionPath);
+      const intent: ResearchOpportunity['intent'] =
+        buyIntent ? 'Buy Intent' :
+        rankablePosition ? 'Quick Win' :
+        'Optimierung';
+
+      return {
+        score,
+        topic,
+        prompt: buildDecisionPrompt(topic, intent, resolvedSetup),
+        source: hasConversionPath ? 'GSC + GA4' : 'GSC',
+        intent,
+        reason: `${query.impressions.toLocaleString('de-DE')} Impr., ${query.clicks.toLocaleString('de-DE')} Klicks, Pos. ${query.position.toFixed(1)}, CTR ${(query.ctr * 100).toFixed(1)} %.`,
+        action: actionForOpportunity(intent, resolvedSetup.isLegal, hasConversionPath),
+      } satisfies Omit<ResearchOpportunity, 'rank'>;
+    })
+    .filter((item): item is Omit<ResearchOpportunity, 'rank'> => Boolean(item));
+
+  const pageCandidates = (dashboardData?.topConvertingPages ?? [])
+    .filter((page) => (page.conversions ?? 0) > 0)
+    .slice(0, 4)
+    .map((page) => {
+      const topic = pathToTopic(page.path, resolvedSetup);
+      return {
+        score: Math.min(92, 62 + Math.round((page.conversions ?? 0) * 4)),
+        topic,
+        prompt: buildDecisionPrompt(topic, 'Buy Intent', resolvedSetup),
+        source: 'GA4',
+        intent: 'Buy Intent',
+        reason: `${(page.conversions ?? 0).toLocaleString('de-DE')} Conversions auf ${page.path}.`,
+        action: 'Decision-Prompt gegen diese Landingpage testen und Trust-/FAQ-Blöcke ergänzen.',
+      } satisfies Omit<ResearchOpportunity, 'rank'>;
+    });
+
+  const fallback = defaultResearchOpportunities(resolvedSetup);
+  const combined = uniqueOpportunities([...queryCandidates, ...pageCandidates, ...fallback]);
+
+  return combined
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10)
+    .map((item, idx) => ({ ...item, rank: idx + 1 }));
+}
+
 function getProjectName(domain?: string, brandKeywords?: string[] | null): string {
   const brand = brandKeywords
     ?.map((kw) => prettifyProjectName(kw))
     .find((kw) => kw.length > 1 && !looksLikeGenericLegalQuery(kw));
   if (brand) return brand;
   if (!domain) return 'dieses Projekt';
-  return prettifyProjectName(domain
+  return prettifyProjectName(normalizeDomain(domain).split('.')[0]) || 'dieses Projekt';
+}
+
+function normalizeDomain(domain?: string): string {
+  if (!domain) return 'nicht gesetzt';
+  return domain
     .replace(/^https?:\/\//, '')
     .replace(/^www\./, '')
     .split(/[/?#]/)[0]
-    .split('.')[0]
-  ) || 'dieses Projekt';
+    .trim();
+}
+
+function normalizePath(value: string): string {
+  try {
+    return new URL(value).pathname.replace(/\/$/, '') || '/';
+  } catch {
+    return value.split(/[?#]/)[0].replace(/\/$/, '') || '/';
+  }
 }
 
 function prettifyProjectName(value: string): string {
   const lowered = value.toLowerCase();
-  if (/\bbernhard\b/.test(lowered) && /\bhofer\b/.test(lowered)) {
-    return 'Mag. Bernhard Hofer';
-  }
-  if (/\banwalt[-_\s]+hofer\b/.test(lowered) || /\brechtsanwalt[-_\s]+hofer\b/.test(lowered)) {
-    return 'Anwalt Hofer';
-  }
+  if (/\bbernhard\b/.test(lowered) && /\bhofer\b/.test(lowered)) return 'Mag. Bernhard Hofer';
+  if (/\banwalt[-_\s]+hofer\b/.test(lowered) || /\brechtsanwalt[-_\s]+hofer\b/.test(lowered)) return 'Anwalt Hofer';
 
   return value
     .replace(/^https?:\/\//, '')
@@ -1000,77 +1162,20 @@ function prettifyProjectName(value: string): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function prettifyTopic(value: string): string {
-  return value
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b(arbeitsrecht|erbrecht|immobilienrecht|strafrecht|vertragsrecht|scheidungsanwalt)\b/gi, (match) =>
-      match.charAt(0).toUpperCase() + match.slice(1).toLowerCase()
-    );
+function inferIndustry(corpus: string): string {
+  if (/\b(seo|marketing|agentur|ads|semrush|traffic)\b/i.test(corpus)) return 'Marketing / SEO';
+  if (/\b(shop|ecommerce|produkt|kaufen|preis)\b/i.test(corpus)) return 'E-Commerce';
+  if (/\b(hotel|restaurant|praxis|klinik|arzt)\b/i.test(corpus)) return 'Local Business';
+  return 'Projekt-Branche aus Daten ableiten';
 }
 
-function isLegalProject(corpus: string): boolean {
-  return /\b(anwalt|rechtsanwalt|kanzlei|jurist|recht|advokat|lawyer|attorney)\b/i.test(corpus);
-}
-
-function looksLikeGenericLegalQuery(value: string): boolean {
-  const normalized = value.toLowerCase().trim();
-  if (!normalized) return true;
-  return [
-    'anwalt',
-    'rechtsanwalt',
-    'kanzlei',
-    'anwalt wien',
-    'rechtsanwalt wien',
-    'mag',
-    'mag.',
-  ].includes(normalized);
-}
-
-function isWeakResearchSeed(seed: string, projectName: string): boolean {
-  const normalizedSeed = seed.toLowerCase().replace(/[^a-z0-9äöüß]+/g, '');
-  const normalizedProject = projectName.toLowerCase().replace(/[^a-z0-9äöüß]+/g, '');
-  if (normalizedSeed.length < 4) return true;
-  if (normalizedProject && normalizedSeed === normalizedProject) return true;
-  if (/^(anwalthofer|rechtsanwaltwienmag|magbernhardhofer|bernhardhofer|1010wien)$/.test(normalizedSeed)) return true;
-  return false;
-}
-
-function buildResearchSeeds(data?: PromptTrackingResult, domain?: string): string[] {
-  const seeds: string[] = [];
-  const projectName = getProjectName(domain, data?.brandKeywordsUsed);
-  const corpus = [
-    domain,
-    projectName,
-    ...(data?.brandKeywordsUsed ?? []),
-    ...(data?.queries ?? []).slice(0, 20).map((q) => q.query),
-  ].filter(Boolean).join(' ').toLowerCase();
-  const isLegal = isLegalProject(corpus);
-
-  if (isLegal) {
-    seeds.push(
-      'rechtliche Erstberatung in Wien',
-      'Scheidungsanwalt in Wien',
-      'Arbeitsrechtliche Beratung',
-      'Erbrecht und Testament',
-      'Immobilienrecht',
-      'Strafverteidigung',
-      'Vertragsprüfung',
-      'Mietrecht'
-    );
-  }
-
-  const querySeeds = (data?.queries ?? [])
-    .slice()
-    .sort((a, b) => (b.impressions + b.clicks * 20) - (a.impressions + a.clicks * 20))
-    .map((q) => queryToResearchTopic(q.query, projectName, data?.brandKeywordsUsed, isLegal))
-    .filter(Boolean);
-
-  seeds.push(...querySeeds);
-
-  return uniqueStrings(seeds)
-    .filter((seed) => seed.length >= 3 && !isWeakResearchSeed(seed, projectName))
-    .slice(0, 12);
+function inferRegion(corpus: string, domain?: string): string {
+  if (/\b(1010|wien|vienna)\b/i.test(corpus)) return 'Wien';
+  if (/\b(graz)\b/i.test(corpus)) return 'Graz';
+  if (/\b(salzburg)\b/i.test(corpus)) return 'Salzburg';
+  if (/\b(linz)\b/i.test(corpus)) return 'Linz';
+  if (/\.at(\/|$)/i.test(domain ?? '')) return 'Österreich';
+  return 'nicht eindeutig';
 }
 
 function queryToResearchTopic(
@@ -1113,102 +1218,111 @@ function queryToResearchTopic(
       return normalized.length > 2 && !stopWords.has(normalized) && !brandStopWords.has(normalized);
     });
 
-  const topic = (words.length > 0 ? words.slice(0, 5).join(' ') : cleaned).slice(0, 80).trim();
-  if (isLegal && looksLikeGenericLegalQuery(topic)) return '';
+  const topic = (words.length > 0 ? words.slice(0, 5).join(' ') : '').slice(0, 80).trim();
+  if (!topic || (isLegal && looksLikeGenericLegalQuery(topic))) return '';
   return prettifyTopic(topic);
 }
 
-function buildResearchIdeas(
-  seeds: string[],
-  projectName: string,
-  selectedIntent: ResearchIntent,
-  includeBrand: boolean
-): PromptResearchIdea[] {
-  const baseIntents: Array<Exclude<ResearchIntent, 'all'>> = [
-    'recommendation', 'comparison', 'commercial', 'informational', 'local', 'brand',
-  ];
-  const intents = selectedIntent === 'all'
-    ? baseIntents.filter((item) => includeBrand || item !== 'brand')
-    : [selectedIntent as Exclude<ResearchIntent, 'all'>];
+function prettifyTopic(value: string): string {
+  return value
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b(arbeitsrecht|erbrecht|immobilienrecht|strafrecht|vertragsrecht|scheidungsanwalt|mietrecht)\b/gi, (match) =>
+      match.charAt(0).toUpperCase() + match.slice(1).toLowerCase()
+    );
+}
 
-  const fallbackSeeds = seeds.length > 0 ? seeds : [projectName];
-  const vertical = isLegalProject(`${projectName} ${fallbackSeeds.join(' ')}`) ? 'legal' : 'generic';
+function pathToTopic(path: string, setup: ResearchSetup): string {
+  const topic = path
+    .split('/')
+    .filter(Boolean)
+    .pop()
+    ?.replace(/[-_]+/g, ' ')
+    .trim();
+  if (topic && topic.length > 2) return prettifyTopic(topic);
+  return setup.isLegal ? 'rechtliche Erstberatung' : setup.projectName;
+}
 
-  return fallbackSeeds.flatMap((topic) => intents.map((intent) => {
-    const brandSuffix = includeBrand || intent === 'brand'
-      ? vertical === 'legal'
-        ? ` Berücksichtige ${projectName} als mögliche Kanzlei.`
-        : ` Berücksichtige ${projectName} als mögliche Lösung.`
-      : '';
+function looksLikeGenericLegalQuery(value: string): boolean {
+  const normalized = value.toLowerCase().trim();
+  if (!normalized) return true;
+  return ['anwalt', 'rechtsanwalt', 'kanzlei', 'anwalt wien', 'rechtsanwalt wien', 'mag', 'mag.'].includes(normalized);
+}
 
-    const templates = vertical === 'legal'
-      ? legalResearchTemplates(topic, projectName, brandSuffix)
-      : genericResearchTemplates(topic, projectName, brandSuffix);
+function hasBuyIntent(query: string, topic: string, isLegal: boolean): boolean {
+  const text = `${query} ${topic}`.toLowerCase();
+  const generic = /\b(kosten|kostet|preis|preise|vergleich|beste|empfehlung|anbieter|beratung|kontakt|termin|kaufen)\b/i.test(text);
+  const legal = /\b(erstberatung|scheidung|strafverteidigung|arbeitsrecht|mietrecht|erbrecht|vertrag|anwalt|rechtsanwalt)\b/i.test(text);
+  return generic || (isLegal && legal);
+}
 
-    const why: Record<Exclude<ResearchIntent, 'all'>, string> = {
-      recommendation: 'Prüft, ob das Projekt in Empfehlungsantworten und Shortlists auftaucht.',
-      comparison: 'Zeigt, ob das Projekt in Vergleichsantworten und Shortlists vorkommt.',
-      commercial: 'Prüft kaufnahe Nachfrage, Preisargumente und Conversion-nahe Antwortmuster.',
-      informational: 'Findet Content-Lücken für FAQ, Ratgeber und erklärende Landingpages.',
-      local: 'Relevant, wenn Geo-Signale oder regionale Sichtbarkeit eine Rolle spielen.',
-      brand: 'Prüft Brand-Wahrnehmung, Alternativen und mögliche Einwände in LLM-Antworten.',
-    };
+function scoreOpportunity(
+  query: PromptQueryData,
+  buyIntent: boolean,
+  rankablePosition: boolean,
+  weakCtr: boolean,
+  hasConversionPath: boolean
+): number {
+  const impressionScore = Math.min(30, Math.round(Math.log10(query.impressions + 1) * 12));
+  const positionScore = rankablePosition ? 22 : query.position <= 3 ? 12 : 8;
+  const ctrScore = weakCtr ? 16 : 8;
+  const buyScore = buyIntent ? 18 : 0;
+  const ga4Score = hasConversionPath ? 14 : 0;
+  return Math.min(100, 18 + impressionScore + positionScore + ctrScore + buyScore + ga4Score);
+}
 
+function buildDecisionPrompt(topic: string, intent: ResearchOpportunity['intent'], setup: ResearchSetup): string {
+  if (setup.isLegal) {
+    if (intent === 'Buy Intent') {
+      return `Ich brauche rechtliche Unterstützung zu "${topic}" in ${setup.region}. Welche Kanzlei passt, welche Kosten/Unterlagen sind wichtig und ist ${setup.projectName} eine gute Wahl?`;
+    }
+    if (intent === 'Quick Win') {
+      return `Welche Rechtsanwälte in ${setup.region} werden für "${topic}" empfohlen? Vergleiche Spezialisierung, Vertrauenssignale, Erstberatung und Erreichbarkeit.`;
+    }
+    return `Welche Fragen sollte eine Kanzlei-Seite zu "${topic}" beantworten, damit Mandanten Vertrauen fassen und eine Erstberatung anfragen?`;
+  }
+
+  if (intent === 'Buy Intent') {
+    return `Ich suche eine Lösung für "${topic}". Welche Anbieter kommen infrage, welche Kosten/Nutzen-Argumente zählen und ist ${setup.projectName} eine passende Option?`;
+  }
+  if (intent === 'Quick Win') {
+    return `Welche Anbieter werden für "${topic}" empfohlen? Vergleiche Nutzen, Aufwand, Risiken und Entscheidungskriterien.`;
+  }
+  return `Welche Inhalte muss eine Seite zu "${topic}" liefern, um in KI-Antworten als hilfreiche Quelle genannt zu werden?`;
+}
+
+function actionForOpportunity(intent: ResearchOpportunity['intent'], isLegal: boolean, hasConversionPath: boolean): string {
+  if (hasConversionPath) return 'Bestehende Conversion-Seite mit Decision-FAQ, Trust-Signalen und klarer CTA erweitern.';
+  if (intent === 'Buy Intent') return isLegal ? 'Leistungsseite mit Kosten, Ablauf, Unterlagen und Erstberatung ergänzen.' : 'Landingpage um Preise, Vergleich und Entscheidungshilfen erweitern.';
+  if (intent === 'Quick Win') return 'Snippet/FAQ optimieren und Query exakt in H2 oder FAQ-Frage aufnehmen.';
+  return 'Content-Lücke schließen: klare Antwort, Belege, Beispiele und interne Verlinkung ergänzen.';
+}
+
+function defaultResearchOpportunities(setup: ResearchSetup): Array<Omit<ResearchOpportunity, 'rank'>> {
+  const topics = setup.isLegal
+    ? ['rechtliche Erstberatung', 'Scheidungsanwalt', 'Arbeitsrechtliche Beratung', 'Erbrecht und Testament']
+    : [`${setup.projectName} Vergleich`, `${setup.projectName} Kosten`, `${setup.projectName} Alternative`];
+
+  return topics.map((topic, idx) => {
+    const intent: ResearchOpportunity['intent'] = idx === 0 ? 'Buy Intent' : idx === 1 ? 'Quick Win' : 'Optimierung';
     return {
-      intent,
+      score: 55 - idx * 4,
       topic,
-      prompt: templates[intent],
-      why: why[intent],
-    };
-  }));
+      prompt: buildDecisionPrompt(topic, intent, setup),
+      source: 'GSC',
+      intent,
+      reason: 'Fallback, falls im aktuellen Zeitraum zu wenige verwertbare Prompt-Queries vorhanden sind.',
+      action: actionForOpportunity(intent, setup.isLegal, false),
+    } satisfies Omit<ResearchOpportunity, 'rank'>;
+  });
 }
 
-function legalResearchTemplates(
-  topic: string,
-  projectName: string,
-  brandSuffix: string
-): Record<Exclude<ResearchIntent, 'all'>, string> {
-  return {
-    recommendation: `Welche Rechtsanwälte in Wien werden für "${topic}" empfohlen, und woran erkennt man eine passende Kanzlei?${brandSuffix}`,
-    comparison: `Welche Kanzlei ist für "${topic}" in Wien geeignet? Vergleiche Spezialisierung, Erfahrung, Erstberatung, Erreichbarkeit und Kosten.${brandSuffix}`,
-    commercial: `Mit welchen Kosten muss man bei "${topic}" rechnen, und welche Fragen sollte man vor der Erstberatung klären?${brandSuffix}`,
-    informational: `Was sollte man tun, wenn man rechtliche Unterstützung bei "${topic}" braucht? Erkläre Ablauf, Unterlagen, Fristen und typische Fehler.${brandSuffix}`,
-    local: `Welche Rechtsanwälte in Wien oder 1010 Wien sind für "${topic}" relevant, und welche Auswahlkriterien sind wichtig?${brandSuffix}`,
-    brand: `Ist ${projectName} eine gute Kanzlei für "${topic}"? Vergleiche Spezialisierung, Vertrauenssignale, mögliche Alternativen und nächste Schritte.`,
-  };
-}
-
-function genericResearchTemplates(
-  topic: string,
-  projectName: string,
-  brandSuffix: string
-): Record<Exclude<ResearchIntent, 'all'>, string> {
-  return {
-    recommendation: `Welche Anbieter oder Lösungen werden für "${topic}" empfohlen, und warum?${brandSuffix}`,
-    comparison: `Vergleiche die besten Optionen für "${topic}" nach Nutzen, Kosten, Aufwand und Risiken.${brandSuffix}`,
-    commercial: `Was kostet "${topic}" typischerweise, und welche Faktoren beeinflussen die Entscheidung?${brandSuffix}`,
-    informational: `Erkläre "${topic}" so, dass ein Entscheider Chancen, Grenzen und nächste Schritte versteht.${brandSuffix}`,
-    local: `Welche lokalen oder regionalen Anbieter für "${topic}" kommen infrage, und woran erkennt man Qualität?${brandSuffix}`,
-    brand: `Ist ${projectName} eine gute Wahl für "${topic}"? Vergleiche Stärken, Schwächen und Alternativen.`,
-  };
-}
-
-function researchIntentLabel(intent: Exclude<ResearchIntent, 'all'>): string {
-  return RESEARCH_INTENTS.find((item) => item.value === intent)?.label ?? intent;
-}
-
-function rotateList<T>(items: T[], offset: number): T[] {
-  if (items.length === 0) return [];
-  const start = offset % items.length;
-  return [...items.slice(start), ...items.slice(0, start)];
-}
-
-function uniqueStrings(items: string[]): string[] {
+function uniqueOpportunities(items: Array<Omit<ResearchOpportunity, 'rank'>>): Array<Omit<ResearchOpportunity, 'rank'>> {
   const seen = new Set<string>();
   return items.filter((item) => {
-    const normalized = item.trim().toLowerCase();
-    if (!normalized || seen.has(normalized)) return false;
-    seen.add(normalized);
+    const key = `${item.intent}-${item.topic}`.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
     return true;
   });
 }

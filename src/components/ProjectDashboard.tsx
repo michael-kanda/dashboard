@@ -375,6 +375,7 @@ export default function ProjectDashboard({
             <div className="relative">
               <PromptTrackingCard
                 data={data.promptTracking}
+                dashboardData={data}
                 domain={domain}
                 dateRange={dateRange}
                 isAdmin={isAdmin}
