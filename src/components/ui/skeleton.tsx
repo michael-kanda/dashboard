@@ -1,3 +1,4 @@
+// src/components/ui/skeleton.tsx
 import { cn } from "@/lib/utils"
 
 function Skeleton({
@@ -6,7 +7,9 @@ function Skeleton({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-gray-200/80", className)}
+      // bg-border-strong references --dp-border-strong which is
+      // #d1d5db in light mode and #334155 in dark mode → correct skeleton tone in both
+      className={cn("animate-pulse rounded-md bg-border-strong/50", className)}
       {...props}
     />
   )
