@@ -625,7 +625,7 @@ function PromptResearchTool({
               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-relaxed text-muted-foreground">
                 <span>{item.reason}</span>
                 {setup.landingPage && normalizePath(setup.landingPage) !== '/' && (
-                  <span>Zielseite: {setup.landingPage}</span>
+                  <span>· Zielseite: {normalizePath(setup.landingPage)}</span>
                 )}
               </div>
             </div>
@@ -1182,7 +1182,7 @@ function buildResearchOpportunities(
       const buyIntent = hasBuyIntent(query.query, finalTopic, resolvedSetup.isLegal);
       const weakCtr = query.impressions >= 10 && query.ctr < 0.025;
       const rankablePosition = query.position >= 4 && query.position <= 18;
-      const score = Math.min(100, scoreOpportunity(query, buyIntent, rankablePosition, weakCtr, hasConversionPath) + (matchesFocusLandingPage ? 10 : 0));
+      const score = Math.min(92, scoreOpportunity(query, buyIntent, rankablePosition, weakCtr, hasConversionPath) + (matchesFocusLandingPage ? 6 : 0));
       const intent: ResearchOpportunity['intent'] =
         buyIntent ? 'Buy Intent' :
         rankablePosition ? 'Quick Win' :
@@ -1207,7 +1207,7 @@ function buildResearchOpportunities(
       const topic = normalizeResearchTopic(resolvedSetup.topic.trim() || pathToTopic(page.path, resolvedSetup), resolvedSetup.isLegal);
       const matchesFocusLandingPage = normalizePath(page.path) === focusLandingPath;
       return {
-        score: Math.min(96, 62 + Math.round((page.conversions ?? 0) * 4) + (matchesFocusLandingPage ? 10 : 0)),
+        score: Math.min(88, 58 + Math.round((page.conversions ?? 0) * 3) + (matchesFocusLandingPage ? 6 : 0)),
         topic,
         prompt: buildDecisionPrompt(topic, 'Buy Intent', effectiveSetup),
         source: 'GA4',
@@ -1388,6 +1388,9 @@ function normalizeResearchTopic(value: string, isLegal: boolean): string {
   if (/alkohol|promille|trunken/.test(normalized) && /führerschein/.test(normalized)) {
     return 'Führerscheinentzug wegen Alkohol';
   }
+  if (/anwaltskosten|anwalt.*kosten|kosten.*anwalt|honorar|rechtsanwaltstarif/.test(normalized)) {
+    return 'Anwaltskosten in Österreich';
+  }
   if (/scheidung|ehe/.test(normalized)) return 'Scheidung in Österreich';
   if (/arbeitsrecht|kündigung|entlassung/.test(normalized)) return 'Arbeitsrechtliche Beratung';
   if (/erbrecht|testament|erbe/.test(normalized)) return 'Erbrecht und Testament';
@@ -1429,11 +1432,11 @@ function scoreOpportunity(
   hasConversionPath: boolean
 ): number {
   const impressionScore = Math.min(30, Math.round(Math.log10(query.impressions + 1) * 12));
-  const positionScore = rankablePosition ? 22 : query.position <= 3 ? 12 : 8;
-  const ctrScore = weakCtr ? 16 : 8;
+  const positionScore = rankablePosition ? 22 : query.position <= 3 ? 4 : 8;
+  const ctrScore = weakCtr ? 16 : query.ctr >= 0.03 ? 2 : 6;
   const buyScore = buyIntent ? 18 : 0;
-  const ga4Score = hasConversionPath ? 14 : 0;
-  return Math.min(100, 18 + impressionScore + positionScore + ctrScore + buyScore + ga4Score);
+  const ga4Score = hasConversionPath ? 10 : 0;
+  return Math.min(92, 12 + impressionScore + positionScore + ctrScore + buyScore + ga4Score);
 }
 
 function buildDecisionPrompt(topic: string, intent: ResearchOpportunity['intent'], setup: ResearchSetup): string {
@@ -1444,6 +1447,9 @@ function buildDecisionPrompt(topic: string, intent: ResearchOpportunity['intent'
     : '';
 
   if (setup.isLegal) {
+    if (isLegalCostTopic(topic)) {
+      return `Mit welchen Anwaltskosten muss ich in ${setup.region} bzw. Österreich rechnen, wie setzen sie sich zusammen und welche Fragen sollte ich vor einer Erstberatung klären${brandPart}?`;
+    }
     if (intent === 'Buy Intent') {
       return `Ich brauche rechtliche Unterstützung zu "${topic}" in ${setup.region}. Welche Kanzlei passt, welche Kosten/Unterlagen sind wichtig${brandPart}?`;
     }
@@ -1467,6 +1473,10 @@ function actionForOpportunity(intent: ResearchOpportunity['intent'], isLegal: bo
   if (intent === 'Buy Intent') return isLegal ? 'Leistungsseite mit Kosten, Ablauf, Unterlagen und Erstberatung ergänzen.' : 'Landingpage um Preise, Vergleich und Entscheidungshilfen erweitern.';
   if (intent === 'Quick Win') return 'Snippet/FAQ optimieren und Query exakt in H2 oder FAQ-Frage aufnehmen.';
   return 'Content-Lücke schließen: klare Antwort, Belege, Beispiele und interne Verlinkung ergänzen.';
+}
+
+function isLegalCostTopic(topic: string): boolean {
+  return /\b(anwaltskosten|honorar|kosten|rechtsanwaltstarif)\b/i.test(topic);
 }
 
 function defaultResearchOpportunities(setup: ResearchSetup): Array<Omit<ResearchOpportunity, 'rank'>> {
