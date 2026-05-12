@@ -20,7 +20,7 @@
  *   1. layout.tsx  → next/font import + className auf <body>
  *   2. Diese Variable → Font-Name für Tailwind/CSS
  */
---dp-font-sans: 'Google Sans Flex', var(--font-google-sans-flex), sans-serif;
+--dp-font-sans: 'Roboto Flex', var(--font-roboto-flex), sans-serif;
    --dp-font-mono: 'Courier New', Courier, monospace;
 
   --dp-text-xs:   0.625rem;   /*  10px  labels, badges        */
