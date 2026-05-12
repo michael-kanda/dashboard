@@ -115,6 +115,53 @@
     background-color: var(--dp-surface-overlay);
   }
 
+  /* ── 8b. Overlay "ausgeblendet" Badge ──────────────────── */
+  .overlay-muted-badge {
+    background-color: var(--dp-bg-primary);
+    border-color: var(--dp-border-default);
+    color: var(--dp-text-body);
+  }
+
+  /* ── 9b. Custom Chart Tooltip Card ─────────────────────── */
+  /*
+   * Add className="chart-tooltip" to any custom Recharts tooltip container.
+   * Automatically correct in both light and dark mode.
+   */
+  .chart-tooltip {
+    background-color: var(--dp-bg-primary);
+    border: 1px solid var(--dp-border-strong);
+    border-radius: var(--dp-radius-lg);
+    box-shadow: var(--dp-shadow-card);
+    color: var(--dp-text-body);
+    padding: 0.75rem 1rem;
+  }
+
+  .chart-tooltip-title {
+    font-size: var(--dp-text-xs);
+    font-weight: var(--dp-weight-bold);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--dp-text-faint);
+    margin-bottom: 0.5rem;
+  }
+
+  .chart-tooltip-value {
+    font-weight: var(--dp-weight-bold);
+    color: var(--dp-text-heading);
+  }
+
+  /* ── 10. Widget Card (shadow-only, no hard border) ──────── */
+  /*
+   * Use .widget-card instead of .card-glass when you want
+   * elevation via shadow only (like the Projekt-Status card).
+   */
+  .widget-card {
+    background-color: var(--dp-bg-primary);
+    border-radius: var(--dp-radius-lg);
+    box-shadow: var(--dp-shadow-card);
+    color: var(--dp-text-body);
+  }
+
   /* ── 8. Recharts – auto-syncs with light/dark theme ────── */
   .recharts-text                                    { fill:             var(--dp-chart-text) !important; }
   .recharts-cartesian-grid line                     { stroke:           var(--dp-chart-grid) !important; }
@@ -146,6 +193,59 @@
   .dark .prompt-pill-purple { background-color: rgba(88,  28, 135, 0.45); border-color: rgba(168, 85, 247, 0.65); color: #d8b4fe; }
   .dark .prompt-pill-slate  { background-color: rgba(51,  65,  85, 0.80); border-color: #64748b;                  color: #cbd5e1; }
   .dark .prompt-pill-blue   { background-color: rgba(30,  58, 138, 0.45); border-color: rgba(96, 165, 250, 0.65); color: #93c5fd; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   Targeted fixes where light-mode hardcoded classes slip through.
+   These rules win over Tailwind utilities in dark mode.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Cards: shadow-only in dark mode, no hard border ─────── */
+/* The glass border looks semi-transparent in dark mode.      */
+/* Replace it with a subtle inset glow shadow instead.       */
+.dark .card-glass {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 1px rgba(51, 65, 85, 0.40),   /* inset border replacement */
+    0 4px 24px rgba(0, 0, 0, 0.40);     /* depth shadow             */
+}
+
+/* ── Tables: prevent white/gray hover rows in dark mode ──── */
+/* Any table row hover that uses bg-white or bg-gray-* will   */
+/* be overridden here so rows stay readable on dark bg.       */
+.dark table tbody tr:hover,
+.dark table tbody tr:hover td {
+  background-color: var(--dp-bg-tertiary) !important;
+  color: var(--dp-text-body);
+}
+/* Also covers alternating stripe patterns */
+.dark table tbody tr.bg-white,
+.dark table tbody tr.bg-gray-50,
+.dark table tbody tr.hover\:bg-white:hover,
+.dark table tbody tr.hover\:bg-gray-50:hover {
+  background-color: transparent !important;
+}
+
+/* ── Recharts: aggressive tooltip override for dark mode ──── */
+/* Covers both default tooltips AND wrapper divs of custom    */
+/* tooltips that forget to set a dark background.             */
+.dark .recharts-tooltip-wrapper > div {
+  background-color: var(--dp-bg-primary) !important;
+  border-color: var(--dp-border-strong) !important;
+  color: var(--dp-text-body) !important;
+}
+
+/* ── Inputs with hardcoded light colors ─────────────────── */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="search"],
+.dark select,
+.dark textarea {
+  background-color: var(--dp-input-bg);
+  border-color: var(--dp-input-border);
+  color: var(--dp-input-text);
 }
 
 
