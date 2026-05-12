@@ -1,7 +1,7 @@
 // src/components/PromptTrackingCard.tsx
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Sparkles, Download, Search, ExternalLink, Wand2, Loader2, X,
   ChevronDown, ChevronUp, Lightbulb, AlertCircle, Info, TrendingUp,
@@ -450,6 +450,9 @@ function PromptResearchTool({
   domain?: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const [isGeneratingResearch, setIsGeneratingResearch] = useState(false);
+  const [researchError, setResearchError] = useState<string | null>(null);
+  const [dataMaxOpportunities, setDataMaxOpportunities] = useState<ResearchOpportunity[] | null>(null);
   const baseSetup = useMemo(
     () => buildResearchSetup(data, dashboardData, domain),
     [data, dashboardData, domain]
@@ -468,14 +471,62 @@ function PromptResearchTool({
     () => buildResearchOpportunities(data, dashboardData, setup),
     [data, dashboardData, setup]
   );
+  const displayedOpportunities = dataMaxOpportunities ?? opportunities;
+
+  useEffect(() => {
+    setDataMaxOpportunities(null);
+  }, [setup]);
 
   const handleCopy = async () => {
-    const text = opportunities
+    const text = displayedOpportunities
       .map((item) => `${item.rank}. [${item.intent} | Score ${item.score}] ${item.prompt}`)
       .join('\n');
     await navigator.clipboard.writeText(text);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
+  };
+
+  const handleGenerateResearch = async () => {
+    if (isGeneratingResearch) return;
+    setIsGeneratingResearch(true);
+    setResearchError(null);
+    try {
+      const res = await fetch('/api/prompt-tracking/research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          setup,
+          queries: (data?.queries ?? []).slice(0, 60).map((query) => ({
+            query: query.query,
+            clicks: query.clicks,
+            impressions: query.impressions,
+            ctr: query.ctr,
+            position: query.position,
+            url: query.url,
+          })),
+          landingPages: (dashboardData?.topConvertingPages ?? []).slice(0, 12).map((page) => ({
+            path: page.path,
+            conversions: page.conversions ?? 0,
+            conversionRate: page.conversionRate ?? 0,
+            sessions: page.sessions ?? 0,
+          })),
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || err?.details || `HTTP ${res.status}`);
+      }
+      const result = await res.json();
+      const ranked = (result.opportunities ?? []).map((item: Omit<ResearchOpportunity, 'rank'>, idx: number) => ({
+        ...item,
+        rank: idx + 1,
+      }));
+      setDataMaxOpportunities(ranked);
+    } catch (error: any) {
+      setResearchError(error?.message || 'DataMax konnte keine Prompts generieren.');
+    } finally {
+      setIsGeneratingResearch(false);
+    }
   };
 
   return (
@@ -494,6 +545,15 @@ function PromptResearchTool({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleGenerateResearch}
+            disabled={isGeneratingResearch}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-amber-300 bg-background/70 text-amber-800 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed transition dark:text-amber-200 dark:hover:bg-amber-950/30"
+          >
+            {isGeneratingResearch ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+            Mit DataMax generieren
+          </button>
           <button
             type="button"
             onClick={handleCopy}
@@ -540,12 +600,18 @@ function PromptResearchTool({
           step="04"
           title="Prompts"
           lines={[
-            `${opportunities.length} Decision-Prompts`,
-            'Ranking nach Potenzial, Intent und GA4-Signal',
+            `${displayedOpportunities.length} Decision-Prompts`,
+            dataMaxOpportunities ? 'DataMax-generiertes Ranking' : 'Fallback-Ranking nach Datenlogik',
             'Direkt kopierbar für LLM-Tests',
           ]}
         />
       </div>
+
+      {researchError && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-300">
+          {researchError}
+        </div>
+      )}
 
       <div className="rounded-md border border-border bg-background/75 p-3 mb-4">
         <div className="text-xs font-semibold text-foreground mb-3">Setup-Felder</div>
@@ -593,20 +659,20 @@ function PromptResearchTool({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
         <ResearchInsight
           label="Quick Wins"
-          items={opportunities.filter((item) => item.intent === 'Quick Win').slice(0, 3)}
+          items={displayedOpportunities.filter((item) => item.intent === 'Quick Win').slice(0, 3)}
         />
         <ResearchInsight
           label="Buy-Intent"
-          items={opportunities.filter((item) => item.intent === 'Buy Intent').slice(0, 3)}
+          items={displayedOpportunities.filter((item) => item.intent === 'Buy Intent').slice(0, 3)}
         />
         <ResearchInsight
           label="Optimierung"
-          items={opportunities.filter((item) => item.intent === 'Optimierung').slice(0, 3)}
+          items={displayedOpportunities.filter((item) => item.intent === 'Optimierung').slice(0, 3)}
         />
       </div>
 
       <div className="space-y-2">
-        {opportunities.map((item) => (
+        {displayedOpportunities.map((item) => (
           <div key={`${item.rank}-${item.topic}-${item.intent}`} className="grid grid-cols-[44px_1fr] lg:grid-cols-[44px_120px_1fr_110px] gap-3 rounded-md border border-border bg-background/75 p-3">
             <div className="text-lg font-bold tabular-nums text-amber-700 dark:text-amber-300">#{item.rank}</div>
             <div className="hidden lg:block">
