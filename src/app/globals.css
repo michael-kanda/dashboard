@@ -197,6 +197,43 @@
 
 
 /* ═══════════════════════════════════════════════════════════
+   CARD STYLE: SHADOW ONLY (no hard border)
+   ───────────────────────────────────────────────────────────
+   All widget cards use box-shadow for visual separation.
+   The --dp-shadow-card already includes a 1px edge ring in
+   light mode, so a visible border is redundant and removed.
+
+   Covers:
+   - .card-glass (explicit glass component)
+   - Any element that combines bg-surface + rounded + border
+     (the inline pattern used in most chart/list components)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Remove border from all standard card containers (both modes) */
+.card-glass,
+.bg-surface.rounded-lg.border,
+.bg-surface.rounded-xl.border,
+.bg-surface.rounded-2xl.border {
+  border-color: transparent !important;
+}
+
+/* Ensure card-glass shadow is always var-driven */
+.card-glass {
+  box-shadow: var(--dp-shadow-card) !important;
+}
+
+/* Gray body backgrounds that leaked through from old hardcoded classes */
+/* PromptTrackingCard and similar tools that use bg-gray-50/bg-stone-50 */
+.dark .bg-gray-50  { background-color: var(--dp-bg-primary) !important; }
+.dark .bg-gray-100 { background-color: var(--dp-bg-secondary) !important; }
+.dark .bg-stone-50 { background-color: var(--dp-bg-primary) !important; }
+
+/* Light mode: neutralize warm-gray backgrounds → use design token */
+.bg-gray-50  { background-color: var(--dp-bg-secondary) !important; }
+.bg-stone-50 { background-color: var(--dp-bg-secondary) !important; }
+
+
+/* ═══════════════════════════════════════════════════════════
    DARK MODE OVERRIDES
    Targeted fixes where light-mode hardcoded classes slip through.
    These rules win over Tailwind utilities in dark mode.
