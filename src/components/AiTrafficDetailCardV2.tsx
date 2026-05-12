@@ -350,7 +350,7 @@ export default function AiTrafficDetailCardV2({
       {isExpanded && (
         <>
           {/* KPI GRID */}
-          <div className="px-6 py-5 bg-surface-secondary dark:bg-surface-tertiary">
+          <div className="px-6 py-5 bg-gradient-to-b from-gray-50/50 to-white dark:bg-surface-tertiary dark:from-transparent dark:to-transparent">
             <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
               <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border border-purple-200/60 dark:border-purple-700/30">
                 <div className="flex items-center gap-2 mb-1"><TrendingUp className="text-purple-600" size={16} />
