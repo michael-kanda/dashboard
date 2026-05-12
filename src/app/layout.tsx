@@ -7,11 +7,13 @@ import MainLayout from '@/components/MainLayout';
 import { Toaster } from 'sonner';
 import * as Sentry from '@sentry/nextjs';
 import "bootstrap-icons/font/bootstrap-icons.css";
-import { Roboto_Flex } from "next/font/google";
+import { Poppins } from "next/font/google";
 
-const robotoFlex = Roboto_Flex({ 
-  subsets: ["latin"],
-  variable: '--font-roboto-flex',
+// Initialisierung von Poppins mit den benötigten Gewichten
+const poppins = Poppins({ 
+  subsets: ["latin"], 
+  weight: ["400", "500", "600", "700"],
+  variable: '--font-poppins', // Diese Variable wird in design-tokens.css genutzt
 });
 // Metadata mit Sentry Tracing
 export function generateMetadata(): Metadata {
@@ -56,7 +58,7 @@ export default function RootLayout({
         {/* Theme SOFORT setzen – vor allem anderen */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-<body className={`${robotoFlex.className} bg-gray-50`}>
+<body className={`${poppins.className} bg-gray-50`}>
   <Providers>
           <Toaster position="top-right" richColors closeButton />
           
