@@ -298,10 +298,6 @@ export default function PromptTrackingCard({
         />
       )}
 
-      {isAdmin && (
-        <PromptResearchTool data={data} dashboardData={dashboardData} domain={domain} />
-      )}
-
       {/* Filter */}
       <div className="flex flex-col sm:flex-row gap-2 mb-4 flex-wrap">
         <div className="relative flex-1 min-w-[180px]">
@@ -402,6 +398,10 @@ export default function PromptTrackingCard({
           className="underline hover:text-purple-600"
         >Seybold (2026)</a>.
       </p>
+
+      {isAdmin && (
+        <PromptResearchTool data={data} dashboardData={dashboardData} domain={domain} />
+      )}
     </div>
   );
 }
