@@ -622,7 +622,12 @@ function PromptResearchTool({
               </div>
               <div className="text-[11px] text-muted-foreground mb-1">{item.topic}</div>
               <p className="text-sm leading-relaxed text-foreground">{item.prompt}</p>
-              <p className="text-[11px] leading-relaxed text-muted-foreground mt-1">{item.reason}</p>
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-relaxed text-muted-foreground">
+                <span>{item.reason}</span>
+                {setup.landingPage && normalizePath(setup.landingPage) !== '/' && (
+                  <span>Zielseite: {setup.landingPage}</span>
+                )}
+              </div>
             </div>
             <div className="col-span-2 lg:col-span-1 text-[11px] leading-relaxed text-muted-foreground lg:text-right">
               {item.action}
@@ -1437,25 +1442,24 @@ function buildDecisionPrompt(topic: string, intent: ResearchOpportunity['intent'
       ? ` und bewerte ${setup.projectName} als mögliche Kanzlei`
       : ` und bewerte ${setup.projectName} als mögliche Lösung`
     : '';
-  const landingPart = setup.landingPage ? ` Nutze als Zielseite: ${setup.landingPage}.` : '';
 
   if (setup.isLegal) {
     if (intent === 'Buy Intent') {
-      return `Ich brauche rechtliche Unterstützung zu "${topic}" in ${setup.region}. Welche Kanzlei passt, welche Kosten/Unterlagen sind wichtig${brandPart}?${landingPart}`;
+      return `Ich brauche rechtliche Unterstützung zu "${topic}" in ${setup.region}. Welche Kanzlei passt, welche Kosten/Unterlagen sind wichtig${brandPart}?`;
     }
     if (intent === 'Quick Win') {
-      return `Welche Rechtsanwälte in ${setup.region} werden für "${topic}" empfohlen? Vergleiche Spezialisierung, Vertrauenssignale, Erstberatung und Erreichbarkeit${brandPart}.${landingPart}`;
+      return `Welche Rechtsanwälte in ${setup.region} werden für "${topic}" empfohlen? Vergleiche Spezialisierung, Vertrauenssignale, Erstberatung und Erreichbarkeit${brandPart}.`;
     }
-    return `Welche Fragen sollte eine Kanzlei-Seite zu "${topic}" beantworten, damit Mandanten Vertrauen fassen und eine Erstberatung anfragen?${brandPart}.${landingPart}`;
+    return `Welche Fragen sollte eine Kanzlei-Seite zu "${topic}" beantworten, damit Mandanten Vertrauen fassen und eine Erstberatung anfragen?${brandPart}.`;
   }
 
   if (intent === 'Buy Intent') {
-    return `Ich suche eine Lösung für "${topic}". Welche Anbieter kommen infrage und welche Kosten/Nutzen-Argumente zählen${brandPart}?${landingPart}`;
+    return `Ich suche eine Lösung für "${topic}". Welche Anbieter kommen infrage und welche Kosten/Nutzen-Argumente zählen${brandPart}?`;
   }
   if (intent === 'Quick Win') {
-    return `Welche Anbieter werden für "${topic}" empfohlen? Vergleiche Nutzen, Aufwand, Risiken und Entscheidungskriterien${brandPart}.${landingPart}`;
+    return `Welche Anbieter werden für "${topic}" empfohlen? Vergleiche Nutzen, Aufwand, Risiken und Entscheidungskriterien${brandPart}.`;
   }
-  return `Welche Inhalte muss eine Seite zu "${topic}" liefern, um in KI-Antworten als hilfreiche Quelle genannt zu werden?${brandPart}.${landingPart}`;
+  return `Welche Inhalte muss eine Seite zu "${topic}" liefern, um in KI-Antworten als hilfreiche Quelle genannt zu werden?${brandPart}.`;
 }
 
 function actionForOpportunity(intent: ResearchOpportunity['intent'], isLegal: boolean, hasConversionPath: boolean): string {
