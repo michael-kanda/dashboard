@@ -1,0 +1,172 @@
+/* ═══════════════════════════════════════════════════════════
+   DATAPEAK DESIGN TOKENS  –  src/app/design-tokens.css
+   ───────────────────────────────────────────────────────────
+   Single source of truth for every design value in the app.
+   Edit here → changes propagate everywhere automatically.
+   Import this file in globals.css AFTER @import "tailwindcss".
+
+   INDEX:
+     01  Typography
+     02  Spacing & Radius
+     03  Brand & Accents
+     04  Colors – Light Mode  (:root)
+     05  Colors – Dark Mode   (.dark)
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+
+  /* ── 01. TYPOGRAPHY ─────────────────────────────────────── */
+  /* Change font here once; layout.tsx loads it via next/font  */
+  --dp-font-sans: 'Poppins', Arial, Helvetica, sans-serif;
+  --dp-font-mono: 'Courier New', Courier, monospace;
+
+  --dp-text-xs:   0.625rem;   /*  10px  labels, badges        */
+  --dp-text-sm:   0.75rem;    /*  12px  captions, fine print  */
+  --dp-text-base: 0.875rem;   /*  14px  body copy             */
+  --dp-text-md:   1rem;       /*  16px  subheadings           */
+  --dp-text-lg:   1.125rem;   /*  18px  section titles        */
+  --dp-text-xl:   1.25rem;    /*  20px  page titles           */
+  --dp-text-2xl:  1.5rem;     /*  24px  hero text             */
+
+  --dp-weight-normal:   400;
+  --dp-weight-medium:   500;
+  --dp-weight-semibold: 600;
+  --dp-weight-bold:     700;
+
+  --dp-leading-tight:  1.25;
+  --dp-leading-normal: 1.5;
+  --dp-leading-loose:  1.75;
+
+
+  /* ── 02. SPACING & RADIUS ───────────────────────────────── */
+  --dp-radius-sm:   0.375rem;   /*  6px  small elements        */
+  --dp-radius-md:   0.5rem;     /*  8px  inputs, buttons       */
+  --dp-radius-lg:   0.75rem;    /* 12px  cards                 */
+  --dp-radius-xl:   1rem;       /* 16px  large cards           */
+  --dp-radius-2xl:  1.5rem;     /* 24px  modals, sheets        */
+  --dp-radius-full: 9999px;     /*       pills, avatars        */
+
+
+  /* ── 03. BRAND & ACCENTS ────────────────────────────────── */
+
+  /* Brand blue – primary actions, links */
+  --dp-brand:            #188BDB;
+  --dp-brand-hover:      #1279c2;
+  --dp-brand-foreground: #ffffff;
+
+  /* Indigo – active states, focus rings, interactive UI */
+  --dp-accent-indigo:       #6366f1;
+  --dp-accent-indigo-light: #eef2ff;
+  --dp-accent-indigo-hover: #f0f4ff;
+
+  /* Emerald – success, avatars */
+  --dp-accent-emerald:       #10b981;
+  --dp-accent-emerald-light: #d1fae5;
+
+  /* Red – danger, destructive, logout */
+  --dp-accent-red:       #ef4444;
+  --dp-accent-red-light: #fef2f2;
+
+
+  /* ── 04. COLORS – LIGHT MODE ───────────────────────────── */
+
+  /* --- Backgrounds --- */
+  --dp-bg-primary:    #ffffff;    /* page surface, cards          */
+  --dp-bg-secondary:  #f9fafb;    /* page body background         */
+  --dp-bg-tertiary:   #f3f4f6;    /* hover states, subtle fills   */
+  --dp-bg-quaternary: #e5e7eb;    /* pressed states, dividers     */
+
+  /* --- Text --- */
+  --dp-text-heading:   #111827;   /* h1–h3, primary labels        */
+  --dp-text-strong:    #1f2937;   /* emphasized body copy         */
+  --dp-text-body:      #374151;   /* standard body copy           */
+  --dp-text-secondary: #4b5563;   /* secondary descriptions       */
+  --dp-text-muted:     #6b7280;   /* placeholders, hints          */
+  --dp-text-faint:     #9ca3af;   /* disabled text, nav labels    */
+
+  /* --- Borders --- */
+  --dp-border-subtle:  #f3f4f6;   /* barely-there separators      */
+  --dp-border-default: #e5e7eb;   /* standard borders             */
+  --dp-border-strong:  #d1d5db;   /* inputs, prominent borders    */
+
+  /* --- Surfaces --- */
+  --dp-surface-sidebar:      #ffffff;
+  --dp-surface-card:         rgba(255, 255, 255, 0.8);
+  --dp-surface-card-border:  rgba(255, 255, 255, 0.6);
+  --dp-surface-overlay:      rgba(0, 0, 0, 0.30);
+
+  /* --- Shadows --- */
+  --dp-shadow-card:    0 4px 16px -4px rgba(79, 70, 229, 0.12),
+                       0 2px  4px -1px rgba(0, 0, 0, 0.05);
+  --dp-shadow-sidebar: 2px 0 8px rgba(0, 0, 0, 0.04);
+
+  /* --- Inputs --- */
+  --dp-input-bg:     #ffffff;
+  --dp-input-border: #d1d5db;
+  --dp-input-text:   #111827;
+  --dp-focus-ring:   #6366f1;
+
+  /* --- Charts (Recharts) --- */
+  --dp-chart-text:           #6b7280;
+  --dp-chart-grid:           #f3f4f6;
+  --dp-chart-tooltip-bg:     #ffffff;
+  --dp-chart-tooltip-border: #e5e7eb;
+  --dp-chart-tooltip-text:   #111827;
+}
+
+
+/* ── 05. COLORS – DARK MODE ─────────────────────────────── */
+.dark {
+
+  /* Accents are adjusted for dark backgrounds */
+  --dp-accent-indigo:       #818cf8;
+  --dp-accent-indigo-light: rgba(99, 102, 241, 0.15);
+  --dp-accent-indigo-hover: rgba(99, 102, 241, 0.10);
+  --dp-accent-emerald:       #34d399;
+  --dp-accent-emerald-light: rgba(16, 185, 129, 0.20);
+  --dp-accent-red:           #f87171;
+  --dp-accent-red-light:     rgba(239, 68, 68, 0.15);
+
+  /* Backgrounds */
+  --dp-bg-primary:    #111827;
+  --dp-bg-secondary:  #030712;
+  --dp-bg-tertiary:   #0f172a;
+  --dp-bg-quaternary: #1e293b;
+
+  /* Text */
+  --dp-text-heading:   #f1f5f9;
+  --dp-text-strong:    #e2e8f0;
+  --dp-text-body:      #cbd5e1;
+  --dp-text-secondary: #94a3b8;
+  --dp-text-muted:     #64748b;
+  --dp-text-faint:     #475569;
+
+  /* Borders */
+  --dp-border-subtle:  #1e293b;
+  --dp-border-default: #1e293b;
+  --dp-border-strong:  #334155;
+
+  /* Surfaces */
+  --dp-surface-sidebar:     #111827;
+  --dp-surface-card:        rgba(15, 23, 42, 0.8);
+  --dp-surface-card-border: rgba(51, 65, 85, 0.5);
+  --dp-surface-overlay:     rgba(0, 0, 0, 0.60);
+
+  /* Shadows */
+  --dp-shadow-card:    0 1px 3px rgba(0, 0, 0, 0.3),
+                       0 0 0 1px rgba(51, 65, 85, 0.2);
+  --dp-shadow-sidebar: none;
+
+  /* Inputs */
+  --dp-input-bg:     #1e293b;
+  --dp-input-border: #334155;
+  --dp-input-text:   #e2e8f0;
+  --dp-focus-ring:   #818cf8;
+
+  /* Charts */
+  --dp-chart-text:           #94a3b8;
+  --dp-chart-grid:           #1e293b;
+  --dp-chart-tooltip-bg:     #1e293b;
+  --dp-chart-tooltip-border: #334155;
+  --dp-chart-tooltip-text:   #e2e8f0;
+}
