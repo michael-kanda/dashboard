@@ -148,13 +148,13 @@
 
   /* Surfaces */
   --dp-surface-sidebar:     #111827;
-  --dp-surface-card:        rgba(15, 23, 42, 0.8);
-  --dp-surface-card-border: rgba(51, 65, 85, 0.5);
+  --dp-surface-card:        rgba(15, 23, 42, 0.95);   /* more opaque = more readable */
+  --dp-surface-card-border: transparent;              /* shadow replaces border in dark */
   --dp-surface-overlay:     rgba(0, 0, 0, 0.60);
 
   /* Shadows */
-  --dp-shadow-card:    0 1px 3px rgba(0, 0, 0, 0.3),
-                       0 0 0 1px rgba(51, 65, 85, 0.2);
+  --dp-shadow-card:    0 0 0 1px rgba(51, 65, 85, 0.40),
+                       0 4px 24px rgba(0, 0, 0, 0.40);
   --dp-shadow-sidebar: none;
 
   /* Inputs */
