@@ -96,8 +96,10 @@
   --dp-surface-overlay:      rgba(0, 0, 0, 0.30);
 
   /* --- Shadows --- */
-  --dp-shadow-card:    0 4px 16px -4px rgba(79, 70, 229, 0.12),
-                       0 2px  4px -1px rgba(0, 0, 0, 0.05);
+  /* The first layer (0 0 0 1px) is a subtle edge ring — replaces hard borders on cards */
+  --dp-shadow-card:    0 0 0 1px rgba(0, 0, 0, 0.06),
+                       0 4px 16px -4px rgba(79, 70, 229, 0.10),
+                       0 2px  4px -1px rgba(0, 0, 0, 0.04);
   --dp-shadow-sidebar: 2px 0 8px rgba(0, 0, 0, 0.04);
 
   /* --- Inputs --- */
