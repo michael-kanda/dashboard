@@ -1,106 +1,11 @@
+/* ── Core Imports ────────────────────────────────────────── */
 @import "tailwindcss";
+@import "./design-tokens.css";        /* ← all colors/sizes/fonts live here */
 @plugin "@tailwindcss/typography";
 
-/* ═══════════════════════════════════════════════════════════
-   DATAPEAK DESIGN TOKENS
-   CSS Custom Properties für automatisches Light/Dark Theming.
-   ═══════════════════════════════════════════════════════════ */
-
-@layer base {
-  /* ── LIGHT MODE (Default) ── */
-  :root {
-    /* Backgrounds */
-    --dp-bg-primary: #ffffff;
-    --dp-bg-secondary: #f9fafb;
-    --dp-bg-tertiary: #f3f4f6;
-    --dp-bg-quaternary: #e5e7eb;
-
-    /* Text */
-    --dp-text-heading: #111827;
-    --dp-text-strong: #1f2937;
-    --dp-text-body: #374151;
-    --dp-text-secondary: #4b5563;
-    --dp-text-muted: #6b7280;
-    --dp-text-faint: #9ca3af;
-
-    /* Borders */
-    --dp-border-subtle: #f3f4f6;
-    --dp-border-default: #e5e7eb;
-    --dp-border-strong: #d1d5db;
-
-    /* Accents & Highlights */
-    --primary-highlight: #188BDB;
-    --dp-focus-ring: #6366f1;
-
-    /* Surfaces & Glassmorphism */
-    --dp-surface-card: rgba(255, 255, 255, 0.8);
-    --dp-surface-card-border: rgba(255, 255, 255, 0.6);
-    --dp-surface-sidebar: #ffffff;
-
-    /* Shadows */
-    --dp-shadow-card: 0 4px 16px -4px rgba(79, 70, 229, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
-
-    /* Inputs */
-    --dp-input-bg: #ffffff;
-    --dp-input-border: #d1d5db;
-    --dp-input-text: #111827;
-    
-    /* Charts (Recharts) */
-    --dp-chart-text: #6b7280;
-    --dp-chart-grid: #f3f4f6;
-    --dp-chart-tooltip-bg: #ffffff;
-    --dp-chart-tooltip-border: #e5e7eb;
-    --dp-chart-tooltip-text: #111827;
-  }
-
-  /* ── DARK MODE ── */
-  .dark {
-    /* Backgrounds */
-    --dp-bg-primary: #111827;
-    --dp-bg-secondary: #030712;
-    --dp-bg-tertiary: #0f172a;
-    --dp-bg-quaternary: #1e293b;
-
-    /* Text */
-    --dp-text-heading: #f1f5f9;
-    --dp-text-strong: #e2e8f0;
-    --dp-text-body: #cbd5e1;
-    --dp-text-secondary: #94a3b8;
-    --dp-text-muted: #64748b;
-    --dp-text-faint: #475569;
-
-    /* Borders */
-    --dp-border-subtle: #1e293b;
-    --dp-border-default: #1e293b;
-    --dp-border-strong: #334155;
-
-    /* Accents & Highlights */
-    --dp-focus-ring: #818cf8;
-
-    /* Surfaces & Glassmorphism */
-    --dp-surface-card: rgba(15, 23, 42, 0.8);
-    --dp-surface-card-border: rgba(51, 65, 85, 0.5);
-    --dp-surface-sidebar: #111827;
-
-    /* Shadows */
-    --dp-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(51, 65, 85, 0.2);
-
-    /* Inputs */
-    --dp-input-bg: #1e293b;
-    --dp-input-border: #334155;
-    --dp-input-text: #e2e8f0;
-
-    /* Charts (Recharts) */
-    --dp-chart-text: #94a3b8;
-    --dp-chart-grid: #1e293b;
-    --dp-chart-tooltip-bg: #1e293b;
-    --dp-chart-tooltip-border: #334155;
-    --dp-chart-tooltip-text: #e2e8f0;
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════
-   GLOBAL HTML/BODY STYLES
+   GLOBAL BASE STYLES
    ═══════════════════════════════════════════════════════════ */
 @layer base {
   html {
@@ -110,10 +15,10 @@
   body {
     background-color: var(--dp-bg-secondary);
     color: var(--dp-text-body);
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: var(--dp-font-sans);
   }
 
-  /* Globale Inputs & Textareas mit den Theme-Variablen */
+  /* Inputs inherit theme variables automatically */
   input, select, textarea {
     background-color: var(--dp-input-bg);
     border-color: var(--dp-input-border);
@@ -125,26 +30,32 @@
   }
 }
 
+
 /* ═══════════════════════════════════════════════════════════
-   KOMPONENTEN (Glassmorphism, Gradient, Pills etc.)
+   COMPONENT CLASSES
+   Add new shared UI patterns here. Avoid hardcoded colors;
+   always reference design-tokens.css variables.
    ═══════════════════════════════════════════════════════════ */
 @layer components {
 
-  /* 1. Dashboard Background */
+  /* ── 1. Dashboard Page Background ─────────────────────── */
   .dashboard-gradient {
-    background-color: #f8fafc;
+    background-color: var(--dp-bg-secondary);
     background-image:
-      radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.03) 0px, transparent 50%),
+      radial-gradient(at   0%   0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
+      radial-gradient(at 100%   0%, rgba(236, 72, 153, 0.03) 0px, transparent 50%),
       radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.03) 0px, transparent 50%);
     background-attachment: fixed;
   }
-
   .dark .dashboard-gradient {
-    background: linear-gradient(135deg, #030712 0%, #0f172a 50%, #030712 100%);
+    background: linear-gradient(135deg,
+      var(--dp-bg-secondary) 0%,
+      var(--dp-bg-tertiary)  50%,
+      var(--dp-bg-secondary) 100%
+    );
   }
 
-  /* 2. Glass Panels & Cards */
+  /* ── 2. Glass / Card Surfaces ──────────────────────────── */
   .glass-panel {
     background: var(--dp-surface-card);
     border: 1px solid var(--dp-surface-card-border);
@@ -155,7 +66,7 @@
   .card-glass {
     background: var(--dp-surface-card);
     border: 1px solid var(--dp-surface-card-border);
-    border-radius: 0.75rem;
+    border-radius: var(--dp-radius-lg);
     box-shadow: var(--dp-shadow-card);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -167,69 +78,96 @@
   }
   .card-glass-hover:hover {
     transform: translateY(-0.25rem);
-    box-shadow: 0 15px 35px -5px rgba(79, 70, 229, 0.1);
+    box-shadow: 0 15px 35px -5px rgba(79, 70, 229, 0.10);
   }
 
-  /* 3. Recharts Styles */
-  .recharts-text { fill: var(--dp-chart-text) !important; }
-  .recharts-cartesian-grid line { stroke: var(--dp-chart-grid) !important; }
+  /* ── 3. Sidebar ────────────────────────────────────────── */
+  .sidebar-bg {
+    background-color: var(--dp-surface-sidebar);
+  }
+
+  /* ── 4. Navigation States ──────────────────────────────── */
+  .nav-active {
+    background-color: var(--dp-accent-indigo-light);
+    color: var(--dp-accent-indigo);
+  }
+  .nav-hover:hover {
+    background-color: var(--dp-bg-tertiary);
+    color: var(--dp-text-heading);
+  }
+
+  /* ── 5. Accent Utilities ───────────────────────────────── */
+  .accent-indigo-text      { color: var(--dp-accent-indigo); }
+  .accent-indigo-indicator { background-color: var(--dp-accent-indigo); }
+
+  .accent-emerald-avatar {
+    background-color: var(--dp-accent-emerald-light);
+    color: var(--dp-accent-emerald);
+    border-color: var(--dp-accent-emerald);
+  }
+
+  /* ── 6. Interactive States ─────────────────────────────── */
+  .hover-red-bg:hover        { background-color: var(--dp-accent-red-light);  }
+  .hover-border-indigo:hover { border-color:     var(--dp-accent-indigo);      }
+
+  /* ── 7. Overlay Backdrop (mobile menu, modals) ─────────── */
+  .overlay-backdrop {
+    background-color: var(--dp-surface-overlay);
+  }
+
+  /* ── 8. Recharts – auto-syncs with light/dark theme ────── */
+  .recharts-text                                    { fill:             var(--dp-chart-text) !important; }
+  .recharts-cartesian-grid line                     { stroke:           var(--dp-chart-grid) !important; }
   .recharts-tooltip-wrapper .recharts-default-tooltip {
-    background-color: var(--dp-chart-tooltip-bg) !important;
-    border-color: var(--dp-chart-tooltip-border) !important;
-    color: var(--dp-chart-tooltip-text) !important;
+    background-color: var(--dp-chart-tooltip-bg)    !important;
+    border-color:     var(--dp-chart-tooltip-border) !important;
+    color:            var(--dp-chart-tooltip-text)   !important;
   }
 
-  /* 4. Prompt Tracking Custom Styles (Ohne @apply für v4 Kompatibilität) */
+  /* ── 9. Prompt Tracking Pills ──────────────────────────── */
   .prompt-pill {
     display: inline-flex;
     align-items: center;
     min-height: 20px;
     padding: 0 0.5rem;
-    border-radius: 9999px;
+    border-radius: var(--dp-radius-full);
     border: 1px solid transparent;
     font-size: 11px;
     line-height: 1.25;
     font-weight: 700;
-    letter-spacing: 0;
   }
-  
-  /* Helles Theme Pills */
+
+  /* Light */
   .prompt-pill-purple { background-color: #f3e8ff; border-color: #a855f7; color: #6b21a8; }
-  .prompt-pill-slate { background-color: #e2e8f0; border-color: #64748b; color: #334155; }
-  .prompt-pill-blue { background-color: #dbeafe; border-color: #60a5fa; color: #1d4ed8; }
-  
-  /* Dunkles Theme Pills */
-  .dark .prompt-pill-purple { background-color: rgba(88, 28, 135, 0.45); border-color: rgba(168, 85, 247, 0.65); color: #d8b4fe; }
-  .dark .prompt-pill-slate { background-color: rgba(51, 65, 85, 0.8); border-color: #64748b; color: #cbd5e1; }
-  .dark .prompt-pill-blue { background-color: rgba(30, 58, 138, 0.45); border-color: rgba(96, 165, 250, 0.65); color: #93c5fd; }
+  .prompt-pill-slate  { background-color: #e2e8f0; border-color: #64748b; color: #334155; }
+  .prompt-pill-blue   { background-color: #dbeafe; border-color: #60a5fa; color: #1d4ed8; }
+
+  /* Dark */
+  .dark .prompt-pill-purple { background-color: rgba(88,  28, 135, 0.45); border-color: rgba(168, 85, 247, 0.65); color: #d8b4fe; }
+  .dark .prompt-pill-slate  { background-color: rgba(51,  65,  85, 0.80); border-color: #64748b;                  color: #cbd5e1; }
+  .dark .prompt-pill-blue   { background-color: rgba(30,  58, 138, 0.45); border-color: rgba(96, 165, 250, 0.65); color: #93c5fd; }
 }
 
+
 /* ═══════════════════════════════════════════════════════════
-   SCROLLBAR & UTILITIES
+   SCROLLBAR
    ═══════════════════════════════════════════════════════════ */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--dp-bg-secondary); }
-::-webkit-scrollbar-thumb { background: var(--dp-border-strong); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--dp-text-muted); }
+::-webkit-scrollbar              { width: 6px; height: 6px; }
+::-webkit-scrollbar-track        { background: var(--dp-bg-secondary); }
+::-webkit-scrollbar-thumb        { background: var(--dp-border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover  { background: var(--dp-text-muted); }
 
-/* Dashboard Scroll Fix */
-[id^="section-"] {
-  scroll-margin-top: 5rem;
-}
+/* Offset for sticky header/nav when jumping to anchors */
+[id^="section-"] { scroll-margin-top: 5rem; }
+
 
 /* ═══════════════════════════════════════════════════════════
-   PDF-EXPORT STYLES
+   PRINT / PDF EXPORT
    ═══════════════════════════════════════════════════════════ */
 @media print {
-  @page {
-    size: A4 portrait;
-    margin: 8mm 8mm 10mm 8mm;
-  }
+  @page { size: A4 portrait; margin: 8mm 8mm 10mm 8mm; }
 
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
   body {
     background: white !important;
@@ -240,16 +178,10 @@
     padding: 0 !important;
   }
 
-  header, footer, nav, button, [role="tooltip"], .print-hidden {
-    display: none !important;
-  }
+  header, footer, nav, button,
+  [role="tooltip"], .print-hidden { display: none !important; }
 
-  main {
-    width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: block !important;
-  }
+  main { width: 100% !important; padding: 0 !important; margin: 0 !important; display: block !important; }
 
   .card-glass, .glass-panel {
     background-color: white !important;
@@ -260,95 +192,36 @@
     backdrop-filter: none !important;
   }
 
-  .print-timeline {
-    display: block !important;
-    break-inside: avoid !important;
-    margin-bottom: 15px !important;
-    padding: 10px !important;
-  }
-  .print-timeline .grid {
-    display: flex !important;
-    justify-content: space-between;
-    gap: 5px !important;
-  }
-  .print-timeline .grid > div {
-    flex: 1;
-    padding: 5px !important;
-    border: 1px solid #eee !important;
-  }
+  .print-timeline { display: block !important; break-inside: avoid !important; margin-bottom: 15px !important; padding: 10px !important; }
+  .print-timeline .grid { display: flex !important; justify-content: space-between; gap: 5px !important; }
+  .print-timeline .grid > div { flex: 1; padding: 5px !important; border: 1px solid #eee !important; }
 
-  .print-header {
-    break-inside: avoid;
-    margin-bottom: 10px;
-    border-bottom: 2px solid #000;
-  }
-  .print-header button, .print-header .inline-flex {
-    display: none !important;
-  }
+  .print-header { break-inside: avoid; margin-bottom: 10px; border-bottom: 2px solid #000; }
+  .print-header button, .print-header .inline-flex { display: none !important; }
 
-  .print-kpi-grid .grid {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 8px !important;
-    margin-bottom: 0 !important;
-  }
-  .print-kpi-grid .grid > div {
-    padding: 8px !important;
-    min-height: 0 !important;
-  }
+  .print-kpi-grid .grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 8px !important; margin-bottom: 0 !important; }
+  .print-kpi-grid .grid > div { padding: 8px !important; min-height: 0 !important; }
 
-  .print-trend-chart {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-    margin-top: 15px !important;
-    height: 280px !important;
-  }
-  .print-trend-chart .recharts-responsive-container {
-    height: 220px !important;
-  }
+  .print-trend-chart { break-inside: avoid !important; page-break-inside: avoid !important; margin-top: 15px !important; height: 280px !important; }
+  .print-trend-chart .recharts-responsive-container { height: 220px !important; }
 
-  .print-traffic-grid {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 10px !important;
-    margin-top: 15px !important;
-    break-inside: avoid !important;
-  }
-  
-  .print-pie-grid {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr 1fr !important;
-    gap: 8px !important;
-    break-inside: avoid !important;
-    margin-top: 15px !important;
-  }
-  .print-pie-grid > div {
-    min-height: 200px !important;
-  }
-  .print-pie-grid .recharts-responsive-container {
-    height: 180px !important;
-  }
+  .print-traffic-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; margin-top: 15px !important; break-inside: avoid !important; }
 
-  .print-semrush-grid {
-    display: block !important;
-    margin-top: 20px !important;
-    break-before: page;
-  }
-  .print-semrush-grid > div {
-    margin-bottom: 15px !important;
-    break-inside: avoid;
-  }
+  .print-pie-grid { display: grid !important; grid-template-columns: 1fr 1fr 1fr !important; gap: 8px !important; break-inside: avoid !important; margin-top: 15px !important; }
+  .print-pie-grid > div { min-height: 200px !important; }
+  .print-pie-grid .recharts-responsive-container { height: 180px !important; }
 
-  .recharts-wrapper {
-    width: 100% !important;
-  }
+  .print-semrush-grid { display: block !important; margin-top: 20px !important; break-before: page; }
+  .print-semrush-grid > div { margin-bottom: 15px !important; break-inside: avoid; }
 
-  h1 { font-size: 16pt !important; color: #188BDB !important; }
+  .recharts-wrapper { width: 100% !important; }
+
+  h1 { font-size: 16pt !important; color: var(--dp-brand) !important; }
   h2 { font-size: 12pt !important; font-weight: bold !important; margin-bottom: 5px !important; }
   h3 { font-size: 10pt !important; font-weight: bold !important; color: #333 !important; }
 
-  /* Reset Dark Mode für Print */
-  html.dark body { background-color: white !important; color: black !important; }
-  html.dark .card-glass { background: white !important; border-color: #e5e7eb !important; color: black !important; }
+  /* Force light mode for print regardless of user preference */
+  html.dark body              { background-color: white !important; color: black !important; }
+  html.dark .card-glass       { background: white !important; border-color: #e5e7eb !important; color: black !important; }
   html.dark .dashboard-gradient { background: white !important; }
 }
