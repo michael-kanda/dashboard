@@ -31,10 +31,10 @@ export default function Header() {
   const [isInMaintenance, setIsInMaintenance] = useState(false);
   const [isCheckingMaintenance, setIsCheckingMaintenance] = useState(true);
   
-  // ✅ NEU: KI-Tool Berechtigung
+  // KI-Tool Berechtigung
   const [kiToolEnabled, setKiToolEnabled] = useState(true);
   
-  // ✅ NEU: Hat User Landingpages? (für Redaktionsplan-Button)
+  // Hat User Landingpages? (für Redaktionsplan-Button)
   const [hasLandingpages, setHasLandingpages] = useState(false);
   const [isCheckingLandingpages, setIsCheckingLandingpages] = useState(true);
 
@@ -79,7 +79,7 @@ export default function Header() {
     }
   }, [session, status]);
 
-  // ✅ NEU: KI-Tool Status prüfen
+  // KI-Tool Status prüfen
   useEffect(() => {
     const checkKiToolStatus = async () => {
       if (status !== 'authenticated' || !session?.user) {
@@ -87,7 +87,6 @@ export default function Header() {
         return;
       }
 
-      // SUPERADMIN hat immer Zugriff
       if (session.user.role === 'SUPERADMIN') {
         setKiToolEnabled(true);
         return;
@@ -99,7 +98,7 @@ export default function Header() {
         setKiToolEnabled(data.kiToolEnabled !== false);
       } catch (e) {
         console.error('Failed to check KI-Tool status:', e);
-        setKiToolEnabled(true); // Im Fehlerfall anzeigen
+        setKiToolEnabled(true);
       }
     };
 
@@ -108,7 +107,7 @@ export default function Header() {
     }
   }, [session, status]);
 
-  // ✅ NEU: Landingpages-Check für BENUTZER
+  // Landingpages-Check für BENUTZER
   useEffect(() => {
     const checkLandingpages = async () => {
       if (status !== 'authenticated' || !session?.user) {
@@ -117,14 +116,12 @@ export default function Header() {
         return;
       }
 
-      // Admins sehen den Button immer (sie haben ja die Redaktionspläne)
       if (session.user.role === 'ADMIN' || session.user.role === 'SUPERADMIN') {
         setIsCheckingLandingpages(false);
         setHasLandingpages(true);
         return;
       }
 
-      // Für BENUTZER: Live-Check ob Landingpages existieren
       try {
         const res = await fetch('/api/user/has-landingpages');
         const data = await res.json();
@@ -147,7 +144,7 @@ export default function Header() {
     return null;
   }
 
-  // Wartungsmodus aktiv -> Header ausblenden
+  // Wartungsmodus aktiv → Header ausblenden
   if (isInMaintenance) {
     return null;
   }
@@ -161,14 +158,12 @@ export default function Header() {
     setIsMobileMenuOpen(false);
   };
 
-  // ✅ Hilfsfunktion: Soll der KI-Tool Button angezeigt werden?
   const shouldShowKiTool = isAdmin && kiToolEnabled;
-
-  // ✅ Hilfsfunktion: Soll der Redaktionsplan Button für User angezeigt werden?
   const shouldShowRedaktionsplanForUser = isUser && hasLandingpages && !isCheckingLandingpages;
 
   return (
-    <header className="bg-white shadow-md relative">
+    // bg-surface + border-b replaces hardcoded bg-white; shadow-sm is subtler and theme-neutral
+    <header className="bg-surface border-b border-border shadow-sm relative">
       <nav className="w-full px-6 py-3 flex justify-between items-center">
 
         {/* Linke Seite: Logo und Begrüßung */}
@@ -192,11 +187,9 @@ export default function Header() {
           </Link>
 
           {status === 'authenticated' && (
-            <>
-              <span className="text-gray-600 underline underline-offset-6 hidden md:block">
-                Hallo, {session.user?.name ?? session.user?.email}
-              </span>
-            </>
+            <span className="text-muted underline underline-offset-6 hidden md:block">
+              Hallo, {session.user?.name ?? session.user?.email}
+            </span>
           )}
         </div>
 
@@ -206,7 +199,6 @@ export default function Header() {
             <>
               <NotificationBell />
               
-              {/* ADMIN: Projekte */}
               {isAdmin && (
                 <Link href="/" passHref>
                   <Button variant={pathname === '/' ? 'default' : 'outline'} className="gap-2">
@@ -216,7 +208,6 @@ export default function Header() {
                 </Link>
               )}
               
-              {/* ADMIN: Redaktionspläne (immer sichtbar für Admins) */}
               {isAdmin && (
                 <Link href="/admin/redaktionsplan" passHref>
                   <Button variant={pathname === '/admin/redaktionsplan' ? 'default' : 'outline'} className="gap-2">
@@ -226,7 +217,6 @@ export default function Header() {
                 </Link>
               )}
               
-              {/* ✅ ADMIN: KI Tool Button (nur wenn aktiviert) */}
               {shouldShowKiTool && (
                 <Link href="/admin/ki-tool" passHref>
                   <Button variant={pathname === '/admin/ki-tool' ? 'default' : 'outline'} className="gap-2">
@@ -236,7 +226,6 @@ export default function Header() {
                 </Link>
               )}
 
-              {/* ADMIN: Admin-Bereich */}
               {isAdmin && (
                 <Link href="/admin" passHref>
                   <Button variant={pathname === '/admin' ? 'default' : 'outline'} className="gap-2">
@@ -246,12 +235,11 @@ export default function Header() {
                 </Link>
               )}
 
-              {/* SUPERADMIN: System */}
               {isSuperAdmin && (
                 <Link href="/admin/system" passHref>
                   <Button 
                     variant={pathname === '/admin/system' ? 'default' : 'outline'} 
-                    className="gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                    className="gap-2 text-accent-indigo border-accent-indigo-light hover:bg-accent-indigo-light"
                     title="System Status"
                   >
                     <HddNetwork size={16} />
@@ -260,7 +248,6 @@ export default function Header() {
                 </Link>
               )}
 
-              {/* BENUTZER: Dashboard */}
               {isUser && (
                 <Link href="/" passHref>
                   <Button variant={pathname === '/' ? 'default' : 'outline'} className="gap-2">
@@ -270,7 +257,6 @@ export default function Header() {
                 </Link>
               )}
               
-              {/* ✅ BENUTZER: Redaktionsplan (nur wenn Landingpages vorhanden) */}
               {shouldShowRedaktionsplanForUser && (
                 <Link href="/dashboard/freigabe" passHref>
                   <Button variant={pathname === '/dashboard/freigabe' ? 'default' : 'outline'} className="gap-2">
@@ -302,7 +288,7 @@ export default function Header() {
           
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="text-gray-600 hover:text-gray-900 p-2 ml-2"
+            className="text-muted hover:text-heading p-2 ml-2 transition-colors"
             aria-label="Menü umschalten"
           >
             {isMobileMenuOpen ? <X size={28} /> : <List size={28} />}
@@ -313,7 +299,7 @@ export default function Header() {
       {/* Mobiles Dropdown-Menü */}
       {isMobileMenuOpen && status === 'authenticated' && (
         <div 
-          className="md:hidden absolute top-full left-0 w-full bg-white shadow-lg border-t border-gray-100 z-50"
+          className="md:hidden absolute top-full left-0 w-full bg-surface shadow-lg border-t border-border-subtle z-50"
           onClick={handleLinkClick}
         >
           <div className="flex flex-col space-y-2 p-4">
@@ -333,7 +319,6 @@ export default function Header() {
                   </Button>
                 </Link>
 
-                {/* ✅ KI Tool Button (Mobil) - nur wenn aktiviert */}
                 {shouldShowKiTool && (
                   <Link href="/admin/ki-tool" passHref>
                     <Button variant={pathname === '/admin/ki-tool' ? 'default' : 'outline'} className="w-full justify-start gap-2">
@@ -350,10 +335,12 @@ export default function Header() {
                   </Button>
                 </Link>
 
-                {/* Mobile Link für Superadmin */}
                 {isSuperAdmin && (
                   <Link href="/admin/system" passHref>
-                    <Button variant={pathname === '/admin/system' ? 'default' : 'outline'} className="w-full justify-start gap-2 text-indigo-600 border-indigo-200 bg-indigo-50">
+                    <Button
+                      variant={pathname === '/admin/system' ? 'default' : 'outline'}
+                      className="w-full justify-start gap-2 text-accent-indigo border-accent-indigo-light bg-accent-indigo-light"
+                    >
                       <HddNetwork size={16} />
                       System Status
                     </Button>
@@ -371,7 +358,6 @@ export default function Header() {
                   </Button>
                 </Link>
                 
-                {/* ✅ Redaktionsplan für User (Mobil) - nur wenn Landingpages vorhanden */}
                 {shouldShowRedaktionsplanForUser && (
                   <Link href="/dashboard/freigabe" passHref>
                     <Button variant={pathname === '/dashboard/freigabe' ? 'default' : 'outline'} className="w-full justify-start gap-2">
@@ -383,9 +369,13 @@ export default function Header() {
               </>
             )}
             
-            <hr className="my-2" />
+            <hr className="my-2 border-border" />
 
-            <Button variant="outline" className="w-full justify-start gap-2" onClick={() => signOut({ callbackUrl: '/login' })}>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={() => signOut({ callbackUrl: '/login' })}
+            >
               <BoxArrowRight size={16} />
               Abmelden
             </Button>
