@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* ═══════════════════════════════════════════════════════════
    DATAPEAK DESIGN TOKENS
@@ -180,20 +179,29 @@
     color: var(--dp-chart-tooltip-text) !important;
   }
 
-  /* 4. Prompt Tracking Custom Styles */
+  /* 4. Prompt Tracking Custom Styles (Ohne @apply für v4 Kompatibilität) */
   .prompt-pill {
-    @apply inline-flex items-center min-h-[20px] px-2 rounded-full border text-[11px] leading-tight font-bold tracking-normal;
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 0 0.5rem;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    font-size: 11px;
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: 0;
   }
   
   /* Helles Theme Pills */
-  .prompt-pill-purple { @apply bg-purple-100 border-purple-500 text-purple-800; }
-  .prompt-pill-slate { @apply bg-slate-200 border-slate-500 text-slate-700; }
-  .prompt-pill-blue { @apply bg-blue-100 border-blue-400 text-blue-700; }
+  .prompt-pill-purple { background-color: #f3e8ff; border-color: #a855f7; color: #6b21a8; }
+  .prompt-pill-slate { background-color: #e2e8f0; border-color: #64748b; color: #334155; }
+  .prompt-pill-blue { background-color: #dbeafe; border-color: #60a5fa; color: #1d4ed8; }
   
-  /* Dunkles Theme Pills (wird in Next.js mit dark: gehandhabt, aber wir belassen es für dein spezielles CSS) */
-  .dark .prompt-pill-purple { background: rgba(88, 28, 135, 0.45); border-color: rgba(168, 85, 247, 0.65); color: #d8b4fe; }
-  .dark .prompt-pill-slate { background: rgba(51, 65, 85, 0.8); border-color: #64748b; color: #cbd5e1; }
-  .dark .prompt-pill-blue { background: rgba(30, 58, 138, 0.45); border-color: rgba(96, 165, 250, 0.65); color: #93c5fd; }
+  /* Dunkles Theme Pills */
+  .dark .prompt-pill-purple { background-color: rgba(88, 28, 135, 0.45); border-color: rgba(168, 85, 247, 0.65); color: #d8b4fe; }
+  .dark .prompt-pill-slate { background-color: rgba(51, 65, 85, 0.8); border-color: #64748b; color: #cbd5e1; }
+  .dark .prompt-pill-blue { background-color: rgba(30, 58, 138, 0.45); border-color: rgba(96, 165, 250, 0.65); color: #93c5fd; }
 }
 
 /* ═══════════════════════════════════════════════════════════
