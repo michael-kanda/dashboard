@@ -142,7 +142,7 @@ const IntentCard: React.FC<{
   conversionRate: number; avgEngagementTime: number; engagementRate: number;
   percentage: number; topPages: Array<{ path: string; sessions: number }>;
 }> = ({ intent, sessions, conversions, conversionRate, avgEngagementTime, engagementRate, percentage, topPages }) => (
-  <div className="p-4 rounded-xl border border-theme-border-subtle hover:border-purple-200 hover:shadow-md transition-all bg-surface"
+  <div className="p-4 rounded-xl border border-border-subtle hover:border-purple-200 hover:shadow-md transition-all bg-surface"
     style={{ borderLeftColor: intent.color, borderLeftWidth: '4px' }}>
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-2">
@@ -167,7 +167,7 @@ const IntentCard: React.FC<{
           {engagementRate.toFixed(1)}%</div></div>
     </div>
     {topPages.length > 0 && (
-      <div className="pt-3 border-t border-theme-border-subtle">
+      <div className="pt-3 border-t border-border-subtle">
         <div className="text-xs font-semibold text-muted mb-2">Top Seiten</div>
         <div className="space-y-1">
           {topPages.slice(0, 3).map((page, i) => (
@@ -189,7 +189,7 @@ const JourneyFlowCard: React.FC<{
   engagementRate: number; avgSessionDuration: number;
   nextPages: Array<{ path: string; sessions: number; percentage: number }>;
 }> = ({ landingPage, totalSessions, conversionRate, engagementRate, avgSessionDuration, nextPages }) => (
-  <div className="p-4 rounded-xl border border-theme-border-subtle bg-surface hover:shadow-md transition-all">
+  <div className="p-4 rounded-xl border border-border-subtle bg-surface hover:shadow-md transition-all">
     <div className="flex items-start justify-between mb-3">
       <div className="flex-1 min-w-0">
         <div className="text-xs text-muted mb-1">Einstiegsseite</div>
@@ -219,7 +219,7 @@ const JourneyFlowCard: React.FC<{
       </div>
     </div>
     {nextPages.length > 0 && (
-      <div className="pt-3 border-t border-theme-border-subtle">
+      <div className="pt-3 border-t border-border-subtle">
         <div className="text-xs font-semibold text-muted mb-2 flex items-center gap-1">
           <ArrowRight size={10} />Nächste Seiten</div>
         <div className="space-y-2">
@@ -289,7 +289,7 @@ export default function AiTrafficDetailCardV2({
 
   // LOADING
   if (isLoading) return (
-    <div className={cn("bg-surface rounded-2xl border border-theme-border-default shadow-sm overflow-hidden", className)}>
+    <div className={cn("bg-surface rounded-2xl border border-border shadow-sm overflow-hidden", className)}>
       <div className="p-6 animate-pulse">
         <div className="h-8 bg-surface-tertiary rounded w-1/3 mb-6" />
         <div className="grid grid-cols-6 gap-4 mb-6">{[...Array(6)].map((_, i) => <div key={i} className="h-24 bg-surface-secondary rounded-xl" />)}</div>
@@ -300,7 +300,7 @@ export default function AiTrafficDetailCardV2({
 
   // ERROR
   if (error) return (
-    <div className={cn("bg-surface rounded-2xl border border-theme-border-default shadow-sm p-6", className)}>
+    <div className={cn("bg-surface rounded-2xl border border-border shadow-sm p-6", className)}>
       <div className="flex flex-col items-center justify-center text-center py-8">
         <AlertTriangle className="text-red-500 w-12 h-12 mb-4" />
         <h3 className="text-lg font-semibold text-heading mb-2">Fehler beim Laden</h3>
@@ -312,9 +312,9 @@ export default function AiTrafficDetailCardV2({
 
   // EMPTY
   if (!data || data.totalSessions === 0) return (
-    <div className={cn("bg-surface rounded-2xl border border-theme-border-default shadow-sm p-6", className)}>
+    <div className={cn("bg-surface rounded-2xl border border-border shadow-sm p-6", className)}>
       <div className="flex flex-col items-center justify-center text-center py-12">
-        <div className="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mb-4"><Bot className="text-purple-400" size={32} /></div>
+        <div className="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-4"><Bot className="text-purple-400" size={32} /></div>
         <h3 className="text-lg font-semibold text-heading mb-2">Keine KI-Traffic Daten</h3>
         <p className="text-sm text-muted max-w-md">Im ausgewählten Zeitraum wurden keine Besuche von KI-Plattformen erfasst.</p>
       </div>
@@ -323,10 +323,10 @@ export default function AiTrafficDetailCardV2({
 
   // MAIN RENDER
   return (
-    <div className={cn("bg-surface rounded-2xl border border-theme-border-default shadow-sm overflow-hidden", className)}>
+    <div className={cn("bg-surface rounded-2xl border border-border shadow-sm overflow-hidden", className)}>
       
       {/* HEADER */}
-      <div className="px-6 pt-6 pb-4 border-b border-theme-border-subtle">
+      <div className="px-6 pt-6 pb-4 border-b border-border-subtle">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
@@ -338,7 +338,7 @@ export default function AiTrafficDetailCardV2({
             {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}</button>
         </div>
         <div className="flex items-center gap-3 text-xs">
-          <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded font-semibold">GA4</span>
+          <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded font-semibold">GA4</span>
           <span className="text-faint">•</span>
           <span className="text-muted">{formattedDateRange}</span>
           {onRefresh && <><span className="text-faint">•</span>
@@ -350,48 +350,48 @@ export default function AiTrafficDetailCardV2({
       {isExpanded && (
         <>
           {/* KPI GRID */}
-          <div className="px-6 py-5 bg-gradient-to-b from-gray-50/50 to-white">
+          <div className="px-6 py-5 bg-surface-secondary dark:bg-surface-tertiary">
             <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-              <div className="bg-purple-50 rounded-xl p-4 border border-purple-100/50">
+              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border border-purple-200/60 dark:border-purple-700/30">
                 <div className="flex items-center gap-2 mb-1"><TrendingUp className="text-purple-600" size={16} />
-                  <span className="text-xs font-medium text-purple-700">Sessions</span></div>
+                  <span className="text-xs font-medium text-purple-700 dark:text-purple-300">Sessions</span></div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-purple-900">{data.totalSessions.toLocaleString('de-DE')}</span>
+                  <span className="text-2xl font-bold text-purple-900 dark:text-purple-100">{data.totalSessions.toLocaleString('de-DE')}</span>
                   {data.totalSessionsChange !== undefined && <span className={cn("text-xs font-semibold", data.totalSessionsChange >= 0 ? "text-green-600" : "text-red-600")}>
                     {data.totalSessionsChange >= 0 ? '+' : ''}{data.totalSessionsChange.toFixed(1)}%</span>}
                 </div>
               </div>
-              <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100/50">
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-200/60 dark:border-indigo-700/30">
                 <div className="flex items-center gap-2 mb-1"><Users className="text-indigo-600" size={16} />
-                  <span className="text-xs font-medium text-indigo-700">Nutzer</span></div>
-                <span className="text-2xl font-bold text-indigo-900">{data.totalUsers.toLocaleString('de-DE')}</span>
+                  <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">Nutzer</span></div>
+                <span className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">{data.totalUsers.toLocaleString('de-DE')}</span>
               </div>
-              <div className="bg-teal-50 rounded-xl p-4 border border-teal-100/50">
+              <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-4 border border-teal-200/60 dark:border-teal-700/30">
                 <div className="flex items-center gap-2 mb-1"><Clock className="text-teal-600" size={16} />
-                  <span className="text-xs font-medium text-teal-700">Ø Verweildauer</span></div>
-                <span className="text-2xl font-bold text-teal-900">{formatDuration(data.avgEngagementTime)}</span>
+                  <span className="text-xs font-medium text-teal-700 dark:text-teal-300">Ø Verweildauer</span></div>
+                <span className="text-2xl font-bold text-teal-900 dark:text-teal-100">{formatDuration(data.avgEngagementTime)}</span>
               </div>
-              <div className="bg-rose-50 rounded-xl p-4 border border-rose-100/50">
+              <div className="bg-rose-50 dark:bg-rose-900/20 rounded-xl p-4 border border-rose-200/60 dark:border-rose-700/30">
                 <div className="flex items-center gap-2 mb-1"><Activity className="text-rose-600" size={16} />
-                  <span className="text-xs font-medium text-rose-700">Interaktionsrate</span></div>
+                  <span className="text-xs font-medium text-rose-700 dark:text-rose-300">Interaktionsrate</span></div>
                 <span className={cn("text-2xl font-bold", data.engagementRate > 60 ? "text-green-600" : data.engagementRate > 40 ? "text-amber-600" : "text-rose-900")}>
                   {data.engagementRate.toFixed(1)}%</span>
               </div>
-              <div className="bg-amber-50 rounded-xl p-4 border border-amber-100/50">
+              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200/60 dark:border-amber-700/30">
                 <div className="flex items-center gap-2 mb-1"><Target className="text-amber-600" size={16} />
-                  <span className="text-xs font-medium text-amber-700">Conversions</span></div>
-                <span className="text-2xl font-bold text-amber-900">{data.conversions.toLocaleString('de-DE')}</span>
+                  <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Conversions</span></div>
+                <span className="text-2xl font-bold text-amber-900 dark:text-amber-100">{data.conversions.toLocaleString('de-DE')}</span>
               </div>
-              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100/50">
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200/60 dark:border-blue-700/30">
                 <div className="flex items-center gap-2 mb-1"><BarChart3 className="text-blue-600" size={16} />
-                  <span className="text-xs font-medium text-blue-700">Ø Seiten/Session</span></div>
-                <span className="text-2xl font-bold text-blue-900">{data.userJourney.avgPagesPerSession.toFixed(1)}</span>
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Ø Seiten/Session</span></div>
+                <span className="text-2xl font-bold text-blue-900 dark:text-blue-100">{data.userJourney.avgPagesPerSession.toFixed(1)}</span>
               </div>
             </div>
           </div>
 
           {/* TABS */}
-          <div className="px-6 py-3 border-b border-theme-border-subtle flex items-center gap-2 overflow-x-auto">
+          <div className="px-6 py-3 border-b border-border-subtle flex items-center gap-2 overflow-x-auto">
             <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<BarChart3 size={14} />} label="Übersicht" />
             <TabButton active={activeTab === 'intent'} onClick={() => setActiveTab('intent')} icon={<Target size={14} />} label="Intent-Analyse" />
             <TabButton active={activeTab === 'journey'} onClick={() => setActiveTab('journey')} icon={<Waypoints size={14} />} label="User-Journey" />
@@ -414,10 +414,10 @@ export default function AiTrafficDetailCardV2({
                         <defs><linearGradient id="aiGradV2" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
                           <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05} /></linearGradient></defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="dateFormatted" tick={{ fontSize: 10, fill: '#6b7280' }} />
-                        <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} width={40} />
-                        <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--dp-chart-grid)" />
+                        <XAxis dataKey="dateFormatted" tick={{ fontSize: 10, fill: 'var(--dp-chart-text)' }} />
+                        <YAxis tick={{ fontSize: 10, fill: 'var(--dp-chart-text)' }} width={40} />
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--dp-chart-tooltip-bg)', border: '1px solid var(--dp-chart-tooltip-border)', borderRadius: '8px', fontSize: '12px', color: 'var(--dp-chart-tooltip-text)' }} />
                         <Area type="monotone" dataKey="sessions" stroke="#8b5cf6" strokeWidth={2} fill="url(#aiGradV2)" />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -429,10 +429,10 @@ export default function AiTrafficDetailCardV2({
                   <div className="h-48">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sourceChartData} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 10, fill: '#6b7280' }} />
-                        <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: '#374151' }} width={80} />
-                        <Tooltip />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--dp-chart-grid)" horizontal={false} />
+                        <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--dp-chart-text)' }} />
+                        <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }} width={80} />
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--dp-chart-tooltip-bg)', color: 'var(--dp-chart-tooltip-text)', borderRadius: '8px', border: '1px solid var(--dp-chart-tooltip-border)' }} />
                         <Bar dataKey="sessions" radius={[0, 4, 4, 0]}>
                           {sourceChartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                         </Bar>
@@ -445,7 +445,7 @@ export default function AiTrafficDetailCardV2({
                     <Target size={14} className="text-purple-500" />Intent-Verteilung</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                     {data.intentBreakdown.map((item, i) => (
-                      <div key={i} className="p-3 rounded-lg border border-theme-border-subtle hover:border-purple-200 transition-all cursor-pointer"
+                      <div key={i} className="p-3 rounded-lg border border-border-subtle hover:border-purple-200 transition-all cursor-pointer"
                         style={{ borderLeftColor: item.intent.color, borderLeftWidth: '3px' }}
                         onClick={() => { setSelectedIntent(item.intent.key); setActiveTab('pages'); }}>
                         <div className="flex items-center gap-1.5 mb-1">
@@ -531,13 +531,13 @@ export default function AiTrafficDetailCardV2({
                 <div className="flex flex-wrap items-center gap-3 mb-4">
                   <div className="relative flex-1 min-w-[200px] max-w-[300px]">
                     <input type="text" placeholder="Seite suchen..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-9 pr-8 py-2 text-sm border border-theme-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
+                      className="w-full pl-9 pr-8 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500" />
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" size={14} />
                     {searchTerm && <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-faint hover:text-secondary">
                       <XCircle size={16} /></button>}
                   </div>
                   <select value={selectedIntent || ''} onChange={(e) => setSelectedIntent(e.target.value || null)}
-                    className="px-3 py-2 text-sm border border-theme-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20">
+                    className="px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20">
                     <option value="">Alle Intents</option>
                     {data.intentBreakdown.map(item => (
                       <option key={item.intent.key} value={item.intent.key}>{item.intent.label} ({item.sessions})</option>
@@ -562,7 +562,7 @@ export default function AiTrafficDetailCardV2({
                     </thead>
                     <tbody>
                       {filteredPages.slice(0, 50).map((page, i) => (
-                        <tr key={i} className="border-b border-theme-border-subtle hover:bg-purple-50/50">
+                        <tr key={i} className="border-b border-border-subtle hover:bg-surface-tertiary">
                           <td className="px-4 py-3">
                             <div className="text-sm font-medium text-heading truncate max-w-[300px]" title={page.path}>
                               {page.path === '/' ? '/ (Startseite)' : page.path}</div>
@@ -601,16 +601,16 @@ export default function AiTrafficDetailCardV2({
             {/* SOURCES TAB */}
             {activeTab === 'sources' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-surface-secondary rounded-xl p-5 border border-theme-border-subtle">
+                <div className="bg-surface-secondary rounded-xl p-5 border border-border-subtle">
                   <h3 className="text-sm font-semibold text-strong mb-4 flex items-center gap-2">
                     <BarChart3 size={14} className="text-purple-500" />Verteilung der KI-Quellen</h3>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sourceChartData} layout="vertical" margin={{ left: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 10, fill: '#6b7280' }} />
-                        <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: '#374151', fontWeight: 500 }} width={100} />
-                        <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--dp-chart-grid)" horizontal={false} />
+                        <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--dp-chart-text)' }} />
+                        <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: 'var(--dp-chart-text)', fontWeight: 500 }} width={100} />
+                        <Tooltip cursor={{ fill: 'rgba(128,128,128,0.08)' }} contentStyle={{ backgroundColor: 'var(--dp-chart-tooltip-bg)', color: 'var(--dp-chart-tooltip-text)', borderRadius: '8px', border: '1px solid var(--dp-chart-tooltip-border)', boxShadow: 'var(--dp-shadow-card)' }} />
                         <Bar dataKey="sessions" radius={[0, 4, 4, 0]} barSize={20}>
                           {sourceChartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                         </Bar>
@@ -621,7 +621,7 @@ export default function AiTrafficDetailCardV2({
                 <div>
                   <h3 className="text-sm font-semibold text-strong mb-3 flex items-center gap-2">
                     <Sparkles size={14} className="text-amber-500" />Performance nach Plattform</h3>
-                  <div className="overflow-hidden rounded-xl border border-theme-border-subtle">
+                  <div className="overflow-hidden rounded-xl border border-border-subtle">
                     <table className="w-full">
                       <thead className="bg-surface-secondary text-xs text-muted">
                         <tr>
@@ -631,9 +631,9 @@ export default function AiTrafficDetailCardV2({
                           <th className="px-4 py-2 text-right font-medium">Interaktionsrate</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-theme-border-subtle">
+                      <tbody className="divide-y divide-border-subtle">
                         {sourceChartData.map((source, i) => (
-                          <tr key={i} className="hover:bg-purple-50/30 transition-colors">
+                          <tr key={i} className="hover:bg-surface-tertiary transition-colors">
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: source.fill }} />
@@ -657,7 +657,7 @@ export default function AiTrafficDetailCardV2({
           </div>
 
           {/* FOOTER */}
-          <div className="px-6 py-4 bg-surface-secondary border-t border-theme-border-subtle">
+          <div className="px-6 py-4 bg-surface-secondary border-t border-border-subtle">
             <div className="flex items-start gap-2 text-xs text-muted">
               <Info size={14} className="text-faint mt-0.5 shrink-0" />
               <p><strong>Intent-Kategorisierung:</strong> Seiten werden automatisch anhand ihrer URL-Struktur kategorisiert.
