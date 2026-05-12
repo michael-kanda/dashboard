@@ -4,7 +4,6 @@
 import React, { useState, useCallback } from 'react';
 import { ConvertingPageData } from '@/lib/dashboard-shared';
 import {
-  FileEarmarkText,
   Search,
   TagFill,
   ChevronDown,
@@ -76,7 +75,7 @@ export default function LandingPageChart({
       default: start = subDays(end, 30);
     }
 
-    return `${format(start, 'dd.MM.yyyy', { locale: de })} - ${format(end, 'dd.MM.yyyy', { locale: de })}`;
+    return `${format(start, 'dd.MM.yyyy', { locale: de })} – ${format(end, 'dd.MM.yyyy', { locale: de })}`;
   };
 
   const toggleExpanded = (path: string) => {
@@ -183,19 +182,12 @@ export default function LandingPageChart({
 
   return (
     <>
-      <div className="bg-surface p-4 rounded-xl border border-theme-border-subtle shadow-sm flex flex-col max-h-[75vh]">
+      <div className="bg-surface p-5 rounded-xl border border-theme-border-subtle shadow-sm flex flex-col max-h-[75vh]">
 
-        {/* Header Bereich */}
-        <div className="mb-4 flex-shrink-0 border-b border-theme-border-subtle pb-2">
-
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-baseline gap-3">
-              <h3 className="text-[18px] font-semibold text-heading flex items-center gap-2">
-                <FileEarmarkText className="text-indigo-500" size={18} />
-                {title}
-              </h3>
-              <span className="text-xs text-faint">Sortiert nach Neuen Nutzern</span>
-            </div>
+        {/* ── Header ──────────────────────────────────────────── */}
+        <div className="mb-4 flex-shrink-0">
+          <div className="flex items-start justify-between gap-4 mb-1.5">
+            <h3 className="text-[18px] font-semibold text-heading">{title}</h3>
 
             <div className="relative">
               <input
@@ -203,191 +195,173 @@ export default function LandingPageChart({
                 placeholder="Seite oder Suchbegriff..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 pr-3 py-1 text-sm border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint"
+                className="pl-8 pr-3 py-1.5 text-sm border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint bg-surface"
               />
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
             </div>
           </div>
 
-          <div className="ml-7 flex flex-wrap items-center justify-between gap-4 mt-1">
-            <div className="text-[11px] text-muted flex items-center gap-2">
-              <span className="font-medium bg-surface-tertiary px-1.5 py-0.5 rounded text-secondary">Quelle: GA4 + GSC</span>
-              <span className="text-faint">•</span>
-              <span>{formattedDateRange}</span>
-              {queryData && (
-                <>
-                  <span className="text-faint">•</span>
-                  <span className="text-indigo-500 flex items-center gap-1">
-                    <TagFill size={10} />
-                    Mit Suchbegriffen
-                  </span>
-                </>
-              )}
-            </div>
-
-            <div className="flex items-center gap-x-4">
-              <span className="text-[10px] text-muted flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-sky-500"></span>
-                Sessions
-              </span>
-              <span className="text-[10px] text-muted flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                Interaktionsrate
-              </span>
-              <span className="text-[10px] text-muted flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                CTR (GSC)
-              </span>
-              <span className="text-[10px] text-muted flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                Conversions
-              </span>
-            </div>
-          </div>
+          <p className="text-xs text-muted">
+            Sortiert nach Neuen Nutzern · Quelle GA4 + GSC · {formattedDateRange}
+            {queryData && ' · Mit Suchbegriffen'}
+          </p>
         </div>
 
-        {/* Liste */}
+        {/* ── Liste ───────────────────────────────────────────── */}
         {sortedData.length === 0 ? (
           <div className="flex-1 flex items-center justify-center text-faint text-sm min-h-[200px]">
             {searchTerm ? 'Keine Landingpages für diese Suche gefunden' : 'Keine validen Daten'}
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-0">
-            <div className="space-y-1">
-              {sortedData.map((page, i) => {
-                const newUsers = page.newUsers || 0;
-                const sessions = page.sessions || 0;
-                const engagementRate = page.engagementRate || 0;
-                const conversions = page.conversions || 0;
-                const ctr = page.ctr;
+          <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar min-h-0">
+            {sortedData.map((page, i) => {
+              const newUsers = page.newUsers || 0;
+              const sessions = page.sessions || 0;
+              const engagementRate = page.engagementRate || 0;
+              const conversions = page.conversions || 0;
+              const ctr = page.ctr;
 
-                const barWidthPercent = maxNewUsers > 0
-                  ? Math.max((newUsers / maxNewUsers) * 60, 2)
-                  : 2;
+              const barWidthPercent = maxNewUsers > 0
+                ? Math.max((newUsers / maxNewUsers) * 100, 2)
+                : 2;
 
-                const queries = getQueriesForPath(page.path);
-                const hasQueries = queries.length > 0;
-                const isExpanded = expandedPaths.has(page.path);
+              const queries = getQueriesForPath(page.path);
+              const hasQueries = queries.length > 0;
+              const isExpanded = expandedPaths.has(page.path);
 
-                const inlineQueries = queries.slice(0, 3);
-                const additionalQueries = queries.slice(3);
+              const inlineQueries = queries.slice(0, 3);
+              const additionalQueries = queries.slice(3);
 
-                return (
-                  <div key={i} className="group">
-                    <div
-                      className={`flex items-center gap-3 py-2 hover:bg-surface-secondary rounded-lg px-2 transition-colors ${hasQueries ? 'cursor-pointer' : ''}`}
-                      onClick={() => hasQueries && toggleExpanded(page.path)}
-                    >
+              return (
+                <div
+                  key={i}
+                  className="py-3.5 border-t border-theme-border-subtle first:border-t-0 group"
+                >
+                  {/* Pfad + Hero-Metrik */}
+                  <div className="flex items-start justify-between gap-4 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <div
+                        className={`text-[15px] font-medium text-strong truncate mb-1 ${hasQueries ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}
+                        onClick={() => hasQueries && toggleExpanded(page.path)}
+                        title={page.path}
+                      >
+                        {page.path}
+                      </div>
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="text-[15px] font-medium text-strong truncate" title={page.path}>
-                            {page.path}
-                          </div>
-                          {hasQueries && (
-                            <span className="text-faint flex-shrink-0">
-                              {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                            </span>
+                      {hasQueries ? (
+                        <div className="text-xs text-muted flex items-center gap-1.5 min-w-0">
+                          <TagFill size={10} className="text-faint flex-shrink-0" />
+                          <span className="truncate">
+                            {inlineQueries.map(q => q.query).join(' · ')}
+                          </span>
+                          {additionalQueries.length > 0 && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpanded(page.path);
+                              }}
+                              className="text-faint hover:text-body flex-shrink-0 ml-1 inline-flex items-center gap-0.5"
+                            >
+                              +{additionalQueries.length} mehr
+                              {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                            </button>
                           )}
                         </div>
-
-                        {hasQueries && (
-                          <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-                            <TagFill size={10} className="text-indigo-400 flex-shrink-0" />
-                            {inlineQueries.map((q, qi) => (
-                              <span
-                                key={qi}
-                                className="inline-flex items-center text-[11px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded"
-                                title={`${q.clicks} Klicks, ${q.impressions} Impressionen`}
-                              >
-                                {q.query}
-                                {q.clicks > 0 && (
-                                  <span className="ml-1 text-[9px] text-indigo-400">({q.clicks})</span>
-                                )}
-                              </span>
-                            ))}
-                            {additionalQueries.length > 0 && !isExpanded && (
-                              <span className="text-[10px] text-faint">
-                                +{additionalQueries.length} weitere
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        <div className="h-1.5 bg-surface-tertiary rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                            style={{ width: `${barWidthPercent}%` }}
-                          />
+                      ) : (
+                        <div className="text-xs text-faint italic">
+                          Keine GSC-Suchbegriffe verfügbar
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <div className="bg-emerald-500 text-white px-3 py-1.5 rounded-md text-[12px] font-semibold whitespace-nowrap min-w-[140px] text-center shadow-sm">
-                          {newUsers.toLocaleString()} Neue Besucher
-                        </div>
-                        <div className="bg-sky-500 text-white px-2 py-1.5 rounded-md text-[11px] font-medium whitespace-nowrap min-w-[75px] text-center shadow-sm">
-                          {sessions.toLocaleString()} Sess.
-                        </div>
-                        <div className="bg-teal-500 text-white px-2 py-1.5 rounded-md text-[11px] font-medium whitespace-nowrap min-w-[70px] text-center shadow-sm">
-                          {engagementRate.toFixed(0)}% Rate
-                        </div>
-                        <div className="bg-amber-500 text-white px-2 py-1.5 rounded-md text-[11px] font-medium whitespace-nowrap min-w-[65px] text-center shadow-sm">
-                          {ctr !== undefined ? `${ctr.toFixed(1)}% CTR` : '– CTR'}
-                        </div>
-                        <div className="bg-slate-400 text-white px-2 py-1.5 rounded-md text-[11px] font-medium whitespace-nowrap min-w-[65px] text-center shadow-sm">
-                          {conversions} Conv.
-                        </div>
-
-                        {projectId && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              loadFollowUpPaths(page.path);
-                            }}
-                            className="bg-violet-500 hover:bg-violet-600 text-white px-2 py-1.5 rounded-md text-[11px] font-medium whitespace-nowrap flex items-center gap-1 shadow-sm transition-colors"
-                            title="Folgepfade anzeigen"
-                          >
-                            <Diagram3Fill size={12} />
-                            Details
-                          </button>
-                        )}
-                      </div>
+                      )}
                     </div>
 
-                    {isExpanded && additionalQueries.length > 0 && (
-                      <div className="ml-4 pl-4 border-l-2 border-indigo-100 py-2 mb-2">
-                        <div className="text-[10px] text-muted mb-1.5">Weitere Suchbegriffe:</div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {additionalQueries.map((q, qi) => (
-                            <span
-                              key={qi}
-                              className="inline-flex items-center text-[11px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded"
-                              title={`${q.clicks} Klicks, ${q.impressions} Impressionen`}
-                            >
-                              {q.query}
-                              {q.clicks > 0 && (
-                                <span className="ml-1 text-[9px] text-indigo-400">({q.clicks})</span>
-                              )}
-                            </span>
-                          ))}
-                        </div>
+                    <div className="text-right flex-shrink-0 min-w-[88px]">
+                      <div className="text-[22px] font-semibold text-heading leading-none">
+                        {newUsers.toLocaleString('de-DE')}
                       </div>
+                      <div className="text-[11px] text-faint mt-1">Neue Nutzer</div>
+                    </div>
+                  </div>
+
+                  {/* Bar */}
+                  <div className="h-[3px] bg-surface-tertiary rounded-full overflow-hidden mb-2.5">
+                    <div
+                      className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                      style={{ width: `${barWidthPercent}%` }}
+                    />
+                  </div>
+
+                  {/* Sekundär-Metriken + Action */}
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="text-xs text-muted flex flex-wrap gap-x-3.5 gap-y-1">
+                      <span>
+                        <span className="text-faint">Sessions</span>{' '}
+                        <span className="text-strong font-medium">{sessions.toLocaleString('de-DE')}</span>
+                      </span>
+                      <span>
+                        <span className="text-faint">Rate</span>{' '}
+                        <span className="text-strong font-medium">{engagementRate.toFixed(0)}%</span>
+                      </span>
+                      <span>
+                        <span className="text-faint">CTR</span>{' '}
+                        {ctr !== undefined ? (
+                          <span className="text-strong font-medium">{ctr.toFixed(1)}%</span>
+                        ) : (
+                          <span className="text-faint">—</span>
+                        )}
+                      </span>
+                      <span>
+                        <span className="text-faint">Conv</span>{' '}
+                        <span className="text-strong font-medium">{conversions}</span>
+                      </span>
+                    </div>
+
+                    {projectId && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          loadFollowUpPaths(page.path);
+                        }}
+                        className="px-2.5 py-1 text-xs font-medium text-body border border-theme-border-default rounded-md hover:bg-surface-secondary hover:border-theme-border-strong transition-colors flex items-center gap-1.5"
+                        title="Folgepfade anzeigen"
+                      >
+                        Folgepfade
+                        <ArrowRight size={11} />
+                      </button>
                     )}
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* Expanded: weitere Suchbegriffe */}
+                  {isExpanded && additionalQueries.length > 0 && (
+                    <div className="ml-3 mt-3 pl-3 border-l-2 border-theme-border-subtle">
+                      <div className="text-[10px] text-faint mb-1.5 uppercase tracking-wider font-medium">Weitere Suchbegriffe</div>
+                      <div className="text-xs text-body flex flex-wrap gap-x-3 gap-y-1">
+                        {additionalQueries.map((q, qi) => (
+                          <span
+                            key={qi}
+                            title={`${q.clicks} Klicks, ${q.impressions} Impressionen`}
+                            className="inline-flex items-center"
+                          >
+                            <span>{q.query}</span>
+                            {q.clicks > 0 && (
+                              <span className="ml-1 text-[10px] text-faint">({q.clicks})</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* --- NEU: Folgepfade Modal / Lightbox --- */}
+      {/* ── Folgepfade Modal / Lightbox ─────────────────────── */}
       {showFollowUpDetail && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center overlay-backdrop backdrop-blur-sm p-4 sm:p-6 animate-in fade-in duration-200"
           onClick={(e) => {
-            // Schließt das Modal, wenn man auf den abgedunkelten Hintergrund klickt
             if (e.target === e.currentTarget) closeFollowUpDetail();
           }}
         >
