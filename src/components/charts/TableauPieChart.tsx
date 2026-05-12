@@ -116,9 +116,9 @@ const CustomTooltip = ({ active, payload, totalValue }: CustomTooltipProps) => {
     const color = payload[0].fill || data.fill;
 
     return (
-      <div className="bg-surface px-3 py-2 rounded-lg shadow-xl border border-theme-border-default min-w-[160px]">
+      <div className="bg-surface px-3 py-2 rounded-lg shadow-xl border border-border min-w-[160px]">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-theme-border-subtle">
+        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border-subtle">
           <div 
             className="w-2.5 h-2.5 rounded-full shadow-sm" 
             style={{ backgroundColor: color }}
@@ -139,7 +139,7 @@ const CustomTooltip = ({ active, payload, totalValue }: CustomTooltipProps) => {
         </div>
 
         {/* Footer Bereich für Extra Metrics */}
-        <div className="mt-2 pt-2 border-t border-theme-border-subtle bg-surface-secondary -mx-3 px-3 py-1 space-y-1.5">
+        <div className="mt-2 pt-2 border-t border-border-subtle bg-surface-secondary -mx-3 px-3 py-1 space-y-1.5">
           
           {/* 1. Interaktionsrate */}
           {data.subValue && (
@@ -234,7 +234,7 @@ export default function TableauPieChart({
 
   if (isLoading) {
     return (
-      <div className={cn('bg-surface rounded-lg shadow-sm border border-theme-border-default p-6 flex flex-col h-[350px] animate-pulse', className)}>
+      <div className={cn('bg-surface rounded-lg shadow-sm border border-border p-6 flex flex-col h-[350px] animate-pulse', className)}>
         <div className="h-6 bg-surface-tertiary rounded w-1/3 mb-4"></div>
         <div className="flex-grow flex items-center justify-center">
           <div className="w-48 h-48 bg-surface-tertiary rounded-full"></div>
@@ -245,7 +245,7 @@ export default function TableauPieChart({
 
   if (error) {
      return (
-      <div className={cn('bg-surface rounded-lg shadow-sm border border-theme-border-default p-6 flex flex-col h-[350px]', className)}>
+      <div className={cn('bg-surface rounded-lg shadow-sm border border-border p-6 flex flex-col h-[350px]', className)}>
         <h3 className="text-lg font-semibold text-heading mb-4">{title}</h3>
         <div className="flex-grow flex flex-col items-center justify-center text-red-500 gap-2">
           <ExclamationTriangleFill size={24} />
@@ -257,7 +257,7 @@ export default function TableauPieChart({
 
   if (!chartData || chartData.length === 0) {
     return (
-      <div className={cn('bg-surface rounded-lg shadow-sm border border-theme-border-default p-6 flex flex-col h-[350px]', className)}>
+      <div className={cn('bg-surface rounded-lg shadow-sm border border-border p-6 flex flex-col h-[350px]', className)}>
         <h3 className="text-lg font-semibold text-heading mb-4 self-start">{title}</h3>
         <div className="flex-grow">
            <NoDataState message="Keine Daten für diesen Zeitraum" />
@@ -267,7 +267,7 @@ export default function TableauPieChart({
   }
 
   return (
-    <div className={cn('bg-surface rounded-lg shadow-sm border border-theme-border-default p-6 flex flex-col h-[350px] hover:shadow-md transition-shadow', className)}>
+    <div className={cn('bg-surface rounded-lg shadow-sm border border-border p-6 flex flex-col h-[350px] hover:shadow-md transition-shadow', className)}>
       <h3 className="text-lg font-semibold text-heading mb-1 flex-shrink-0">
         {title}
       </h3>
@@ -299,7 +299,7 @@ export default function TableauPieChart({
                 <Cell 
                   key={`cell-${index}`} 
                   fill={entry.fill} 
-                  stroke="#ffffff" 
+                  stroke="var(--dp-bg-primary)" 
                   strokeWidth={2} 
                 />
               ))}
