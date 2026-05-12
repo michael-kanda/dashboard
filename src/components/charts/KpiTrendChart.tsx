@@ -154,7 +154,7 @@ const CustomTooltip = ({ active, payload, label, kpi1, kpi2, holidayMap, weather
     const weather: DailyWeather | undefined = weatherData?.[dateKey];
     
     return (
-      <div className="bg-surface px-4 py-3 rounded-xl shadow-xl border border-theme-border-default text-sm z-50 min-w-[220px] max-w-[300px]">
+      <div className="bg-surface px-4 py-3 rounded-xl shadow-xl border border-border text-sm z-50 min-w-[220px] max-w-[300px]">
         {/* Datum */}
         <p className="text-faint font-medium text-xs tracking-wide uppercase mb-2">
           {dateLabel}
@@ -162,7 +162,7 @@ const CustomTooltip = ({ active, payload, label, kpi1, kpi2, holidayMap, weather
         
         {/* Wetter & Feiertag — kompakte Zeile */}
         {(weather || holiday) && (
-          <div className="flex items-center gap-3 mb-2.5 pb-2.5 border-b border-theme-border-subtle">
+          <div className="flex items-center gap-3 mb-2.5 pb-2.5 border-b border-border-subtle">
             {weather && (
               <div className="flex items-center gap-1.5 text-secondary">
                 <WeatherSvgIcon type={weather.icon} />
@@ -286,7 +286,7 @@ export default function KpiTrendChart({
 
   if (isLoading) {
     return (
-      <div className={cn("bg-surface rounded-lg shadow-sm border border-theme-border-default p-6 h-[400px] animate-pulse flex items-center justify-center", className)}>
+      <div className={cn("bg-surface rounded-lg shadow-sm border border-border p-6 h-[400px] animate-pulse flex items-center justify-center", className)}>
         <div className="flex flex-col items-center gap-2">
           <div className="h-8 w-8 bg-surface-tertiary rounded-full animate-bounce"></div>
           <span className="text-faint text-sm">Lade Trend-Daten...</span>
@@ -296,12 +296,12 @@ export default function KpiTrendChart({
   }
 
   return (
-    <div className={cn("bg-surface rounded-lg shadow-sm border border-theme-border-default p-6 transition-all hover:shadow-md", className)}>
+    <div className={cn("bg-surface rounded-lg shadow-sm border border-border p-6 transition-all hover:shadow-md", className)}>
       
       {/* HEADER & CONTROLS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400">
             <CalendarEvent size={18} />
           </div>
           <h3 className="text-lg font-semibold text-heading">
@@ -314,7 +314,7 @@ export default function KpiTrendChart({
             <select
               value={activeKpi}
               onChange={(e) => onKpiChange(e.target.value)}
-              className="appearance-none bg-surface-secondary hover:bg-surface border border-theme-border-default hover:border-theme-border-default text-body text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 pr-10 py-2 cursor-pointer transition-colors"
+              className="appearance-none bg-surface-secondary hover:bg-surface border border-border hover:border-border text-body text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 pr-10 py-2 cursor-pointer transition-colors"
             >
               {Object.keys(KPI_CONFIG).map((key) => (
                 <option key={key} value={key}>
@@ -334,7 +334,7 @@ export default function KpiTrendChart({
             <select
               value={compareKpi}
               onChange={(e) => setCompareKpi(e.target.value)}
-              className="appearance-none bg-surface border border-theme-border-default hover:border-theme-border-default text-secondary text-sm rounded-md focus:ring-purple-500 focus:border-purple-500 block w-full pl-9 pr-8 py-2 cursor-pointer transition-colors"
+              className="appearance-none bg-surface border border-border hover:border-border text-secondary text-sm rounded-md focus:ring-purple-500 focus:border-purple-500 block w-full pl-9 pr-8 py-2 cursor-pointer transition-colors"
             >
               <option value="none">Kein Vergleich</option>
               {Object.keys(KPI_CONFIG)
@@ -362,12 +362,12 @@ export default function KpiTrendChart({
               ))}
             </defs>
             
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--dp-chart-grid)" />
             
             <XAxis
               dataKey="date"
               tickFormatter={formatXAxisTick}
-              tick={{ fontSize: 11, fill: '#6b7280' }}
+              tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
               axisLine={false}
               tickLine={false}
               dy={10}
@@ -377,7 +377,7 @@ export default function KpiTrendChart({
             <YAxis
               yAxisId="left"
               tickFormatter={(val) => formatYAxis(val, activeKpi)}
-              tick={{ fontSize: 11, fill: '#6b7280' }}
+              tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
               axisLine={false}
               tickLine={false}
               dx={-10}
@@ -388,7 +388,7 @@ export default function KpiTrendChart({
                 yAxisId="right"
                 orientation="right"
                 tickFormatter={(val) => formatYAxis(val, compareKpi)}
-                tick={{ fontSize: 11, fill: '#9ca3af' }}
+                tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
                 axisLine={false}
                 tickLine={false}
                 dx={10}
@@ -417,7 +417,7 @@ export default function KpiTrendChart({
                      if (!conf) return null;
 
                      return (
-                       <div key={index} className="flex items-center gap-2 text-xs font-medium text-secondary bg-surface-secondary px-2 py-1 rounded-full border border-theme-border-subtle">
+                       <div key={index} className="flex items-center gap-2 text-xs font-medium text-secondary bg-surface-secondary px-2 py-1 rounded-full border border-border-subtle">
                          <span 
                            className="w-2.5 h-2.5 rounded-full" 
                            style={{ backgroundColor: conf.color }}
