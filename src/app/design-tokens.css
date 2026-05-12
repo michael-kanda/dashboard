@@ -14,10 +14,13 @@
    ═══════════════════════════════════════════════════════════ */
 
 :root {
-
-  /* ── 01. TYPOGRAPHY ─────────────────────────────────────── */
-  /* Change font here once; layout.tsx loads it via next/font  */
-  --dp-font-sans: 'Poppins', Arial, Helvetica, sans-serif;
+/* ── 01. TYPOGRAPHY ─────────────────────────────────────── */
+/*
+ * Font wechseln = 2 Stellen ändern:
+ *   1. layout.tsx  → next/font import + className auf <body>
+ *   2. Diese Variable → Font-Name für Tailwind/CSS
+ */
+  --dp-font-sans: 'Inter', Arial, Helvetica, sans-serif;
   --dp-font-mono: 'Courier New', Courier, monospace;
 
   --dp-text-xs:   0.625rem;   /*  10px  labels, badges        */
