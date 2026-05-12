@@ -3,11 +3,11 @@
 
 import { useState, useMemo } from 'react';
 import {
-  CurrencyDollar,
   ChevronDown,
-  ChevronUp,
-  CaretDownFill,
-  CaretUpFill,
+  ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowDownUp,
   Search,
 } from 'react-bootstrap-icons';
 import type { GoogleAdsData, GoogleAdsRow } from '@/lib/dashboard-shared';
@@ -123,13 +123,12 @@ function aggregateBy(rows: GoogleAdsRow[], field: keyof GoogleAdsRow): Aggregate
 function getNextDimension(viewMode: ViewMode): { field: keyof GoogleAdsRow; label: string } | null {
   switch (viewMode) {
     case 'campaign':
-      return { field: 'adGroup', label: 'Anzeigengruppe' };
+      return { field: 'adGroup', label: 'Anzeigengr.' };
     case 'adgroup':
       return { field: 'adName', label: 'Anzeige' };
     case 'ads':
-      return null; // Anzeigen haben kein weiteres Drill-Down
+      return null;
     default:
-      // Suchanfragen haben kein weiteres Drill-Down
       return null;
   }
 }
@@ -151,12 +150,8 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
   const { totals } = data;
   const isSheet = data.source === 'sheet';
 
-  // Zeitraum-String
   const dateRangeStr = formatDateRange(dateRange);
 
-  // View-Mode → welche Rows + welches Feld
-  // Bei Sheet-Daten: separate Arrays pro Ebene (kein Thresholding)
-  // Bei GA4-Daten: ein gemeinsames rows-Array, das aggregiert wird
   const viewConfig: Record<ViewMode, { field: keyof GoogleAdsRow }> = {
     campaign:    { field: 'campaign' },
     adgroup:     { field: 'adGroup' },
@@ -183,7 +178,6 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
     let aggregated = aggregateBy(sourceRows, config.field);
 
     // GA4-Modus: Lookup-Overrides für Conversions und Metriken
-    // (bei Sheet-Daten nicht nötig — die Werte stimmen bereits)
     if (!isSheet) {
       if (viewMode === 'campaign' && data.conversionsByCampaign) {
         for (const row of aggregated) {
@@ -227,7 +221,6 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
         }
       }
     }
-    // Kein conversionsByQuery-Override mehr — Suchanfragen zeigen keine Conversions
 
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
@@ -254,11 +247,14 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
     }
   };
 
+  // ── Sort-Indikator: aktiv = Pfeil, inaktiv = subtiler Doppelpfeil ──
   const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return null;
+    if (sortField !== field) {
+      return <ArrowDownUp size={10} className="ml-1 inline opacity-40" />;
+    }
     return sortAsc
-      ? <CaretUpFill size={10} className="ml-0.5 inline" />
-      : <CaretDownFill size={10} className="ml-0.5 inline" />;
+      ? <ArrowUp size={10} className="ml-1 inline" />
+      : <ArrowDown size={10} className="ml-1 inline" />;
   };
 
   const viewModeLabels: Record<ViewMode, string> = {
@@ -268,19 +264,25 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
     searchquery: 'Suchanfragen',
   };
 
-  // Conversions ausblenden: in der Suchanfragen-Ansicht (nur bei GA4 — Sheet-Daten haben echte Conversions)
+  // Conversions ausblenden: in der Suchanfragen-Ansicht (nur bei GA4)
   const hideConv = !isSheet && viewMode === 'searchquery';
 
   const hasAnyData = data.rows.length > 0 || (data.landingPageRows || []).length > 0
     || (data.campaignRows || []).length > 0 || (data.adRows || []).length > 0;
 
-  // Skeleton
+  // ── Skeleton ──
   if (isLoading) {
     return (
-      <div className="card-glass p-6 animate-pulse">
-        <div className="h-6 bg-surface-tertiary rounded w-48 mb-4" />
-        <div className="space-y-3">
+      <div className="bg-surface rounded-xl border border-theme-border-default p-5 animate-pulse">
+        <div className="h-6 bg-surface-tertiary rounded w-56 mb-2" />
+        <div className="h-3 bg-surface-tertiary rounded w-72 mb-5" />
+        <div className="grid grid-cols-5 gap-2 mb-6">
           {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-16 bg-surface-tertiary rounded-md" />
+          ))}
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-10 bg-surface-tertiary rounded" />
           ))}
         </div>
@@ -288,11 +290,11 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
     );
   }
 
-  // Keine Daten
+  // ── Empty State ──
   if (!hasAnyData) {
     return (
-      <div className="card-glass p-6">
-        <h3 className="text-base font-semibold text-strong mb-2">Google Ads</h3>
+      <div className="bg-surface rounded-xl border border-theme-border-default p-5">
+        <h3 className="text-[18px] font-semibold text-heading mb-1">Google Ads Performance</h3>
         <p className="text-sm text-muted">
           Keine Google Ads-Daten für diesen Zeitraum vorhanden. Stelle sicher, dass Google Ads
           mit GA4 verknüpft ist.
@@ -301,110 +303,127 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
     );
   }
 
+  // ── Liste der sichtbaren View-Modes ──
+  const visibleModes = (Object.keys(viewModeLabels) as ViewMode[])
+    .filter((mode) => mode !== 'ads' || isSheet);
+
   return (
-    <div className="bg-surface rounded-xl border border-theme-border-default overflow-hidden">
-      {/* ── KPI-Header ── */}
-      <div className="p-4 sm:p-6 border-b border-theme-border-subtle">
-        <h3 className="text-lg font-semibold text-strong mb-1 flex items-center gap-2">
-          <CurrencyDollar size={18} className="text-amber-500" />
-          Google Ads Performance
-        </h3>
-        <p className="text-xs text-muted mb-4">
-          Quelle: {isSheet ? 'Google Ads' : 'GA4'}{dateRangeStr && <> &nbsp;·&nbsp; {dateRangeStr}</>}
+    <div className="bg-surface rounded-xl border border-theme-border-default p-5">
+
+      {/* ── Header ──────────────────────────────────────────── */}
+      <div className="mb-4">
+        <h3 className="text-[18px] font-semibold text-heading mb-1">Google Ads Performance</h3>
+        <p className="text-xs text-muted">
+          Quelle {isSheet ? 'Google Ads' : 'GA4'}
+          {dateRangeStr && ` · ${dateRangeStr}`}
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <KpiMini label="Ad Spend"    value={formatCurrency(totals.cost)} />
-          <KpiMini label="Klicks"      value={formatNumber(totals.clicks)} />
-          <KpiMini label="Ø CPC"       value={formatCurrency(totals.avgCpc)} />
-          <KpiMini label="Conversions" value={formatNumber(totals.conversions)} />
-          {isSheet
-            ? <KpiMini label="Impressionen" value={formatNumber((totals as any).impressions ?? 0)} />
-            : <KpiMini label="Sitzungen"    value={formatNumber(totals.sessions)} />
-          }
+      </div>
+
+      {/* ── KPI-Strip ───────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-5">
+        <KpiMini label="Ad Spend"    value={formatCurrency(totals.cost)} />
+        <KpiMini label="Klicks"      value={formatNumber(totals.clicks)} />
+        <KpiMini label="Ø CPC"       value={formatCurrency(totals.avgCpc)} />
+        <KpiMini label="Conversions" value={formatNumber(totals.conversions)} />
+        {isSheet
+          ? <KpiMini label="Impressionen" value={formatNumber((totals as any).impressions ?? 0)} />
+          : <KpiMini label="Sitzungen"    value={formatNumber(totals.sessions)} />
+        }
+      </div>
+
+      {/* ── Tabs + Search ───────────────────────────────────── */}
+      <div className="flex items-end justify-between gap-3 border-b border-theme-border-subtle mb-1 flex-wrap">
+        <div className="flex gap-0.5 -mb-px">
+          {visibleModes.map((mode) => {
+            const isActive = viewMode === mode;
+            return (
+              <button
+                key={mode}
+                onClick={() => {
+                  setViewMode(mode);
+                  setExpandedRow(null);
+                  setSearchTerm('');
+                }}
+                className={`px-3.5 py-2 text-[13px] font-medium transition-colors border-b-2 ${
+                  isActive
+                    ? 'border-strong text-heading'
+                    : 'border-transparent text-muted hover:text-body'
+                }`}
+              >
+                {viewModeLabels[mode]}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-3 pb-2">
+          <span className="text-[11px] text-faint whitespace-nowrap">
+            {tableData.length} {tableData.length === 1 ? 'Eintrag' : 'Einträge'}
+          </span>
+          <div className="relative">
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Suchen..."
+              className="w-40 pl-7 pr-2.5 py-1 text-xs h-7 rounded-md border border-theme-border-subtle bg-surface text-body placeholder:text-faint focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+            />
+          </div>
         </div>
       </div>
 
-      {/* ── Toolbar ── */}
-      <div className="px-4 sm:px-6 py-3 flex flex-wrap items-center gap-3 border-b border-theme-border-subtle bg-surface">
-        <div className="flex rounded-lg border border-theme-border-subtle overflow-hidden">
-          {(Object.keys(viewModeLabels) as ViewMode[])
-            .filter((mode) => mode !== 'ads' || isSheet) // "Anzeigen" nur bei Sheet-Daten
-            .map((mode) => (
-            <button
-              key={mode}
-              onClick={() => {
-                setViewMode(mode);
-                setExpandedRow(null);
-                setSearchTerm('');
-              }}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                viewMode === mode
-                  ? 'bg-indigo-500/10 text-indigo-500 dark:text-indigo-400'
-                  : 'text-muted hover:text-strong hover:bg-surface-secondary'
-              }`}
-            >
-              {viewModeLabels[mode]}
-            </button>
-          ))}
-        </div>
-
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={`${viewModeLabels[viewMode]} durchsuchen...`}
-            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-theme-border-subtle bg-surface text-body placeholder:text-faint focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
-          />
-        </div>
-
-        <span className="text-xs text-faint ml-auto">
-          {tableData.length} {tableData.length === 1 ? 'Eintrag' : 'Einträge'}
-        </span>
-      </div>
-
-      {/* ── Tabelle ── */}
+      {/* ── Tabelle ─────────────────────────────────────────── */}
       <div className="overflow-x-auto">
-        <table className="w-full text-xs">
+        <table className="w-full">
           <thead>
-            <tr className="border-b border-theme-border-subtle bg-surface-secondary">
-              <th className="text-left px-4 py-2.5 font-semibold text-muted w-[30%]">
+            <tr>
+              <th className="text-left px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider text-faint">
                 {viewModeLabels[viewMode]}
               </th>
               <th
                 onClick={() => handleSort('cost')}
-                className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
+                className={`text-right px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                  sortField === 'cost' ? 'text-body' : 'text-faint'
+                }`}
               >
                 Kosten<SortIcon field="cost" />
               </th>
               <th
                 onClick={() => handleSort('clicks')}
-                className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
+                className={`text-right px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                  sortField === 'clicks' ? 'text-body' : 'text-faint'
+                }`}
               >
                 Klicks<SortIcon field="clicks" />
               </th>
               <th
                 onClick={() => handleSort('cpc')}
-                className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
+                className={`text-right px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                  sortField === 'cpc' ? 'text-body' : 'text-faint'
+                }`}
               >
                 CPC<SortIcon field="cpc" />
               </th>
               {!hideConv && (
-              <th
-                onClick={() => handleSort('conversions')}
-                className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
-              >
-                Conv.<SortIcon field="conversions" />
-              </th>
+                <th
+                  onClick={() => handleSort('conversions')}
+                  className={`text-right px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                    sortField === 'conversions' ? 'text-body' : 'text-faint'
+                  }`}
+                >
+                  Conv.<SortIcon field="conversions" />
+                </th>
               )}
               {!isSheet && (
-              <th
-                onClick={() => handleSort('sessions')}
-                className="text-right px-3 py-2.5 font-semibold text-muted cursor-pointer hover:text-strong transition-colors whitespace-nowrap"
-              >
-                Sitzungen<SortIcon field="sessions" />
-              </th>
+                <th
+                  onClick={() => handleSort('sessions')}
+                  className={`text-right px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                    sortField === 'sessions' ? 'text-body' : 'text-faint'
+                  }`}
+                >
+                  Sitzungen<SortIcon field="sessions" />
+                </th>
               )}
             </tr>
           </thead>
@@ -429,7 +448,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
               <tr>
                 <td
                   colSpan={4 + (hideConv ? 0 : 1) + (isSheet ? 0 : 1)}
-                  className="px-4 py-8 text-center text-sm text-muted"
+                  className="px-4 py-10 text-center text-sm text-muted"
                 >
                   Keine Ergebnisse für &quot;{searchTerm}&quot;
                 </td>
@@ -447,30 +466,18 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
 function KpiMini({
   label,
   value,
-  highlight,
-  dimmed,
   tooltip,
 }: {
   label: string;
   value: string;
-  highlight?: boolean;
-  dimmed?: boolean;
   tooltip?: string;
 }) {
   return (
-    <div className="bg-surface-secondary/50 rounded-xl px-3 py-2.5" title={tooltip}>
-      <div className="text-[10px] font-medium text-faint uppercase tracking-wider mb-0.5">
+    <div className="bg-surface-secondary/60 rounded-md px-3.5 py-3" title={tooltip}>
+      <div className="text-[10px] font-medium text-faint uppercase tracking-wider mb-1.5">
         {label}
       </div>
-      <div
-        className={`text-sm font-bold ${
-          highlight
-            ? 'text-emerald-500'
-            : dimmed
-            ? 'text-muted'
-            : 'text-strong'
-        }`}
-      >
+      <div className="text-[18px] font-medium text-heading leading-none">
         {value}
       </div>
     </div>
@@ -499,7 +506,6 @@ function TableRow({
   const nextDim = getNextDimension(viewMode);
 
   // Conversions in SubRows ausblenden, wenn SubRows = Suchanfragen (nur GA4)
-  // Sheet-Daten haben immer echte Conversions
   const hideSubConv = !isSheet && viewMode === 'adgroup';
 
   const aggregatedSubRows = useMemo(() => {
@@ -507,9 +513,7 @@ function TableRow({
 
     const subAgg = aggregateBy(row.subRows, nextDim.field);
 
-    // GA4-Modus: Lookup-Overrides (nicht nötig bei Sheet-Daten)
     if (!isSheet) {
-      // Echte Conversions für Anzeigengruppen-SubRows einsetzen
       if (viewMode === 'campaign' && conversionsByAdGroup) {
         for (const sub of subAgg) {
           if (conversionsByAdGroup[sub.label] !== undefined) {
@@ -518,7 +522,6 @@ function TableRow({
         }
       }
 
-      // Echte Metriken für Anzeigengruppen-SubRows einsetzen
       if (viewMode === 'campaign' && metricsByAdGroup) {
         for (const sub of subAgg) {
           const lookup = metricsByAdGroup[sub.label];
@@ -544,57 +547,75 @@ function TableRow({
     <>
       <tr
         onClick={hasSubRows ? onToggle : undefined}
-        className={`border-b border-theme-border-subtle transition-colors ${
-          hasSubRows ? 'cursor-pointer hover:bg-surface-secondary/50' : ''
-        } ${isExpanded ? 'bg-surface-secondary/30' : ''}`}
+        className={`border-t border-theme-border-subtle transition-colors ${
+          hasSubRows ? 'cursor-pointer hover:bg-surface-secondary/40' : ''
+        } ${isExpanded ? 'bg-surface-secondary/50' : ''}`}
       >
-        <td className="px-4 py-2.5 font-medium text-strong max-w-[300px]">
+        <td className="px-2 py-3 text-sm font-medium text-strong max-w-[300px]">
           <div className="flex items-center gap-2">
-            {hasSubRows && (
-              <span className="text-faint flex-shrink-0">
-                {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-              </span>
-            )}
+            <span className="text-faint flex-shrink-0 w-3 flex justify-center">
+              {hasSubRows ? (
+                isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />
+              ) : null}
+            </span>
             <span className="truncate" title={row.label}>
               {row.label}
             </span>
           </div>
         </td>
-        <td className="text-right px-3 py-2.5 text-strong font-semibold">
+        <td className="text-right px-2 py-3 text-sm font-medium text-heading whitespace-nowrap">
           {formatCurrency(row.cost)}
         </td>
-        <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.clicks)}</td>
-        <td className="text-right px-3 py-2.5 text-body">{formatCurrency(row.cpc)}</td>
+        <td className="text-right px-2 py-3 text-sm text-body whitespace-nowrap">
+          {formatNumber(row.clicks)}
+        </td>
+        <td className="text-right px-2 py-3 text-sm text-body whitespace-nowrap">
+          {formatCurrency(row.cpc)}
+        </td>
         {!hideConv && (
-        <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.conversions)}</td>
+          <td className="text-right px-2 py-3 text-sm text-body whitespace-nowrap">
+            {formatNumber(row.conversions)}
+          </td>
         )}
         {!isSheet && (
-        <td className="text-right px-3 py-2.5 text-body">{formatNumber(row.sessions)}</td>
+          <td className="text-right px-2 py-3 text-sm text-body whitespace-nowrap">
+            {formatNumber(row.sessions)}
+          </td>
         )}
       </tr>
 
       {isExpanded &&
         hasSubRows &&
         aggregatedSubRows.map((sub) => (
-          <tr key={sub.label} className="border-b border-theme-border-subtle bg-surface/30">
-            <td className="pl-10 pr-4 py-2 text-muted">
-              <span className="text-[10px] uppercase tracking-wider text-faint mr-1.5">
-                {nextDim!.label}:
-              </span>
-              <span className="truncate" title={sub.label}>
-                {sub.label}
-              </span>
+          <tr key={sub.label} className={isExpanded ? 'bg-surface-secondary/50' : ''}>
+            <td className="px-2 py-2">
+              <div className="ml-3.5 pl-3.5 border-l-2 border-theme-border-subtle text-xs text-body">
+                <span className="text-[10px] uppercase tracking-wider text-faint mr-1.5 font-medium">
+                  {nextDim!.label}
+                </span>
+                <span className="truncate" title={sub.label}>
+                  {sub.label}
+                </span>
+              </div>
             </td>
-            <td className="text-right px-3 py-2 text-muted">{formatCurrency(sub.cost)}</td>
-            <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.clicks)}</td>
-            <td className="text-right px-3 py-2 text-muted">{formatCurrency(sub.cpc)}</td>
+            <td className="text-right px-2 py-2 text-xs text-body whitespace-nowrap">
+              {formatCurrency(sub.cost)}
+            </td>
+            <td className="text-right px-2 py-2 text-xs text-faint whitespace-nowrap">
+              {formatNumber(sub.clicks)}
+            </td>
+            <td className="text-right px-2 py-2 text-xs text-faint whitespace-nowrap">
+              {formatCurrency(sub.cpc)}
+            </td>
             {!hideConv && (
-            <td className="text-right px-3 py-2 text-muted">
-              {hideSubConv ? '–' : formatNumber(sub.conversions)}
-            </td>
+              <td className="text-right px-2 py-2 text-xs text-faint whitespace-nowrap">
+                {hideSubConv ? '–' : formatNumber(sub.conversions)}
+              </td>
             )}
             {!isSheet && (
-            <td className="text-right px-3 py-2 text-muted">{formatNumber(sub.sessions)}</td>
+              <td className="text-right px-2 py-2 text-xs text-faint whitespace-nowrap">
+                {formatNumber(sub.sessions)}
+              </td>
             )}
           </tr>
         ))}
