@@ -94,7 +94,7 @@ export default function PromptTrackingCard({
       <div className="card-glass prompt-tracking-card p-6">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="w-5 h-5 text-purple-500" />
-          <h3 className="text-lg font-semibold">Prompt Tracking (GSC)</h3>
+          <h3 className="text-lg font-semibold text-heading">Prompt Tracking (GSC)</h3>
           <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
             AI Mode Proxy
           </span>
@@ -180,7 +180,7 @@ export default function PromptTrackingCard({
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <Sparkles className="w-5 h-5 text-purple-500" />
-            <h3 className="text-lg font-semibold">Prompt Tracking</h3>
+            <h3 className="text-lg font-semibold text-heading">Prompt Tracking</h3>
             <span className="prompt-pill prompt-pill-purple">
               GSC Proxy
             </span>
@@ -213,7 +213,7 @@ export default function PromptTrackingCard({
           </button>
           <button
             onClick={handleExport}
-            className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-border hover:bg-muted/50 transition"
+            className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-border text-body hover:bg-surface-secondary transition"
             title="CSV exportieren"
           >
             <Download className="w-4 h-4" />
@@ -257,7 +257,7 @@ export default function PromptTrackingCard({
         />
       </div>
 
-      {/* Klassifikations-Row: Brand klein + Geo + Frage-Typ */}
+      {/* Klassifikations-Row */}
       <ClassificationRow
         brandShare={t.brandedImpressionShare ?? t.brandedShare}
         brandKeywordsSource={data.brandKeywordsSource}
@@ -301,19 +301,19 @@ export default function PromptTrackingCard({
       {/* Filter */}
       <div className="flex flex-col sm:flex-row gap-2 mb-4 flex-wrap">
         <div className="relative flex-1 min-w-[180px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
           <input
             type="text"
             placeholder="Suchen in Prompts..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-border bg-surface text-body focus:outline-none focus:ring-2 focus:ring-purple-500/30"
           />
         </div>
         <select
           value={filterMode}
           onChange={(e) => setFilterMode(e.target.value as FilterMode)}
-          className="px-3 py-2 text-sm rounded-md border border-border bg-background"
+          className="px-3 py-2 text-sm rounded-md border border-border bg-surface text-body"
         >
           <option value="all">Alle Queries</option>
           <option value="branded">Nur Brand</option>
@@ -324,7 +324,7 @@ export default function PromptTrackingCard({
         <select
           value={questionTypeFilter}
           onChange={(e) => setQuestionTypeFilter(e.target.value as QuestionType | 'all')}
-          className="px-3 py-2 text-sm rounded-md border border-border bg-background"
+          className="px-3 py-2 text-sm rounded-md border border-border bg-surface text-body"
         >
           <option value="all">Alle Frage-Typen</option>
           {(Object.keys(QUESTION_TYPE_LABELS) as QuestionType[]).map((qt) => (
@@ -336,7 +336,7 @@ export default function PromptTrackingCard({
         <select
           value={sortMode}
           onChange={(e) => setSortMode(e.target.value as SortMode)}
-          className="px-3 py-2 text-sm rounded-md border border-border bg-background"
+          className="px-3 py-2 text-sm rounded-md border border-border bg-surface text-body"
         >
           <option value="impressions">Sort: Impressions</option>
           <option value="clicks">Sort: Klicks</option>
@@ -350,7 +350,7 @@ export default function PromptTrackingCard({
       <div className="overflow-x-auto -mx-2">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+            <tr className="text-left text-xs uppercase tracking-wider text-muted border-b border-border">
               <th className="px-2 py-2 font-medium">Query</th>
               <th className="px-2 py-2 font-medium text-center">W</th>
               <th className="px-2 py-2 font-medium text-center">Typ</th>
@@ -530,17 +530,18 @@ function PromptResearchTool({
   };
 
   return (
-    <section className="mt-5 mb-5 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-950/20 p-4 print:hidden">
+    /* ── Clean surface card with amber left accent for "Admin only" ── */
+    <section className="mt-5 mb-5 rounded-lg shadow-card bg-surface-secondary dark:bg-surface-tertiary p-4 print:hidden border-l-4 border-l-amber-400 dark:border-l-amber-500">
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-4">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <Target className="w-5 h-5 text-amber-600" />
-            <h4 className="font-semibold text-foreground">Prompt Research Tool</h4>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-800">
+            <h4 className="font-semibold text-heading">Prompt Research Tool</h4>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
               Nur Admins
             </span>
           </div>
-          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+          <p className="text-xs text-muted mt-1 leading-relaxed">
             Research-Workflow aus Projekt-Setup, GA4/GSC-Signalen, Quick-Wins und gerankten Decision-Prompts.
           </p>
         </div>
@@ -549,7 +550,7 @@ function PromptResearchTool({
             type="button"
             onClick={handleGenerateResearch}
             disabled={isGeneratingResearch}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-amber-300 bg-background/70 text-amber-800 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed transition dark:text-amber-200 dark:hover:bg-amber-950/30"
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-amber-300 bg-surface text-amber-800 hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition dark:text-amber-200 dark:hover:bg-surface-tertiary"
           >
             {isGeneratingResearch ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
             Mit DataMax generieren
@@ -608,13 +609,14 @@ function PromptResearchTool({
       </div>
 
       {researchError && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-300">
+        <div className="mb-4 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 p-3 text-xs text-red-700 dark:text-red-300">
           {researchError}
         </div>
       )}
 
-      <div className="rounded-md border border-border bg-background/75 p-3 mb-4">
-        <div className="text-xs font-semibold text-foreground mb-3">Setup-Felder</div>
+      {/* Setup fields */}
+      <div className="rounded-md shadow-sm bg-surface p-3 mb-4">
+        <div className="text-xs font-semibold text-heading mb-3">Setup-Felder</div>
         <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr_150px] gap-3 mb-3">
           <SetupField
             label="Landingpage"
@@ -628,12 +630,12 @@ function PromptResearchTool({
             placeholder="Scheidungsanwalt Wien"
             onChange={(value) => setSetupOverrides((current) => ({ ...current, topic: value }))}
           />
-          <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+          <label className="flex flex-col gap-1 text-xs font-medium text-muted">
             Brand-Modus
             <select
               value={setup.includeBrand ? 'brand' : 'nonbrand'}
               onChange={(event) => setSetupOverrides((current) => ({ ...current, includeBrand: event.target.value === 'brand' }))}
-              className="px-3 py-2 text-sm rounded-md border border-border bg-background text-foreground"
+              className="px-3 py-2 text-sm rounded-md border border-border bg-surface text-body"
             >
               <option value="brand">mit Brand</option>
               <option value="nonbrand">ohne Brand</option>
@@ -673,29 +675,29 @@ function PromptResearchTool({
 
       <div className="space-y-2">
         {displayedOpportunities.map((item) => (
-          <div key={`${item.rank}-${item.topic}-${item.intent}`} className="grid grid-cols-[44px_1fr] lg:grid-cols-[44px_120px_1fr_110px] gap-3 rounded-md border border-border bg-background/75 p-3">
+          <div key={`${item.rank}-${item.topic}-${item.intent}`} className="grid grid-cols-[44px_1fr] lg:grid-cols-[44px_120px_1fr_110px] gap-3 rounded-md shadow-sm bg-surface p-3">
             <div className="text-lg font-bold tabular-nums text-amber-700 dark:text-amber-300">#{item.rank}</div>
             <div className="hidden lg:block">
-              <div className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">{item.intent}</div>
-              <div className="text-xs font-medium tabular-nums">Score {item.score}</div>
-              <div className="text-[10px] text-muted-foreground">{item.source}</div>
+              <div className="text-[10px] uppercase tracking-wide font-semibold text-muted">{item.intent}</div>
+              <div className="text-xs font-medium tabular-nums text-body">Score {item.score}</div>
+              <div className="text-[10px] text-muted">{item.source}</div>
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1 lg:hidden">
-                <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">{item.intent}</span>
-                <span className="text-xs font-medium tabular-nums">Score {item.score}</span>
-                <span className="text-[10px] text-muted-foreground">{item.source}</span>
+                <span className="text-[10px] uppercase tracking-wide font-semibold text-muted">{item.intent}</span>
+                <span className="text-xs font-medium tabular-nums text-body">Score {item.score}</span>
+                <span className="text-[10px] text-muted">{item.source}</span>
               </div>
-              <div className="text-[11px] text-muted-foreground mb-1">{item.topic}</div>
-              <p className="text-sm leading-relaxed text-foreground">{item.prompt}</p>
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-relaxed text-muted-foreground">
+              <div className="text-[11px] text-muted mb-1">{item.topic}</div>
+              <p className="text-sm leading-relaxed text-body">{item.prompt}</p>
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-relaxed text-muted">
                 <span>{item.reason}</span>
                 {setup.landingPage && normalizePath(setup.landingPage) !== '/' && (
                   <span>· Zielseite: {normalizePath(setup.landingPage)}</span>
                 )}
               </div>
             </div>
-            <div className="col-span-2 lg:col-span-1 text-[11px] leading-relaxed text-muted-foreground lg:text-right">
+            <div className="col-span-2 lg:col-span-1 text-[11px] leading-relaxed text-muted lg:text-right">
               {item.action}
             </div>
           </div>
@@ -707,14 +709,14 @@ function PromptResearchTool({
 
 function ResearchStep({ step, title, lines }: { step: string; title: string; lines: string[] }) {
   return (
-    <div className="rounded-md border border-border bg-background/75 p-3">
+    <div className="rounded-md shadow-sm bg-surface p-3">
       <div className="flex items-center gap-2 mb-2">
         <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 tabular-nums">{step}</span>
-        <span className="text-sm font-semibold">{title}</span>
+        <span className="text-sm font-semibold text-heading">{title}</span>
       </div>
       <ul className="space-y-1">
         {lines.map((line) => (
-          <li key={line} className="text-xs leading-relaxed text-muted-foreground">{line}</li>
+          <li key={line} className="text-xs leading-relaxed text-muted">{line}</li>
         ))}
       </ul>
     </div>
@@ -733,14 +735,14 @@ function SetupField({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+    <label className="flex flex-col gap-1 text-xs font-medium text-muted">
       {label}
       <input
         type="text"
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="px-3 py-2 text-sm rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+        className="px-3 py-2 text-sm rounded-md border border-border bg-surface text-body focus:outline-none focus:ring-2 focus:ring-amber-500/30"
       />
     </label>
   );
@@ -748,25 +750,25 @@ function SetupField({
 
 function ResearchInsight({ label, items }: { label: string; items: ResearchOpportunity[] }) {
   return (
-    <div className="rounded-md border border-border bg-background/60 p-3">
-      <div className="text-xs font-semibold text-foreground mb-2">{label}</div>
+    <div className="rounded-md shadow-sm bg-surface p-3">
+      <div className="text-xs font-semibold text-heading mb-2">{label}</div>
       {items.length > 0 ? (
         <ul className="space-y-1.5">
           {items.map((item) => (
-            <li key={`${item.rank}-${item.topic}`} className="text-xs text-muted-foreground leading-snug">
-              <span className="font-medium text-foreground">#{item.rank}</span> {item.topic}
+            <li key={`${item.rank}-${item.topic}`} className="text-xs text-muted leading-snug">
+              <span className="font-medium text-body">#{item.rank}</span> {item.topic}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-muted-foreground">Keine klaren Kandidaten im aktuellen Zeitraum.</p>
+        <p className="text-xs text-muted">Keine klaren Kandidaten im aktuellen Zeitraum.</p>
       )}
     </div>
   );
 }
 
 // ════════════════════════════════════════════════════════════════════
-// ClassificationRow – Brand klein + Geo + Frage-Typ
+// ClassificationRow
 // ════════════════════════════════════════════════════════════════════
 
 function ClassificationRow({
@@ -785,26 +787,25 @@ function ClassificationRow({
     : 0;
 
   const sourceTooltip =
-    brandKeywordsSource === 'configured'      ? 'Brand-Keywords manuell konfiguriert' :
-    brandKeywordsSource === 'auto-detected'   ? 'Brand-Keywords automatisch erkannt (Domain + Page-Title)' :
-    brandKeywordsSource === 'domain-heuristic'? 'Heuristik aus Domain-Wurzel. Brand-Keywords im Settings setzen für bessere Erkennung.' :
-                                                'Keine Brand-Erkennung möglich';
+    brandKeywordsSource === 'configured'       ? 'Brand-Keywords manuell konfiguriert' :
+    brandKeywordsSource === 'auto-detected'    ? 'Brand-Keywords automatisch erkannt (Domain + Page-Title)' :
+    brandKeywordsSource === 'domain-heuristic' ? 'Heuristik aus Domain-Wurzel. Brand-Keywords im Settings setzen für bessere Erkennung.' :
+                                                 'Keine Brand-Erkennung möglich';
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-      {/* Brand-Tile (klein, mit Erklärung) */}
-      <div className="rounded-md border border-border bg-background/40 p-3">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1">
+      <div className="rounded-md shadow-sm bg-surface-secondary p-3">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-muted mb-1">
           <Sparkles className="w-3.5 h-3.5" />
           <span>Brand-Impressions</span>
           <span title={sourceTooltip} className="cursor-help ml-auto">
             <Info className="w-3 h-3 opacity-60" />
           </span>
         </div>
-        <div className="text-base font-semibold tabular-nums">
+        <div className="text-base font-semibold tabular-nums text-heading">
           {brandShare.toFixed(1)} %
         </div>
-        <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+        <div className="text-[10px] text-muted mt-0.5 leading-tight">
           {brandShare < 5
             ? 'Long-Tail ist meist generisch — bei B2B normal'
             : brandShare < 30
@@ -813,35 +814,33 @@ function ClassificationRow({
         </div>
       </div>
 
-      {/* Geo-Tile */}
-      <div className="rounded-md border border-border bg-background/40 p-3">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1">
+      <div className="rounded-md shadow-sm bg-surface-secondary p-3">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-muted mb-1">
           <MapPin className="w-3.5 h-3.5" />
           <span>Geo-Impressions</span>
           <span
-            title='Anteil der Prompt-Impressions mit Stadt-, Bundesland- oder Lokalbezug (z.B. "wien", "in der nähe", PLZ etc.). Hoch = lokale Relevanz.'
+            title='Anteil der Prompt-Impressions mit Stadt-, Bundesland- oder Lokalbezug.'
             className="cursor-help ml-auto"
           >
             <Info className="w-3 h-3 opacity-60" />
           </span>
         </div>
-        <div className="text-base font-semibold tabular-nums">
+        <div className="text-base font-semibold tabular-nums text-heading">
           {geoShare.toFixed(1)} %
         </div>
-        <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+        <div className="text-[10px] text-muted mt-0.5 leading-tight">
           {geoShare > 30 ? 'Stark lokalbezogene Suchen' :
            geoShare > 10 ? 'Teilweise mit Ortsbezug' :
            'Überwiegend ortsunabhängig'}
         </div>
       </div>
 
-      {/* Dominanter Frage-Typ */}
-      <div className="rounded-md border border-border bg-background/40 p-3">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1">
+      <div className="rounded-md shadow-sm bg-surface-secondary p-3">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-muted mb-1">
           <MessageCircleQuestion className="w-3.5 h-3.5" />
           <span>Dominanter Frage-Typ</span>
           <span
-            title="Welcher Frage-Typ in deinen Long-Tail-Queries dominiert. Direkter Hinweis auf passenden Content (FAQ, Vergleichsseite, Preisseite, etc.)"
+            title="Welcher Frage-Typ in deinen Long-Tail-Queries dominiert."
             className="cursor-help ml-auto"
           >
             <Info className="w-3 h-3 opacity-60" />
@@ -849,11 +848,11 @@ function ClassificationRow({
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-base">{QUESTION_TYPE_LABELS[dominantQuestionType].emoji}</span>
-          <span className="text-base font-semibold">
+          <span className="text-base font-semibold text-heading">
             {QUESTION_TYPE_LABELS[dominantQuestionType].label}
           </span>
         </div>
-        <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight tabular-nums">
+        <div className="text-[10px] text-muted mt-0.5 leading-tight tabular-nums">
           {dominantPct.toFixed(0)} % der Queries
         </div>
       </div>
@@ -877,9 +876,9 @@ function SignalBadge({ signal, reasons }: { signal: 'strong' | 'weak' | 'insuffi
       <div className="flex items-start gap-2 text-sm">
         <span className="shrink-0 leading-5">{cfg.icon}</span>
         <div className="flex-1">
-          <div className="font-semibold">{cfg.label}</div>
+          <div className="font-semibold text-body">{cfg.label}</div>
           {reasons.length > 0 && (
-            <ul className="text-xs mt-0.5 leading-relaxed">
+            <ul className="text-xs mt-0.5 leading-relaxed text-muted">
               {reasons.map((r, i) => <li key={i}>· {r}</li>)}
             </ul>
           )}
@@ -898,16 +897,16 @@ function ShareTrendChart({ trend }: { trend: PromptTrackingShareBucket[] }) {
     last.sharePercent < first.sharePercent * 0.95 ? 'down' : 'flat';
 
   return (
-    <div className="mb-4 rounded-md border border-border bg-background/40 p-3">
+    <div className="mb-4 rounded-md shadow-sm bg-surface-secondary p-3">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-muted uppercase tracking-wider">
           <Info className="w-3 h-3" />
           Anteil prompt-Queries über Zeit
         </div>
         <div className="flex items-center gap-1 text-xs">
           {direction === 'up' && <><TrendingUp className="w-3 h-3 text-green-600" /><span className="text-green-700 dark:text-green-400 font-medium">steigend</span></>}
           {direction === 'down' && <><TrendingDown className="w-3 h-3 text-red-600" /><span className="text-red-700 dark:text-red-400 font-medium">fallend</span></>}
-          {direction === 'flat' && <><Minus className="w-3 h-3 text-muted-foreground" /><span className="text-muted-foreground">stabil</span></>}
+          {direction === 'flat' && <><Minus className="w-3 h-3 text-muted" /><span className="text-muted">stabil</span></>}
         </div>
       </div>
       <div className="flex items-end gap-1 h-20">
@@ -923,11 +922,11 @@ function ShareTrendChart({ trend }: { trend: PromptTrackingShareBucket[] }) {
                 className="w-full rounded-t bg-purple-400 dark:bg-purple-600 group-hover:bg-purple-500 dark:group-hover:bg-purple-500 transition relative"
                 style={{ height: `${Math.max(height, 4)}%`, minHeight: '4px' }}
               >
-                <span className="hidden group-hover:block absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] tabular-nums whitespace-nowrap text-foreground">
+                <span className="hidden group-hover:block absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] tabular-nums whitespace-nowrap text-body">
                   {bucket.sharePercent.toFixed(1)}%
                 </span>
               </div>
-              <span className="text-[10px] text-muted-foreground tabular-nums truncate w-full text-center">
+              <span className="text-[10px] text-muted tabular-nums truncate w-full text-center">
                 {bucket.label}
               </span>
             </div>
@@ -941,8 +940,8 @@ function ShareTrendChart({ trend }: { trend: PromptTrackingShareBucket[] }) {
 function WordCountHistogram({ buckets }: { buckets: PromptWordCountBucket[] }) {
   const maxCount = Math.max(...buckets.map((b) => b.count), 1);
   return (
-    <div className="mb-4 rounded-md border border-border bg-background/40 p-3">
-      <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+    <div className="mb-4 rounded-md shadow-sm bg-surface-secondary p-3">
+      <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-muted uppercase tracking-wider">
         <Info className="w-3 h-3" />
         Wortzahl-Verteilung
       </div>
@@ -951,11 +950,11 @@ function WordCountHistogram({ buckets }: { buckets: PromptWordCountBucket[] }) {
           const pct = (b.count / maxCount) * 100;
           return (
             <div key={b.range} className="flex items-center gap-2 text-xs">
-              <span className="w-12 text-muted-foreground tabular-nums shrink-0">{b.range} W</span>
-              <div className="flex-1 h-4 bg-muted/50 rounded overflow-hidden">
+              <span className="w-12 text-muted tabular-nums shrink-0">{b.range} W</span>
+              <div className="flex-1 h-4 bg-surface-tertiary rounded overflow-hidden">
                 <div className="h-full bg-purple-400/70 dark:bg-purple-600/70 rounded" style={{ width: `${pct}%` }} />
               </div>
-              <span className="w-12 text-right tabular-nums text-foreground/80">{b.count}</span>
+              <span className="w-12 text-right tabular-nums text-body">{b.count}</span>
             </div>
           );
         })}
@@ -992,46 +991,46 @@ function ClusterDisplay({
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-2 flex-wrap">
           <Wand2 className="w-5 h-5 text-purple-600" />
-          <h4 className="font-semibold">KI-Analyse: {clusters.length} Cluster erkannt</h4>
-          <span className="text-xs text-muted-foreground">
+          <h4 className="font-semibold text-heading">KI-Analyse: {clusters.length} Cluster erkannt</h4>
+          <span className="text-xs text-muted">
             {meta.queriesAnalyzed} Queries · {(meta.elapsedMs / 1000).toFixed(1)}s · {meta.model}
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={handleMarkdownExport} className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-muted/50 transition" title="Markdown-Briefing exportieren">
+          <button onClick={handleMarkdownExport} className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border text-body hover:bg-surface-secondary transition" title="Markdown-Briefing exportieren">
             <FileText className="w-3.5 h-3.5" />
             MD
           </button>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <button onClick={onClose} className="text-muted hover:text-heading">
             <X className="w-4 h-4" />
           </button>
         </div>
       </div>
-      <div className="mb-5 rounded-md bg-background/60 border border-border p-4">
+      <div className="mb-5 rounded-md shadow-sm bg-surface p-4">
         <div className="flex items-center gap-2 mb-2">
           <Lightbulb className="w-4 h-4 text-amber-500" />
-          <span className="font-medium text-sm">Gesamtbild</span>
+          <span className="font-medium text-sm text-heading">Gesamtbild</span>
         </div>
-        <p className="text-sm leading-relaxed mb-3">{insights.summary}</p>
+        <p className="text-sm leading-relaxed mb-3 text-body">{insights.summary}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div>
-            <div className="font-medium text-muted-foreground mb-1">Dominanter Intent</div>
-            <div>{insights.dominantIntent}</div>
+            <div className="font-medium text-muted mb-1">Dominanter Intent</div>
+            <div className="text-body">{insights.dominantIntent}</div>
           </div>
           <div>
-            <div className="font-medium text-muted-foreground mb-1">Top-Attribute</div>
+            <div className="font-medium text-muted mb-1">Top-Attribute</div>
             <div className="flex flex-wrap gap-1">
               {insights.dominantAttributes.map((attr, i) => (
-                <span key={i} className="px-2 py-0.5 rounded-full bg-muted/70 text-foreground">{attr}</span>
+                <span key={i} className="px-2 py-0.5 rounded-full bg-surface-tertiary text-body">{attr}</span>
               ))}
             </div>
           </div>
         </div>
         {insights.contentGaps.length > 0 && (
           <div className="mt-3 pt-3 border-t border-border">
-            <div className="font-medium text-muted-foreground text-xs mb-1.5">Content-Lücken & Empfehlungen</div>
+            <div className="font-medium text-muted text-xs mb-1.5">Content-Lücken & Empfehlungen</div>
             <ul className="text-xs space-y-1 list-disc list-inside marker:text-purple-500">
-              {insights.contentGaps.map((gap, i) => <li key={i}>{gap}</li>)}
+              {insights.contentGaps.map((gap, i) => <li key={i} className="text-body">{gap}</li>)}
             </ul>
           </div>
         )}
@@ -1066,24 +1065,24 @@ function ClusterCard({ cluster, allQueries, isExpanded, onToggleExpand }: {
   const totalClicks = clusterQueries.reduce((s, q) => s + q.clicks, 0);
 
   return (
-    <div className="rounded-md bg-background/60 border border-border p-4">
+    <div className="rounded-md shadow-sm bg-surface p-4">
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${intentMeta.color}`}>
               {intentMeta.emoji} {intentMeta.label}
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted/70 tabular-nums">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-surface-tertiary text-muted tabular-nums">
               {clusterQueries.length} Queries
             </span>
           </div>
-          <h5 className="font-semibold text-sm leading-tight">{cluster.theme}</h5>
+          <h5 className="font-semibold text-sm leading-tight text-heading">{cluster.theme}</h5>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground leading-relaxed mb-3">{cluster.description}</p>
+      <p className="text-xs text-muted leading-relaxed mb-3">{cluster.description}</p>
       <div className="flex gap-4 text-xs mb-3 tabular-nums">
-        <div><span className="text-muted-foreground">Impr.:</span> <span className="font-medium">{totalImpressions.toLocaleString('de-DE')}</span></div>
-        <div><span className="text-muted-foreground">Klicks:</span> <span className="font-medium">{totalClicks.toLocaleString('de-DE')}</span></div>
+        <div><span className="text-muted">Impr.:</span> <span className="font-medium text-body">{totalImpressions.toLocaleString('de-DE')}</span></div>
+        <div><span className="text-muted">Klicks:</span> <span className="font-medium text-body">{totalClicks.toLocaleString('de-DE')}</span></div>
       </div>
       <div className="flex flex-wrap gap-1 mb-3">
         {cluster.topAttributes.map((attr, i) => (
@@ -1101,8 +1100,8 @@ function ClusterCard({ cluster, allQueries, isExpanded, onToggleExpand }: {
             .sort((a, b) => b.impressions - a.impressions)
             .map((q, i) => (
               <li key={i} className="text-xs flex items-start gap-2">
-                <span className="text-muted-foreground tabular-nums shrink-0">{q.impressions.toLocaleString('de-DE')}</span>
-                <span className="text-foreground/90 leading-snug">{q.query}</span>
+                <span className="text-muted tabular-nums shrink-0">{q.impressions.toLocaleString('de-DE')}</span>
+                <span className="text-body leading-snug">{q.query}</span>
               </li>
             ))}
         </ul>
@@ -1115,19 +1114,19 @@ function KpiTile({ label, value, sub, delta, deltaSuffix = '', tooltip, highligh
   { label: string; value: string; sub?: string; delta?: number; deltaSuffix?: string; tooltip?: string; highlight?: boolean; }
 ) {
   return (
-    <div className={`rounded-lg border bg-background/50 p-3 relative ${highlight ? 'border-purple-300 dark:border-purple-700 ring-1 ring-purple-200 dark:ring-purple-900/30' : 'border-border'}`}>
-      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+    <div className={`rounded-lg border bg-surface p-3 relative ${highlight ? 'border-purple-300 dark:border-purple-700 ring-1 ring-purple-200 dark:ring-purple-900/30' : 'border-border'}`}>
+      <div className="flex items-center gap-1 text-xs text-muted">
         <span>{label}</span>
         {tooltip && <span title={tooltip} className="cursor-help"><Info className="w-3 h-3 opacity-60" /></span>}
       </div>
-      <div className="text-xl font-semibold mt-0.5 tabular-nums">{value}</div>
+      <div className="text-xl font-semibold mt-0.5 tabular-nums text-heading">{value}</div>
       {delta !== undefined && (
-        <div className={`text-[11px] mt-0.5 tabular-nums flex items-center gap-0.5 ${delta > 0 ? 'text-green-600 dark:text-green-400' : delta < 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>
+        <div className={`text-[11px] mt-0.5 tabular-nums flex items-center gap-0.5 ${delta > 0 ? 'text-green-600 dark:text-green-400' : delta < 0 ? 'text-red-600 dark:text-red-400' : 'text-muted'}`}>
           {delta > 0 ? <TrendingUp className="w-3 h-3" /> : delta < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
           {delta > 0 ? '+' : ''}{delta.toFixed(1)}{deltaSuffix} vs. Vorperiode
         </div>
       )}
-      {sub && !delta && <div className="text-[11px] text-muted-foreground mt-0.5">{sub}</div>}
+      {sub && !delta && <div className="text-[11px] text-muted mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -1135,11 +1134,11 @@ function KpiTile({ label, value, sub, delta, deltaSuffix = '', tooltip, highligh
 function PromptRow({ q }: { q: PromptQueryData }) {
   const qtMeta = QUESTION_TYPE_LABELS[q.questionType];
   return (
-    <tr className="border-b border-slate-200/80 hover:bg-slate-50/80 transition dark:border-border/50 dark:hover:bg-muted/30">
+    <tr className="border-b border-border-subtle hover:bg-surface-tertiary transition">
       <td className="px-2 py-2 max-w-[380px]">
         <div className="flex items-center gap-1.5">
           {q.hasGeoReference && <MapPin className="w-3 h-3 text-emerald-500 shrink-0" aria-label="Geo-Bezug" />}
-          <span className="truncate" title={q.query}>{q.query}</span>
+          <span className="truncate text-body" title={q.query}>{q.query}</span>
         </div>
       </td>
       <td className="px-2 py-2 text-center">
@@ -1155,13 +1154,13 @@ function PromptRow({ q }: { q: PromptQueryData }) {
           {qtMeta.emoji}
         </span>
       </td>
-      <td className="px-2 py-2 text-right tabular-nums">{q.impressions.toLocaleString('de-DE')}</td>
-      <td className="px-2 py-2 text-right tabular-nums">{q.clicks.toLocaleString('de-DE')}</td>
-      <td className="px-2 py-2 text-right tabular-nums">{(q.ctr * 100).toFixed(1)}%</td>
-      <td className="px-2 py-2 text-right tabular-nums">{q.position.toFixed(1)}</td>
+      <td className="px-2 py-2 text-right tabular-nums text-body">{q.impressions.toLocaleString('de-DE')}</td>
+      <td className="px-2 py-2 text-right tabular-nums text-body">{q.clicks.toLocaleString('de-DE')}</td>
+      <td className="px-2 py-2 text-right tabular-nums text-body">{(q.ctr * 100).toFixed(1)}%</td>
+      <td className="px-2 py-2 text-right tabular-nums text-body">{q.position.toFixed(1)}</td>
       <td className="px-2 py-2">
         {q.url && (
-          <a href={q.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground" title={q.url}>
+          <a href={q.url} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-heading" title={q.url}>
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         )}
@@ -1174,6 +1173,10 @@ function calcChange(current: number, previous: number): number {
   if (!previous || previous === 0) return current > 0 ? 100 : 0;
   return ((current - previous) / previous) * 100;
 }
+
+// ════════════════════════════════════════════════════════════════════
+// All utility functions below are unchanged (logic only)
+// ════════════════════════════════════════════════════════════════════
 
 function buildResearchSetup(
   data?: PromptTrackingResult,
@@ -1255,12 +1258,10 @@ function buildResearchOpportunities(
         'Optimierung';
 
       return {
-        score,
-        topic: finalTopic,
+        score, topic,
         prompt: buildDecisionPrompt(finalTopic, intent, effectiveSetup),
         source: hasConversionPath ? 'GSC + GA4' : 'GSC',
-        intent,
-        reason: `${query.impressions.toLocaleString('de-DE')} Impr., ${query.clicks.toLocaleString('de-DE')} Klicks, Pos. ${query.position.toFixed(1)}, CTR ${(query.ctr * 100).toFixed(1)} %.`,
+        intent, reason: `${query.impressions.toLocaleString('de-DE')} Impr., ${query.clicks.toLocaleString('de-DE')} Klicks, Pos. ${query.position.toFixed(1)}, CTR ${(query.ctr * 100).toFixed(1)} %.`,
         action: actionForOpportunity(intent, resolvedSetup.isLegal, hasConversionPath),
       } satisfies Omit<ResearchOpportunity, 'rank'>;
     })
@@ -1274,30 +1275,21 @@ function buildResearchOpportunities(
       const matchesFocusLandingPage = normalizePath(page.path) === focusLandingPath;
       return {
         score: Math.min(88, 58 + Math.round((page.conversions ?? 0) * 3) + (matchesFocusLandingPage ? 6 : 0)),
-        topic,
-        prompt: buildDecisionPrompt(topic, 'Buy Intent', effectiveSetup),
-        source: 'GA4',
-        intent: 'Buy Intent',
+        topic, prompt: buildDecisionPrompt(topic, 'Buy Intent', effectiveSetup),
+        source: 'GA4', intent: 'Buy Intent',
         reason: `${(page.conversions ?? 0).toLocaleString('de-DE')} Conversions auf ${page.path}.`,
         action: 'Decision-Prompt gegen diese Landingpage testen und Trust-/FAQ-Blöcke ergänzen.',
       } satisfies Omit<ResearchOpportunity, 'rank'>;
     });
 
-  const fallback = queryCandidates.length + pageCandidates.length >= 3
-    ? []
-    : defaultResearchOpportunities(effectiveSetup);
+  const fallback = queryCandidates.length + pageCandidates.length >= 3 ? [] : defaultResearchOpportunities(effectiveSetup);
   const combined = uniqueOpportunities([...queryCandidates, ...pageCandidates, ...fallback]);
 
-  return combined
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 10)
-    .map((item, idx) => ({ ...item, rank: idx + 1 }));
+  return combined.sort((a, b) => b.score - a.score).slice(0, 10).map((item, idx) => ({ ...item, rank: idx + 1 }));
 }
 
 function getProjectName(domain?: string, brandKeywords?: string[] | null): string {
-  const brand = brandKeywords
-    ?.map((kw) => prettifyProjectName(kw))
-    .find((kw) => kw.length > 1 && !looksLikeGenericLegalQuery(kw));
+  const brand = brandKeywords?.map((kw) => prettifyProjectName(kw)).find((kw) => kw.length > 1 && !looksLikeGenericLegalQuery(kw));
   if (brand) return brand;
   if (!domain) return 'dieses Projekt';
   return prettifyProjectName(normalizeDomain(domain).split('.')[0]) || 'dieses Projekt';
@@ -1305,54 +1297,27 @@ function getProjectName(domain?: string, brandKeywords?: string[] | null): strin
 
 function normalizeDomain(domain?: string): string {
   if (!domain) return 'nicht gesetzt';
-  return domain
-    .replace(/^https?:\/\//, '')
-    .replace(/^www\./, '')
-    .split(/[/?#]/)[0]
-    .trim();
+  return domain.replace(/^https?:\/\//, '').replace(/^www\./, '').split(/[/?#]/)[0].trim();
 }
 
 function normalizePath(value: string): string {
   if (!value.trim()) return '/';
-  try {
-    return new URL(value).pathname.replace(/\/$/, '') || '/';
-  } catch {
-    return value.split(/[?#]/)[0].replace(/\/$/, '') || '/';
-  }
+  try { return new URL(value).pathname.replace(/\/$/, '') || '/'; }
+  catch { return value.split(/[?#]/)[0].replace(/\/$/, '') || '/'; }
 }
 
 function inferLandingPage(data?: PromptTrackingResult, dashboardData?: ProjectDashboardData): string {
-  const convertingPage = (dashboardData?.topConvertingPages ?? [])
-    .slice()
-    .sort((a, b) => (b.conversions ?? 0) - (a.conversions ?? 0))[0]?.path;
+  const convertingPage = (dashboardData?.topConvertingPages ?? []).slice().sort((a, b) => (b.conversions ?? 0) - (a.conversions ?? 0))[0]?.path;
   if (convertingPage) return normalizePath(convertingPage);
-
-  const queryUrl = (data?.queries ?? [])
-    .slice()
-    .sort((a, b) => (b.impressions + b.clicks * 20) - (a.impressions + a.clicks * 20))
-    .find((query) => query.url)?.url;
+  const queryUrl = (data?.queries ?? []).slice().sort((a, b) => (b.impressions + b.clicks * 20) - (a.impressions + a.clicks * 20)).find((query) => query.url)?.url;
   return queryUrl ? normalizePath(queryUrl) : '';
 }
 
-function inferPrimaryTopic(
-  data?: PromptTrackingResult,
-  dashboardData?: ProjectDashboardData,
-  projectName = '',
-  isLegal = false
-): string {
-  const promptTopic = (data?.queries ?? [])
-    .slice()
-    .sort((a, b) => (b.impressions + b.clicks * 20) - (a.impressions + a.clicks * 20))
-    .map((query) => queryToResearchTopic(query.query, projectName, data?.brandKeywordsUsed, isLegal))
-    .find(Boolean);
+function inferPrimaryTopic(data?: PromptTrackingResult, dashboardData?: ProjectDashboardData, projectName = '', isLegal = false): string {
+  const promptTopic = (data?.queries ?? []).slice().sort((a, b) => (b.impressions + b.clicks * 20) - (a.impressions + a.clicks * 20)).map((query) => queryToResearchTopic(query.query, projectName, data?.brandKeywordsUsed, isLegal)).find(Boolean);
   if (promptTopic) return promptTopic;
-
-  const topQueryTopic = (dashboardData?.topQueries ?? [])
-    .slice(0, 10)
-    .map((query) => queryToResearchTopic(query.query, projectName, data?.brandKeywordsUsed, isLegal))
-    .find(Boolean);
+  const topQueryTopic = (dashboardData?.topQueries ?? []).slice(0, 10).map((query) => queryToResearchTopic(query.query, projectName, data?.brandKeywordsUsed, isLegal)).find(Boolean);
   if (topQueryTopic) return topQueryTopic;
-
   return isLegal ? 'rechtliche Erstberatung' : '';
 }
 
@@ -1360,17 +1325,7 @@ function prettifyProjectName(value: string): string {
   const lowered = value.toLowerCase();
   if (/\bbernhard\b/.test(lowered) && /\bhofer\b/.test(lowered)) return 'Mag. Bernhard Hofer';
   if (/\banwalt[-_\s]+hofer\b/.test(lowered) || /\brechtsanwalt[-_\s]+hofer\b/.test(lowered)) return 'Anwalt Hofer';
-
-  return value
-    .replace(/^https?:\/\//, '')
-    .replace(/^www\./, '')
-    .split(/[/?#]/)[0]
-    .replace(/\.[a-z]{2,}$/i, '')
-    .replace(/[§|]+/g, ' ')
-    .replace(/[-_]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  return value.replace(/^https?:\/\//, '').replace(/^www\./, '').split(/[/?#]/)[0].replace(/\.[a-z]{2,}$/i, '').replace(/[§|]+/g, ' ').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function inferIndustry(corpus: string): string {
@@ -1389,98 +1344,46 @@ function inferRegion(corpus: string, domain?: string): string {
   return 'nicht eindeutig';
 }
 
-function queryToResearchTopic(
-  query: string,
-  projectName: string,
-  brandKeywords?: string[] | null,
-  isLegal = false
-): string {
-  const brandParts = [
-    projectName,
-    ...(brandKeywords ?? []),
-    'mag',
-    'magister',
-    'bernhard',
-    'hofer',
-  ].flatMap((part) => part.split(/[\s\-_.§,]+/));
-
-  const cleaned = query
-    .replace(/[?!"'():;,.§]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  const stopWords = new Set([
-    'was', 'wie', 'warum', 'wieso', 'welche', 'welcher', 'welches', 'wer', 'wo', 'wann',
-    'ist', 'sind', 'kann', 'koennen', 'können', 'fuer', 'für', 'und', 'oder', 'mit',
-    'ohne', 'bei', 'von', 'im', 'in', 'der', 'die', 'das', 'ein', 'eine', 'einen',
-    'einer', 'zu', 'zum', 'zur', 'am', 'besten', 'beste', 'kosten', 'kostet',
-    'rechtsanwalt', 'anwalt', 'kanzlei', 'law', 'attorney', '1010', 'wien',
-  ]);
-  const brandStopWords = new Set(
-    brandParts
-      .map((part) => part.toLowerCase().trim())
-      .filter((part) => part.length > 2)
-  );
-
-  const words = cleaned
-    .split(' ')
-    .filter((word) => {
-      const normalized = word.toLowerCase();
-      return normalized.length > 2 && !stopWords.has(normalized) && !brandStopWords.has(normalized);
-    });
-
+function queryToResearchTopic(query: string, projectName: string, brandKeywords?: string[] | null, isLegal = false): string {
+  const brandParts = [projectName, ...(brandKeywords ?? []), 'mag', 'magister', 'bernhard', 'hofer'].flatMap((part) => part.split(/[\s\-_.§,]+/));
+  const cleaned = query.replace(/[?!"'():;,.§]/g, ' ').replace(/\s+/g, ' ').trim();
+  const stopWords = new Set(['was','wie','warum','wieso','welche','welcher','welches','wer','wo','wann','ist','sind','kann','koennen','können','fuer','für','und','oder','mit','ohne','bei','von','im','in','der','die','das','ein','eine','einen','einer','zu','zum','zur','am','besten','beste','kosten','kostet','rechtsanwalt','anwalt','kanzlei','law','attorney','1010','wien']);
+  const brandStopWords = new Set(brandParts.map((part) => part.toLowerCase().trim()).filter((part) => part.length > 2));
+  const words = cleaned.split(' ').filter((word) => { const n = word.toLowerCase(); return n.length > 2 && !stopWords.has(n) && !brandStopWords.has(n); });
   const topic = (words.length > 0 ? words.slice(0, 5).join(' ') : '').slice(0, 80).trim();
   if (!topic || (isLegal && looksLikeGenericLegalQuery(topic))) return '';
   return prettifyTopic(topic);
 }
 
 function prettifyTopic(value: string): string {
-  return value
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b(arbeitsrecht|erbrecht|immobilienrecht|strafrecht|vertragsrecht|scheidungsanwalt|mietrecht)\b/gi, (match) =>
-      match.charAt(0).toUpperCase() + match.slice(1).toLowerCase()
-    );
+  return value.replace(/\s+/g, ' ').trim().replace(/\b(arbeitsrecht|erbrecht|immobilienrecht|strafrecht|vertragsrecht|scheidungsanwalt|mietrecht)\b/gi, (match) => match.charAt(0).toUpperCase() + match.slice(1).toLowerCase());
 }
 
 function normalizeResearchTopic(value: string, isLegal: boolean): string {
   const topic = prettifyTopic(value);
   if (!isLegal) return topic;
-
   const normalized = topic.toLowerCase();
-  if (/führerschein/.test(normalized) && /(entzogen|entzug|abgenommen|weg)/.test(normalized)) {
-    return 'Führerscheinentzug in Österreich';
-  }
-  if (/alkohol|promille|trunken/.test(normalized) && /führerschein/.test(normalized)) {
-    return 'Führerscheinentzug wegen Alkohol';
-  }
-  if (/anwaltskosten|anwalt.*kosten|kosten.*anwalt|honorar|rechtsanwaltstarif/.test(normalized)) {
-    return 'Anwaltskosten in Österreich';
-  }
+  if (/führerschein/.test(normalized) && /(entzogen|entzug|abgenommen|weg)/.test(normalized)) return 'Führerscheinentzug in Österreich';
+  if (/alkohol|promille|trunken/.test(normalized) && /führerschein/.test(normalized)) return 'Führerscheinentzug wegen Alkohol';
+  if (/anwaltskosten|anwalt.*kosten|kosten.*anwalt|honorar|rechtsanwaltstarif/.test(normalized)) return 'Anwaltskosten in Österreich';
   if (/scheidung|ehe/.test(normalized)) return 'Scheidung in Österreich';
   if (/arbeitsrecht|kündigung|entlassung/.test(normalized)) return 'Arbeitsrechtliche Beratung';
   if (/erbrecht|testament|erbe/.test(normalized)) return 'Erbrecht und Testament';
   if (/mietrecht|miete|vermieter/.test(normalized)) return 'Mietrechtliche Beratung';
   if (/strafrecht|strafverteidigung|anzeige/.test(normalized)) return 'Strafverteidigung';
-
   return topic;
 }
 
 function pathToTopic(path: string, setup: ResearchSetup): string {
-  const topic = path
-    .split('/')
-    .filter(Boolean)
-    .pop()
-    ?.replace(/[-_]+/g, ' ')
-    .trim();
+  const topic = path.split('/').filter(Boolean).pop()?.replace(/[-_]+/g, ' ').trim();
   if (topic && topic.length > 2) return prettifyTopic(topic);
   return setup.isLegal ? 'rechtliche Erstberatung' : setup.projectName;
 }
 
 function looksLikeGenericLegalQuery(value: string): boolean {
-  const normalized = value.toLowerCase().trim();
-  if (!normalized) return true;
-  return ['anwalt', 'rechtsanwalt', 'kanzlei', 'anwalt wien', 'rechtsanwalt wien', 'mag', 'mag.'].includes(normalized);
+  const n = value.toLowerCase().trim();
+  if (!n) return true;
+  return ['anwalt','rechtsanwalt','kanzlei','anwalt wien','rechtsanwalt wien','mag','mag.'].includes(n);
 }
 
 function hasBuyIntent(query: string, topic: string, isLegal: boolean): boolean {
@@ -1490,13 +1393,7 @@ function hasBuyIntent(query: string, topic: string, isLegal: boolean): boolean {
   return generic || (isLegal && legal);
 }
 
-function scoreOpportunity(
-  query: PromptQueryData,
-  buyIntent: boolean,
-  rankablePosition: boolean,
-  weakCtr: boolean,
-  hasConversionPath: boolean
-): number {
+function scoreOpportunity(query: PromptQueryData, buyIntent: boolean, rankablePosition: boolean, weakCtr: boolean, hasConversionPath: boolean): number {
   const impressionScore = Math.min(30, Math.round(Math.log10(query.impressions + 1) * 12));
   const positionScore = rankablePosition ? 22 : query.position <= 3 ? 4 : 8;
   const ctrScore = weakCtr ? 16 : query.ctr >= 0.03 ? 2 : 6;
@@ -1506,31 +1403,15 @@ function scoreOpportunity(
 }
 
 function buildDecisionPrompt(topic: string, intent: ResearchOpportunity['intent'], setup: ResearchSetup): string {
-  const brandPart = setup.includeBrand
-    ? setup.isLegal
-      ? ` und bewerte ${setup.projectName} als mögliche Kanzlei`
-      : ` und bewerte ${setup.projectName} als mögliche Lösung`
-    : '';
-
+  const brandPart = setup.includeBrand ? (setup.isLegal ? ` und bewerte ${setup.projectName} als mögliche Kanzlei` : ` und bewerte ${setup.projectName} als mögliche Lösung`) : '';
   if (setup.isLegal) {
-    if (isLegalCostTopic(topic)) {
-      return `Mit welchen Anwaltskosten muss ich in ${setup.region} bzw. Österreich rechnen, wie setzen sie sich zusammen und welche Fragen sollte ich vor einer Erstberatung klären${brandPart}?`;
-    }
-    if (intent === 'Buy Intent') {
-      return `Ich brauche rechtliche Unterstützung zu "${topic}" in ${setup.region}. Welche Kanzlei passt, welche Kosten/Unterlagen sind wichtig${brandPart}?`;
-    }
-    if (intent === 'Quick Win') {
-      return `Welche Rechtsanwälte in ${setup.region} werden für "${topic}" empfohlen? Vergleiche Spezialisierung, Vertrauenssignale, Erstberatung und Erreichbarkeit${brandPart}.`;
-    }
+    if (isLegalCostTopic(topic)) return `Mit welchen Anwaltskosten muss ich in ${setup.region} bzw. Österreich rechnen, wie setzen sie sich zusammen und welche Fragen sollte ich vor einer Erstberatung klären${brandPart}?`;
+    if (intent === 'Buy Intent') return `Ich brauche rechtliche Unterstützung zu "${topic}" in ${setup.region}. Welche Kanzlei passt, welche Kosten/Unterlagen sind wichtig${brandPart}?`;
+    if (intent === 'Quick Win') return `Welche Rechtsanwälte in ${setup.region} werden für "${topic}" empfohlen? Vergleiche Spezialisierung, Vertrauenssignale, Erstberatung und Erreichbarkeit${brandPart}.`;
     return `Welche Fragen sollte eine Kanzlei-Seite zu "${topic}" beantworten, damit Mandanten Vertrauen fassen und eine Erstberatung anfragen?${brandPart}.`;
   }
-
-  if (intent === 'Buy Intent') {
-    return `Ich suche eine Lösung für "${topic}". Welche Anbieter kommen infrage und welche Kosten/Nutzen-Argumente zählen${brandPart}?`;
-  }
-  if (intent === 'Quick Win') {
-    return `Welche Anbieter werden für "${topic}" empfohlen? Vergleiche Nutzen, Aufwand, Risiken und Entscheidungskriterien${brandPart}.`;
-  }
+  if (intent === 'Buy Intent') return `Ich suche eine Lösung für "${topic}". Welche Anbieter kommen infrage und welche Kosten/Nutzen-Argumente zählen${brandPart}?`;
+  if (intent === 'Quick Win') return `Welche Anbieter werden für "${topic}" empfohlen? Vergleiche Nutzen, Aufwand, Risiken und Entscheidungskriterien${brandPart}.`;
   return `Welche Inhalte muss eine Seite zu "${topic}" liefern, um in KI-Antworten als hilfreiche Quelle genannt zu werden?${brandPart}.`;
 }
 
@@ -1549,39 +1430,23 @@ function defaultResearchOpportunities(setup: ResearchSetup): Array<Omit<Research
   const topics = setup.isLegal
     ? ['rechtliche Erstberatung', 'Scheidungsanwalt', 'Arbeitsrechtliche Beratung', 'Erbrecht und Testament']
     : [`${setup.projectName} Vergleich`, `${setup.projectName} Kosten`, `${setup.projectName} Alternative`];
-
   return topics.map((topic, idx) => {
     const intent: ResearchOpportunity['intent'] = idx === 0 ? 'Buy Intent' : idx === 1 ? 'Quick Win' : 'Optimierung';
-    return {
-      score: 55 - idx * 4,
-      topic,
-      prompt: buildDecisionPrompt(topic, intent, setup),
-      source: 'GSC',
-      intent,
-      reason: 'Fallback, falls im aktuellen Zeitraum zu wenige verwertbare Prompt-Queries vorhanden sind.',
-      action: actionForOpportunity(intent, setup.isLegal, false),
-    } satisfies Omit<ResearchOpportunity, 'rank'>;
+    return { score: 55 - idx * 4, topic, prompt: buildDecisionPrompt(topic, intent, setup), source: 'GSC', intent, reason: 'Fallback, falls im aktuellen Zeitraum zu wenige verwertbare Prompt-Queries vorhanden sind.', action: actionForOpportunity(intent, setup.isLegal, false) } satisfies Omit<ResearchOpportunity, 'rank'>;
   });
 }
 
 function uniqueOpportunities(items: Array<Omit<ResearchOpportunity, 'rank'>>): Array<Omit<ResearchOpportunity, 'rank'>> {
   const bestByTopic = new Map<string, Omit<ResearchOpportunity, 'rank'>>();
-
   items.forEach((item) => {
     const key = item.topic.toLowerCase();
     const existing = bestByTopic.get(key);
-    if (!existing || item.score > existing.score) {
-      bestByTopic.set(key, item);
-    }
+    if (!existing || item.score > existing.score) bestByTopic.set(key, item);
   });
-
   return Array.from(bestByTopic.values());
 }
 
-function buildMarkdown(
-  result: PromptClusterApiResponse,
-  allQueries: PromptQueryData[]
-): string {
+function buildMarkdown(result: PromptClusterApiResponse, allQueries: PromptQueryData[]): string {
   const { clusters, insights, meta } = result;
   const lines: string[] = [];
   lines.push(`# Prompt Cluster Briefing`);
