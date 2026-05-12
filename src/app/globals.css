@@ -81,12 +81,66 @@
     box-shadow: 0 15px 35px -5px rgba(79, 70, 229, 0.10);
   }
 
-  /* ── 3. Sidebar ────────────────────────────────────────── */
+  /* ── 3. Sidebar (Marine-Blau Theme) ────────────────────── */
+  /*
+   * Sidebar verwendet ein eigenes, theme-unabhängiges Farbschema:
+   * dunkles Marineblau als Hintergrund, weiße Schrift.
+   * Funktioniert in Light- und Dark-Mode identisch.
+   *
+   * Anpassbare Werte:
+   *   --sidebar-bg-color      → Hintergrundfarbe der Sidebar
+   *   --sidebar-text-primary  → primäre Textfarbe (Headings, aktive Items)
+   *   --sidebar-text-secondary→ sekundäre Textfarbe (muted, faint)
+   *   --sidebar-accent        → Akzentfarbe (z.B. für Active-Indikator)
+   */
   .sidebar-bg {
-    background-color: var(--dp-surface-sidebar);
+    --sidebar-bg-color:      #1e3a5f;                  /* Marineblau */
+    --sidebar-text-primary:  #ffffff;                  /* Weiß */
+    --sidebar-text-secondary: rgba(255, 255, 255, 0.65);
+    --sidebar-text-faint:    rgba(255, 255, 255, 0.45);
+    --sidebar-hover-bg:      rgba(255, 255, 255, 0.08);
+    --sidebar-active-bg:     rgba(255, 255, 255, 0.15);
+    --sidebar-border:        rgba(255, 255, 255, 0.10);
+    --sidebar-accent:        #93c5fd;                  /* Helles Blau für Akzente */
+
+    background-color: var(--sidebar-bg-color);
+    color: var(--sidebar-text-primary);
+  }
+
+  /* Alle Sidebar-Texte weiß bzw. abgestuft weiß */
+  .sidebar-bg .text-heading,
+  .sidebar-bg .text-strong,
+  .sidebar-bg .text-body {
+    color: var(--sidebar-text-primary);
+  }
+  .sidebar-bg .text-muted {
+    color: var(--sidebar-text-secondary);
+  }
+  .sidebar-bg .text-faint {
+    color: var(--sidebar-text-faint);
+  }
+
+  /* Indigo-Akzentfarbe (User-Rolle, aktive Sektion) → helles Blau */
+  .sidebar-bg .accent-indigo-text,
+  .sidebar-bg .accent-indigo-indicator {
+    color: var(--sidebar-accent);
+  }
+  .sidebar-bg .accent-indigo-indicator {
+    background-color: var(--sidebar-accent);
+  }
+
+  /* Borders abgeschwächt weiß statt grau */
+  .sidebar-bg .border-border,
+  .sidebar-bg .border-border-subtle,
+  .sidebar-bg .border-border-strong {
+    border-color: var(--sidebar-border);
+  }
+  .sidebar-bg .bg-border-subtle {
+    background-color: var(--sidebar-border);
   }
 
   /* ── 4. Navigation States ──────────────────────────────── */
+  /* Außerhalb der Sidebar: Standard-Theme. Innerhalb: Marine-Theme. */
   .nav-active {
     background-color: var(--dp-accent-indigo-light);
     color: var(--dp-accent-indigo);
@@ -94,6 +148,25 @@
   .nav-hover:hover {
     background-color: var(--dp-bg-tertiary);
     color: var(--dp-text-heading);
+  }
+
+  /* Sidebar-Overrides: aktiver Menüpunkt = transluzent weiß */
+  .sidebar-bg .nav-active {
+    background-color: var(--sidebar-active-bg);
+    color: var(--sidebar-text-primary);
+  }
+  .sidebar-bg .nav-hover:hover {
+    background-color: var(--sidebar-hover-bg);
+    color: var(--sidebar-text-primary);
+  }
+  /* Tailwind hover:bg-surface-secondary innerhalb der Sidebar */
+  .sidebar-bg .hover\:bg-surface-secondary:hover {
+    background-color: var(--sidebar-hover-bg);
+  }
+  /* Tailwind hover:text-heading / hover:text-body innerhalb der Sidebar */
+  .sidebar-bg .hover\:text-heading:hover,
+  .sidebar-bg .hover\:text-body:hover {
+    color: var(--sidebar-text-primary);
   }
 
   /* ── 5. Accent Utilities ───────────────────────────────── */
