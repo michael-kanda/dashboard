@@ -54,7 +54,7 @@ export default function RootLayout({
         {/* Theme SOFORT setzen – vor allem anderen */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className={`${poppins.className} bg-gray-50`}>
+<body className={`${inter.className} bg-gray-50`}>
         <Providers>
           <Toaster position="top-right" richColors closeButton />
           
