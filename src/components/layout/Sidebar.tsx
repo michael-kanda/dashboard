@@ -275,6 +275,7 @@ export default function Sidebar() {
 
   const renderDesktopSidebar = () => (
     <aside data-sidebar className={`
+      dark
       hidden md:flex flex-col sidebar-bg
       ${/* border-r border-border */ ''}
       rounded-2xl shadow-xl m-3
@@ -409,7 +410,7 @@ export default function Sidebar() {
   // ═══════════════════════════════════════════════════════
 
   const renderMobileHeader = () => (
-    <header className="md:hidden sidebar-bg shadow-md relative print:hidden">
+    <header className="dark md:hidden sidebar-bg shadow-md relative print:hidden">
       <nav className="w-full px-6 py-3 flex justify-between items-center">
         <Link href="/" onClick={handleLinkClick}>
           <div className="relative h-[45px] w-[180px]">
