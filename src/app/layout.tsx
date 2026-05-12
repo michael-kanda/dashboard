@@ -8,11 +8,8 @@ import { Toaster } from 'sonner';
 import * as Sentry from '@sentry/nextjs';
 import "bootstrap-icons/font/bootstrap-icons.css";
 
-// Poppins Font
-const poppins = Poppins({ 
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"]
-});
+import { Inter } from "next/font/google";
+const inter = Inter({ subsets: ["latin"], weight: ["400","500","600","700"] });
 
 // Metadata mit Sentry Tracing
 export function generateMetadata(): Metadata {
