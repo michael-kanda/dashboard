@@ -1,26 +1,26 @@
-// app/layout.tsx
+// src/app/layout.tsx
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Poppins } from "next/font/google"; // Nur ein Import notwendig
 import "./globals.css";
 import { Providers } from "./providers";
 import MainLayout from '@/components/MainLayout';
 import { Toaster } from 'sonner';
 import * as Sentry from '@sentry/nextjs';
 import "bootstrap-icons/font/bootstrap-icons.css";
-import { Poppins } from "next/font/google";
 
 // Initialisierung von Poppins mit den benötigten Gewichten
 const poppins = Poppins({ 
   subsets: ["latin"], 
   weight: ["400", "500", "600", "700"],
-  variable: '--font-poppins', // Diese Variable wird in design-tokens.css genutzt
+  variable: '--font-poppins',
 });
+
 // Metadata mit Sentry Tracing
 export function generateMetadata(): Metadata {
   return {
     title: 'Data Peak | SEO & Analytics Dashboard',
     description:
-      'Data Peak ist das zentrale Dashboard zur Analyse Ihrer Web-Performance. Verbinden Sie Google Search Console, Analytics & Semrush für einheitliches KPI-Reporting.',
+      'Data Peak ist das zentrale Dashboard zur Analyse Ihrer Web-Performance.',
     icons: {
       icon: '/favicon.ico',
     },
@@ -30,10 +30,6 @@ export function generateMetadata(): Metadata {
   };
 }
 
-// ─── Theme Init Script ───────────────────────────────────
-// Läuft VOR React-Hydration um Flash of Wrong Theme zu verhindern.
-// Liest localStorage und setzt/entfernt die 'dark' Klasse auf <html>
-// BEVOR irgendein CSS oder React-Component rendert.
 const themeInitScript = `
   (function() {
     try {
@@ -53,15 +49,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de" suppressHydrationWarning>
+    <html lang="de" suppressHydrationWarning className={poppins.variable}>
       <head>
-        {/* Theme SOFORT setzen – vor allem anderen */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-<body className={`${poppins.className} bg-gray-50`}>
-  <Providers>
+      <body className={`${poppins.className} bg-gray-50`}>
+        <Providers>
           <Toaster position="top-right" richColors closeButton />
-          
           <MainLayout>
             {children}
           </MainLayout>
