@@ -10,30 +10,36 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // ✅ KORRIGIERT: 'default' ist jetzt der blaue Button (#188BDB)
+        // Primary brand action – uses --dp-brand, works in light and dark
         default:
-          "bg-[#188BDB] text-white hover:bg-[#188BDB]/90",
+          "bg-brand text-brand-foreground hover:bg-brand-hover",
+
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        // ✅ KORRIGIERT: 'outline' ist jetzt der graue Button (was vorher 'default' war)
+          "bg-accent-red text-white hover:bg-accent-red/90",
+
+        // Secondary/neutral – inherits theme border and text via CSS vars
         outline:
-          "border border-gray-300 text-gray-600 hover:bg-gray-100",
+          "border border-border text-body bg-surface hover:bg-surface-secondary hover:text-heading",
+
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-surface-tertiary text-body hover:bg-surface-quaternary",
+
+        ghost:
+          "hover:bg-surface-tertiary hover:text-heading",
+
+        link:
+          "text-brand underline-offset-4 hover:underline",
       },
       size: {
-        // HIER IST DEINE ÄNDERUNG: (bleibt erhalten)
         default: "h-9 px-3 py-1",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        sm:      "h-9 rounded-md px-3",
+        lg:      "h-11 rounded-md px-8",
+        icon:    "h-10 w-10",
       },
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size:    "default",
     },
   }
 )
