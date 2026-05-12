@@ -377,6 +377,7 @@ export default function ProjectDashboard({
                 data={data.promptTracking}
                 domain={domain}
                 dateRange={dateRange}
+                isAdmin={isAdmin}
               />
               {!isPromptTrackingVisible && isAdmin && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

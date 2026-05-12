@@ -6,6 +6,7 @@ import {
   Sparkles, Download, Search, ExternalLink, Wand2, Loader2, X,
   ChevronDown, ChevronUp, Lightbulb, AlertCircle, Info, TrendingUp,
   TrendingDown, Minus, FileText, MapPin, MessageCircleQuestion,
+  Copy, ClipboardCheck, Target, RefreshCw,
 } from 'lucide-react';
 import type {
   PromptTrackingResult,
@@ -26,16 +27,18 @@ interface PromptTrackingCardProps {
   data?: PromptTrackingResult;
   domain?: string;
   dateRange?: string;
+  isAdmin?: boolean;
 }
 
 type FilterMode = 'all' | 'branded' | 'nonBranded' | 'geo' | 'noGeo';
 type SortMode = 'impressions' | 'clicks' | 'ctr' | 'position' | 'wordCount';
+type ResearchIntent = 'all' | 'recommendation' | 'comparison' | 'commercial' | 'informational' | 'local' | 'brand';
 
 const MAX_QUERIES_FOR_AI = 200;
 const MIN_QUERIES_FOR_AI = 5;
 
 export default function PromptTrackingCard({
-  data, domain, dateRange,
+  data, domain, dateRange, isAdmin = false,
 }: PromptTrackingCardProps) {
   const [search, setSearch] = useState('');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
@@ -98,6 +101,9 @@ export default function PromptTrackingCard({
         <p className="text-muted text-sm">
           Keine prompt-ähnlichen Suchanfragen im gewählten Zeitraum gefunden.
         </p>
+        {isAdmin && (
+          <PromptResearchTool data={data} domain={domain} />
+        )}
       </div>
     );
   }
@@ -291,6 +297,10 @@ export default function PromptTrackingCard({
         />
       )}
 
+      {isAdmin && (
+        <PromptResearchTool data={data} domain={domain} />
+      )}
+
       {/* Filter */}
       <div className="flex flex-col sm:flex-row gap-2 mb-4 flex-wrap">
         <div className="relative flex-1 min-w-[180px]">
@@ -392,6 +402,155 @@ export default function PromptTrackingCard({
         >Seybold (2026)</a>.
       </p>
     </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Admin-only Prompt Research Tool
+// ════════════════════════════════════════════════════════════════════
+
+const RESEARCH_INTENTS: Array<{ value: ResearchIntent; label: string }> = [
+  { value: 'all', label: 'Alle Intents' },
+  { value: 'recommendation', label: 'Empfehlung' },
+  { value: 'comparison', label: 'Vergleich' },
+  { value: 'commercial', label: 'Kosten/Kauf' },
+  { value: 'informational', label: 'Erklaerung' },
+  { value: 'local', label: 'Lokal' },
+  { value: 'brand', label: 'Brand' },
+];
+
+interface PromptResearchIdea {
+  intent: Exclude<ResearchIntent, 'all'>;
+  topic: string;
+  prompt: string;
+  why: string;
+}
+
+function PromptResearchTool({
+  data,
+  domain,
+}: {
+  data?: PromptTrackingResult;
+  domain?: string;
+}) {
+  const [intent, setIntent] = useState<ResearchIntent>('all');
+  const [customTopic, setCustomTopic] = useState('');
+  const [includeBrand, setIncludeBrand] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  const projectName = getProjectName(domain, data?.brandKeywordsUsed);
+  const seeds = useMemo(() => buildResearchSeeds(data, domain), [data, domain]);
+  const activeSeeds = useMemo(() => {
+    const custom = customTopic.trim();
+    const base = custom ? [custom, ...seeds] : seeds;
+    return rotateList(base, offset).slice(0, 4);
+  }, [customTopic, seeds, offset]);
+
+  const ideas = useMemo(
+    () => buildResearchIdeas(activeSeeds, projectName, intent, includeBrand).slice(0, 12),
+    [activeSeeds, projectName, intent, includeBrand]
+  );
+
+  const handleCopy = async () => {
+    const text = ideas.map((idea, idx) => `${idx + 1}. ${idea.prompt}`).join('\n');
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  };
+
+  return (
+    <section className="mt-5 mb-5 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-950/20 p-4 print:hidden">
+      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-4">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Target className="w-5 h-5 text-amber-600" />
+            <h4 className="font-semibold text-foreground">Prompt Research Tool</h4>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-800">
+              Nur Admins
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            Projektbezogene Prompt-Ideen fuer {projectName}. Basis: Brand-Keywords, Domain und reale GSC-Prompt-Queries.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setOffset((value) => value + 1)}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border bg-background/70 hover:bg-background transition"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Varianten
+          </button>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-amber-600 text-white hover:bg-amber-700 transition"
+          >
+            {copied ? <ClipboardCheck className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? 'Kopiert' : 'Prompts kopieren'}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_180px_150px] gap-2 mb-4">
+        <input
+          type="text"
+          value={customTopic}
+          onChange={(e) => setCustomTopic(e.target.value)}
+          placeholder="Optionales Fokus-Thema, z.B. KI SEO Audit"
+          className="px-3 py-2 text-sm rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+        />
+        <select
+          value={intent}
+          onChange={(e) => setIntent(e.target.value as ResearchIntent)}
+          className="px-3 py-2 text-sm rounded-md border border-border bg-background"
+        >
+          {RESEARCH_INTENTS.map((item) => (
+            <option key={item.value} value={item.value}>{item.label}</option>
+          ))}
+        </select>
+        <label className="flex items-center gap-2 px-3 py-2 text-sm rounded-md border border-border bg-background cursor-pointer">
+          <input
+            type="checkbox"
+            checked={includeBrand}
+            onChange={(e) => setIncludeBrand(e.target.checked)}
+            className="rounded border-border"
+          />
+          mit Brand
+        </label>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        {activeSeeds.map((seed) => (
+          <button
+            type="button"
+            key={seed}
+            onClick={() => setCustomTopic(seed)}
+            className="text-[11px] px-2 py-1 rounded-full bg-background/80 border border-border text-muted-foreground hover:text-foreground hover:border-amber-300 transition"
+            title="Als Fokus-Thema verwenden"
+          >
+            {seed}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+        {ideas.map((idea, idx) => (
+          <div key={`${idea.intent}-${idea.topic}-${idx}`} className="rounded-md border border-border bg-background/70 p-3">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-[10px] uppercase tracking-wide font-semibold text-amber-700 dark:text-amber-300">
+                {researchIntentLabel(idea.intent)}
+              </span>
+              <span className="text-[10px] text-muted-foreground truncate">{idea.topic}</span>
+            </div>
+            <p className="text-sm leading-relaxed text-foreground">{idea.prompt}</p>
+            <p className="text-[11px] leading-relaxed text-muted-foreground mt-2">{idea.why}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -803,6 +962,129 @@ function PromptRow({ q }: { q: PromptQueryData }) {
 function calcChange(current: number, previous: number): number {
   if (!previous || previous === 0) return current > 0 ? 100 : 0;
   return ((current - previous) / previous) * 100;
+}
+
+function getProjectName(domain?: string, brandKeywords?: string[] | null): string {
+  const brand = brandKeywords?.find((kw) => kw.trim().length > 1)?.trim();
+  if (brand) return brand;
+  if (!domain) return 'dieses Projekt';
+  return domain
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .split(/[/?#]/)[0]
+    .split('.')[0]
+    .replace(/[-_]+/g, ' ')
+    .trim() || 'dieses Projekt';
+}
+
+function buildResearchSeeds(data?: PromptTrackingResult, domain?: string): string[] {
+  const seeds: string[] = [];
+  const projectName = getProjectName(domain, data?.brandKeywordsUsed);
+
+  if (projectName !== 'dieses Projekt') seeds.push(projectName);
+  data?.brandKeywordsUsed?.forEach((kw) => seeds.push(kw));
+
+  const querySeeds = (data?.queries ?? [])
+    .slice()
+    .sort((a, b) => (b.impressions + b.clicks * 20) - (a.impressions + a.clicks * 20))
+    .map((q) => queryToResearchTopic(q.query))
+    .filter(Boolean);
+
+  seeds.push(...querySeeds);
+
+  return uniqueStrings(seeds)
+    .filter((seed) => seed.length >= 3)
+    .slice(0, 12);
+}
+
+function queryToResearchTopic(query: string): string {
+  const cleaned = query
+    .replace(/[?!"'():;,.]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const stopWords = new Set([
+    'was', 'wie', 'warum', 'wieso', 'welche', 'welcher', 'welches', 'wer', 'wo', 'wann',
+    'ist', 'sind', 'kann', 'koennen', 'können', 'fuer', 'für', 'und', 'oder', 'mit',
+    'ohne', 'bei', 'von', 'im', 'in', 'der', 'die', 'das', 'ein', 'eine', 'einen',
+    'einer', 'zu', 'zum', 'zur', 'am', 'besten', 'beste', 'kosten', 'kostet',
+  ]);
+
+  const words = cleaned
+    .split(' ')
+    .filter((word) => {
+      const normalized = word.toLowerCase();
+      return normalized.length > 2 && !stopWords.has(normalized);
+    });
+
+  return (words.length > 0 ? words.slice(0, 5).join(' ') : cleaned).slice(0, 80);
+}
+
+function buildResearchIdeas(
+  seeds: string[],
+  projectName: string,
+  selectedIntent: ResearchIntent,
+  includeBrand: boolean
+): PromptResearchIdea[] {
+  const baseIntents: Array<Exclude<ResearchIntent, 'all'>> = [
+    'recommendation', 'comparison', 'commercial', 'informational', 'local', 'brand',
+  ];
+  const intents = selectedIntent === 'all'
+    ? baseIntents.filter((item) => includeBrand || item !== 'brand')
+    : [selectedIntent as Exclude<ResearchIntent, 'all'>];
+
+  const fallbackSeeds = seeds.length > 0 ? seeds : [projectName];
+
+  return fallbackSeeds.flatMap((topic) => intents.map((intent) => {
+    const brandSuffix = includeBrand || intent === 'brand'
+      ? ` Beruecksichtige ${projectName} als moegliche Loesung.`
+      : '';
+
+    const templates: Record<Exclude<ResearchIntent, 'all'>, string> = {
+      recommendation: `Welche Anbieter, Tools oder Methoden werden fuer "${topic}" empfohlen und warum?${brandSuffix}`,
+      comparison: `Vergleiche die besten Optionen fuer "${topic}" nach Nutzen, Kosten, Aufwand und Risiken.${brandSuffix}`,
+      commercial: `Was kostet "${topic}" typischerweise und welche Faktoren beeinflussen die Entscheidung?${brandSuffix}`,
+      informational: `Erklaere "${topic}" so, dass ein Entscheider die wichtigsten Chancen, Grenzen und naechsten Schritte versteht.${brandSuffix}`,
+      local: `Welche lokalen oder regionalen Anbieter fuer "${topic}" kommen infrage und woran erkennt man Qualitaet?${brandSuffix}`,
+      brand: `Ist ${projectName} eine gute Wahl fuer "${topic}"? Vergleiche Staerken, Schwaechen und Alternativen.`,
+    };
+
+    const why: Record<Exclude<ResearchIntent, 'all'>, string> = {
+      recommendation: 'Gut fuer AI-Answer-Tests, weil Empfehlungsprompts oft Anbieterlisten ausloesen.',
+      comparison: 'Zeigt, ob das Projekt in Vergleichsantworten und Shortlists vorkommt.',
+      commercial: 'Prueft kaufnahe Nachfrage, Preisargumente und Conversion-nahe Antwortmuster.',
+      informational: 'Findet Content-Luecken fuer FAQ, Ratgeber und erklaerende Landingpages.',
+      local: 'Relevant, wenn Geo-Signale oder regionale Sichtbarkeit eine Rolle spielen.',
+      brand: 'Prueft Brand-Wahrnehmung, Alternativen und moegliche Einwaende in LLM-Antworten.',
+    };
+
+    return {
+      intent,
+      topic,
+      prompt: templates[intent],
+      why: why[intent],
+    };
+  }));
+}
+
+function researchIntentLabel(intent: Exclude<ResearchIntent, 'all'>): string {
+  return RESEARCH_INTENTS.find((item) => item.value === intent)?.label ?? intent;
+}
+
+function rotateList<T>(items: T[], offset: number): T[] {
+  if (items.length === 0) return [];
+  const start = offset % items.length;
+  return [...items.slice(start), ...items.slice(0, start)];
+}
+
+function uniqueStrings(items: string[]): string[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const normalized = item.trim().toLowerCase();
+    if (!normalized || seen.has(normalized)) return false;
+    seen.add(normalized);
+    return true;
+  });
 }
 
 function buildMarkdown(
