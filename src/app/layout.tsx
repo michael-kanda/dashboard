@@ -7,12 +7,11 @@ import MainLayout from '@/components/MainLayout';
 import { Toaster } from 'sonner';
 import * as Sentry from '@sentry/nextjs';
 import "bootstrap-icons/font/bootstrap-icons.css";
+import { Roboto_Flex } from "next/font/google";
 
-import { Google_Sans_Flex } from "next/font/google";
-const googleSansFlex = Google_Sans_Flex({ 
+const robotoFlex = Roboto_Flex({ 
   subsets: ["latin"],
-  variable: '--font-google-sans-flex', // CSS-Variable für die Tokens
-  display: 'swap',
+  variable: '--font-roboto-flex',
 });
 // Metadata mit Sentry Tracing
 export function generateMetadata(): Metadata {
@@ -57,7 +56,7 @@ export default function RootLayout({
         {/* Theme SOFORT setzen – vor allem anderen */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-<body className={`${googleSansFlex.className} bg-gray-50`}>
+<body className={`${robotoFlex.className} bg-gray-50`}>
   <Providers>
           <Toaster position="top-right" richColors closeButton />
           
