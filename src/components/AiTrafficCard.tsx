@@ -77,7 +77,7 @@ export default function AiTrafficCard({
   // Ladezustand
   if (isLoading) {
     return (
-      <div className={cn("bg-surface rounded-lg shadow-md border border-theme-border-default p-6", className)}>
+      <div className={cn("bg-surface rounded-lg shadow-md border border-border p-6", className)}>
         <div className="animate-pulse">
           <div className="h-6 bg-surface-tertiary rounded w-1/3 mb-4"></div>
           <div className="h-16 bg-surface-tertiary rounded mb-4"></div>
@@ -92,7 +92,7 @@ export default function AiTrafficCard({
   }
 
   return (
-    <div className={cn("bg-surface rounded-lg shadow-md border border-theme-border-default p-6 flex flex-col", className)}>
+    <div className={cn("bg-surface rounded-lg shadow-md border border-border p-6 flex flex-col", className)}>
       
       {/* Header - Bereinigt: Nur Icon, Titel und Badge (keine Buttons) */}
       <div className="flex items-center justify-between mb-1">
@@ -101,7 +101,7 @@ export default function AiTrafficCard({
           <h3 className="text-lg font-semibold text-heading">KI-Traffic</h3>
         </div>
         {!error && (
-          <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
+          <div className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full text-sm font-medium">
             {safePercentage.toFixed(1)}%
             <span className="hidden sm:inline"> Anteil</span>
           </div>
@@ -134,26 +134,26 @@ export default function AiTrafficCard({
           
           {/* Metriken */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-purple-50 rounded-lg p-4">
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-1">
                 <GraphUp size={16} className="text-purple-600" />
-                <p className="text-sm text-purple-700 font-medium">Sitzungen</p>
+                <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Sitzungen</p>
               </div>
               <div className="flex items-baseline">
-                <p className="text-2xl font-bold text-purple-900">
+                <p className="text-2xl font-bold text-purple-900 dark:text-purple-200">
                   {safeTotalSessions.toLocaleString('de-DE')}
                 </p>
                 <ChangeIndicator change={totalSessionsChange} />
               </div>
             </div>
             
-            <div className="bg-purple-50 rounded-lg p-4">
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-1">
                 <People size={16} className="text-purple-600" />
-                <p className="text-sm text-purple-700 font-medium">Nutzer</p>
+                <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Nutzer</p>
               </div>
               <div className="flex items-baseline">
-                <p className="text-2xl font-bold text-purple-900">
+                <p className="text-2xl font-bold text-purple-900 dark:text-purple-200">
                   {safeTotalUsers.toLocaleString('de-DE')}
                 </p>
                 <ChangeIndicator change={totalUsersChange} />
@@ -214,10 +214,10 @@ export default function AiTrafficCard({
                         <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--dp-chart-grid)" />
                     <XAxis 
                       dataKey="date" 
-                      tick={{ fontSize: 11, fill: '#6b7280' }}
+                      tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
                       tickFormatter={(value) => {
                         const date = new Date(value);
                         return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
@@ -225,15 +225,16 @@ export default function AiTrafficCard({
                       minTickGap={30}
                     />
                     <YAxis 
-                      tick={{ fontSize: 11, fill: '#6b7280' }}
+                      tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
                       width={35}
                     />
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #e5e7eb',
+                        backgroundColor: 'var(--dp-chart-tooltip-bg)',
+                        border: '1px solid var(--dp-chart-tooltip-border)',
                         borderRadius: '6px',
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        color: 'var(--dp-chart-tooltip-text)',
                       }}
                       labelFormatter={(value) => {
                         const date = new Date(value);
@@ -254,7 +255,7 @@ export default function AiTrafficCard({
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-[200px] flex items-center justify-center text-xs text-faint italic border border-dashed border-theme-border-default rounded">
+              <div className="h-[200px] flex items-center justify-center text-xs text-faint italic border border-dashed border-border rounded">
                 Keine Trenddaten verfügbar
               </div>
             )}
@@ -264,7 +265,7 @@ export default function AiTrafficCard({
       )} 
         
       {/* Footer Info-Text & Neuer Button */}
-      <div className="mt-4 pt-4 border-t border-theme-border-subtle flex flex-col gap-3">
+      <div className="mt-4 pt-4 border-t border-border-subtle flex flex-col gap-3">
         <p className="text-xs text-muted">
           KI-Traffic umfasst Besuche von bekannten KI-Bots wie ChatGPT, Claude, Perplexity und Google Gemini.
         </p>
@@ -273,19 +274,19 @@ export default function AiTrafficCard({
           <button
             type="button"
             onClick={onDetailClick}
-            className="w-full py-2.5 px-4 bg-transparent border border-purple-200 text-purple-700 text-sm font-medium rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center group cursor-pointer"
+            className="w-full py-2.5 px-4 bg-transparent border border-purple-300 dark:border-purple-500 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors flex items-center justify-center group cursor-pointer"
           >
             KI-Traffic Analyse
-            <ChevronRight size={12} className="ml-1 text-purple-400 group-hover:text-purple-600 transition-colors" />
+            <ChevronRight size={12} className="ml-1 text-purple-400 dark:text-purple-500 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors" />
           </button>
           <button
             type="button"
             onClick={onPromptTrackingClick}
             disabled={!onPromptTrackingClick}
-            className="w-full py-2.5 px-4 bg-transparent border border-sky-200 text-sky-700 text-sm font-medium rounded-lg hover:bg-sky-50 transition-colors flex items-center justify-center group cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+            className="w-full py-2.5 px-4 bg-transparent border border-sky-300 dark:border-sky-500 text-sky-700 dark:text-sky-300 text-sm font-medium rounded-lg hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors flex items-center justify-center group cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
           >
             Prompt Tracking
-            <ChevronRight size={12} className="ml-1 text-sky-400 group-hover:text-sky-600 transition-colors" />
+            <ChevronRight size={12} className="ml-1 text-sky-400 dark:text-sky-500 group-hover:text-sky-600 dark:group-hover:text-sky-300 transition-colors" />
           </button>
         </div>
       </div>
