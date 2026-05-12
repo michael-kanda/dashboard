@@ -1162,11 +1162,14 @@ function buildResearchOpportunities(
 
   const focusLandingPath = normalizePath(resolvedSetup.landingPage);
   const hasFocusLandingPage = focusLandingPath !== '/';
+  const effectiveSetup = hasFocusLandingPage
+    ? resolvedSetup
+    : { ...resolvedSetup, landingPage: '' };
 
   const queryCandidates = (data?.queries ?? [])
     .map((query): Omit<ResearchOpportunity, 'rank'> | null => {
       const topic = queryToResearchTopic(query.query, resolvedSetup.projectName, data?.brandKeywordsUsed, resolvedSetup.isLegal);
-      const finalTopic = resolvedSetup.topic.trim() || topic;
+      const finalTopic = normalizeResearchTopic(resolvedSetup.topic.trim() || topic, resolvedSetup.isLegal);
       if (!finalTopic) return null;
       const queryPath = query.url ? normalizePath(query.url) : '';
       const matchesFocusLandingPage = hasFocusLandingPage && queryPath === focusLandingPath;
@@ -1183,7 +1186,7 @@ function buildResearchOpportunities(
       return {
         score,
         topic: finalTopic,
-        prompt: buildDecisionPrompt(finalTopic, intent, resolvedSetup),
+        prompt: buildDecisionPrompt(finalTopic, intent, effectiveSetup),
         source: hasConversionPath ? 'GSC + GA4' : 'GSC',
         intent,
         reason: `${query.impressions.toLocaleString('de-DE')} Impr., ${query.clicks.toLocaleString('de-DE')} Klicks, Pos. ${query.position.toFixed(1)}, CTR ${(query.ctr * 100).toFixed(1)} %.`,
@@ -1196,12 +1199,12 @@ function buildResearchOpportunities(
     .filter((page) => (page.conversions ?? 0) > 0 || normalizePath(page.path) === focusLandingPath)
     .slice(0, 4)
     .map((page) => {
-      const topic = resolvedSetup.topic.trim() || pathToTopic(page.path, resolvedSetup);
+      const topic = normalizeResearchTopic(resolvedSetup.topic.trim() || pathToTopic(page.path, resolvedSetup), resolvedSetup.isLegal);
       const matchesFocusLandingPage = normalizePath(page.path) === focusLandingPath;
       return {
         score: Math.min(96, 62 + Math.round((page.conversions ?? 0) * 4) + (matchesFocusLandingPage ? 10 : 0)),
         topic,
-        prompt: buildDecisionPrompt(topic, 'Buy Intent', resolvedSetup),
+        prompt: buildDecisionPrompt(topic, 'Buy Intent', effectiveSetup),
         source: 'GA4',
         intent: 'Buy Intent',
         reason: `${(page.conversions ?? 0).toLocaleString('de-DE')} Conversions auf ${page.path}.`,
@@ -1209,7 +1212,9 @@ function buildResearchOpportunities(
       } satisfies Omit<ResearchOpportunity, 'rank'>;
     });
 
-  const fallback = defaultResearchOpportunities(resolvedSetup);
+  const fallback = queryCandidates.length + pageCandidates.length >= 3
+    ? []
+    : defaultResearchOpportunities(effectiveSetup);
   const combined = uniqueOpportunities([...queryCandidates, ...pageCandidates, ...fallback]);
 
   return combined
@@ -1367,6 +1372,26 @@ function prettifyTopic(value: string): string {
     );
 }
 
+function normalizeResearchTopic(value: string, isLegal: boolean): string {
+  const topic = prettifyTopic(value);
+  if (!isLegal) return topic;
+
+  const normalized = topic.toLowerCase();
+  if (/führerschein/.test(normalized) && /(entzogen|entzug|abgenommen|weg)/.test(normalized)) {
+    return 'Führerscheinentzug in Österreich';
+  }
+  if (/alkohol|promille|trunken/.test(normalized) && /führerschein/.test(normalized)) {
+    return 'Führerscheinentzug wegen Alkohol';
+  }
+  if (/scheidung|ehe/.test(normalized)) return 'Scheidung in Österreich';
+  if (/arbeitsrecht|kündigung|entlassung/.test(normalized)) return 'Arbeitsrechtliche Beratung';
+  if (/erbrecht|testament|erbe/.test(normalized)) return 'Erbrecht und Testament';
+  if (/mietrecht|miete|vermieter/.test(normalized)) return 'Mietrechtliche Beratung';
+  if (/strafrecht|strafverteidigung|anzeige/.test(normalized)) return 'Strafverteidigung';
+
+  return topic;
+}
+
 function pathToTopic(path: string, setup: ResearchSetup): string {
   const topic = path
     .split('/')
@@ -1460,13 +1485,17 @@ function defaultResearchOpportunities(setup: ResearchSetup): Array<Omit<Research
 }
 
 function uniqueOpportunities(items: Array<Omit<ResearchOpportunity, 'rank'>>): Array<Omit<ResearchOpportunity, 'rank'>> {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    const key = `${item.intent}-${item.topic}`.toLowerCase();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
+  const bestByTopic = new Map<string, Omit<ResearchOpportunity, 'rank'>>();
+
+  items.forEach((item) => {
+    const key = item.topic.toLowerCase();
+    const existing = bestByTopic.get(key);
+    if (!existing || item.score > existing.score) {
+      bestByTopic.set(key, item);
+    }
   });
+
+  return Array.from(bestByTopic.values());
 }
 
 function buildMarkdown(
