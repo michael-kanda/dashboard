@@ -471,7 +471,7 @@ function PromptResearchTool({
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-            Projektbezogene Prompt-Ideen fuer {projectName}. Basis: Brand-Keywords, Domain und reale GSC-Prompt-Queries.
+            Projektbezogene Prompt-Ideen für {projectName}. Basis: Themen aus GSC-Queries, Domain und Brand-Kontext.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -499,7 +499,7 @@ function PromptResearchTool({
           type="text"
           value={customTopic}
           onChange={(e) => setCustomTopic(e.target.value)}
-          placeholder="Optionales Fokus-Thema, z.B. KI SEO Audit"
+          placeholder="Optionales Fokus-Thema, z.B. Scheidungsanwalt Wien"
           className="px-3 py-2 text-sm rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-500/30"
         />
         <select
@@ -539,10 +539,11 @@ function PromptResearchTool({
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
         {ideas.map((idea, idx) => (
           <div key={`${idea.intent}-${idea.topic}-${idx}`} className="rounded-md border border-border bg-background/70 p-3">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-[10px] uppercase tracking-wide font-semibold text-amber-700 dark:text-amber-300">
+            <div className="flex items-center gap-2 mb-2 min-w-0">
+              <span className="text-[10px] uppercase tracking-wide font-semibold text-amber-700 dark:text-amber-300 shrink-0">
                 {researchIntentLabel(idea.intent)}
               </span>
+              <span className="text-[10px] text-muted-foreground shrink-0">·</span>
               <span className="text-[10px] text-muted-foreground truncate">{idea.topic}</span>
             </div>
             <p className="text-sm leading-relaxed text-foreground">{idea.prompt}</p>
@@ -965,41 +966,130 @@ function calcChange(current: number, previous: number): number {
 }
 
 function getProjectName(domain?: string, brandKeywords?: string[] | null): string {
-  const brand = brandKeywords?.find((kw) => kw.trim().length > 1)?.trim();
+  const brand = brandKeywords
+    ?.map((kw) => prettifyProjectName(kw))
+    .find((kw) => kw.length > 1 && !looksLikeGenericLegalQuery(kw));
   if (brand) return brand;
   if (!domain) return 'dieses Projekt';
-  return domain
+  return prettifyProjectName(domain
     .replace(/^https?:\/\//, '')
     .replace(/^www\./, '')
     .split(/[/?#]/)[0]
     .split('.')[0]
+  ) || 'dieses Projekt';
+}
+
+function prettifyProjectName(value: string): string {
+  const lowered = value.toLowerCase();
+  if (/\bbernhard\b/.test(lowered) && /\bhofer\b/.test(lowered)) {
+    return 'Mag. Bernhard Hofer';
+  }
+  if (/\banwalt[-_\s]+hofer\b/.test(lowered) || /\brechtsanwalt[-_\s]+hofer\b/.test(lowered)) {
+    return 'Anwalt Hofer';
+  }
+
+  return value
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .split(/[/?#]/)[0]
+    .replace(/\.[a-z]{2,}$/i, '')
+    .replace(/[§|]+/g, ' ')
     .replace(/[-_]+/g, ' ')
-    .trim() || 'dieses Projekt';
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function prettifyTopic(value: string): string {
+  return value
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b(arbeitsrecht|erbrecht|immobilienrecht|strafrecht|vertragsrecht|scheidungsanwalt)\b/gi, (match) =>
+      match.charAt(0).toUpperCase() + match.slice(1).toLowerCase()
+    );
+}
+
+function isLegalProject(corpus: string): boolean {
+  return /\b(anwalt|rechtsanwalt|kanzlei|jurist|recht|advokat|lawyer|attorney)\b/i.test(corpus);
+}
+
+function looksLikeGenericLegalQuery(value: string): boolean {
+  const normalized = value.toLowerCase().trim();
+  if (!normalized) return true;
+  return [
+    'anwalt',
+    'rechtsanwalt',
+    'kanzlei',
+    'anwalt wien',
+    'rechtsanwalt wien',
+    'mag',
+    'mag.',
+  ].includes(normalized);
+}
+
+function isWeakResearchSeed(seed: string, projectName: string): boolean {
+  const normalizedSeed = seed.toLowerCase().replace(/[^a-z0-9äöüß]+/g, '');
+  const normalizedProject = projectName.toLowerCase().replace(/[^a-z0-9äöüß]+/g, '');
+  if (normalizedSeed.length < 4) return true;
+  if (normalizedProject && normalizedSeed === normalizedProject) return true;
+  if (/^(anwalthofer|rechtsanwaltwienmag|magbernhardhofer|bernhardhofer|1010wien)$/.test(normalizedSeed)) return true;
+  return false;
 }
 
 function buildResearchSeeds(data?: PromptTrackingResult, domain?: string): string[] {
   const seeds: string[] = [];
   const projectName = getProjectName(domain, data?.brandKeywordsUsed);
+  const corpus = [
+    domain,
+    projectName,
+    ...(data?.brandKeywordsUsed ?? []),
+    ...(data?.queries ?? []).slice(0, 20).map((q) => q.query),
+  ].filter(Boolean).join(' ').toLowerCase();
+  const isLegal = isLegalProject(corpus);
 
-  if (projectName !== 'dieses Projekt') seeds.push(projectName);
-  data?.brandKeywordsUsed?.forEach((kw) => seeds.push(kw));
+  if (isLegal) {
+    seeds.push(
+      'rechtliche Erstberatung in Wien',
+      'Scheidungsanwalt in Wien',
+      'Arbeitsrechtliche Beratung',
+      'Erbrecht und Testament',
+      'Immobilienrecht',
+      'Strafverteidigung',
+      'Vertragsprüfung',
+      'Mietrecht'
+    );
+  }
 
   const querySeeds = (data?.queries ?? [])
     .slice()
     .sort((a, b) => (b.impressions + b.clicks * 20) - (a.impressions + a.clicks * 20))
-    .map((q) => queryToResearchTopic(q.query))
+    .map((q) => queryToResearchTopic(q.query, projectName, data?.brandKeywordsUsed, isLegal))
     .filter(Boolean);
 
   seeds.push(...querySeeds);
 
   return uniqueStrings(seeds)
-    .filter((seed) => seed.length >= 3)
+    .filter((seed) => seed.length >= 3 && !isWeakResearchSeed(seed, projectName))
     .slice(0, 12);
 }
 
-function queryToResearchTopic(query: string): string {
+function queryToResearchTopic(
+  query: string,
+  projectName: string,
+  brandKeywords?: string[] | null,
+  isLegal = false
+): string {
+  const brandParts = [
+    projectName,
+    ...(brandKeywords ?? []),
+    'mag',
+    'magister',
+    'bernhard',
+    'hofer',
+  ].flatMap((part) => part.split(/[\s\-_.§,]+/));
+
   const cleaned = query
-    .replace(/[?!"'():;,.]/g, ' ')
+    .replace(/[?!"'():;,.§]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -1008,16 +1098,24 @@ function queryToResearchTopic(query: string): string {
     'ist', 'sind', 'kann', 'koennen', 'können', 'fuer', 'für', 'und', 'oder', 'mit',
     'ohne', 'bei', 'von', 'im', 'in', 'der', 'die', 'das', 'ein', 'eine', 'einen',
     'einer', 'zu', 'zum', 'zur', 'am', 'besten', 'beste', 'kosten', 'kostet',
+    'rechtsanwalt', 'anwalt', 'kanzlei', 'law', 'attorney', '1010', 'wien',
   ]);
+  const brandStopWords = new Set(
+    brandParts
+      .map((part) => part.toLowerCase().trim())
+      .filter((part) => part.length > 2)
+  );
 
   const words = cleaned
     .split(' ')
     .filter((word) => {
       const normalized = word.toLowerCase();
-      return normalized.length > 2 && !stopWords.has(normalized);
+      return normalized.length > 2 && !stopWords.has(normalized) && !brandStopWords.has(normalized);
     });
 
-  return (words.length > 0 ? words.slice(0, 5).join(' ') : cleaned).slice(0, 80);
+  const topic = (words.length > 0 ? words.slice(0, 5).join(' ') : cleaned).slice(0, 80).trim();
+  if (isLegal && looksLikeGenericLegalQuery(topic)) return '';
+  return prettifyTopic(topic);
 }
 
 function buildResearchIdeas(
@@ -1034,28 +1132,26 @@ function buildResearchIdeas(
     : [selectedIntent as Exclude<ResearchIntent, 'all'>];
 
   const fallbackSeeds = seeds.length > 0 ? seeds : [projectName];
+  const vertical = isLegalProject(`${projectName} ${fallbackSeeds.join(' ')}`) ? 'legal' : 'generic';
 
   return fallbackSeeds.flatMap((topic) => intents.map((intent) => {
     const brandSuffix = includeBrand || intent === 'brand'
-      ? ` Beruecksichtige ${projectName} als moegliche Loesung.`
+      ? vertical === 'legal'
+        ? ` Berücksichtige ${projectName} als mögliche Kanzlei.`
+        : ` Berücksichtige ${projectName} als mögliche Lösung.`
       : '';
 
-    const templates: Record<Exclude<ResearchIntent, 'all'>, string> = {
-      recommendation: `Welche Anbieter, Tools oder Methoden werden fuer "${topic}" empfohlen und warum?${brandSuffix}`,
-      comparison: `Vergleiche die besten Optionen fuer "${topic}" nach Nutzen, Kosten, Aufwand und Risiken.${brandSuffix}`,
-      commercial: `Was kostet "${topic}" typischerweise und welche Faktoren beeinflussen die Entscheidung?${brandSuffix}`,
-      informational: `Erklaere "${topic}" so, dass ein Entscheider die wichtigsten Chancen, Grenzen und naechsten Schritte versteht.${brandSuffix}`,
-      local: `Welche lokalen oder regionalen Anbieter fuer "${topic}" kommen infrage und woran erkennt man Qualitaet?${brandSuffix}`,
-      brand: `Ist ${projectName} eine gute Wahl fuer "${topic}"? Vergleiche Staerken, Schwaechen und Alternativen.`,
-    };
+    const templates = vertical === 'legal'
+      ? legalResearchTemplates(topic, projectName, brandSuffix)
+      : genericResearchTemplates(topic, projectName, brandSuffix);
 
     const why: Record<Exclude<ResearchIntent, 'all'>, string> = {
-      recommendation: 'Gut fuer AI-Answer-Tests, weil Empfehlungsprompts oft Anbieterlisten ausloesen.',
+      recommendation: 'Prüft, ob das Projekt in Empfehlungsantworten und Shortlists auftaucht.',
       comparison: 'Zeigt, ob das Projekt in Vergleichsantworten und Shortlists vorkommt.',
-      commercial: 'Prueft kaufnahe Nachfrage, Preisargumente und Conversion-nahe Antwortmuster.',
-      informational: 'Findet Content-Luecken fuer FAQ, Ratgeber und erklaerende Landingpages.',
+      commercial: 'Prüft kaufnahe Nachfrage, Preisargumente und Conversion-nahe Antwortmuster.',
+      informational: 'Findet Content-Lücken für FAQ, Ratgeber und erklärende Landingpages.',
       local: 'Relevant, wenn Geo-Signale oder regionale Sichtbarkeit eine Rolle spielen.',
-      brand: 'Prueft Brand-Wahrnehmung, Alternativen und moegliche Einwaende in LLM-Antworten.',
+      brand: 'Prüft Brand-Wahrnehmung, Alternativen und mögliche Einwände in LLM-Antworten.',
     };
 
     return {
@@ -1065,6 +1161,36 @@ function buildResearchIdeas(
       why: why[intent],
     };
   }));
+}
+
+function legalResearchTemplates(
+  topic: string,
+  projectName: string,
+  brandSuffix: string
+): Record<Exclude<ResearchIntent, 'all'>, string> {
+  return {
+    recommendation: `Welche Rechtsanwälte in Wien werden für "${topic}" empfohlen, und woran erkennt man eine passende Kanzlei?${brandSuffix}`,
+    comparison: `Welche Kanzlei ist für "${topic}" in Wien geeignet? Vergleiche Spezialisierung, Erfahrung, Erstberatung, Erreichbarkeit und Kosten.${brandSuffix}`,
+    commercial: `Mit welchen Kosten muss man bei "${topic}" rechnen, und welche Fragen sollte man vor der Erstberatung klären?${brandSuffix}`,
+    informational: `Was sollte man tun, wenn man rechtliche Unterstützung bei "${topic}" braucht? Erkläre Ablauf, Unterlagen, Fristen und typische Fehler.${brandSuffix}`,
+    local: `Welche Rechtsanwälte in Wien oder 1010 Wien sind für "${topic}" relevant, und welche Auswahlkriterien sind wichtig?${brandSuffix}`,
+    brand: `Ist ${projectName} eine gute Kanzlei für "${topic}"? Vergleiche Spezialisierung, Vertrauenssignale, mögliche Alternativen und nächste Schritte.`,
+  };
+}
+
+function genericResearchTemplates(
+  topic: string,
+  projectName: string,
+  brandSuffix: string
+): Record<Exclude<ResearchIntent, 'all'>, string> {
+  return {
+    recommendation: `Welche Anbieter oder Lösungen werden für "${topic}" empfohlen, und warum?${brandSuffix}`,
+    comparison: `Vergleiche die besten Optionen für "${topic}" nach Nutzen, Kosten, Aufwand und Risiken.${brandSuffix}`,
+    commercial: `Was kostet "${topic}" typischerweise, und welche Faktoren beeinflussen die Entscheidung?${brandSuffix}`,
+    informational: `Erkläre "${topic}" so, dass ein Entscheider Chancen, Grenzen und nächste Schritte versteht.${brandSuffix}`,
+    local: `Welche lokalen oder regionalen Anbieter für "${topic}" kommen infrage, und woran erkennt man Qualität?${brandSuffix}`,
+    brand: `Ist ${projectName} eine gute Wahl für "${topic}"? Vergleiche Stärken, Schwächen und Alternativen.`,
+  };
 }
 
 function researchIntentLabel(intent: Exclude<ResearchIntent, 'all'>): string {
