@@ -8,9 +8,12 @@ import { Toaster } from 'sonner';
 import * as Sentry from '@sentry/nextjs';
 import "bootstrap-icons/font/bootstrap-icons.css";
 
-import { Inter } from "next/font/google";
-const inter = Inter({ subsets: ["latin"], weight: ["400","500","600","700"] });
-
+import { Google_Sans_Flex } from "next/font/google";
+const googleSansFlex = Google_Sans_Flex({ 
+  subsets: ["latin"],
+  variable: '--font-google-sans-flex', // CSS-Variable für die Tokens
+  display: 'swap',
+});
 // Metadata mit Sentry Tracing
 export function generateMetadata(): Metadata {
   return {
@@ -54,8 +57,8 @@ export default function RootLayout({
         {/* Theme SOFORT setzen – vor allem anderen */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-<body className={`${inter.className} bg-gray-50`}>
-        <Providers>
+<body className={`${googleSansFlex.className} bg-gray-50`}>
+  <Providers>
           <Toaster position="top-right" richColors closeButton />
           
           <MainLayout>
