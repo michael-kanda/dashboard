@@ -2,7 +2,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ClockHistory, FunnelFill, ExclamationTriangleFill, Search, X, Trophy, Award, CheckCircleFill } from 'react-bootstrap-icons';
+import {
+  ExclamationTriangleFill,
+  Search,
+  X,
+  ArrowUp,
+  ArrowDown,
+  ArrowDownUp,
+  Link45deg
+} from 'react-bootstrap-icons';
 import { cn } from '@/lib/utils';
 import { type DateRangeOption, getRangeLabel } from '@/components/DateRangeSelector';
 
@@ -12,7 +20,7 @@ type TopQueryData = {
   impressions: number;
   ctr: number;
   position: number;
-  url?: string; // ✅ NEU: Landingpage URL (optional für Abwärtskompatibilität)
+  url?: string; // Landingpage URL (optional für Abwärtskompatibilität)
 };
 
 interface TopQueriesListProps {
@@ -23,30 +31,26 @@ interface TopQueriesListProps {
   error?: string | null;
 }
 
-// ✅ Hilfsfunktion: URL zu lesbarem Pfad konvertieren
+// Hilfsfunktion: URL zu lesbarem Pfad konvertieren
 function formatUrl(url: string | undefined): string | null {
   if (!url) return null;
-  
+
   try {
     const urlObj = new URL(url);
     let path = urlObj.pathname;
-    
-    // Query-Parameter entfernen falls vorhanden
+
     path = path.split('?')[0];
-    
-    // Trailing Slash entfernen (außer bei Root)
+
     if (path.length > 1 && path.endsWith('/')) {
       path = path.slice(0, -1);
     }
-    
-    // Leerer Pfad = Homepage
+
     if (path === '' || path === '/') {
       return '/';
     }
-    
+
     return path;
   } catch {
-    // Fallback: Wenn URL nicht parsebar, versuche Pfad direkt zu extrahieren
     const match = url.match(/^https?:\/\/[^\/]+(\/[^\?]*)/);
     if (match && match[1]) {
       let path = match[1];
@@ -66,7 +70,7 @@ export default function TopQueriesList({
   dateRange,
   error = null
 }: TopQueriesListProps) {
-  const [sortField, setSortField] = useState<keyof TopQueryData | null>(null);
+  const [sortField, setSortField] = useState<keyof TopQueryData | null>('clicks');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -85,14 +89,13 @@ export default function TopQueriesList({
     let data = queries || [];
     if (searchTerm) {
       const lowerTerm = searchTerm.toLowerCase();
-      // ✅ Suche auch in URL
-      data = data.filter(q => 
+      data = data.filter(q =>
         q.query.toLowerCase().includes(lowerTerm) ||
         (q.url && q.url.toLowerCase().includes(lowerTerm))
       );
     }
     if (!sortField) return data;
-    
+
     return [...data].sort((a, b) => {
       const aVal = a[sortField];
       const bVal = b[sortField];
@@ -106,169 +109,204 @@ export default function TopQueriesList({
     });
   }, [queries, sortField, sortDirection, searchTerm]);
 
-  const renderRankingBadge = (position: number) => {
+  // ── Position-Anzeige: Dot + Zahl, einheitlicher Stil ──────
+  const renderPosition = (position: number) => {
     const rounded = Math.round(position);
-    
-    if (rounded === 1) {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700/50 shadow-sm">
-          <Trophy size={10} className="text-yellow-600" />
-          {position.toFixed(1)}
-        </span>
-      );
-    }
-    if (rounded <= 3) {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-surface-tertiary text-body border border-border shadow-sm">
-          <Award size={10} className="text-muted" />
-          {position.toFixed(1)}
-        </span>
-      );
-    }
+    const formatted = position.toFixed(1).replace('.', ',');
+
     if (rounded <= 10) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-700/50">
-          <CheckCircleFill size={10} className="text-emerald-500 opacity-60" />
-          {position.toFixed(1)}
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+          <span className="font-medium text-strong">{formatted}</span>
         </span>
       );
     }
-    
+    if (rounded <= 20) {
+      return (
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+          <span className="font-medium text-strong">{formatted}</span>
+        </span>
+      );
+    }
     return (
-      <span className="text-muted font-medium text-xs">
-        {position.toFixed(1)}
-      </span>
+      <span className="font-medium text-muted">{formatted}</span>
     );
   };
 
+  // ── Sort-Header-Renderer ──────────────────────────────────
+  const renderSortHeader = (
+    field: keyof TopQueryData,
+    label: string,
+    rightAligned = false
+  ) => {
+    const isActive = sortField === field;
+
+    return (
+      <th
+        onClick={() => handleSort(field)}
+        className={cn(
+          "px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider cursor-pointer select-none border-b border-theme-border-subtle hover:text-body transition-colors bg-surface",
+          rightAligned ? "text-right" : "text-left",
+          isActive ? "text-body" : "text-faint"
+        )}
+      >
+        <div className={cn("flex items-center gap-1", rightAligned && "justify-end")}>
+          <span>{label}</span>
+          {isActive ? (
+            sortDirection === 'desc'
+              ? <ArrowDown size={10} className="text-body" />
+              : <ArrowUp size={10} className="text-body" />
+          ) : (
+            <ArrowDownUp size={10} className="opacity-40" />
+          )}
+        </div>
+      </th>
+    );
+  };
+
+  // ── Header-Block (Titel + Subtitle + Search) ─────────────
+  const renderHeader = (subtitle: React.ReactNode) => (
+    <div className="mb-4 flex-shrink-0">
+      <div className="flex items-start justify-between gap-4 mb-1.5">
+        <h3 className="text-[18px] font-semibold text-heading">Top Suchanfragen</h3>
+
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Query oder Pfad..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8 pr-8 py-1.5 text-sm border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint bg-surface"
+          />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-faint hover:text-body"
+              title="Filter zurücksetzen"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+      <p className="text-xs text-muted">{subtitle}</p>
+    </div>
+  );
+
+  // ── Loading State ────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className={cn("bg-surface rounded-lg shadow-sm border border-border card-glass", className)}>
-        <div className="p-4 bg-[#188BDB] rounded-t-lg">
-          <div className="flex items-center gap-2 text-white">
-            <ClockHistory size={20} />
-            <h3 className="text-lg font-semibold">Top 100 Suchanfragen</h3>
-          </div>
-        </div>
-        <div className="p-6 animate-pulse space-y-3">
-          {[...Array(5)].map((_, i) => <div key={i} className="h-12 bg-surface-tertiary rounded"></div>)}
+      <div className={cn("bg-surface rounded-lg shadow-sm border border-border card-glass p-5 flex flex-col", className)}>
+        {renderHeader('Lade Daten...')}
+        <div className="animate-pulse space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-12 bg-surface-tertiary rounded" />
+          ))}
         </div>
       </div>
     );
   }
 
+  // ── Error State ──────────────────────────────────────────
   if (error) {
     return (
-      <div className={cn("bg-surface rounded-lg shadow-sm border border-border card-glass", className)}>
-        <div className="p-4 bg-[#188BDB] rounded-t-lg">
-          <div className="flex items-center gap-2 text-white">
-            <ClockHistory size={20} />
-            <h3 className="text-lg font-semibold">Top 100 Suchanfragen</h3>
-          </div>
-        </div>
-        <div className="p-6 text-center text-sm text-red-700 flex flex-col items-center gap-2 min-h-[200px] justify-center">
-          <ExclamationTriangleFill className="text-red-500 w-6 h-6" />
-          <span className="font-semibold">Fehler bei GSC-Daten</span>
-          <p className="text-xs text-muted" title={error}>Die Suchanfragen konnten nicht geladen werden.</p>
+      <div className={cn("bg-surface rounded-lg shadow-sm border border-border card-glass p-5 flex flex-col", className)}>
+        {renderHeader('Quelle GSC')}
+        <div className="py-12 text-center flex flex-col items-center gap-2">
+          <ExclamationTriangleFill className="text-red-500" size={24} />
+          <span className="text-sm font-semibold text-strong">Fehler bei GSC-Daten</span>
+          <p className="text-xs text-muted max-w-md" title={error}>
+            Die Suchanfragen konnten nicht geladen werden.
+          </p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className={cn("bg-surface rounded-lg shadow-sm border border-border flex flex-col card-glass", className)}>
-      
-      {/* Header */}
-      <div className="p-4 bg-[#188BDB] rounded-t-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <ClockHistory className="text-white" size={20} />
-          <h3 className="text-lg font-semibold text-white">Top 100 Suchanfragen (Quelle: GSC)</h3>
-          {rangeLabel && (
-             <span className="text-xs text-white/90 bg-black/10 px-2 py-0.5 rounded-full ml-2 hidden sm:inline-block">
-               {rangeLabel}
-             </span>
-           )}
-        </div>
+  // ── Subtitle für Normal-State ────────────────────────────
+  const subtitleParts = [
+    'Quelle GSC',
+    rangeLabel,
+    `${displayedQueries.length} ${displayedQueries.length === 1 ? 'Eintrag' : 'Einträge'}`
+  ].filter(Boolean);
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-initial">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/70" size={14} />
-            <input 
-              type="text" 
-              placeholder="Suchen..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full sm:w-48 bg-white/20 text-white placeholder-white/70 text-sm rounded-full py-1.5 pl-8 pr-8 border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
-            />
-            {searchTerm && (
-              <button 
-                onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-          <div className="text-xs text-white/80 whitespace-nowrap hidden sm:block">
-            {displayedQueries.length} {displayedQueries.length === 1 ? 'Eintrag' : 'Einträge'}
-          </div>
-        </div>
-      </div>
+  // ── Totals für Footer ────────────────────────────────────
+  const totalClicks = displayedQueries.reduce((sum, q) => sum + q.clicks, 0);
+  const totalImpressions = displayedQueries.reduce((sum, q) => sum + q.impressions, 0);
+  const avgCtr = totalImpressions > 0
+    ? (totalClicks / totalImpressions) * 100
+    : 0;
+
+  return (
+    <div className={cn("bg-surface rounded-lg shadow-sm border border-border card-glass p-5 flex flex-col", className)}>
+      {renderHeader(subtitleParts.join(' · '))}
 
       {/* Tabelle */}
-      <div className="overflow-x-auto flex-grow">
+      <div className="flex-grow min-h-0">
         {displayedQueries.length === 0 ? (
-           <div className="p-8 text-center text-sm text-muted italic min-h-[200px] flex flex-col items-center justify-center">
-             <Search className="text-faint mb-2" size={32} />
-             {searchTerm ? `Keine Ergebnisse für "${searchTerm}"` : 'Keine Suchanfragen gefunden.'}
-           </div>
+          <div className="py-12 text-center text-sm text-muted flex flex-col items-center gap-2">
+            <Search className="text-faint" size={28} />
+            <p>
+              {searchTerm
+                ? <>Keine Ergebnisse für „<span className="font-medium text-body">{searchTerm}</span>"</>
+                : 'Keine Suchanfragen gefunden.'}
+            </p>
+          </div>
         ) : (
-          <div className="max-h-[600px] overflow-y-auto">
-            <table className="w-full border-collapse">
+          <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
+            <table className="w-full border-collapse table-fixed">
+              <colgroup>
+                <col style={{ width: '48%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '14%' }} />
+              </colgroup>
+
               <thead className="sticky top-0 z-10">
-                <tr className="bg-[#188BDB] text-white">
-                  <th onClick={() => handleSort('query')} className="px-4 py-3 text-left text-sm font-semibold border-r border-white/20 cursor-pointer hover:bg-[#1479BF] transition-colors"><div className="flex items-center gap-2">Suchanfrage <FunnelFill size={12} className="opacity-60" /></div></th>
-                  <th onClick={() => handleSort('clicks')} className="px-4 py-3 text-right text-sm font-semibold border-r border-white/20 cursor-pointer hover:bg-[#1479BF] transition-colors whitespace-nowrap"><div className="flex items-center justify-end gap-2">Klicks <FunnelFill size={12} className="opacity-60" /></div></th>
-                  <th onClick={() => handleSort('impressions')} className="px-4 py-3 text-right text-sm font-semibold border-r border-white/20 cursor-pointer hover:bg-[#1479BF] transition-colors whitespace-nowrap"><div className="flex items-center justify-end gap-2">Impr. <FunnelFill size={12} className="opacity-60" /></div></th>
-                  <th onClick={() => handleSort('ctr')} className="px-4 py-3 text-right text-sm font-semibold border-r border-white/20 cursor-pointer hover:bg-[#1479BF] transition-colors whitespace-nowrap"><div className="flex items-center justify-end gap-2">CTR <FunnelFill size={12} className="opacity-60" /></div></th>
-                  <th onClick={() => handleSort('position')} className="px-4 py-3 text-right text-sm font-semibold cursor-pointer hover:bg-[#1479BF] transition-colors whitespace-nowrap"><div className="flex items-center justify-end gap-2">Pos. <FunnelFill size={12} className="opacity-60" /></div></th>
+                <tr>
+                  {renderSortHeader('query', 'Suchanfrage')}
+                  {renderSortHeader('clicks', 'Klicks', true)}
+                  {renderSortHeader('impressions', 'Impr.', true)}
+                  {renderSortHeader('ctr', 'CTR', true)}
+                  {renderSortHeader('position', 'Pos.', true)}
                 </tr>
               </thead>
+
               <tbody>
                 {displayedQueries.map((query, index) => {
                   const formattedPath = formatUrl(query.url);
-                  
+
                   return (
-                    <tr 
+                    <tr
                       key={`${query.query}-${index}`}
-                      className={cn("border-b border-border hover:bg-surface-tertiary transition-colors", index % 2 === 0 ? "bg-surface" : "bg-surface-secondary")}
+                      className="border-b border-theme-border-subtle hover:bg-surface-secondary/40 transition-colors"
                     >
-                      <td className="px-4 py-3 text-sm text-heading border-r border-border">
-                        <div className="break-words max-w-md">
-                          {/* ✅ Suchanfrage */}
-                          <span className="font-medium">{query.query}</span>
-                          
-                          {/* ✅ NEU: Landingpage subtil darunter */}
-                          {formattedPath && (
-                            <div className="mt-1">
-                              <span 
-                                className="inline-flex items-center text-xs text-rose-400 font-mono px-1.5 py-0.5 bg-surface-secondary rounded border border-border/50"
-                                title={query.url}
-                              >
-                                {formattedPath}
-                              </span>
-                            </div>
-                          )}
+                      <td className="px-2 py-3 align-top">
+                        <div className="text-sm font-medium text-heading break-words">
+                          {query.query}
                         </div>
+                        {formattedPath && (
+                          <div className="flex items-center gap-1 mt-1 text-xs text-muted" title={query.url}>
+                            <Link45deg size={12} className="text-faint flex-shrink-0" />
+                            <span className="font-mono text-[11px] truncate">{formattedPath}</span>
+                          </div>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-heading text-right border-r border-border whitespace-nowrap">{query.clicks.toLocaleString('de-DE')}</td>
-                      <td className="px-4 py-3 text-sm text-heading text-right border-r border-border whitespace-nowrap">{query.impressions.toLocaleString('de-DE')}</td>
-                      <td className="px-4 py-3 text-sm text-heading text-right border-r border-border whitespace-nowrap">{(query.ctr * 100).toFixed(1)}%</td>
-                      
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <div className="flex justify-end">
-                          {renderRankingBadge(query.position)}
-                        </div>
+                      <td className="px-2 py-3 text-right align-top text-sm font-medium text-strong whitespace-nowrap">
+                        {query.clicks.toLocaleString('de-DE')}
+                      </td>
+                      <td className="px-2 py-3 text-right align-top text-sm text-body whitespace-nowrap">
+                        {query.impressions.toLocaleString('de-DE')}
+                      </td>
+                      <td className="px-2 py-3 text-right align-top text-sm text-body whitespace-nowrap">
+                        {(query.ctr * 100).toFixed(1).replace('.', ',')}%
+                      </td>
+                      <td className="px-2 py-3 text-right align-top whitespace-nowrap">
+                        {renderPosition(query.position)}
                       </td>
                     </tr>
                   );
@@ -280,14 +318,22 @@ export default function TopQueriesList({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 bg-surface-secondary border-t border-border rounded-b-lg">
-        <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-secondary">
-          <div className="flex items-center gap-4">
-            <span>Klicks: <span className="font-semibold text-heading">{displayedQueries.reduce((sum, q) => sum + q.clicks, 0).toLocaleString('de-DE')}</span></span>
-            <span>Impressionen: <span className="font-semibold text-heading">{displayedQueries.reduce((sum, q) => sum + q.impressions, 0).toLocaleString('de-DE')}</span></span>
-          </div>
+      {displayedQueries.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-theme-border-subtle flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted">
+          <span>
+            <span className="text-faint">Klicks gesamt</span>{' '}
+            <span className="text-strong font-medium ml-1">{totalClicks.toLocaleString('de-DE')}</span>
+          </span>
+          <span>
+            <span className="text-faint">Impressionen gesamt</span>{' '}
+            <span className="text-strong font-medium ml-1">{totalImpressions.toLocaleString('de-DE')}</span>
+          </span>
+          <span>
+            <span className="text-faint">Ø CTR</span>{' '}
+            <span className="text-strong font-medium ml-1">{avgCtr.toFixed(1).replace('.', ',')}%</span>
+          </span>
         </div>
-      </div>
+      )}
     </div>
   );
 }
