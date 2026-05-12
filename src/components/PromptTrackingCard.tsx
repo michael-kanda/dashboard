@@ -1069,7 +1069,7 @@ function buildResearchOpportunities(
   );
 
   const queryCandidates = (data?.queries ?? [])
-    .map((query) => {
+    .map((query): Omit<ResearchOpportunity, 'rank'> | null => {
       const topic = queryToResearchTopic(query.query, resolvedSetup.projectName, data?.brandKeywordsUsed, resolvedSetup.isLegal);
       if (!topic) return null;
       const hasConversionPath = query.url ? conversionPaths.has(normalizePath(query.url)) : false;
@@ -1094,7 +1094,7 @@ function buildResearchOpportunities(
     })
     .filter((item): item is Omit<ResearchOpportunity, 'rank'> => Boolean(item));
 
-  const pageCandidates = (dashboardData?.topConvertingPages ?? [])
+  const pageCandidates: Array<Omit<ResearchOpportunity, 'rank'>> = (dashboardData?.topConvertingPages ?? [])
     .filter((page) => (page.conversions ?? 0) > 0)
     .slice(0, 4)
     .map((page) => {
