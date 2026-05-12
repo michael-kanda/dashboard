@@ -275,8 +275,10 @@ export default function Sidebar() {
 
   const renderDesktopSidebar = () => (
     <aside data-sidebar className={`
-      hidden md:flex flex-col sidebar-bg border-r border-border
-      transition-all duration-200 ease-in-out relative flex-shrink-0 sticky top-0 h-screen
+      hidden md:flex flex-col sidebar-bg
+      ${/* border-r border-border */ ''}
+      rounded-2xl shadow-xl m-3
+      transition-all duration-200 ease-in-out relative flex-shrink-0 sticky top-3 h-[calc(100vh-1.5rem)]
       ${isCollapsed ? 'w-[72px]' : 'w-[260px]'}
     `}>
       <button onClick={() => setIsCollapsed(!isCollapsed)}
