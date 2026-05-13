@@ -129,10 +129,7 @@ export default function Sidebar() {
   // ═══════════════════════════════════════════════════════
   // LOGO-KONFIGURATION (DATEITAUSCH)
   // ═══════════════════════════════════════════════════════
-  const logoLight = "/logo-data-peak.webp"; 
-  const logoDark = "/logo-data-peak-dark.webp";  
-  
-  const systemLogo = theme === 'dark' ? logoDark : logoLight;
+  const systemLogo = "/logo-data-peak-dark.webp";
   const logoSrc = session?.user?.logo_url || systemLogo;
   const priorityLoad = true;
 
@@ -299,7 +296,7 @@ export default function Sidebar() {
               priority={priorityLoad}
               onError={(e) => { 
                 const target = e.target as HTMLImageElement;
-                if (logoSrc !== logoLight) target.src = logoLight; 
+                if (logoSrc !== systemLogo) target.src = systemLogo;
               }}
               className="object-contain transition-all duration-300"
               sizes={isCollapsed ? "40px" : "240px"} 
@@ -421,7 +418,7 @@ export default function Sidebar() {
               priority={priorityLoad}
               onError={(e) => { 
                 const target = e.target as HTMLImageElement;
-                if (logoSrc !== logoLight) target.src = logoLight; 
+                if (logoSrc !== systemLogo) target.src = systemLogo;
               }}
               className="object-contain transition-all duration-300" 
               sizes="180px" 
