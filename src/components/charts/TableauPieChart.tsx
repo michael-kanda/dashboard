@@ -234,7 +234,7 @@ export default function TableauPieChart({
 
   if (isLoading) {
     return (
-      <div className={cn('bg-surface rounded-lg shadow-sm border border-border p-6 flex flex-col h-[350px] animate-pulse', className)}>
+      <div className={cn('bg-white dark:bg-surface rounded-lg shadow-sm border border-border p-6 flex flex-col h-[350px] animate-pulse', className)}>
         <div className="h-6 bg-surface-tertiary rounded w-1/3 mb-4"></div>
         <div className="flex-grow flex items-center justify-center">
           <div className="w-48 h-48 bg-surface-tertiary rounded-full"></div>
@@ -245,7 +245,7 @@ export default function TableauPieChart({
 
   if (error) {
      return (
-      <div className={cn('bg-surface rounded-lg shadow-sm border border-border p-6 flex flex-col h-[350px]', className)}>
+      <div className={cn('bg-white dark:bg-surface rounded-lg shadow-sm border border-border p-6 flex flex-col h-[350px]', className)}>
         <h3 className="text-lg font-semibold text-heading mb-4">{title}</h3>
         <div className="flex-grow flex flex-col items-center justify-center text-red-500 gap-2">
           <ExclamationTriangleFill size={24} />
@@ -257,7 +257,7 @@ export default function TableauPieChart({
 
   if (!chartData || chartData.length === 0) {
     return (
-      <div className={cn('bg-surface rounded-lg shadow-sm border border-border p-6 flex flex-col h-[350px]', className)}>
+      <div className={cn('bg-white dark:bg-surface rounded-lg shadow-sm border border-border p-6 flex flex-col h-[350px]', className)}>
         <h3 className="text-lg font-semibold text-heading mb-4 self-start">{title}</h3>
         <div className="flex-grow">
            <NoDataState message="Keine Daten für diesen Zeitraum" />
@@ -267,7 +267,7 @@ export default function TableauPieChart({
   }
 
   return (
-    <div className={cn('bg-surface rounded-lg shadow-sm border border-border p-6 flex flex-col h-[350px] hover:shadow-md transition-shadow', className)}>
+    <div className={cn('bg-white dark:bg-surface rounded-lg shadow-sm border border-border p-6 flex flex-col h-[350px] hover:shadow-md transition-shadow', className)}>
       <h3 className="text-lg font-semibold text-heading mb-1 flex-shrink-0">
         {title}
       </h3>

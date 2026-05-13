@@ -77,7 +77,7 @@ export default function AiTrafficCard({
   // Ladezustand
   if (isLoading) {
     return (
-      <div className={cn("bg-white dark:bg-surface rounded-lg shadow-md border border-border p-6", className)}>
+      <div className={cn("bg-white dark:bg-surface rounded-lg shadow-md p-6", className)}>
         <div className="animate-pulse">
           <div className="h-6 bg-surface-tertiary rounded w-1/3 mb-4"></div>
           <div className="h-16 bg-surface-tertiary rounded mb-4"></div>
@@ -92,7 +92,7 @@ export default function AiTrafficCard({
   }
 
   return (
-    <div className={cn("bg-white dark:bg-surface rounded-lg shadow-md border border-border p-6 flex flex-col", className)}>
+    <div className={cn("bg-white dark:bg-surface rounded-lg shadow-md p-6 flex flex-col", className)}>
       
       {/* Header - Bereinigt: Nur Icon, Titel und Badge (keine Buttons) */}
       <div className="flex items-center justify-between mb-1">
