@@ -70,6 +70,49 @@ export async function PUT(
       `[PUT assignments] Aktualisiere ${project_ids.length} Zuweisungen für Admin ${targetUserId}`
     );
 
+    if (session?.user.role === 'ADMIN') {
+      const adminMandantId = session.user.mandant_id;
+
+      if (!adminMandantId) {
+        return NextResponse.json(
+          { message: 'Admins ohne Label dürfen keine Projektzuweisungen ändern.' },
+          { status: 403 }
+        );
+      }
+
+      const { rows: targetAdminRows } = await sql`
+        SELECT mandant_id FROM users
+        WHERE id::text = ${targetUserId} AND role = 'ADMIN'
+        LIMIT 1;
+      `;
+
+      if (targetAdminRows.length === 0 || targetAdminRows[0].mandant_id !== adminMandantId) {
+        return NextResponse.json(
+          { message: 'Admins dürfen nur andere Admins im eigenen Label bearbeiten.' },
+          { status: 403 }
+        );
+      }
+
+      if (project_ids.length > 0) {
+        for (const projectId of project_ids) {
+          const { rows: projectRows } = await sql`
+            SELECT mandant_id
+            FROM users
+            WHERE id::text = ${projectId}
+              AND role = 'BENUTZER'
+            LIMIT 1;
+          `;
+
+          if (projectRows.length === 0 || projectRows[0].mandant_id !== adminMandantId) {
+            return NextResponse.json(
+              { message: 'Admins dürfen nur Projekte im eigenen Label zuweisen.' },
+              { status: 403 }
+            );
+          }
+        }
+      }
+    }
+
     // 3. KORREKTUR: Datenbank-Operationen IN EINER MANUELLEN TRANSAKTION
     
     // Starte Transaktion

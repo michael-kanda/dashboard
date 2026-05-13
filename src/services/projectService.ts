@@ -55,9 +55,8 @@ export async function getProjectsForDashboard(user: { id: string; role: string; 
       LEFT JOIN users creator ON u."createdByAdminId" = creator.id
       LEFT JOIN landingpages lp ON u.id = lp.user_id
       WHERE u.role = 'BENUTZER'
-        AND u.mandant_id = ${adminMandantId}
         AND (
-          u."createdByAdminId"::text = ${user.id}
+          (u.mandant_id = ${adminMandantId} AND u."createdByAdminId"::text = ${user.id})
           OR EXISTS (
             SELECT 1 FROM project_assignments pa 
             WHERE pa.project_id = u.id AND pa.user_id::text = ${user.id}

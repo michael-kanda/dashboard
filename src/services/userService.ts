@@ -59,9 +59,8 @@ export async function getUsersForManagement(user: UserSession): Promise<User[]> 
           ) as assigned_projects
         FROM users u
         WHERE u.role = 'BENUTZER' 
-          AND u.mandant_id = ${adminMandantId}
           AND (
-            u."createdByAdminId"::text = ${adminId}
+            (u.mandant_id = ${adminMandantId} AND u."createdByAdminId"::text = ${adminId})
             OR EXISTS (
               SELECT 1 FROM project_assignments pa 
               WHERE pa.project_id = u.id AND pa.user_id::text = ${adminId}

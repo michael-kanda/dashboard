@@ -47,17 +47,30 @@ export async function POST(
 
     // Validiere, dass beide IDs existieren
     const { rows: adminCheck } = await sql`
-      SELECT id, email, role FROM users WHERE id::text = ${userId};
+      SELECT id, email, role, mandant_id FROM users WHERE id::text = ${userId};
     `;
     if (adminCheck.length === 0 || adminCheck[0].role !== 'ADMIN') {
       return NextResponse.json({ message: 'Ziel-Benutzer ist kein Admin' }, { status: 404 });
     }
 
     const { rows: projectCheck } = await sql`
-      SELECT id, email, role FROM users WHERE id::text = ${projectId};
+      SELECT id, email, role, mandant_id FROM users WHERE id::text = ${projectId};
     `;
     if (projectCheck.length === 0 || projectCheck[0].role !== 'BENUTZER') {
       return NextResponse.json({ message: 'Ziel-Projekt ist kein Benutzer (Kunde)' }, { status: 404 });
+    }
+
+    if (session?.user?.role === 'ADMIN') {
+      const adminMandantId = session.user.mandant_id;
+      const targetAdminMandantId = adminCheck[0].mandant_id;
+      const projectMandantId = projectCheck[0].mandant_id;
+
+      if (!adminMandantId || targetAdminMandantId !== adminMandantId || projectMandantId !== adminMandantId) {
+        return NextResponse.json(
+          { message: 'Admins dürfen nur Projektzuweisungen innerhalb ihres eigenen Labels ändern.' },
+          { status: 403 }
+        );
+      }
     }
 
     console.log('[POST] ✅ Validierung erfolgreich');
