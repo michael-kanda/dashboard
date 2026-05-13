@@ -142,9 +142,9 @@
   --dp-text-heading:   #f1f5f9;
   --dp-text-strong:    #e2e8f0;
   --dp-text-body:      #cbd5e1;
-  --dp-text-secondary: #94a3b8;
-  --dp-text-muted:     #64748b;
-  --dp-text-faint:     #475569;
+  --dp-text-secondary: #cbd5e1;
+  --dp-text-muted:     #cbd5e1;
+  --dp-text-faint:     #94a3b8;
 
   /* Borders */
   --dp-border-subtle:  #1e293b;

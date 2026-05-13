@@ -128,7 +128,7 @@ export default function ProjectDashboard({
   const [showAiTrafficDetail, setShowAiTrafficDetail] = useState(false);
   const [showPromptTrackingDetail, setShowPromptTrackingDetail] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
-  const visibilityButtonClass = "inline-flex items-center gap-1.5 rounded-md border border-border bg-white/80 dark:bg-surface/70 px-2 py-1 text-[11px] font-medium text-muted shadow-sm hover:text-strong hover:border-theme-border-strong hover:bg-surface-secondary transition-colors";
+  const visibilityButtonClass = "visibility-toggle-button inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors";
 
   useEffect(() => {
     setIsUpdating(false);

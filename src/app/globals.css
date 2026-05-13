@@ -211,6 +211,33 @@
     color: var(--dp-text-body);
   }
 
+  .visibility-toggle-button {
+    background-color: rgba(255, 255, 255, 0.82);
+    border-color: var(--dp-border-default);
+    color: var(--dp-text-body);
+  }
+
+  .visibility-toggle-button:hover {
+    background-color: var(--dp-bg-tertiary);
+    border-color: var(--dp-border-strong);
+    color: var(--dp-text-heading);
+  }
+
+  .dark .visibility-toggle-button {
+    background-color: rgba(15, 23, 42, 0.92);
+    border-color: rgba(203, 213, 225, 0.26);
+    color: #e2e8f0;
+    box-shadow:
+      0 0 0 1px rgba(203, 213, 225, 0.10),
+      0 8px 18px rgba(0, 0, 0, 0.28);
+  }
+
+  .dark .visibility-toggle-button:hover {
+    background-color: rgba(30, 41, 59, 0.96);
+    border-color: rgba(203, 213, 225, 0.42);
+    color: #f8fafc;
+  }
+
   /* ── 9b. Custom Chart Tooltip Card ─────────────────────── */
   /*
    * Add className="chart-tooltip" to any custom Recharts tooltip container.
