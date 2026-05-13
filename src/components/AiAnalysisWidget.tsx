@@ -167,7 +167,7 @@ export default function AiAnalysisWidget({
     return (
       <div className="relative group mb-6">
         <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl opacity-5 group-hover:opacity-15 transition duration-700 blur-sm"></div>
-        <div className="relative bg-surface rounded-xl p-6 flex flex-col sm:flex-row items-center gap-6 shadow-sm border border-theme-border-subtle">
+        <div className="relative dashboard-widget-surface rounded-xl p-6 flex flex-col sm:flex-row items-center gap-6">
           <div className="relative shrink-0">
             <div className={`absolute inset-0 rounded-2xl opacity-10 animate-pulse ${isPrefetched ? 'bg-emerald-500' : 'bg-indigo-500'}`}></div>
             <div className={`relative p-1 rounded-2xl border-2 ${isPrefetched ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-indigo-500/10 border-indigo-500/30'}`}>
@@ -202,7 +202,7 @@ export default function AiAnalysisWidget({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-surface rounded-2xl border border-theme-border-default ring-1 ring-indigo-500/10 flex flex-col h-full shadow-sm">
+      <div className="dashboard-widget-surface rounded-2xl flex flex-col h-full">
         <div className="p-5 border-b border-theme-border-subtle rounded-t-2xl flex justify-between items-center">
           <h3 className="font-bold text-heading flex items-center gap-2">
             {isLoading ? <ArrowRepeat className="animate-spin text-indigo-500" /> : <InfoCircle className="text-indigo-500" />}
@@ -223,7 +223,7 @@ export default function AiAnalysisWidget({
         </div>
       </div>
 
-      <div className="bg-surface rounded-2xl border border-theme-border-default flex flex-col h-full shadow-sm">
+      <div className="dashboard-widget-surface rounded-2xl flex flex-col h-full">
         <div className="p-5 border-b border-theme-border-subtle flex justify-between items-center">
           <h3 className="font-bold text-heading flex items-center gap-2">
             <GraphUpArrow className="text-emerald-500" />

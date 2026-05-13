@@ -96,7 +96,7 @@ export default function TableauKpiCard({
 
   if (isLoading) {
     return (
-      <div className={`bg-surface rounded-xl border border-theme-border-default p-5 ${className}`}>
+      <div className={`dashboard-widget-surface rounded-xl p-5 ${className}`}>
         <div className="animate-pulse space-y-4">
           <div className="h-4 bg-surface-tertiary rounded w-1/3"></div>
           <div className="h-3 bg-surface-tertiary rounded w-1/2"></div>
@@ -108,7 +108,7 @@ export default function TableauKpiCard({
   }
 
   return (
-    <div className={`bg-surface rounded-xl border border-theme-border-default p-5 transition-all duration-300 hover:shadow-lg hover:border-theme-border-strong relative overflow-visible flex flex-col ${className}`}>
+    <div className={`dashboard-widget-surface rounded-xl p-5 transition-all duration-300 relative overflow-visible flex flex-col ${className}`}>
       
       {/* Hintergrund-Balken */}
       {barComparison && (

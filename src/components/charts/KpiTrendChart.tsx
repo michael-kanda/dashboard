@@ -286,7 +286,7 @@ export default function KpiTrendChart({
 
   if (isLoading) {
     return (
-      <div className={cn("bg-surface rounded-lg shadow-sm border border-border p-6 h-[400px] animate-pulse flex items-center justify-center", className)}>
+      <div className={cn("dashboard-widget-surface rounded-lg p-6 h-[400px] animate-pulse flex items-center justify-center", className)}>
         <div className="flex flex-col items-center gap-2">
           <div className="h-8 w-8 bg-surface-tertiary rounded-full animate-bounce"></div>
           <span className="text-faint text-sm">Lade Trend-Daten...</span>
@@ -296,7 +296,7 @@ export default function KpiTrendChart({
   }
 
   return (
-    <div className={cn("bg-surface rounded-lg shadow-sm border border-border p-6 transition-all hover:shadow-md", className)}>
+    <div className={cn("dashboard-widget-surface rounded-lg p-6 transition-all", className)}>
       
       {/* HEADER & CONTROLS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">

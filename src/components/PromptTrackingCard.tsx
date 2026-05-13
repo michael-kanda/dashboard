@@ -91,7 +91,7 @@ export default function PromptTrackingCard({
 
   if (!data || data.totals.totalQueries === 0) {
     return (
-      <div className="card-glass prompt-tracking-card p-6">
+      <div className="dashboard-widget-surface prompt-tracking-card rounded-lg p-6">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="w-5 h-5 text-purple-500" />
           <h3 className="text-lg font-semibold text-heading">Prompt Tracking (GSC)</h3>
@@ -174,7 +174,7 @@ export default function PromptTrackingCard({
   };
 
   return (
-    <div className="card-glass prompt-tracking-card p-6">
+    <div className="dashboard-widget-surface prompt-tracking-card rounded-lg p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
         <div className="flex-1">

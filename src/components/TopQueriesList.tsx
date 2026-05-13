@@ -199,7 +199,7 @@ export default function TopQueriesList({
   // ── Loading State ────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className={cn("bg-surface rounded-lg shadow-sm border border-border card-glass p-5 flex flex-col", className)}>
+      <div className={cn("dashboard-widget-surface rounded-lg p-5 flex flex-col", className)}>
         {renderHeader('Lade Daten...')}
         <div className="animate-pulse space-y-2">
           {[...Array(5)].map((_, i) => (
@@ -213,7 +213,7 @@ export default function TopQueriesList({
   // ── Error State ──────────────────────────────────────────
   if (error) {
     return (
-      <div className={cn("bg-surface rounded-lg shadow-sm border border-border card-glass p-5 flex flex-col", className)}>
+      <div className={cn("dashboard-widget-surface rounded-lg p-5 flex flex-col", className)}>
         {renderHeader('Quelle GSC')}
         <div className="py-12 text-center flex flex-col items-center gap-2">
           <ExclamationTriangleFill className="text-red-500" size={24} />
@@ -241,7 +241,7 @@ export default function TopQueriesList({
     : 0;
 
   return (
-    <div className={cn("bg-surface rounded-lg shadow-sm border border-border card-glass p-5 flex flex-col", className)}>
+    <div className={cn("dashboard-widget-surface rounded-lg p-5 flex flex-col", className)}>
       {renderHeader(subtitleParts.join(' · '))}
 
       {/* Tabelle */}

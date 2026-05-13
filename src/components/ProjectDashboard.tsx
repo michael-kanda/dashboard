@@ -37,7 +37,7 @@ const PromptTrackingCard = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="card-glass p-6">
+      <div className="dashboard-widget-surface rounded-lg p-6">
         <div className="animate-pulse text-muted text-sm">Prompt-Tracking lädt…</div>
       </div>
     ),
@@ -487,8 +487,8 @@ export default function ProjectDashboard({
         <Trace at="Semrush?" />
         {hasSemrushConfig && (
           <div id="section-semrush" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 scroll-mt-20 print-semrush-grid">
-            {hasKampagne1Config && <div className="card-glass p-4 sm:p-6"><SemrushTopKeywords projectId={projectId} /></div>}
-            {hasKampagne2Config && <div className="card-glass p-4 sm:p-6"><SemrushTopKeywords02 projectId={projectId} /></div>}
+            {hasKampagne1Config && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords projectId={projectId} /></div>}
+            {hasKampagne2Config && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords02 projectId={projectId} /></div>}
           </div>
         )}
 

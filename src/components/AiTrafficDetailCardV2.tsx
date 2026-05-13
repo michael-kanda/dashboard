@@ -289,7 +289,7 @@ export default function AiTrafficDetailCardV2({
 
   // LOADING
   if (isLoading) return (
-    <div className={cn("bg-surface rounded-2xl border border-border shadow-sm overflow-hidden", className)}>
+    <div className={cn("dashboard-widget-surface rounded-2xl overflow-hidden", className)}>
       <div className="p-6 animate-pulse">
         <div className="h-8 bg-surface-tertiary rounded w-1/3 mb-6" />
         <div className="grid grid-cols-6 gap-4 mb-6">{[...Array(6)].map((_, i) => <div key={i} className="h-24 bg-surface-secondary rounded-xl" />)}</div>
@@ -300,7 +300,7 @@ export default function AiTrafficDetailCardV2({
 
   // ERROR
   if (error) return (
-    <div className={cn("bg-surface rounded-2xl border border-border shadow-sm p-6", className)}>
+    <div className={cn("dashboard-widget-surface rounded-2xl p-6", className)}>
       <div className="flex flex-col items-center justify-center text-center py-8">
         <AlertTriangle className="text-red-500 w-12 h-12 mb-4" />
         <h3 className="text-lg font-semibold text-heading mb-2">Fehler beim Laden</h3>
@@ -312,7 +312,7 @@ export default function AiTrafficDetailCardV2({
 
   // EMPTY
   if (!data || data.totalSessions === 0) return (
-    <div className={cn("bg-surface rounded-2xl border border-border shadow-sm p-6", className)}>
+    <div className={cn("dashboard-widget-surface rounded-2xl p-6", className)}>
       <div className="flex flex-col items-center justify-center text-center py-12">
         <div className="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-4"><Bot className="text-purple-400" size={32} /></div>
         <h3 className="text-lg font-semibold text-heading mb-2">Keine KI-Traffic Daten</h3>
@@ -323,7 +323,7 @@ export default function AiTrafficDetailCardV2({
 
   // MAIN RENDER
   return (
-    <div className={cn("bg-surface rounded-2xl border border-border shadow-sm overflow-hidden", className)}>
+    <div className={cn("dashboard-widget-surface rounded-2xl overflow-hidden", className)}>
       
       {/* HEADER */}
       <div className="px-6 pt-6 pb-4 border-b border-border-subtle">

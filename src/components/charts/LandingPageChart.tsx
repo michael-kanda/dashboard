@@ -182,7 +182,7 @@ export default function LandingPageChart({
 
   return (
     <>
-      <div className="bg-white dark:bg-surface p-5 rounded-xl border border-theme-border-subtle shadow-sm flex flex-col max-h-[75vh]">
+      <div className="dashboard-widget-surface p-5 rounded-xl flex flex-col max-h-[75vh]">
 
         {/* ── Header ──────────────────────────────────────────── */}
         <div className="mb-4 flex-shrink-0">

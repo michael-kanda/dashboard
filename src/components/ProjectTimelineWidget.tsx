@@ -125,7 +125,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
 
   if (isLoading) {
     return (
-      <div className="card-glass p-8 min-h-[300px] flex items-center justify-center animate-pulse">
+      <div className="dashboard-widget-surface rounded-lg p-8 min-h-[300px] flex items-center justify-center animate-pulse">
         <HourglassSplit size={32} className="text-indigo-300 mb-3" />
       </div>
     );
@@ -218,7 +218,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
   };
 
   return (
-    <div className="card-glass p-6 lg:p-8 print-timeline">
+    <div className="dashboard-widget-surface rounded-lg p-6 lg:p-8 print-timeline">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 border-b border-theme-border-default/50 pb-4">

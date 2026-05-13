@@ -273,7 +273,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
   // ── Skeleton ──
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-surface rounded-xl shadow-md p-5 animate-pulse">
+      <div className="dashboard-widget-surface rounded-xl p-5 animate-pulse">
         <div className="h-6 bg-surface-tertiary rounded w-56 mb-2" />
         <div className="h-3 bg-surface-tertiary rounded w-72 mb-5" />
         <div className="grid grid-cols-5 gap-2 mb-6">
@@ -293,7 +293,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
   // ── Empty State ──
   if (!hasAnyData) {
     return (
-      <div className="bg-white dark:bg-surface rounded-xl shadow-md p-5">
+      <div className="dashboard-widget-surface rounded-xl p-5">
         <h3 className="text-[18px] font-semibold text-heading mb-1">Google Ads Performance</h3>
         <p className="text-sm text-muted">
           Keine Google Ads-Daten für diesen Zeitraum vorhanden. Stelle sicher, dass Google Ads
@@ -308,7 +308,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
     .filter((mode) => mode !== 'ads' || isSheet);
 
   return (
-    <div className="bg-white dark:bg-surface rounded-xl shadow-md p-5">
+    <div className="dashboard-widget-surface rounded-xl p-5">
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="mb-4">
