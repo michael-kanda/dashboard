@@ -536,7 +536,7 @@ function PromptResearchTool({
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <Target className="w-5 h-5 text-amber-600" />
-            <h4 className="font-semibold text-heading">Prompt Research Tool</h4>
+            <h3 className="font-semibold text-heading">Prompt Research Tool</h3>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
               Nur Admins
             </span>
