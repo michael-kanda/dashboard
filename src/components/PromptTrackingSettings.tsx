@@ -196,7 +196,7 @@ export default function PromptTrackingSettings({
           <button
             onClick={handleDetectPreview}
             disabled={isDetecting || isApplying}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-fuchsia-300 dark:border-fuchsia-700 bg-background hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-fuchsia-300 dark:border-fuchsia-700 bg-surface hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition disabled:opacity-50"
           >
             {isDetecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
             Vorschau erkennen
@@ -286,7 +286,7 @@ export default function PromptTrackingSettings({
             }
           }}
           placeholder="Neues Keyword..."
-          className="flex-1 px-3 py-2 text-sm rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30"
+          className="flex-1 px-3 py-2 text-sm rounded-md border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30"
         />
         <button
           onClick={handleAdd}
@@ -349,7 +349,7 @@ export default function PromptTrackingSettings({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-md bg-foreground text-background hover:opacity-90 disabled:opacity-50 transition"
+          className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-md bg-brand text-brand-foreground hover:bg-brand-hover disabled:opacity-50 transition"
         >
           {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Speichern
