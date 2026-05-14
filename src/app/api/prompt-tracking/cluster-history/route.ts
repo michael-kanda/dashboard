@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   let session;
   try {
     session = await auth();
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -27,7 +27,12 @@ export async function GET(req: NextRequest) {
   // ── Optional: Date-Range-Filter ──────────────────────────────────
   const url = new URL(req.url);
   const dateRange = url.searchParams.get('dateRange');
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '10', 10), 50);
+
+  // Limit defensiv parsen: invalid input ('foo', leer, negativ) → default 10.
+  // Vorher: parseInt('foo', 10) = NaN → Math.min(NaN, 50) = NaN → LIMIT NaN
+  // wäre als SQL-Param ein 500-Error gewesen.
+  const rawLimit = Number.parseInt(url.searchParams.get('limit') ?? '10', 10);
+  const limit = Math.min(Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 10, 50);
 
   try {
     let rows;
