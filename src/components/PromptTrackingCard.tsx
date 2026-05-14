@@ -95,7 +95,7 @@ export default function PromptTrackingCard({
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="w-5 h-5 text-purple-500" />
           <h3 className="text-lg font-semibold text-heading">Prompt Tracking (GSC)</h3>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+          <span className="tone-pill tone-pill--soft tone--purple">
             AI Mode Proxy
           </span>
         </div>
@@ -537,7 +537,7 @@ function PromptResearchTool({
           <div className="flex items-center gap-2 flex-wrap">
             <Target className="w-5 h-5 text-amber-600" />
             <h3 className="font-semibold text-heading">Prompt Research Tool</h3>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
+            <span className="tone-pill tone-pill--outline tone--amber">
               Nur Admins
             </span>
           </div>
@@ -1069,10 +1069,10 @@ function ClusterCard({ cluster, allQueries, isExpanded, onToggleExpand }: {
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className={`text-[10px] px-2 py-0.5 rounded-full ${intentMeta.color}`}>
+            <span className={intentMeta.className}>
               {intentMeta.emoji} {intentMeta.label}
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-surface-tertiary text-muted tabular-nums">
+            <span className="tone-pill tone-pill--soft tone--slate tabular-nums">
               {clusterQueries.length} Queries
             </span>
           </div>
@@ -1086,7 +1086,7 @@ function ClusterCard({ cluster, allQueries, isExpanded, onToggleExpand }: {
       </div>
       <div className="flex flex-wrap gap-1 mb-3">
         {cluster.topAttributes.map((attr, i) => (
-          <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+          <span key={i} className="tone-pill tone-pill--soft tone--purple">
             {attr}
           </span>
         ))}
@@ -1150,7 +1150,7 @@ function PromptRow({ q }: { q: PromptQueryData }) {
           : <span className="prompt-table-pill prompt-table-pill-nonbrand">Non-Brand</span>}
       </td>
       <td className="px-2 py-2 text-center">
-        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border whitespace-nowrap ${qtMeta.color}`} title={qtMeta.label}>
+        <span className={qtMeta.className} title={qtMeta.label}>
           {qtMeta.emoji}
         </span>
       </td>
