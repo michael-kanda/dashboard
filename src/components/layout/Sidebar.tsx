@@ -280,9 +280,9 @@ export default function Sidebar() {
       ${isCollapsed ? 'w-[72px]' : 'w-[260px]'}
     `}>
       <button onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-[28px] z-50 w-6 h-6 sidebar-bg border border-border rounded-full flex items-center justify-center shadow-sm hover:shadow-md hover-border-indigo transition-all duration-150 text-faint hover:text-indigo-600"
+        className="absolute -right-3 top-[28px] z-50 w-6 h-6 sidebar-bg border border-border rounded-full flex items-center justify-center shadow-sm hover:shadow-md hover-border-indigo transition-all duration-150 text-white hover:text-indigo-300"
       >
-        {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </button>
 
       {/* Logo Bereich */}
