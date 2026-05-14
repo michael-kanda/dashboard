@@ -42,7 +42,7 @@ const ResearchResponseSchema = z.object({
     topic: z.string(),
     prompt: z.string(),
     intent: z.enum(['Quick Win', 'Buy Intent', 'Optimierung']),
-    score: z.number().min(1).max(92),
+    score: z.number().min(1).max(100),
     source: z.enum(['GSC', 'GA4', 'GSC + GA4']),
     reason: z.string(),
     action: z.string(),
@@ -55,13 +55,13 @@ Du erstellst Decision-Prompts aus echten GSC- und GA4-Daten.
 
 Wichtig:
 - Keine generischen Templates wiederholen.
-- Jeder Prompt muss zum konkreten Thema passen.
+- Jeder Prompt muss zum konkreten Thema **dieser** Query passen — nicht zum Top-Thema der Seite.
 - Bei Rechtsanwalt/Kanzlei-Projekten müssen die Prompts nach echten Mandatsfragen klingen.
 - Kosten-Themen sind Kosten-/Honorar-Prompts, keine Kanzlei-Auswahl-Floskeln.
-- Hundebiss, Waffenrecht, Verkehrsunfall, Führerscheinentzug usw. sind unterschiedliche Rechtsprobleme und brauchen unterschiedliche Prompts.
+- Hundebiss, Waffenrecht, Verkehrsunfall, Führerscheinentzug, Immobilienrecht, Arbeitsrecht usw. sind unterschiedliche Rechtsprobleme und brauchen unterschiedliche Prompts. Niemals zwei verschiedene Themen mit demselben Prompt-Text beantworten.
 - Die Landingpage NICHT in den Prompt schreiben. Nutze sie nur für reason/action/source.
 - Wenn includeBrand=false, Projekt/Brand nicht im Prompt nennen.
-- Score maximal 92. Top-Rankings mit guter CTR sind nicht automatisch höchste Quick Wins.
+- Score: 1–100. Differenziere: nur die wirklich perfekten Quick Wins kommen über 90, schwächere Kandidaten bleiben deutlich darunter. Nicht jeder Eintrag soll am Maximum kleben.
 - Antworte ausschließlich mit strukturierten JSON-Daten nach Schema.`;
 
 export async function POST(req: NextRequest) {
