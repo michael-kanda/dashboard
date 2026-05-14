@@ -102,9 +102,6 @@ export default function PromptTrackingCard({
         <p className="text-muted text-sm">
           Keine prompt-ähnlichen Suchanfragen im gewählten Zeitraum gefunden.
         </p>
-        {isAdmin && (
-          <PromptResearchTool data={data} dashboardData={dashboardData} domain={domain} />
-        )}
       </div>
     );
   }
@@ -1322,10 +1319,20 @@ function inferPrimaryTopic(data?: PromptTrackingResult, dashboardData?: ProjectD
 }
 
 function prettifyProjectName(value: string): string {
-  const lowered = value.toLowerCase();
-  if (/\bbernhard\b/.test(lowered) && /\bhofer\b/.test(lowered)) return 'Mag. Bernhard Hofer';
-  if (/\banwalt[-_\s]+hofer\b/.test(lowered) || /\brechtsanwalt[-_\s]+hofer\b/.test(lowered)) return 'Anwalt Hofer';
-  return value.replace(/^https?:\/\//, '').replace(/^www\./, '').split(/[/?#]/)[0].replace(/\.[a-z]{2,}$/i, '').replace(/[§|]+/g, ' ').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/\b\w/g, (char) => char.toUpperCase());
+  // Generische Tokenisierung: Domain/String säubern, Bindestriche/Underscores zu Leerzeichen,
+  // jedes Wort kapitalisieren. "anwalt-hofer.at" → "Anwalt Hofer".
+  // Wer einen formal-akademischen Namen wie "Mag. Bernhard Hofer" anzeigen will, soll diesen
+  // als brand_keyword setzen — das passiert dann in detectBrandKeywords / Settings, nicht hier.
+  return value
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .split(/[/?#]/)[0]
+    .replace(/\.[a-z]{2,}$/i, '')
+    .replace(/[§|]+/g, ' ')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function inferIndustry(corpus: string): string {
@@ -1345,7 +1352,9 @@ function inferRegion(corpus: string, domain?: string): string {
 }
 
 function queryToResearchTopic(query: string, projectName: string, brandKeywords?: string[] | null, isLegal = false): string {
-  const brandParts = [projectName, ...(brandKeywords ?? []), 'mag', 'magister', 'bernhard', 'hofer'].flatMap((part) => part.split(/[\s\-_.§,]+/));
+  // 'mag'/'magister' bleibt als generischer Akademiker-Titel-Stopword für DACH-Domains.
+  // Customer-spezifische Stopwords gehören ausschließlich in brandKeywords.
+  const brandParts = [projectName, ...(brandKeywords ?? []), 'mag', 'magister'].flatMap((part) => part.split(/[\s\-_.§,]+/));
   const cleaned = query.replace(/[?!"'():;,.§]/g, ' ').replace(/\s+/g, ' ').trim();
   const stopWords = new Set(['was','wie','warum','wieso','welche','welcher','welches','wer','wo','wann','ist','sind','kann','koennen','können','fuer','für','und','oder','mit','ohne','bei','von','im','in','der','die','das','ein','eine','einen','einer','zu','zum','zur','am','besten','beste','kosten','kostet','rechtsanwalt','anwalt','kanzlei','law','attorney','1010','wien']);
   const brandStopWords = new Set(brandParts.map((part) => part.toLowerCase().trim()).filter((part) => part.length > 2));
