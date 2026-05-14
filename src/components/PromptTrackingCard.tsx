@@ -460,13 +460,16 @@ function PromptResearchTool({
     () => ({ ...baseSetup, ...setupOverrides }),
     [baseSetup, setupOverrides]
   );
-  const summary = useMemo(
-    () => buildResearchDataSummary(data, dashboardData, setup),
-    [data, dashboardData, setup]
-  );
+  // Erst opportunities berechnen — dann summary daraus ableiten.
+  // Vorher hat buildResearchDataSummary intern noch einmal buildResearchOpportunities
+  // aufgerufen → doppelte Regex-/Score-Pipeline pro setup-Change.
   const opportunities = useMemo(
     () => buildResearchOpportunities(data, dashboardData, setup),
     [data, dashboardData, setup]
+  );
+  const summary = useMemo(
+    () => buildResearchDataSummary(opportunities, data, dashboardData),
+    [opportunities, data, dashboardData]
   );
   const displayedOpportunities = dataMaxOpportunities ?? opportunities;
 
@@ -1204,8 +1207,11 @@ function buildResearchSetup(
   };
 }
 
-function buildResearchDataSummary(data?: PromptTrackingResult, dashboardData?: ProjectDashboardData, setup?: ResearchSetup) {
-  const opportunities = buildResearchOpportunities(data, dashboardData, setup ?? buildResearchSetup(data, dashboardData));
+function buildResearchDataSummary(
+  opportunities: Array<Omit<ResearchOpportunity, 'rank'>>,
+  data?: PromptTrackingResult,
+  dashboardData?: ProjectDashboardData,
+) {
   return {
     gscQueries: (data?.totals.totalQueries ?? 0).toLocaleString('de-DE'),
     gscImpressions: (data?.totals.totalImpressions ?? 0).toLocaleString('de-DE'),
@@ -1406,9 +1412,15 @@ function looksLikeGenericLegalQuery(value: string): boolean {
 
 function hasBuyIntent(query: string, topic: string, isLegal: boolean): boolean {
   const text = `${query} ${topic}`.toLowerCase();
+  // Generische Buy-Signale: explizite Preis-/Vergleichs-/Kontakt-/Kauf-Wörter.
   const generic = /\b(kosten|kostet|preis|preise|vergleich|beste|empfehlung|anbieter|beratung|kontakt|termin|kaufen)\b/i.test(text);
-  const legal = /\b(erstberatung|scheidung|strafverteidigung|arbeitsrecht|mietrecht|erbrecht|vertrag|anwalt|rechtsanwalt)\b/i.test(text);
-  return generic || (isLegal && legal);
+  // Legal-Buy-Signale: NUR echte Mandats-/Kontakt-Signale.
+  // Bloße Rechtsbereich-Wörter (scheidung, mietrecht, anwalt, …) qualifizieren NICHT
+  // automatisch — die landen sonst auf jeder Anwaltsseite in allen Queries und erzeugen
+  // einen "alle 10 Buy Intent"-Eindruck. Wenn echte Kauf-Signale dabei sind, greift
+  // sowieso schon der generic-Path.
+  const legalBuy = /\b(erstberatung|mandat|kanzleibesuch|honorar|anwaltskosten|rechtsanwaltstarif|terminvereinbarung)\b/i.test(text);
+  return generic || (isLegal && legalBuy);
 }
 
 function scoreOpportunity(query: PromptQueryData, buyIntent: boolean, rankablePosition: boolean, weakCtr: boolean, hasConversionPath: boolean): number {
