@@ -502,9 +502,19 @@
   background-color: transparent !important;
 }
 
-/* ── Recharts: aggressive tooltip override for dark mode ──── */
-/* Covers both default tooltips AND wrapper divs of custom    */
-/* tooltips that forget to set a dark background.             */
+/* ── Recharts: tooltip override (Light + Dark) ───────────────── */
+/* Custom-Tooltips (via <Tooltip content={...}/>) bringen meistens  */
+/* keinen eigenen Background mit — dann scheint das Chart darunter */
+/* durch. Diese Regel setzt einen sicheren Default-Hintergrund auf */
+/* den direkten Wrapper-Child-Div, egal ob Default oder Custom.    */
+/* Border/Shadow ohne !important: Custom-Styling darf gewinnen.    */
+.recharts-tooltip-wrapper > div {
+  background-color: var(--dp-bg-primary) !important;
+  border: 1px solid var(--dp-border-default);
+  border-radius: var(--dp-radius-lg);
+  box-shadow: var(--dp-shadow-card);
+  color: var(--dp-text-body);
+}
 .dark .recharts-tooltip-wrapper > div {
   background-color: var(--dp-bg-primary) !important;
   border-color: var(--dp-border-strong) !important;
