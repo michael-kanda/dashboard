@@ -1,5 +1,6 @@
 /* ── Core Imports ────────────────────────────────────────── */
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));   
 @import "./design-tokens.css";        /* ← all colors/sizes/fonts live here */
 @plugin "@tailwindcss/typography";
 
