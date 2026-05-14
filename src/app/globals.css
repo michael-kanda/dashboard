@@ -1,6 +1,16 @@
 /* ── Core Imports ────────────────────────────────────────── */
 @import "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *));   
+
+/*
+ * Tailwind v4: class-based dark mode opt-in.
+ * Ohne diese Zeile fällt v4 auf @media (prefers-color-scheme: dark)
+ * zurück und ignoriert die .dark-Klasse aus dem App-Theme-Toggle.
+ * Folge: dark:-Varianten leaken im Light Mode durch, sobald das
+ * System-Theme auf Dark steht. Lassen — auch wenn Tailwind nicht
+ * mehr genutzt würde, schadet die Zeile nicht.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @import "./design-tokens.css";        /* ← all colors/sizes/fonts live here */
 @plugin "@tailwindcss/typography";
 
@@ -310,6 +320,63 @@
   .dark .prompt-pill-purple { background-color: rgba(88,  28, 135, 0.45); border-color: rgba(168, 85, 247, 0.65); color: #d8b4fe; }
   .dark .prompt-pill-slate  { background-color: rgba(51,  65,  85, 0.80); border-color: #64748b;                  color: #cbd5e1; }
   .dark .prompt-pill-blue   { background-color: rgba(30,  58, 138, 0.45); border-color: rgba(96, 165, 250, 0.65); color: #93c5fd; }
+
+  /* ── 10. Tone Pills (KI-Cluster-Intents, Question-Types, Attribute-Tags) ── */
+  /*
+   * Generisches Pill-System mit zwei Layout-Varianten und 10 Tone-Optionen.
+   * Verwendung:  <span class="tone-pill tone-pill--outline tone--blue">…</span>
+   *              <span class="tone-pill tone-pill--soft tone--amber">…</span>
+   *
+   * Vorher: jede Pill trug 6 Tailwind-Klassen (bg-X-100 text-X-700 dark:bg-X-900/30 dark:text-X-300 …),
+   * was beim Tailwind-v4-Dark-Mode-Bug zu washed-out Pills im Light Mode geführt hat.
+   * Jetzt: CSS-Klassen mit eigenem .dark-Selector — unabhängig von Tailwinds dark:-Variante.
+   */
+  .tone-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: var(--dp-radius-full);
+    white-space: nowrap;
+    background-color: var(--tp-bg);
+    color: var(--tp-text);
+    border: 1px solid var(--tp-border, transparent);
+    line-height: 1.5;
+  }
+
+  .tone-pill--outline {
+    padding: 1px 0.375rem;
+  }
+
+  .tone-pill--soft {
+    padding: 2px 0.5rem;
+    border-color: transparent;
+  }
+
+  /* ── Tone-Varianten (Light) ─────────────────────────────── */
+  .tone--blue     { --tp-bg: #eff6ff; --tp-text: #1e40af; --tp-border: #bfdbfe; }
+  .tone--indigo   { --tp-bg: #eef2ff; --tp-text: #3730a3; --tp-border: #c7d2fe; }
+  .tone--purple   { --tp-bg: #faf5ff; --tp-text: #6b21a8; --tp-border: #e9d5ff; }
+  .tone--violet   { --tp-bg: #f5f3ff; --tp-text: #5b21b6; --tp-border: #ddd6fe; }
+  .tone--cyan     { --tp-bg: #ecfeff; --tp-text: #155e75; --tp-border: #a5f3fc; }
+  .tone--emerald  { --tp-bg: #ecfdf5; --tp-text: #065f46; --tp-border: #a7f3d0; }
+  .tone--teal     { --tp-bg: #f0fdfa; --tp-text: #115e59; --tp-border: #99f6e4; }
+  .tone--amber    { --tp-bg: #fffbeb; --tp-text: #92400e; --tp-border: #fde68a; }
+  .tone--yellow   { --tp-bg: #fefce8; --tp-text: #854d0e; --tp-border: #fef08a; }
+  .tone--slate    { --tp-bg: #f1f5f9; --tp-text: #334155; --tp-border: #cbd5e1; }
+
+  /* ── Tone-Varianten (Dark) ──────────────────────────────── */
+  .dark .tone--blue    { --tp-bg: rgba(30,  64, 175, 0.20); --tp-text: #93c5fd; --tp-border: rgba(30,  64, 175, 0.40); }
+  .dark .tone--indigo  { --tp-bg: rgba(55,  48, 163, 0.20); --tp-text: #a5b4fc; --tp-border: rgba(55,  48, 163, 0.40); }
+  .dark .tone--purple  { --tp-bg: rgba(107, 33, 168, 0.20); --tp-text: #d8b4fe; --tp-border: rgba(107, 33, 168, 0.40); }
+  .dark .tone--violet  { --tp-bg: rgba(91,  33, 182, 0.20); --tp-text: #c4b5fd; --tp-border: rgba(91,  33, 182, 0.40); }
+  .dark .tone--cyan    { --tp-bg: rgba(21,  94, 117, 0.20); --tp-text: #67e8f9; --tp-border: rgba(21,  94, 117, 0.40); }
+  .dark .tone--emerald { --tp-bg: rgba(6,   95,  70, 0.20); --tp-text: #6ee7b7; --tp-border: rgba(6,   95,  70, 0.40); }
+  .dark .tone--teal    { --tp-bg: rgba(17,  94,  89, 0.20); --tp-text: #5eead4; --tp-border: rgba(17,  94,  89, 0.40); }
+  .dark .tone--amber   { --tp-bg: rgba(146, 64,  14, 0.20); --tp-text: #fcd34d; --tp-border: rgba(146, 64,  14, 0.40); }
+  .dark .tone--yellow  { --tp-bg: rgba(133, 77,  14, 0.20); --tp-text: #fde047; --tp-border: rgba(133, 77,  14, 0.40); }
+  .dark .tone--slate   { --tp-bg: rgba(51,  65,  85, 0.40); --tp-text: #cbd5e1; --tp-border: rgba(51,  65,  85, 0.60); }
 }
 
 
