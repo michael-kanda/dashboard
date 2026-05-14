@@ -110,10 +110,11 @@ export interface PromptClusterApiResponse extends PromptClusterResult {
 }
 
 // ── Intent-Labels für UI ──────────────────────────────────────────
-export const INTENT_LABELS: Record<PromptIntent, { label: string; emoji: string; color: string }> = {
-  informational: { label: 'Informational',  emoji: '📚', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
-  transactional: { label: 'Transactional',  emoji: '🛒', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
-  comparative:   { label: 'Vergleichend',   emoji: '⚖️', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
-  navigational:  { label: 'Navigational',   emoji: '🧭', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
-  commercial:    { label: 'Commercial',     emoji: '💼', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
+// Pill-Klassen sind in globals.css definiert (Tone-Pill-System).
+export const INTENT_LABELS: Record<PromptIntent, { label: string; emoji: string; className: string }> = {
+  informational: { label: 'Informational', emoji: '📚', className: 'tone-pill tone-pill--soft tone--blue' },
+  transactional: { label: 'Transactional', emoji: '🛒', className: 'tone-pill tone-pill--soft tone--emerald' },
+  comparative:   { label: 'Vergleichend',  emoji: '⚖️', className: 'tone-pill tone-pill--soft tone--purple' },
+  navigational:  { label: 'Navigational',  emoji: '🧭', className: 'tone-pill tone-pill--soft tone--slate' },
+  commercial:    { label: 'Commercial',    emoji: '💼', className: 'tone-pill tone-pill--soft tone--amber' },
 };
