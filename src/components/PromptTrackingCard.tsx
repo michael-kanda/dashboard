@@ -572,7 +572,7 @@ function PromptResearchTool({
             `Branche: ${setup.industry}`,
             `Region: ${setup.region}`,
             `Landingpage: ${setup.landingPage || 'nicht gesetzt'}`,
-            `Thema: ${setup.topic || 'aus Daten abgeleitet'}`,
+            `Thema: ${setup.topic || 'automatisch pro Query'}`,
             `Brand: ${setup.includeBrand ? 'mit Brand' : 'ohne Brand'}`,
           ]}
         />
@@ -1240,7 +1240,10 @@ function buildResearchOpportunities(
   const queryCandidates = (data?.queries ?? [])
     .map((query): Omit<ResearchOpportunity, 'rank'> | null => {
       const topic = queryToResearchTopic(query.query, resolvedSetup.projectName, data?.brandKeywordsUsed, resolvedSetup.isLegal);
-      const finalTopic = normalizeResearchTopic(resolvedSetup.topic.trim() || topic, resolvedSetup.isLegal);
+      // Per-Query-Topic ist die Wahrheit. setup.topic überschreibt nur, wenn
+      // der User es manuell als Fokus gesetzt hat (= explizite Absicht).
+      const focusTopic = resolvedSetup.topic.trim();
+      const finalTopic = normalizeResearchTopic(focusTopic || topic, resolvedSetup.isLegal);
       if (!finalTopic) return null;
       const queryPath = query.url ? normalizePath(query.url) : '';
       const matchesFocusLandingPage = hasFocusLandingPage && queryPath === focusLandingPath;
@@ -1248,7 +1251,9 @@ function buildResearchOpportunities(
       const buyIntent = hasBuyIntent(query.query, finalTopic, resolvedSetup.isLegal);
       const weakCtr = query.impressions >= 10 && query.ctr < 0.025;
       const rankablePosition = query.position >= 4 && query.position <= 18;
-      const score = Math.min(92, scoreOpportunity(query, buyIntent, rankablePosition, weakCtr, hasConversionPath) + (matchesFocusLandingPage ? 6 : 0));
+      // Score: keine Cluster-at-92-Falle mehr. Cap auf 100, sodass die wirklich
+      // perfekten Queries 95-100 erreichen und schwächere klar darunter streuen.
+      const score = Math.min(100, scoreOpportunity(query, buyIntent, rankablePosition, weakCtr, hasConversionPath) + (matchesFocusLandingPage ? 6 : 0));
       const intent: ResearchOpportunity['intent'] =
         buyIntent ? 'Buy Intent' :
         rankablePosition ? 'Quick Win' :
@@ -1259,7 +1264,7 @@ function buildResearchOpportunities(
         prompt: buildDecisionPrompt(finalTopic, intent, effectiveSetup),
         source: hasConversionPath ? 'GSC + GA4' : 'GSC',
         intent, reason: `${query.impressions.toLocaleString('de-DE')} Impr., ${query.clicks.toLocaleString('de-DE')} Klicks, Pos. ${query.position.toFixed(1)}, CTR ${(query.ctr * 100).toFixed(1)} %.`,
-        action: actionForOpportunity(intent, resolvedSetup.isLegal, hasConversionPath),
+        action: actionForOpportunity(intent, resolvedSetup.isLegal, hasConversionPath, finalTopic),
       } satisfies Omit<ResearchOpportunity, 'rank'>;
     })
     .filter((item): item is Omit<ResearchOpportunity, 'rank'> => Boolean(item));
@@ -1268,14 +1273,17 @@ function buildResearchOpportunities(
     .filter((page) => (page.conversions ?? 0) > 0 || normalizePath(page.path) === focusLandingPath)
     .slice(0, 4)
     .map((page) => {
-      const topic = normalizeResearchTopic(resolvedSetup.topic.trim() || pathToTopic(page.path, resolvedSetup), resolvedSetup.isLegal);
+      // Path-Topic primär, focus-Topic nur als Override wenn User es explizit gesetzt hat.
+      const pageTopic = pathToTopic(page.path, resolvedSetup);
+      const focusTopic = resolvedSetup.topic.trim();
+      const topic = normalizeResearchTopic(focusTopic || pageTopic, resolvedSetup.isLegal);
       const matchesFocusLandingPage = normalizePath(page.path) === focusLandingPath;
       return {
-        score: Math.min(88, 58 + Math.round((page.conversions ?? 0) * 3) + (matchesFocusLandingPage ? 6 : 0)),
+        score: Math.min(100, 58 + Math.round((page.conversions ?? 0) * 3) + (matchesFocusLandingPage ? 6 : 0)),
         topic, prompt: buildDecisionPrompt(topic, 'Buy Intent', effectiveSetup),
         source: 'GA4', intent: 'Buy Intent',
         reason: `${(page.conversions ?? 0).toLocaleString('de-DE')} Conversions auf ${page.path}.`,
-        action: 'Decision-Prompt gegen diese Landingpage testen und Trust-/FAQ-Blöcke ergänzen.',
+        action: `Decision-Prompt zu „${topic}" gegen diese Landingpage testen und Trust-/FAQ-Blöcke ergänzen.`,
       } satisfies Omit<ResearchOpportunity, 'rank'>;
     });
 
@@ -1310,12 +1318,12 @@ function inferLandingPage(data?: PromptTrackingResult, dashboardData?: ProjectDa
   return queryUrl ? normalizePath(queryUrl) : '';
 }
 
-function inferPrimaryTopic(data?: PromptTrackingResult, dashboardData?: ProjectDashboardData, projectName = '', isLegal = false): string {
-  const promptTopic = (data?.queries ?? []).slice().sort((a, b) => (b.impressions + b.clicks * 20) - (a.impressions + a.clicks * 20)).map((query) => queryToResearchTopic(query.query, projectName, data?.brandKeywordsUsed, isLegal)).find(Boolean);
-  if (promptTopic) return promptTopic;
-  const topQueryTopic = (dashboardData?.topQueries ?? []).slice(0, 10).map((query) => queryToResearchTopic(query.query, projectName, data?.brandKeywordsUsed, isLegal)).find(Boolean);
-  if (topQueryTopic) return topQueryTopic;
-  return isLegal ? 'rechtliche Erstberatung' : '';
+function inferPrimaryTopic(_data?: PromptTrackingResult, _dashboardData?: ProjectDashboardData, _projectName = '', _isLegal = false): string {
+  // Bewusst leer: Wenn der User keinen Fokus-Topic gesetzt hat, soll das Tool
+  // pro Query ein eigenes Topic verwenden (queryToResearchTopic), statt einen
+  // globalen Topic aus der Top-Query abzuleiten. Das war die Hauptursache für
+  // "alle Prompts klingen gleich" (siehe Tickethistorie #prompt-research-bug).
+  return '';
 }
 
 function prettifyProjectName(value: string): string {
@@ -1368,18 +1376,19 @@ function prettifyTopic(value: string): string {
   return value.replace(/\s+/g, ' ').trim().replace(/\b(arbeitsrecht|erbrecht|immobilienrecht|strafrecht|vertragsrecht|scheidungsanwalt|mietrecht)\b/gi, (match) => match.charAt(0).toUpperCase() + match.slice(1).toLowerCase());
 }
 
-function normalizeResearchTopic(value: string, isLegal: boolean): string {
+function normalizeResearchTopic(value: string, _isLegal: boolean): string {
+  // Bewusst SCHWACH: nur Casing/Trim + ein paar legal-typische Stemming-Korrekturen,
+  // die wirklich nur Schreibvarianten zusammenfassen.
+  // Themen-CLUSTERN (z.B. "scheidung" + "ehe" auf einen Topic) macht DataMax/AI,
+  // nicht regex — sonst werden faktisch unterschiedliche Rechtsprobleme zusammengeworfen.
   const topic = prettifyTopic(value);
-  if (!isLegal) return topic;
+  if (!topic) return topic;
   const normalized = topic.toLowerCase();
-  if (/führerschein/.test(normalized) && /(entzogen|entzug|abgenommen|weg)/.test(normalized)) return 'Führerscheinentzug in Österreich';
-  if (/alkohol|promille|trunken/.test(normalized) && /führerschein/.test(normalized)) return 'Führerscheinentzug wegen Alkohol';
-  if (/anwaltskosten|anwalt.*kosten|kosten.*anwalt|honorar|rechtsanwaltstarif/.test(normalized)) return 'Anwaltskosten in Österreich';
-  if (/scheidung|ehe/.test(normalized)) return 'Scheidung in Österreich';
-  if (/arbeitsrecht|kündigung|entlassung/.test(normalized)) return 'Arbeitsrechtliche Beratung';
-  if (/erbrecht|testament|erbe/.test(normalized)) return 'Erbrecht und Testament';
-  if (/mietrecht|miete|vermieter/.test(normalized)) return 'Mietrechtliche Beratung';
-  if (/strafrecht|strafverteidigung|anzeige/.test(normalized)) return 'Strafverteidigung';
+
+  // Nur stark eindeutige Schreibvariant-Konsolidierung (kein Topic-Merging):
+  if (/\bführerscheinentzug(s|es)?\b/.test(normalized)) return prettifyTopic('Führerscheinentzug');
+  if (/\banwaltskosten\b|\brechtsanwaltstarif\b/.test(normalized)) return prettifyTopic('Anwaltskosten');
+
   return topic;
 }
 
@@ -1408,7 +1417,7 @@ function scoreOpportunity(query: PromptQueryData, buyIntent: boolean, rankablePo
   const ctrScore = weakCtr ? 16 : query.ctr >= 0.03 ? 2 : 6;
   const buyScore = buyIntent ? 18 : 0;
   const ga4Score = hasConversionPath ? 10 : 0;
-  return Math.min(92, 12 + impressionScore + positionScore + ctrScore + buyScore + ga4Score);
+  return Math.min(100, 12 + impressionScore + positionScore + ctrScore + buyScore + ga4Score);
 }
 
 function buildDecisionPrompt(topic: string, intent: ResearchOpportunity['intent'], setup: ResearchSetup): string {
@@ -1424,11 +1433,20 @@ function buildDecisionPrompt(topic: string, intent: ResearchOpportunity['intent'
   return `Welche Inhalte muss eine Seite zu "${topic}" liefern, um in KI-Antworten als hilfreiche Quelle genannt zu werden?${brandPart}.`;
 }
 
-function actionForOpportunity(intent: ResearchOpportunity['intent'], isLegal: boolean, hasConversionPath: boolean): string {
-  if (hasConversionPath) return 'Bestehende Conversion-Seite mit Decision-FAQ, Trust-Signalen und klarer CTA erweitern.';
-  if (intent === 'Buy Intent') return isLegal ? 'Leistungsseite mit Kosten, Ablauf, Unterlagen und Erstberatung ergänzen.' : 'Landingpage um Preise, Vergleich und Entscheidungshilfen erweitern.';
-  if (intent === 'Quick Win') return 'Snippet/FAQ optimieren und Query exakt in H2 oder FAQ-Frage aufnehmen.';
-  return 'Content-Lücke schließen: klare Antwort, Belege, Beispiele und interne Verlinkung ergänzen.';
+function actionForOpportunity(intent: ResearchOpportunity['intent'], isLegal: boolean, hasConversionPath: boolean, topic: string): string {
+  // hasConversionPath ist ein MODIFIER, kein Override: die topic-spezifische
+  // Empfehlung bleibt erhalten, wir hängen nur einen Conversion-Hinweis an.
+  const baseAction =
+    intent === 'Buy Intent'
+      ? (isLegal
+          ? `Leistungsseite zu „${topic}" um Kosten, Ablauf, Unterlagen und Erstberatung ausbauen.`
+          : `Landingpage zu „${topic}" um Preise, Vergleich und Entscheidungshilfen erweitern.`)
+      : intent === 'Quick Win'
+        ? `Snippet/FAQ zu „${topic}" optimieren — Query exakt in H2 oder FAQ-Frage aufnehmen.`
+        : `Content-Lücke zu „${topic}" schließen: klare Antwort, Belege, Beispiele und interne Verlinkung ergänzen.`;
+  return hasConversionPath
+    ? `${baseAction} (Conversion-Seite vorhanden — Trust-Signale & CTA an dieser Stelle priorisieren.)`
+    : baseAction;
 }
 
 function isLegalCostTopic(topic: string): boolean {
@@ -1441,7 +1459,7 @@ function defaultResearchOpportunities(setup: ResearchSetup): Array<Omit<Research
     : [`${setup.projectName} Vergleich`, `${setup.projectName} Kosten`, `${setup.projectName} Alternative`];
   return topics.map((topic, idx) => {
     const intent: ResearchOpportunity['intent'] = idx === 0 ? 'Buy Intent' : idx === 1 ? 'Quick Win' : 'Optimierung';
-    return { score: 55 - idx * 4, topic, prompt: buildDecisionPrompt(topic, intent, setup), source: 'GSC', intent, reason: 'Fallback, falls im aktuellen Zeitraum zu wenige verwertbare Prompt-Queries vorhanden sind.', action: actionForOpportunity(intent, setup.isLegal, false) } satisfies Omit<ResearchOpportunity, 'rank'>;
+    return { score: 55 - idx * 4, topic, prompt: buildDecisionPrompt(topic, intent, setup), source: 'GSC', intent, reason: 'Fallback, falls im aktuellen Zeitraum zu wenige verwertbare Prompt-Queries vorhanden sind.', action: actionForOpportunity(intent, setup.isLegal, false, topic) } satisfies Omit<ResearchOpportunity, 'rank'>;
   });
 }
 
