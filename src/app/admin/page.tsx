@@ -16,11 +16,11 @@ export default async function AdminPage() {
   const users = await getUsersForManagement(session.user);
 
   return (
-    <div className="p-8 mt-8 max-w-full mx-auto bg-gray-50 min-h-screen">
+    <div className="p-8 mt-8 max-w-full mx-auto bg-surface-secondary min-h-screen">
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin-Bereich</h1>
-          <p className="text-gray-600 mt-2">Verwalten Sie Benutzer und Projekte</p>
+          <h1 className="text-3xl font-bold text-heading">Admin-Bereich</h1>
+          <p className="text-body mt-2">Verwalten Sie Benutzer und Projekte</p>
         </div>
       </div>
 
