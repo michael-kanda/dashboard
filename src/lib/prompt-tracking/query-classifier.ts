@@ -7,17 +7,19 @@ export type QuestionType =
   | 'what' | 'how' | 'why' | 'who' | 'where' | 'when'
   | 'compare' | 'price' | 'recommendation' | 'other';
 
-export const QUESTION_TYPE_LABELS: Record<QuestionType, { label: string; emoji: string; color: string }> = {
-  what:           { label: 'Was-Frage',    emoji: '❓', color: 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' },
-  how:            { label: 'Wie-Frage',    emoji: '🔧', color: 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' },
-  why:            { label: 'Warum-Frage',  emoji: '💭', color: 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' },
-  who:            { label: 'Wer-Frage',    emoji: '👤', color: 'bg-cyan-50 text-cyan-800 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-800' },
-  where:          { label: 'Wo-Frage',     emoji: '📍', color: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800' },
-  when:           { label: 'Wann-Frage',   emoji: '🕐', color: 'bg-teal-50 text-teal-800 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-800' },
-  compare:        { label: 'Vergleich',    emoji: '⚖️', color: 'bg-violet-50 text-violet-800 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-800' },
-  price:          { label: 'Preis/Kosten', emoji: '💰', color: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800' },
-  recommendation: { label: 'Empfehlung',   emoji: '⭐', color: 'bg-yellow-50 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800' },
-  other:          { label: 'Sonstige',     emoji: '💬', color: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700' },
+// Pill-Klassen sind in globals.css definiert (Tone-Pill-System).
+// Wer den Style ändern will, ändert dort -- nicht hier.
+export const QUESTION_TYPE_LABELS: Record<QuestionType, { label: string; emoji: string; className: string }> = {
+  what:           { label: 'Was-Frage',    emoji: '❓', className: 'tone-pill tone-pill--outline tone--blue' },
+  how:            { label: 'Wie-Frage',    emoji: '🔧', className: 'tone-pill tone-pill--outline tone--purple' },
+  why:            { label: 'Warum-Frage',  emoji: '💭', className: 'tone-pill tone-pill--outline tone--indigo' },
+  who:            { label: 'Wer-Frage',    emoji: '👤', className: 'tone-pill tone-pill--outline tone--cyan' },
+  where:          { label: 'Wo-Frage',     emoji: '📍', className: 'tone-pill tone-pill--outline tone--emerald' },
+  when:           { label: 'Wann-Frage',   emoji: '🕐', className: 'tone-pill tone-pill--outline tone--teal' },
+  compare:        { label: 'Vergleich',    emoji: '⚖️', className: 'tone-pill tone-pill--outline tone--violet' },
+  price:          { label: 'Preis/Kosten', emoji: '💰', className: 'tone-pill tone-pill--outline tone--amber' },
+  recommendation: { label: 'Empfehlung',   emoji: '⭐', className: 'tone-pill tone-pill--outline tone--yellow' },
+  other:          { label: 'Sonstige',     emoji: '💬', className: 'tone-pill tone-pill--outline tone--slate' },
 };
 
 export const GENERIC_TERMS = new Set([
