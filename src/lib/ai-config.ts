@@ -9,7 +9,7 @@ import { streamText } from 'ai';
 export const AI_CONFIG = {
   // Modell-Kette: Beste zuerst, dann Fallbacks
   models: [
-    'gemini-3-flash-preview',  // Primary (Free Tier, beste Qualität, aber 20 Req/Tag Limit)
+    'gemini-3.1-flash-lite',  // Primary (Free Tier, beste Qualität, aber 20 Req/Tag Limit)
     'gemini-2.5-flash',        // Fallback 1 (Pay-as-you-go verfügbar)
     'gemini-2.0-flash',        // Fallback 2 (günstigster Paid, sehr stabil)
   ] as const,
