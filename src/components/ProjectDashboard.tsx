@@ -308,8 +308,8 @@ export default function ProjectDashboard({
 
         {/* KI-Traffic Sektion mit Toggle für Detail-Ansicht */}
         <Trace at="AiTrafficCard" />
-        <div id="section-ki-traffic" className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-8 scroll-mt-20 print-traffic-grid">
-          <div className="xl:col-span-1 print-ai-card">
+        <div id="section-ki-traffic" className="grid grid-cols-1 gap-6 mt-8 scroll-mt-20 print-traffic-grid">
+          <div className="print-ai-card">
             <AiTrafficCard
               totalSessions={data.aiTraffic?.totalSessions ?? 0}
               totalUsers={data.aiTraffic?.totalUsers ?? 0}
@@ -331,7 +331,7 @@ export default function ProjectDashboard({
           </div>
 
           <Trace at="TopQueriesList" />
-          <div className="xl:col-span-2 print-queries-list">
+          <div className="print-queries-list">
             <TopQueriesList
               queries={data.topQueries ?? []}
               isLoading={isLoading}
