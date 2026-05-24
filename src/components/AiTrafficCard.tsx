@@ -261,19 +261,19 @@ export default function AiTrafficCard({
           <button
             type="button"
             onClick={onDetailClick}
-            className="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 text-white text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
+            className="group w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 text-white text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             KI-Traffic Analyse
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
           </button>
           <button
             type="button"
             onClick={onPromptTrackingClick}
             disabled={!onPromptTrackingClick}
-            className="w-full py-2.5 px-4 bg-transparent border-2 border-sky-500 dark:border-sky-400 text-sky-700 dark:text-sky-300 text-sm font-semibold rounded-lg hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors flex items-center justify-center gap-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+            className="group w-full py-2 px-4 bg-surface hover:bg-surface-tertiary border border-border text-body text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
           >
             Prompt Tracking
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>
       </div>
