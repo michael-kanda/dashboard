@@ -12,8 +12,8 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import type { AiTrafficCardProps } from '@/types/ai-traffic';
+import AiTrafficModelTrendChart from '@/components/AiTrafficModelTrendChart';
 
 // Hilfskomponente für Änderungsindikator
 const ChangeIndicator: React.FC<{ change?: number }> = ({ change }) => {
@@ -46,13 +46,15 @@ export default function AiTrafficCard({
   error,
   onDetailClick,
   onPromptTrackingClick,
+  projectId,
 }: AiTrafficCardProps) {
 
   const safePercentage = typeof percentage === 'number' && !isNaN(percentage) ? percentage : 0;
   const safeTotalSessions = typeof totalSessions === 'number' && !isNaN(totalSessions) ? totalSessions : 0;
   const safeTotalUsers = typeof totalUsers === 'number' && !isNaN(totalUsers) ? totalUsers : 0;
   const safeTopAiSources = Array.isArray(topAiSources) ? topAiSources : [];
-  const safeTrend = Array.isArray(trend) ? trend : [];
+  // Hinweis: trend-Prop wird nicht mehr verwendet — AiTrafficModelTrendChart holt eigene Daten
+  void trend;
 
   // Dynamische Datumsberechnung
   const formattedDateRange = useMemo(() => {
@@ -206,68 +208,11 @@ export default function AiTrafficCard({
             </div>
           </div>
 
-          {/* Trend Chart */}
-          <div>
-            <h4 className="text-sm font-semibold text-body mb-2">Sitzungs-Trend (KI)</h4>
-            {safeTrend.length > 0 ? (
-              <div className="h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={safeTrend}
-                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="aiGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--dp-chart-grid)" />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
-                      tickFormatter={(value) => {
-                        const date = new Date(value);
-                        return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-                      }}
-                      minTickGap={30}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
-                      width={35}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'var(--dp-chart-tooltip-bg)',
-                        border: '1px solid var(--dp-chart-tooltip-border)',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        color: 'var(--dp-chart-tooltip-text)',
-                      }}
-                      labelFormatter={(value) => {
-                        const date = new Date(value);
-                        return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`;
-                      }}
-                      formatter={(value: number) => [value.toLocaleString('de-DE'), 'Sitzungen']}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#8b5cf6"
-                      strokeWidth={2}
-                      fillOpacity={1}
-                      fill="url(#aiGradient)"
-                      dot={false}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="h-[200px] flex items-center justify-center text-xs text-faint italic border border-dashed border-border rounded">
-                Keine Trenddaten verfügbar
-              </div>
-            )}
-          </div>
+          {/* Trend Chart pro KI-Modell (Multi-Line, im Stil von KpiTrendChart) */}
+          <AiTrafficModelTrendChart
+            projectId={projectId}
+            dateRange={dateRange}
+          />
 
         </div>
       )}
