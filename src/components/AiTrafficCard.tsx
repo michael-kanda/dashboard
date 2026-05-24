@@ -1,7 +1,7 @@
 // src/components/AiTrafficCard.tsx
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Cpu,
   TrendingUp,
@@ -14,6 +14,8 @@ import {
 import { cn } from '@/lib/utils';
 import type { AiTrafficCardProps } from '@/types/ai-traffic';
 import AiTrafficModelTrendChart from '@/components/AiTrafficModelTrendChart';
+import SourceMiniSparkline from '@/components/SourceMiniSparkline';
+import { useAiTrafficExtended } from '@/hooks/useAiTrafficExtended';
 
 // Brand-Farben für KI-Quellen-Dots (konsistent mit AiTrafficModelTrendChart)
 const SOURCE_DOT_COLORS: Record<string, string> = {
@@ -37,17 +39,43 @@ function getSourceDotColor(source: string): string {
   return '#9ca3af'; // Neutral grau für unbekannte Quellen
 }
 
-// Hilfskomponente für Änderungsindikator
-const ChangeIndicator: React.FC<{ change?: number }> = ({ change }) => {
+/** Normalisiert einen rohen Quellnamen auf den kanonischen Modell-Key. */
+function normalizeSourceKey(source: string): string {
+  const lower = source.toLowerCase();
+  if (lower.includes('chatgpt') || lower.includes('openai')) return 'chatgpt.com';
+  if (lower.includes('claude') || lower.includes('anthropic')) return 'claude.ai';
+  if (lower.includes('perplexity')) return 'perplexity.ai';
+  if (lower.includes('gemini') || lower.includes('bard')) return 'gemini.google.com';
+  if (lower.includes('copilot') || lower.includes('bing')) return 'copilot.microsoft.com';
+  if (lower.includes('you.com')) return 'you.com';
+  if (lower.includes('poe')) return 'poe.com';
+  if (lower.includes('character')) return 'character.ai';
+  return source;
+}
+
+/** Vorperiodenwert aus Current + %-Change rückrechnen. */
+function calcPreviousValue(current: number, change?: number): number | null {
+  if (typeof change !== 'number' || !isFinite(change)) return null;
+  if (change === -100) return null; // war 0 davor
+  const previous = current / (1 + change / 100);
+  return Math.round(previous);
+}
+
+// Hilfskomponente für Änderungsindikator mit Vorperiode-Tooltip
+const ChangeIndicator: React.FC<{ change?: number; current: number; label: string }> = ({ change, current, label }) => {
   if (!change) {
     return null;
   }
   const isPositive = change >= 0;
   const color = isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
   const Icon = isPositive ? ArrowUp : ArrowDown;
+  const previous = calcPreviousValue(current, change);
 
   return (
-    <span className={cn('flex items-center text-xs font-medium ml-2', color)}>
+    <span
+      className={cn('flex items-center text-xs font-medium ml-2 cursor-help', color)}
+      title={previous !== null ? `${label} Vorperiode: ${previous.toLocaleString('de-DE')}` : undefined}
+    >
       <Icon className="mr-0.5 w-3 h-3" />
       {Math.abs(change).toFixed(1)}%
     </span>
@@ -77,6 +105,29 @@ export default function AiTrafficCard({
   const safeTopAiSources = Array.isArray(topAiSources) ? topAiSources : [];
   // Hinweis: trend-Prop wird nicht mehr verwendet — AiTrafficModelTrendChart holt eigene Daten
   void trend;
+
+  // Klick-State: synchronisiert Liste ↔ Trend-Chart
+  const [selectedModel, setSelectedModel] = useState<string | undefined>(undefined);
+
+  // Geteilte Extended-Daten (Hook deduped via Module-Cache)
+  const { data: extendedData } = useAiTrafficExtended(projectId, dateRange);
+
+  // Sparkline-Daten pro normalisiertem Modell-Key vorbereiten (letzte ~14 Tage)
+  const sparklinesByModel = useMemo<Record<string, number[]>>(() => {
+    if (!extendedData?.trendBySource?.length) return {};
+    const result: Record<string, Map<string, number>> = {};
+    for (const row of extendedData.trendBySource) {
+      if (!result[row.source]) result[row.source] = new Map();
+      const existing = result[row.source].get(row.date) || 0;
+      result[row.source].set(row.date, existing + row.sessions);
+    }
+    const out: Record<string, number[]> = {};
+    for (const [src, dayMap] of Object.entries(result)) {
+      const sortedDates = Array.from(dayMap.keys()).sort();
+      out[src] = sortedDates.slice(-14).map((d) => dayMap.get(d) || 0);
+    }
+    return out;
+  }, [extendedData]);
 
   // Dynamische Datumsberechnung
   const formattedDateRange = useMemo(() => {
@@ -127,13 +178,13 @@ export default function AiTrafficCard({
     <div className={cn("dashboard-widget-surface rounded-lg p-6 flex flex-col", className)}>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2">
-          <Cpu className="text-purple-600 dark:text-purple-400 w-6 h-6" />
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
+        <div className="flex items-center gap-2 min-w-0">
+          <Cpu className="text-purple-600 dark:text-purple-400 w-6 h-6 flex-shrink-0" />
           <h3 className="text-lg font-semibold text-heading">KI-Traffic</h3>
         </div>
         {!error && (
-          <span className="tone-pill tone-pill--soft tone--purple text-xs px-3 py-1">
+          <span className="tone-pill tone-pill--soft tone--purple text-xs px-2.5 py-1 whitespace-nowrap flex-shrink-0">
             {safePercentage.toFixed(1)}%
             <span className="hidden sm:inline ml-1">Anteil</span>
           </span>
@@ -178,7 +229,7 @@ export default function AiTrafficCard({
                   <p className="text-2xl font-bold text-heading tabular-nums">
                     {safeTotalSessions.toLocaleString('de-DE')}
                   </p>
-                  <ChangeIndicator change={totalSessionsChange} />
+                  <ChangeIndicator change={totalSessionsChange} current={safeTotalSessions} label="Sitzungen" />
                 </div>
               </div>
 
@@ -191,34 +242,70 @@ export default function AiTrafficCard({
                   <p className="text-2xl font-bold text-heading tabular-nums">
                     {safeTotalUsers.toLocaleString('de-DE')}
                   </p>
-                  <ChangeIndicator change={totalUsersChange} />
+                  <ChangeIndicator change={totalUsersChange} current={safeTotalUsers} label="Nutzer" />
                 </div>
               </div>
             </div>
 
             {/* Rechte Spalte: Top KI-Quellen */}
             <div>
-              <p className="text-[11px] text-muted font-medium uppercase tracking-wide mb-2">
-                Top KI-Quellen
-              </p>
-              <div className="space-y-1.5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] text-muted font-medium uppercase tracking-wide">
+                  Top KI-Quellen
+                </p>
+                {selectedModel && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedModel(undefined)}
+                    className="text-[10px] text-muted hover:text-body underline underline-offset-2 transition-colors"
+                  >
+                    Auswahl zurücksetzen
+                  </button>
+                )}
+              </div>
+              <div className="space-y-0.5">
                 {safeTopAiSources.length > 0 ? (
                   safeTopAiSources.map((source, index) => {
                     const sourcePercentage = typeof source.percentage === 'number' && !isNaN(source.percentage) ? source.percentage : 0;
                     const sourceSessions = typeof source.sessions === 'number' && !isNaN(source.sessions) ? source.sessions : 0;
                     const sourceName = source.source || 'Unbekannt';
                     const dotColor = getSourceDotColor(sourceName);
+                    const modelKey = normalizeSourceKey(sourceName);
+                    const isSelected = selectedModel === modelKey;
+                    const sparklineValues = sparklinesByModel[modelKey] ?? [];
 
                     return (
-                      <div key={index} className="flex items-center justify-between text-sm">
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => setSelectedModel(isSelected ? undefined : modelKey)}
+                        className={cn(
+                          'w-full flex items-center justify-between gap-3 text-sm px-2 py-1.5 rounded-md transition-colors text-left',
+                          isSelected
+                            ? 'bg-surface-tertiary ring-1 ring-border'
+                            : 'hover:bg-surface-tertiary/60'
+                        )}
+                        title={`Im Trend-Chart unten anzeigen: ${sourceName}`}
+                      >
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <div
                             className="w-2 h-2 rounded-full flex-shrink-0"
                             style={{ backgroundColor: dotColor }}
                           />
-                          <span className="text-body truncate">{sourceName}</span>
+                          <span className={cn('truncate', isSelected ? 'text-heading font-medium' : 'text-body')}>
+                            {sourceName}
+                          </span>
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0 tabular-nums">
+                          {sparklineValues.length >= 2 && (
+                            <SourceMiniSparkline
+                              values={sparklineValues}
+                              color={dotColor}
+                              width={50}
+                              height={18}
+                              className="opacity-80"
+                            />
+                          )}
                           <span className="font-medium text-heading">
                             {sourceSessions.toLocaleString('de-DE')}
                           </span>
@@ -226,7 +313,7 @@ export default function AiTrafficCard({
                             {sourcePercentage.toFixed(1)}%
                           </span>
                         </div>
-                      </div>
+                      </button>
                     );
                   })
                 ) : (
@@ -241,6 +328,8 @@ export default function AiTrafficCard({
           <AiTrafficModelTrendChart
             projectId={projectId}
             dateRange={dateRange}
+            externalPrimaryModel={selectedModel}
+            onPrimaryModelChange={setSelectedModel}
           />
 
         </div>
