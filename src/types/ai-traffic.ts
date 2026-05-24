@@ -45,4 +45,8 @@ export interface AiTrafficCardProps {
   onDetailClick?: () => void;
   onPromptTrackingClick?: () => void;
   projectId?: string;
+  /** Prompt-Tracking-Daten (für PromptTrackingBridge in der Card). */
+  promptTracking?: import('@/lib/dashboard-shared').PromptTrackingResult;
+  /** Wird Prompt-Tracking überhaupt angeboten? Steuert ob die Bridge angezeigt wird. */
+  promptTrackingEnabled?: boolean;
 }
