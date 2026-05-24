@@ -106,7 +106,10 @@ export interface AiTrafficExtendedData {
     users: number;
     engagementRate: number;
     percentage: number;
-    topPages: Array<{ path: string; sessions: number }>;
+    conversions: number;
+    conversionRate: number; // in % (conversions / sessions * 100)
+    topPages: Array<{ path: string; sessions: number; conversions: number }>;
+    topLandingPage?: { path: string; sessions: number; conversions: number };
   }>;
   
   // Landingpages
@@ -554,8 +557,9 @@ export async function getAiTrafficExtended(
     const sourceMap = new Map<string, {
       sessions: number;
       users: number;
+      conversions: number;
       engagementRateWeighted: number;
-      pages: Map<string, number>;
+      pages: Map<string, { sessions: number; conversions: number }>;
     }>();
 
     const pageMap = new Map<string, {
@@ -638,18 +642,24 @@ export async function getAiTrafficExtended(
 
       // Source aggregieren
       if (!sourceMap.has(source)) {
-        sourceMap.set(source, { 
-          sessions: 0, 
-          users: 0, 
-          engagementRateWeighted: 0, 
-          pages: new Map() 
+        sourceMap.set(source, {
+          sessions: 0,
+          users: 0,
+          conversions: 0,
+          engagementRateWeighted: 0,
+          pages: new Map()
         });
       }
       const sourceData = sourceMap.get(source)!;
       sourceData.sessions += sessions;
       sourceData.users += users;
+      sourceData.conversions += conversions;
       sourceData.engagementRateWeighted += engagementRate * sessions;
-      sourceData.pages.set(path, (sourceData.pages.get(path) || 0) + sessions);
+      const existingPage = sourceData.pages.get(path) || { sessions: 0, conversions: 0 };
+      sourceData.pages.set(path, {
+        sessions: existingPage.sessions + sessions,
+        conversions: existingPage.conversions + conversions,
+      });
 
       // Page aggregieren
       if (!pageMap.has(path)) {
@@ -783,17 +793,35 @@ export async function getAiTrafficExtended(
 
     // Sources
     const sources = Array.from(sourceMap.entries())
-      .map(([source, data]) => ({
-        source,
-        sessions: data.sessions,
-        users: data.users,
-        engagementRate: data.sessions > 0 ? (data.engagementRateWeighted / data.sessions) * 100 : 0,
-        percentage: totalSessions > 0 ? (data.sessions / totalSessions) * 100 : 0,
-        topPages: Array.from(data.pages.entries())
-          .sort((a, b) => b[1] - a[1])
+      .map(([source, data]) => {
+        const sortedPages = Array.from(data.pages.entries())
+          .sort((a, b) => b[1].sessions - a[1].sessions);
+        const topPages = sortedPages
           .slice(0, 5)
-          .map(([path, sessions]) => ({ path, sessions }))
-      }))
+          .map(([path, vals]) => ({
+            path,
+            sessions: vals.sessions,
+            conversions: vals.conversions,
+          }));
+        const topLandingPage = sortedPages[0]
+          ? {
+              path: sortedPages[0][0],
+              sessions: sortedPages[0][1].sessions,
+              conversions: sortedPages[0][1].conversions,
+            }
+          : undefined;
+        return {
+          source,
+          sessions: data.sessions,
+          users: data.users,
+          engagementRate: data.sessions > 0 ? (data.engagementRateWeighted / data.sessions) * 100 : 0,
+          percentage: totalSessions > 0 ? (data.sessions / totalSessions) * 100 : 0,
+          conversions: data.conversions,
+          conversionRate: data.sessions > 0 ? (data.conversions / data.sessions) * 100 : 0,
+          topPages,
+          topLandingPage,
+        };
+      })
       .sort((a, b) => b.sessions - a.sessions);
 
     // Landing Pages mit Intent
