@@ -311,6 +311,7 @@ export default function ProjectDashboard({
         <div id="section-ki-traffic" className="grid grid-cols-1 gap-6 mt-8 scroll-mt-20 print-traffic-grid">
           <div className="print-ai-card">
             <AiTrafficCard
+              projectId={projectId}
               totalSessions={data.aiTraffic?.totalSessions ?? 0}
               totalUsers={data.aiTraffic?.totalUsers ?? 0}
               percentage={data.kpis?.sessions?.value ? ((data.aiTraffic?.totalSessions ?? 0) / data.kpis.sessions.value * 100) : 0}
