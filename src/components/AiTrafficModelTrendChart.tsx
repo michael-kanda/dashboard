@@ -1,7 +1,7 @@
 // src/components/AiTrafficModelTrendChart.tsx
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ArrowLeftRight, Cpu, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { AiTrafficExtendedData } from '@/lib/ai-traffic-extended-v2';
+import { useAiTrafficExtended } from '@/hooks/useAiTrafficExtended';
 
 // ============================================================================
 // KI-MODELL KONFIGURATION (Farben + Labels, zentral)
@@ -103,48 +103,35 @@ interface AiTrafficModelTrendChartProps {
   projectId?: string;
   dateRange?: string;
   className?: string;
+  /**
+   * Wenn gesetzt, überschreibt das die interne Modell-Auswahl.
+   * Wird genutzt, wenn die Card-Liste eine Quelle anklickt → Chart synchronisiert.
+   */
+  externalPrimaryModel?: string;
+  /** Callback wenn das Primary-Modell intern geändert wird (Dropdown). */
+  onPrimaryModelChange?: (model: string) => void;
 }
 
 export default function AiTrafficModelTrendChart({
   projectId,
   dateRange = '30d',
   className,
+  externalPrimaryModel,
+  onPrimaryModelChange,
 }: AiTrafficModelTrendChartProps) {
-  const [data, setData] = useState<AiTrafficExtendedData | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>(undefined);
+  const { data, isLoading, error } = useAiTrafficExtended(projectId, dateRange);
 
   // Modell-Auswahl: Default = stärkstes Modell, Vergleich aus
-  const [primaryModel, setPrimaryModel] = useState<string>('');
+  const [internalPrimary, setInternalPrimary] = useState<string>('');
   const [compareModel, setCompareModel] = useState<string>('none');
 
-  // -------- FETCH ----------------------------------------------------------
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    setError(undefined);
-    try {
-      const params = new URLSearchParams({ dateRange });
-      if (projectId) params.set('projectId', projectId);
-      const response = await fetch(`/api/ai-traffic-detail-v2?${params.toString()}`);
+  // Effektives Primary-Modell: extern > intern
+  const primaryModel = externalPrimaryModel || internalPrimary;
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error(`Server lieferte kein JSON (Status: ${response.status})`);
-      }
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-      setData(result.data || undefined);
-    } catch (err) {
-      console.error('[AiTrafficModelTrendChart] Fetch Error:', err);
-      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [projectId, dateRange]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const setPrimaryModel = (m: string) => {
+    setInternalPrimary(m);
+    onPrimaryModelChange?.(m);
+  };
 
   // -------- VERFÜGBARE MODELLE (sortiert nach Gesamt-Sessions) -------------
   const availableModels = useMemo(() => {
@@ -158,12 +145,19 @@ export default function AiTrafficModelTrendChart({
       .map(([source]) => source);
   }, [data]);
 
-  // Default-Modell setzen (stärkstes), sobald Daten da sind
+  // Default-Modell setzen (stärkstes), sobald Daten da sind und nichts extern gesetzt ist
   useEffect(() => {
-    if (!primaryModel && availableModels.length > 0) {
-      setPrimaryModel(availableModels[0]);
+    if (!internalPrimary && !externalPrimaryModel && availableModels.length > 0) {
+      setInternalPrimary(availableModels[0]);
     }
-  }, [availableModels, primaryModel]);
+  }, [availableModels, internalPrimary, externalPrimaryModel]);
+
+  // Wenn extern ein Modell gewählt wird, das auch nicht im Compare-Dropdown halten
+  useEffect(() => {
+    if (externalPrimaryModel && compareModel === externalPrimaryModel) {
+      setCompareModel('none');
+    }
+  }, [externalPrimaryModel, compareModel]);
 
   // -------- CHART-DATA (long → pivot) --------------------------------------
   const chartData = useMemo(() => {
