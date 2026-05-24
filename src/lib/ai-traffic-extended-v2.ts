@@ -123,6 +123,9 @@ export interface AiTrafficExtendedData {
   }>;
   
   trend: Array<{ date: string; sessions: number; users: number }>;
+
+  // Trend pro KI-Quelle (long format) — für Multi-Line-Chart im Frontend
+  trendBySource: Array<{ date: string; source: string; sessions: number; users: number }>;
 }
 
 // ============================================================================
@@ -397,7 +400,8 @@ export async function getAiTrafficExtended(
       trendResponse,
       journeyResponse,
       eventsResponse,
-      scrollResponse
+      scrollResponse,
+      trendBySourceResponse
     ] = await Promise.all([
       
       // 1. Hauptdaten: Source + Landingpage + Metriken (inkl. engagementRate)
@@ -513,6 +517,25 @@ export async function getAiTrafficExtended(
             }
           }
         },
+      }).catch(() => ({ data: { rows: [] } })),
+
+      // 6. Trend-Daten pro KI-Quelle (täglich × source)
+      analytics.properties.runReport({
+        property: formattedPropertyId,
+        requestBody: {
+          dateRanges: [{ startDate, endDate }],
+          dimensions: [
+            { name: 'date' },
+            { name: 'sessionSource' }
+          ],
+          metrics: [
+            { name: 'sessions' },
+            { name: 'totalUsers' }
+          ],
+          dimensionFilter: aiSourceFilter,
+          orderBys: [{ dimension: { dimensionName: 'date' } }],
+          limit: '10000'
+        },
       }).catch(() => ({ data: { rows: [] } }))
     ]);
 
@@ -525,6 +548,7 @@ export async function getAiTrafficExtended(
     const journeyRows = journeyResponse.data.rows || [];
     const eventsRows = eventsResponse.data.rows || [];
     const scrollRows = scrollResponse.data.rows || [];
+    const trendBySourceRows = trendBySourceResponse.data.rows || [];
 
     // --- Aggregations-Maps ---
     const sourceMap = new Map<string, {
@@ -800,6 +824,36 @@ export async function getAiTrafficExtended(
       users: parseInt(row.metricValues?.[1]?.value || '0', 10)
     }));
 
+    // Trend pro KI-Quelle (long format) — normalisierte Sources nach Tag aggregiert
+    // Mehrere Raw-Sources können auf dieselbe normalisierte Source mappen (z.B. chat.openai.com → chatgpt.com).
+    // Daher Map<dateKey, Map<normalizedSource, {sessions, users}>>
+    const trendBySourceMap = new Map<string, Map<string, { sessions: number; users: number }>>();
+    for (const row of trendBySourceRows) {
+      const date = parseGa4Date(row.dimensionValues?.[0]?.value || '');
+      const rawSource = row.dimensionValues?.[1]?.value || 'unknown';
+      const source = normalizeSource(rawSource);
+      const sessions = parseInt(row.metricValues?.[0]?.value || '0', 10);
+      const users = parseInt(row.metricValues?.[1]?.value || '0', 10);
+
+      if (!trendBySourceMap.has(date)) {
+        trendBySourceMap.set(date, new Map());
+      }
+      const dayMap = trendBySourceMap.get(date)!;
+      const existing = dayMap.get(source) || { sessions: 0, users: 0 };
+      dayMap.set(source, {
+        sessions: existing.sessions + sessions,
+        users: existing.users + users
+      });
+    }
+
+    const trendBySource: Array<{ date: string; source: string; sessions: number; users: number }> = [];
+    for (const [date, dayMap] of trendBySourceMap.entries()) {
+      for (const [source, vals] of dayMap.entries()) {
+        trendBySource.push({ date, source, sessions: vals.sessions, users: vals.users });
+      }
+    }
+    trendBySource.sort((a, b) => a.date.localeCompare(b.date));
+
     return {
       totalSessions,
       totalUsers,
@@ -818,7 +872,8 @@ export async function getAiTrafficExtended(
       },
       sources,
       landingPages,
-      trend
+      trend,
+      trendBySource
     };
 
   } catch (error) {
