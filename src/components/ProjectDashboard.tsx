@@ -329,17 +329,6 @@ export default function ProjectDashboard({
               onPromptTrackingClick={shouldRenderPromptTracking ? handlePromptTrackingClick : undefined}
             />
           </div>
-
-          <Trace at="TopQueriesList" />
-          <div className="print-queries-list">
-            <TopQueriesList
-              queries={data.topQueries ?? []}
-              isLoading={isLoading}
-              className="h-full"
-              dateRange={dateRange}
-              error={safeApiErrors?.gsc}
-            />
-          </div>
         </div>
 
         {/* KI-Traffic Detail-Ansicht (ausklappbar) */}
@@ -352,6 +341,17 @@ export default function ProjectDashboard({
             />
           </div>
         )}
+
+        <Trace at="TopQueriesList" />
+        <div className="mt-8 print-queries-list">
+          <TopQueriesList
+            queries={data.topQueries ?? []}
+            isLoading={isLoading}
+            className="h-full"
+            dateRange={dateRange}
+            error={safeApiErrors?.gsc}
+          />
+        </div>
 
         {/* PROMPT TRACKING Detail-Ansicht (ausklappbar) */}
         <Trace at="PromptTrackingCard?" />
