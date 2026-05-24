@@ -129,6 +129,16 @@ export default function AiTrafficCard({
     return out;
   }, [extendedData]);
 
+  // Extended-Source-Daten (conversions, topLandingPage) pro normalisiertem Modell-Key
+  type ExtendedSource = NonNullable<typeof extendedData>['sources'][number];
+  const extendedSourceMap = useMemo<Map<string, ExtendedSource>>(() => {
+    const map = new Map<string, ExtendedSource>();
+    for (const src of extendedData?.sources ?? []) {
+      map.set(normalizeSourceKey(src.source), src);
+    }
+    return map;
+  }, [extendedData]);
+
   // Dynamische Datumsberechnung
   const formattedDateRange = useMemo(() => {
     const endDate = new Date();
@@ -273,6 +283,12 @@ export default function AiTrafficCard({
                     const modelKey = normalizeSourceKey(sourceName);
                     const isSelected = selectedModel === modelKey;
                     const sparklineValues = sparklinesByModel[modelKey] ?? [];
+                    const extSource = extendedSourceMap.get(modelKey);
+                    const topLp = extSource?.topLandingPage;
+                    const convRate = extSource?.conversionRate ?? 0;
+                    const convCount = extSource?.conversions ?? 0;
+                    // Sub-Zeile nur anzeigen wenn wir Landingpage oder Conversions haben
+                    const hasSubRow = !!topLp || convCount > 0;
 
                     return (
                       <button
@@ -280,39 +296,70 @@ export default function AiTrafficCard({
                         type="button"
                         onClick={() => setSelectedModel(isSelected ? undefined : modelKey)}
                         className={cn(
-                          'w-full flex items-center justify-between gap-3 text-sm px-2 py-1.5 rounded-md transition-colors text-left',
+                          'w-full flex flex-col gap-0.5 text-sm px-2 py-1.5 rounded-md transition-colors text-left',
                           isSelected
                             ? 'bg-surface-tertiary ring-1 ring-border'
                             : 'hover:bg-surface-tertiary/60'
                         )}
                         title={`Im Trend-Chart unten anzeigen: ${sourceName}`}
                       >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div
-                            className="w-2 h-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: dotColor }}
-                          />
-                          <span className={cn('truncate', isSelected ? 'text-heading font-medium' : 'text-body')}>
-                            {sourceName}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 flex-shrink-0 tabular-nums">
-                          {sparklineValues.length >= 2 && (
-                            <SourceMiniSparkline
-                              values={sparklineValues}
-                              color={dotColor}
-                              width={50}
-                              height={18}
-                              className="opacity-80"
+                        {/* Main row */}
+                        <div className="flex items-center justify-between gap-3 w-full">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <div
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: dotColor }}
                             />
-                          )}
-                          <span className="font-medium text-heading">
-                            {sourceSessions.toLocaleString('de-DE')}
-                          </span>
-                          <span className="text-xs text-muted min-w-[3rem] text-right">
-                            {sourcePercentage.toFixed(1)}%
-                          </span>
+                            <span className={cn('truncate', isSelected ? 'text-heading font-medium' : 'text-body')}>
+                              {sourceName}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 flex-shrink-0 tabular-nums">
+                            {sparklineValues.length >= 2 && (
+                              <SourceMiniSparkline
+                                values={sparklineValues}
+                                color={dotColor}
+                                width={50}
+                                height={18}
+                                className="opacity-80"
+                              />
+                            )}
+                            <span className="font-medium text-heading">
+                              {sourceSessions.toLocaleString('de-DE')}
+                            </span>
+                            <span className="text-xs text-muted min-w-[3rem] text-right">
+                              {sourcePercentage.toFixed(1)}%
+                            </span>
+                          </div>
                         </div>
+
+                        {/* Sub row: Top-Landingpage + Conversion-Rate */}
+                        {hasSubRow && (
+                          <div className="flex items-center justify-between gap-2 pl-4 text-[11px] text-muted">
+                            {topLp ? (
+                              <span className="truncate font-mono" title={topLp.path}>
+                                {topLp.path === '/' ? '/ (Startseite)' : topLp.path}
+                              </span>
+                            ) : (
+                              <span />
+                            )}
+                            {convCount > 0 && (
+                              <span className="flex-shrink-0 tabular-nums">
+                                <span className="text-heading font-medium">{convCount.toLocaleString('de-DE')}</span>
+                                <span className="ml-1">Conv</span>
+                                <span className="text-faint mx-1">·</span>
+                                <span className={cn(
+                                  'font-medium',
+                                  convRate >= 3 ? 'text-green-600 dark:text-green-400' :
+                                  convRate >= 1 ? 'text-amber-600 dark:text-amber-400' :
+                                  'text-muted'
+                                )}>
+                                  {convRate.toFixed(1)}%
+                                </span>
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </button>
                     );
                   })
