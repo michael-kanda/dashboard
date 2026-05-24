@@ -100,6 +100,8 @@ export default function AiTrafficCard({
   onDetailClick,
   onPromptTrackingClick,
   projectId,
+  promptTracking,
+  promptTrackingEnabled = true,
 }: AiTrafficCardProps) {
 
   const safePercentage = typeof percentage === 'number' && !isNaN(percentage) ? percentage : 0;
@@ -407,12 +409,12 @@ export default function AiTrafficCard({
             onPrimaryModelChange={setSelectedModel}
           />
 
-          {/* Prompt-Tracking-Bridge — zeigt Top-Prompts, für die zitiert wird.
-              TODO: Sobald PromptTrackingData-Type bekannt: topPrompts aus Daten ableiten und reichen.
-              Aktuell deaktiviert (keine Daten verfügbar). */}
+          {/* Prompt-Tracking-Bridge — Top-Fragen, mit denen Nutzer die Seite finden (AI Mode Proxy).
+              Versteckt sich automatisch wenn keine Daten / nicht aktiviert. */}
           <PromptTrackingBridge
+            data={promptTracking}
+            enabled={promptTrackingEnabled && !!onPromptTrackingClick}
             onOpenDetails={onPromptTrackingClick}
-            // topPrompts={...}  ← hier echte Daten reinreichen sobald verfügbar
           />
 
         </div>
