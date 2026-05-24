@@ -328,6 +328,8 @@ export default function ProjectDashboard({
               error={safeApiErrors?.ga4}
               onDetailClick={() => setShowAiTrafficDetail(!showAiTrafficDetail)}
               onPromptTrackingClick={shouldRenderPromptTracking ? handlePromptTrackingClick : undefined}
+              promptTracking={data.promptTracking}
+              promptTrackingEnabled={shouldRenderPromptTracking}
             />
           </div>
         </div>
@@ -342,17 +344,6 @@ export default function ProjectDashboard({
             />
           </div>
         )}
-
-        <Trace at="TopQueriesList" />
-        <div className="mt-8 print-queries-list">
-          <TopQueriesList
-            queries={data.topQueries ?? []}
-            isLoading={isLoading}
-            className="h-full"
-            dateRange={dateRange}
-            error={safeApiErrors?.gsc}
-          />
-        </div>
 
         {/* PROMPT TRACKING Detail-Ansicht (ausklappbar) */}
         <Trace at="PromptTrackingCard?" />
@@ -392,6 +383,17 @@ export default function ProjectDashboard({
             </div>
           </div>
         )}
+
+        <Trace at="TopQueriesList" />
+        <div className="mt-8 print-queries-list">
+          <TopQueriesList
+            queries={data.topQueries ?? []}
+            isLoading={isLoading}
+            className="h-full"
+            dateRange={dateRange}
+            error={safeApiErrors?.gsc}
+          />
+        </div>
 
         <Trace at="LandingPageChart?" />
         {shouldRenderChart && (
