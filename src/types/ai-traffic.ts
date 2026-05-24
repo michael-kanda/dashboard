@@ -44,4 +44,5 @@ export interface AiTrafficCardProps {
   error?: string;
   onDetailClick?: () => void;
   onPromptTrackingClick?: () => void;
+  projectId?: string;
 }
