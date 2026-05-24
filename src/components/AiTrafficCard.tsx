@@ -15,6 +15,28 @@ import { cn } from '@/lib/utils';
 import type { AiTrafficCardProps } from '@/types/ai-traffic';
 import AiTrafficModelTrendChart from '@/components/AiTrafficModelTrendChart';
 
+// Brand-Farben für KI-Quellen-Dots (konsistent mit AiTrafficModelTrendChart)
+const SOURCE_DOT_COLORS: Record<string, string> = {
+  chatgpt: '#10a37f',
+  claude: '#d97706',
+  perplexity: '#6366f1',
+  gemini: '#4285f4',
+  bard: '#4285f4',
+  copilot: '#00a4ef',
+  bing: '#00a4ef',
+  you: '#8b5cf6',
+  poe: '#7c3aed',
+  character: '#ec4899',
+};
+
+function getSourceDotColor(source: string): string {
+  const lower = source.toLowerCase();
+  for (const [key, color] of Object.entries(SOURCE_DOT_COLORS)) {
+    if (lower.includes(key)) return color;
+  }
+  return '#9ca3af'; // Neutral grau für unbekannte Quellen
+}
+
 // Hilfskomponente für Änderungsindikator
 const ChangeIndicator: React.FC<{ change?: number }> = ({ change }) => {
   if (!change) {
@@ -140,72 +162,79 @@ export default function AiTrafficCard({
         </div>
       ) : (
         // Normaler Inhalt
-        <div className="flex flex-col gap-4 flex-1">
+        <div className="flex flex-col gap-6 flex-1">
 
-          {/* Metriken */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Sitzungen</p>
+          {/* Metriken (links) + Top KI-Quellen (rechts) im 2-Spalten-Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+
+            {/* Linke Spalte: Sitzungen + Nutzer */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-muted" />
+                  <p className="text-[11px] text-muted font-medium uppercase tracking-wide">Sitzungen</p>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <p className="text-2xl font-bold text-heading tabular-nums">
+                    {safeTotalSessions.toLocaleString('de-DE')}
+                  </p>
+                  <ChangeIndicator change={totalSessionsChange} />
+                </div>
               </div>
-              <div className="flex items-baseline">
-                <p className="text-2xl font-bold text-purple-900 dark:text-purple-200">
-                  {safeTotalSessions.toLocaleString('de-DE')}
-                </p>
-                <ChangeIndicator change={totalSessionsChange} />
+
+              <div>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Users className="w-3.5 h-3.5 text-muted" />
+                  <p className="text-[11px] text-muted font-medium uppercase tracking-wide">Nutzer</p>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <p className="text-2xl font-bold text-heading tabular-nums">
+                    {safeTotalUsers.toLocaleString('de-DE')}
+                  </p>
+                  <ChangeIndicator change={totalUsersChange} />
+                </div>
               </div>
             </div>
 
-            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Nutzer</p>
-              </div>
-              <div className="flex items-baseline">
-                <p className="text-2xl font-bold text-purple-900 dark:text-purple-200">
-                  {safeTotalUsers.toLocaleString('de-DE')}
-                </p>
-                <ChangeIndicator change={totalUsersChange} />
-              </div>
-            </div>
-          </div>
+            {/* Rechte Spalte: Top KI-Quellen */}
+            <div>
+              <p className="text-[11px] text-muted font-medium uppercase tracking-wide mb-2">
+                Top KI-Quellen
+              </p>
+              <div className="space-y-1.5">
+                {safeTopAiSources.length > 0 ? (
+                  safeTopAiSources.map((source, index) => {
+                    const sourcePercentage = typeof source.percentage === 'number' && !isNaN(source.percentage) ? source.percentage : 0;
+                    const sourceSessions = typeof source.sessions === 'number' && !isNaN(source.sessions) ? source.sessions : 0;
+                    const sourceName = source.source || 'Unbekannt';
+                    const dotColor = getSourceDotColor(sourceName);
 
-          {/* Top KI-Quellen */}
-          <div>
-            <h4 className="text-sm font-semibold text-body mb-3">Top KI-Quellen</h4>
-            <div className="space-y-2">
-              {safeTopAiSources.length > 0 ? (
-                safeTopAiSources.map((source, index) => {
-                  const sourcePercentage = typeof source.percentage === 'number' && !isNaN(source.percentage) ? source.percentage : 0;
-                  const sourceSessions = typeof source.sessions === 'number' && !isNaN(source.sessions) ? source.sessions : 0;
-
-                  return (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                          index === 0 ? 'bg-purple-600' :
-                          index === 1 ? 'bg-purple-500' :
-                          index === 2 ? 'bg-purple-400' :
-                          'bg-purple-300'
-                        }`}></div>
-                        <span className="text-sm text-body truncate">{source.source || 'Unbekannt'}</span>
+                    return (
+                      <div key={index} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: dotColor }}
+                          />
+                          <span className="text-body truncate">{sourceName}</span>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0 tabular-nums">
+                          <span className="font-medium text-heading">
+                            {sourceSessions.toLocaleString('de-DE')}
+                          </span>
+                          <span className="text-xs text-muted min-w-[3rem] text-right">
+                            {sourcePercentage.toFixed(1)}%
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="text-sm font-medium text-heading">
-                          {sourceSessions.toLocaleString('de-DE')}
-                        </span>
-                        <span className="text-xs text-muted min-w-[3rem] text-right">
-                          {sourcePercentage.toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="text-sm text-muted italic">Keine KI-Traffic-Daten verfügbar</p>
-              )}
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-muted italic">Keine KI-Traffic-Daten verfügbar</p>
+                )}
+              </div>
             </div>
+
           </div>
 
           {/* Trend Chart pro KI-Modell (Multi-Line, im Stil von KpiTrendChart) */}
