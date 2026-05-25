@@ -22,8 +22,8 @@ export async function GET() {
       aiModel: {
         status: 'pending',
         message: '',
-        activeModel: AI_CONFIG.primaryModel,
-        fallbackModel: AI_CONFIG.fallbackModel,
+        activeModel: AI_CONFIG.primaryModel as string,
+        fallbackModel: AI_CONFIG.fallbackModel as string,
         latency: 0,
       },
       bingApi: { status: 'pending', message: '' },
