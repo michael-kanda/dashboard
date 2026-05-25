@@ -37,10 +37,11 @@ const DEFAULT_FONT_INDEX = 1; // text-sm
 interface DataMaxChatProps {
   projectId?: string;
   dateRange?: string;
+  ansprache?: string | null;
   className?: string;
 }
 
-export function DataMaxChat({ projectId, dateRange = '30d', className = '' }: DataMaxChatProps) {
+export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, className = '' }: DataMaxChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fontSizeIndex, setFontSizeIndex] = useState(DEFAULT_FONT_INDEX);
@@ -243,6 +244,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', className = '' }: Da
                   questions={suggestedQuestions}
                   onQuestionClick={handleSuggestedClick}
                   isLoading={isLoading}
+                  ansprache={ansprache}
                 />
               ) : (
                 messages.map((message) => (

@@ -37,6 +37,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
   // ✅ NEU: Filter-Logik (wie in ProjectsClientView)
   const filteredUsers = users.filter(user => 
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.ansprache && user.ansprache.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (user.domain && user.domain.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (user.mandant_id && user.mandant_id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -167,6 +168,11 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
               <div>
                 <label className="block text-sm font-medium text-gray-700">Mandant-ID (Label)</label>
                 <input name="mandant_id" type="text" required readOnly={!isSuperAdmin} defaultValue={!isSuperAdmin ? sessionUser.mandant_id || '' : undefined} placeholder={isSuperAdmin ? "z.B. max-online" : "Wird geerbt"} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 text-sm placeholder:text-gray-400" disabled={isSubmitting || !isSuperAdmin} />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Ansprache</label>
+                <input name="ansprache" type="text" placeholder="z.B. Herr Muster oder Frau Muster" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
               </div>
           </div>
 
@@ -324,6 +330,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
                     </div>
                     
                     {user.mandant_id && <p className="text-xs text-indigo-600 font-medium truncate">Label: {user.mandant_id}</p>}
+                    {user.ansprache && <p className="text-xs text-gray-500 font-medium truncate">Ansprache: {user.ansprache}</p>}
                     {user.domain && <p className="text-sm text-blue-600 font-medium truncate mt-1">{user.domain}</p>}
 
                     {user.role === 'BENUTZER' && user.assigned_admins && (

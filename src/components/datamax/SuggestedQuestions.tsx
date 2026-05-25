@@ -8,13 +8,19 @@ interface SuggestedQuestionsProps {
   questions: string[];
   onQuestionClick: (question: string) => void;
   isLoading?: boolean;
+  ansprache?: string | null;
 }
 
 export function SuggestedQuestions({ 
   questions, 
   onQuestionClick,
-  isLoading = false 
+  isLoading = false,
+  ansprache = null
 }: SuggestedQuestionsProps) {
+  const greeting = ansprache?.trim()
+    ? `Hallo ${ansprache.trim()}! Ich bin DataMax`
+    : 'Hallo! Ich bin DataMax';
+
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-4">
       {/* Avatar */}
@@ -38,7 +44,7 @@ export function SuggestedQuestions({
         transition={{ delay: 0.1 }}
         className="font-semibold text-gray-900 mb-1"
       >
-        Hallo! Ich bin DataMax
+        {greeting}
       </motion.h4>
       
       <motion.p 

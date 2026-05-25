@@ -13,6 +13,7 @@ declare module 'next-auth' {
   interface User extends DefaultUser {
     role: 'BENUTZER' | 'ADMIN' | 'SUPERADMIN';
     mandant_id?: string | null;
+    ansprache?: string | null;
     permissions?: string[];
     logo_url?: string | null;
     domain?: string | null;                  // <--- NEU
@@ -37,6 +38,7 @@ declare module 'next-auth' {
       id: string;
       role: 'BENUTZER' | 'ADMIN' | 'SUPERADMIN';
       mandant_id?: string | null;
+      ansprache?: string | null;
       permissions?: string[];
       logo_url?: string | null;
       domain?: string | null;                  // <--- NEU
@@ -60,6 +62,7 @@ declare module 'next-auth/jwt' {
     refreshToken?: string;
     role: 'BENUTZER' | 'ADMIN' | 'SUPERADMIN';
     mandant_id?: string | null;
+    ansprache?: string | null;
     permissions?: string[];
     logo_url?: string | null;
     domain?: string | null;                  // <--- NEU

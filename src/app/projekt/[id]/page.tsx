@@ -144,6 +144,7 @@ export default async function ProjectPage({
         deviceData={dashboardData.deviceData}
         userRole={session.user.role}
         userEmail={supportEmail}
+        userAnsprache={session.user.ansprache || null}
         showLandingPages={projectUser.settings_show_landingpages !== false}
         showGoogleAds={projectUser.settings_show_google_ads === true}
         showPromptTracking={projectUser.settings_show_prompt_tracking === true}

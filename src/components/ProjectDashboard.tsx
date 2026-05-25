@@ -87,6 +87,7 @@ interface ProjectDashboardProps {
   bingData?: any[];
   userRole?: string;
   userEmail?: string;
+  userAnsprache?: string | null;
   showLandingPages?: boolean;
   showGoogleAds?: boolean;
   showPromptTracking?: boolean;
@@ -110,6 +111,7 @@ export default function ProjectDashboard({
   projectTimelineActive = false,
   userRole = 'USER',
   userEmail = '',
+  userAnsprache = null,
   showLandingPages = false,
   showGoogleAds = false,
   showPromptTracking = false,
@@ -501,7 +503,7 @@ export default function ProjectDashboard({
       {/* DataMax Chat - Floating Button unten rechts (Conditional) */}
       <Trace at="DataMaxChat?" />
       {dataMaxEnabled && (
-        <DataMaxChat projectId={projectId} dateRange={dateRange} />
+        <DataMaxChat projectId={projectId} dateRange={dateRange} ansprache={userAnsprache} />
       )}
 
       <Trace at="ENDE-Render" />

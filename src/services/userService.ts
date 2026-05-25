@@ -16,7 +16,7 @@ export async function getUsersForManagement(user: UserSession): Promise<User[]> 
     if (user.role === 'SUPERADMIN') {
       const result = await sql`
         SELECT 
-          u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.permissions, u.favicon_url,
+          u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
           (
             SELECT STRING_AGG(DISTINCT admins.email, ', ')
             FROM project_assignments pa_sub
@@ -44,7 +44,7 @@ export async function getUsersForManagement(user: UserSession): Promise<User[]> 
 
       const kundenRes = await sql`
         SELECT DISTINCT 
-          u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.permissions, u.favicon_url,
+          u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
           (
             SELECT STRING_AGG(DISTINCT admins.email, ', ')
             FROM project_assignments pa_sub
@@ -72,7 +72,7 @@ export async function getUsersForManagement(user: UserSession): Promise<User[]> 
       if (kannAdminsVerwalten && adminMandantId) {
         const adminsRes = await sql`
           SELECT 
-            u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.permissions, u.favicon_url,
+            u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
             (
               SELECT STRING_AGG(DISTINCT admins.email, ', ')
               FROM project_assignments pa_sub

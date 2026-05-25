@@ -2,7 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { signIn } from 'next-auth/react';
+import { getSession, signIn } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { 
@@ -25,6 +25,7 @@ export default function LoginForm() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [successAnsprache, setSuccessAnsprache] = useState('');
   
   const [showPassword, setShowPassword] = useState(false);
   const [shake, setShake] = useState(0);
@@ -56,6 +57,8 @@ export default function LoginForm() {
       setError('E-Mail oder Passwort ist falsch.');
       setShake(prev => prev + 1);
     } else {
+      const session = await getSession();
+      setSuccessAnsprache(session?.user?.ansprache?.trim() || '');
       // ✅ ERFOLG: Karte drehen
       setIsSuccess(true);
       
@@ -217,7 +220,7 @@ export default function LoginForm() {
             <div className="space-y-2">
               <h3 className="text-xl font-bold text-gray-900 flex items-center justify-center gap-2">
                 <div className="w-5 h-5 border-2 border-[#188bdb]/30 border-t-[#188bdb] rounded-full animate-spin" />
-                Login erfolgreich
+                Login erfolgreich{successAnsprache ? ` ${successAnsprache}` : ''}
               </h3>
               <p className="text-[#188bdb] font-medium animate-pulse">
                 Dateninitialisierung läuft...

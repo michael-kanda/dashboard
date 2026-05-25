@@ -37,6 +37,7 @@ const formatDateForInput = (date: Date | string | null | undefined): string => {
 interface ApiPayload {
   email: string;
   mandant_id: string | null;
+  ansprache: string | null;
   permissions?: string[] | null; 
   domain: string | null;
   gsc_site_url: string | null;
@@ -59,6 +60,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
   const [formData, setFormData] = useState({
     email: '',
     mandantId: '',
+    ansprache: '',
     permissions: '', 
     domain: '',
     gscSiteUrl: '',
@@ -88,6 +90,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
       const newFormData = {
         email: user.email || '',
         mandantId: user.mandant_id || '',
+        ansprache: user.ansprache || '',
         permissions: user.permissions?.join(', ') || '',
         domain: user.domain || '',
         gscSiteUrl: user.gsc_site_url || '',
@@ -143,6 +146,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
       const payload: ApiPayload = {
         email: formData.email,
         mandant_id: formData.mandantId || null,
+        ansprache: formData.ansprache.trim() || null,
         permissions: (isSuperAdmin && user.role === 'ADMIN') ? permissionsArray : null,
         domain: formData.domain || null,
         gsc_site_url: formData.gscSiteUrl || null,
@@ -189,6 +193,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
       setFormData({
         email: updatedUser.email || '',
         mandantId: updatedUser.mandant_id || '',
+        ansprache: updatedUser.ansprache || '',
         permissions: updatedUser.permissions?.join(', ') || '',
         domain: updatedUser.domain || '',
         gscSiteUrl: updatedUser.gsc_site_url || '',
@@ -300,6 +305,31 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
               />
             )}
           </div>
+        </div>
+
+        {/* --- Ansprache --- */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Ansprache</label>
+          <div className="relative mt-1">
+            <input
+              type="text"
+              name="ansprache"
+              value={formData.ansprache}
+              onChange={handleInputChange}
+              placeholder="z.B. Herr Muster oder Frau Muster"
+              className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed placeholder:text-gray-400"
+              disabled={isSubmitting}
+            />
+            {formData.ansprache && !isSubmitting && (
+              <CheckCircle
+                className="absolute top-1/2 right-3 -translate-y-1/2 text-green-500"
+                size={16}
+              />
+            )}
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Wird für Login-Meldung und DataMax-Begrüßung verwendet.
+          </p>
         </div>
 
         {/* --- Admin-Berechtigungen --- */}

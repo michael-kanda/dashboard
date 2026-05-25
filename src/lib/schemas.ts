@@ -7,6 +7,7 @@ export const UserSchema = z.object({
   role: z.enum(['SUPERADMIN', 'ADMIN', 'BENUTZER']),
   domain: z.string().nullable().optional(),
   mandant_id: z.string().nullable().optional(),
+  ansprache: z.string().nullable().optional(),
   // Permissions können null, ein Array oder ein String sein - wir normalisieren es zu Array
   permissions: z.union([
     z.array(z.string()), 

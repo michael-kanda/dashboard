@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         // ✅ UPDATE: SUM(lp.gsc_impressionen_change) hinzugefügt
         result = await sql`
           SELECT 
-            u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.permissions, u.favicon_url,
+            u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
             u.project_timeline_active, u.project_start_date, u.project_duration_months,
             creator.email as creator_email,
             (
@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
             u.role, 
             u.domain, 
             u.mandant_id, 
+            u.ansprache,
             u.permissions, 
             u.favicon_url,
             (
@@ -102,7 +103,7 @@ export async function GET(request: NextRequest) {
         // ✅ UPDATE: SUM(lp.gsc_impressionen_change) hinzugefügt
         result = await sql`
           SELECT 
-            u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.permissions, u.favicon_url,
+            u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
             u.project_timeline_active, u.project_start_date, u.project_duration_months,
             creator.email as creator_email,
             (
@@ -143,7 +144,7 @@ export async function GET(request: NextRequest) {
 
         const kundenRes = await sql`
           SELECT DISTINCT 
-            u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.permissions, u.favicon_url,
+            u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
             (
               SELECT STRING_AGG(DISTINCT admins.email, ', ')
               FROM project_assignments pa_sub
@@ -171,7 +172,7 @@ export async function GET(request: NextRequest) {
         if (kannAdminsVerwalten && adminMandantId) {
           const adminsRes = await sql`
             SELECT 
-              u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.permissions, u.favicon_url,
+              u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
               (
                 SELECT STRING_AGG(DISTINCT admins.email, ', ')
                 FROM project_assignments pa_sub
@@ -238,7 +239,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const createdByAdminId = session.user.id;
     const { 
-      email, password, role, mandant_id, permissions, domain, gsc_site_url, ga4_property_id, 
+      email, password, role, mandant_id, ansprache, permissions, domain, gsc_site_url, ga4_property_id,
       semrush_project_id, semrush_tracking_id, semrush_tracking_id_02, favicon_url,
       project_start_date, project_duration_months, project_timeline_active,
       settings_show_prompt_tracking
@@ -282,6 +283,7 @@ export async function POST(req: NextRequest) {
     const { rows: newUsers } = await sql<User>`
       INSERT INTO users (
         email, password, role, mandant_id, permissions,
+        ansprache,
         domain, gsc_site_url, ga4_property_id,
         semrush_project_id, semrush_tracking_id, semrush_tracking_id_02,
         favicon_url,
@@ -293,6 +295,7 @@ export async function POST(req: NextRequest) {
         ${email}, ${hashedPassword}, ${roleToCreate}, 
         ${effective_mandant_id || null}, 
         ${permissionsPgString},
+        ${typeof ansprache === 'string' && ansprache.trim() ? ansprache.trim() : null},
         ${domain || null}, ${gsc_site_url || null}, ${ga4_property_id || null},
         ${semrush_project_id || null}, ${semrush_tracking_id || null}, ${semrush_tracking_id_02 || null},
         ${favicon_url || null},
@@ -300,7 +303,7 @@ export async function POST(req: NextRequest) {
         ${promptTrackingVisible},
         ${createdByAdminId}
       )
-      RETURNING id, email, role, domain, mandant_id, permissions, favicon_url`; 
+      RETURNING id, email, role, domain, mandant_id, ansprache, permissions, favicon_url`;
       
     const newUser = newUsers[0];
 

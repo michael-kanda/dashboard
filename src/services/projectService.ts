@@ -7,7 +7,7 @@ export async function getProjectsForDashboard(user: { id: string; role: string; 
   if (user.role === 'SUPERADMIN') {
     const res = await sql`
       SELECT 
-        u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.permissions, u.favicon_url,
+        u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
         u.project_timeline_active, u.project_start_date, u.project_duration_months, u."createdAt",
         creator.email as creator_email,
         (
@@ -36,7 +36,7 @@ export async function getProjectsForDashboard(user: { id: string; role: string; 
     const adminMandantId = user.mandant_id;
     const res = await sql`
       SELECT 
-        u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.permissions, u.favicon_url,
+        u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
         u.project_timeline_active, u.project_start_date, u.project_duration_months, u."createdAt",
         creator.email as creator_email,
         (

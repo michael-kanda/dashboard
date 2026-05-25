@@ -32,7 +32,7 @@ export const authConfig = {
           try {
             const result = await sql`
               SELECT
-                id, email, password, role, mandant_id, permissions, domain,
+                id, email, password, role, mandant_id, ansprache, permissions, domain,
                 gsc_site_url, ga4_property_id, google_ads_sheet_id,
                 brand_keywords, settings_show_prompt_tracking
               FROM users
@@ -41,14 +41,16 @@ export const authConfig = {
             rows = result.rows;
           } catch (dbError) {
             const message = dbError instanceof Error ? dbError.message : String(dbError);
-            if (!message.includes('brand_keywords') && !message.includes('settings_show_prompt_tracking')) {
+            if (!message.includes('brand_keywords') && !message.includes('settings_show_prompt_tracking') && !message.includes('ansprache')) {
               throw dbError;
             }
 
-            console.warn('[Authorize] Prompt-Tracking-Spalten fehlen noch, nutze Login-Fallback.');
+            console.warn('[Authorize] Optionale User-Spalten fehlen noch, nutze Login-Fallback.');
             const fallback = await sql`
               SELECT
-                id, email, password, role, mandant_id, permissions, domain,
+                id, email, password, role, mandant_id,
+                NULL::varchar as ansprache,
+                permissions, domain,
                 gsc_site_url, ga4_property_id,
                 NULL::varchar as google_ads_sheet_id,
                 NULL::text[] as brand_keywords,
@@ -122,6 +124,7 @@ export const authConfig = {
           email: user.email,
           role: user.role,
           mandant_id: user.mandant_id,
+          ansprache: user.ansprache || null,
           permissions: user.permissions || [],
           logo_url: logo_url,
           domain: user.domain || null,
@@ -149,6 +152,7 @@ export const authConfig = {
         if (user.id) token.id = user.id;
         token.role = user.role as 'BENUTZER' | 'ADMIN' | 'SUPERADMIN';
         token.mandant_id = user.mandant_id;
+        token.ansprache = user.ansprache;
         token.permissions = user.permissions;
         token.logo_url = user.logo_url;
         token.domain = user.domain;
@@ -168,6 +172,7 @@ export const authConfig = {
         session.user.id = token.id as string;
         session.user.role = token.role as 'BENUTZER' | 'ADMIN' | 'SUPERADMIN';
         session.user.mandant_id = token.mandant_id as string | null | undefined;
+        session.user.ansprache = token.ansprache as string | null | undefined;
         session.user.permissions = token.permissions as string[] | undefined;
         session.user.logo_url = token.logo_url as string | null | undefined;
         session.user.domain = token.domain as string | null | undefined;

@@ -41,6 +41,7 @@ export async function GET(
         email,
         role,
         domain,
+        ansprache,
         gsc_site_url,
         ga4_property_id,
         semrush_project_id,
@@ -113,6 +114,7 @@ export async function PUT(
 
     const {
         email,
+        ansprache,
         domain,
         gsc_site_url,
         ga4_property_id,
@@ -212,6 +214,7 @@ export async function PUT(
           UPDATE users
           SET 
             email = ${normalizedEmail},
+            ansprache = ${typeof ansprache === 'string' && ansprache.trim() ? ansprache.trim() : null},
             domain = ${domain || null},
             gsc_site_url = ${gsc_site_url || null},
             ga4_property_id = ${ga4_property_id || null},
@@ -230,7 +233,7 @@ export async function PUT(
             password = ${await bcrypt.hash(password, 10)}
           WHERE id = ${targetUserId}::uuid
           RETURNING
-            id::text as id, email, role, domain, 
+            id::text as id, email, role, domain, ansprache,
             gsc_site_url, ga4_property_id, 
             semrush_project_id, semrush_tracking_id, semrush_tracking_id_02,
             google_ads_sheet_id,
@@ -243,6 +246,7 @@ export async function PUT(
           UPDATE users
           SET 
             email = ${normalizedEmail},
+            ansprache = ${typeof ansprache === 'string' && ansprache.trim() ? ansprache.trim() : null},
             domain = ${domain || null},
             gsc_site_url = ${gsc_site_url || null},
             ga4_property_id = ${ga4_property_id || null},
@@ -260,7 +264,7 @@ export async function PUT(
             settings_show_prompt_tracking = ${promptTrackingVisible}
           WHERE id = ${targetUserId}::uuid
           RETURNING
-            id::text as id, email, role, domain, 
+            id::text as id, email, role, domain, ansprache,
             gsc_site_url, ga4_property_id, 
             semrush_project_id, semrush_tracking_id, semrush_tracking_id_02,
             google_ads_sheet_id,

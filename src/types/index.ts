@@ -6,6 +6,7 @@ export interface User {
   password?: string;
   role: 'SUPERADMIN' | 'ADMIN' | 'BENUTZER';
   mandant_id?: string | null;
+  ansprache?: string | null;
   permissions?: string[];
   domain?: string;
   gsc_site_url?: string;

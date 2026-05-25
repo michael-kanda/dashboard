@@ -20,6 +20,7 @@ export async function createTables() {
         role VARCHAR(50) NOT NULL CHECK (role IN ('SUPERADMIN', 'ADMIN', 'BENUTZER')),
         
         mandant_id VARCHAR(255) NULL, 
+        ansprache VARCHAR(255) NULL,
         permissions TEXT[] DEFAULT '{}', 
 
         domain VARCHAR(255),
@@ -42,6 +43,7 @@ export async function createTables() {
 
     await sql`
       ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS ansprache VARCHAR(255),
       ADD COLUMN IF NOT EXISTS google_ads_sheet_id VARCHAR(255),
       ADD COLUMN IF NOT EXISTS brand_keywords TEXT[] DEFAULT NULL,
       ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE;

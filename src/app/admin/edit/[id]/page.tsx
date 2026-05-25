@@ -36,6 +36,7 @@ async function getUserData(id: string): Promise<UserWithAssignments | null> {
         email,
         role,
         mandant_id,
+        ansprache,
         permissions,
         COALESCE(domain, '') as domain,
         COALESCE(gsc_site_url, '') as gsc_site_url,
