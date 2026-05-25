@@ -12,6 +12,7 @@ interface GlobalHeaderProps {
   onDateRangeChange: (range: DateRangeOption) => void;
   userRole?: string;
   userEmail?: string;
+  userAnsprache?: string | null;
 }
 
 export default function GlobalHeader({
@@ -20,10 +21,19 @@ export default function GlobalHeader({
   dateRange,
   onDateRangeChange,
   userRole = 'USER',
-  userEmail = ''
+  userEmail = '',
+  userAnsprache = null
 }: GlobalHeaderProps) {
 
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
+  const hour = new Date().getHours();
+  const greeting =
+    hour >= 5 && hour < 11 ? 'Guten Morgen' :
+    hour >= 11 && hour < 14 ? 'Mahlzeit' :
+    hour >= 18 || hour < 5 ? 'Guten Abend' :
+    'Guten Tag';
+  const trimmedAnsprache = userAnsprache?.trim();
+  const userGreeting = trimmedAnsprache ? `${greeting}, ${trimmedAnsprache}` : greeting;
 
   return (
     <div className="relative sm:sticky sm:top-0 z-40 card-glass p-4 sm:p-6 mb-6 print:hidden backdrop-blur-md transition-all duration-200 border-b border-theme-border-subtle">
@@ -50,9 +60,15 @@ export default function GlobalHeader({
 
             <div className="flex flex-col gap-1">
               {/* Projekt-ID */}
-              {projectId && (
+              {isAdmin && projectId && (
                 <span className="text-[10px] text-theme-muted font-mono tracking-wide">
                   ID: {projectId}
+                </span>
+              )}
+
+              {!isAdmin && (
+                <span className="text-sm text-theme-muted font-medium">
+                  {userGreeting}
                 </span>
               )}
 

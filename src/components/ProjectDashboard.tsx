@@ -260,6 +260,7 @@ export default function ProjectDashboard({
           onDateRangeChange={handleDateRangeChange}
           userRole={userRole}
           userEmail={userEmail}
+          userAnsprache={userAnsprache}
         />
 
         <Trace at="ProjectTimelineWidget?" />
