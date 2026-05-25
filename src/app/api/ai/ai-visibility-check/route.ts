@@ -12,9 +12,9 @@ export const maxDuration = 120; // 2 Minuten für mehrere API-Calls
 // KONFIGURATION - Nutzt ai-config.ts
 // ============================================================================
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-// Grounding funktioniert mit gemini-2.0-flash und höher
-const GROUNDING_MODEL = AI_CONFIG.lastResortModel; // gemini-2.0-flash - stabil für Grounding
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '';
+// Grounding läuft über das stabile Fallback-Modell.
+const GROUNDING_MODEL = AI_CONFIG.lastResortModel;
 
 // ============================================================================
 // TYPEN

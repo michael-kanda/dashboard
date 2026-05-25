@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
+import { generateText } from 'ai';
+import { AI_CONFIG, google } from '@/lib/ai-config';
 import { getSearchConsoleData, getAnalyticsData } from '@/lib/google-api';
 import { getBingData } from '@/lib/bing-api';
 export const dynamic = 'force-dynamic';
@@ -17,6 +19,13 @@ export async function GET() {
       database: { status: 'pending', message: '', latency: 0 },
       google: { status: 'pending', message: '' },
       semrush: { status: 'pending', message: '' },
+      aiModel: {
+        status: 'pending',
+        message: '',
+        activeModel: AI_CONFIG.primaryModel,
+        fallbackModel: AI_CONFIG.fallbackModel,
+        latency: 0,
+      },
       bingApi: { status: 'pending', message: '' },
       cache: { count: 0, size: 'Unknown' },
       cron: { status: 'pending', message: '', lastRun: null as string | null },
@@ -62,7 +71,49 @@ export async function GET() {
       status.semrush.message = e.message;
     }
 
-    // --- TEST 4: CACHE STATS ---
+    // --- TEST 4: KI MODELL LIVE CHECK ---
+    const startAi = performance.now();
+    try {
+      if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+        throw new Error('Env Variable GEMINI_API_KEY oder GOOGLE_GENERATIVE_AI_API_KEY fehlt.');
+      }
+
+      const modelsToCheck = [AI_CONFIG.primaryModel, AI_CONFIG.fallbackModel];
+      let lastError = '';
+
+      for (const modelName of modelsToCheck) {
+        try {
+          await generateText({
+            model: google(modelName),
+            prompt: 'Antworte exakt mit OK.',
+            temperature: 0,
+            maxOutputTokens: 8,
+          });
+
+          status.aiModel.activeModel = modelName;
+          status.aiModel.latency = Math.round(performance.now() - startAi);
+          status.aiModel.status = modelName === AI_CONFIG.primaryModel ? 'ok' : 'warning';
+          status.aiModel.message = modelName === AI_CONFIG.primaryModel
+            ? `Aktiv: ${modelName}. Live-Test fehlerfrei.`
+            : `Fallback aktiv: ${modelName}. Primary ${AI_CONFIG.primaryModel} fehlerhaft: ${lastError}`;
+          break;
+        } catch (modelError: any) {
+          lastError = modelError?.message || String(modelError);
+        }
+      }
+
+      if (status.aiModel.status === 'pending') {
+        status.aiModel.status = 'error';
+        status.aiModel.latency = Math.round(performance.now() - startAi);
+        status.aiModel.message = `Alle KI-Modelle fehlgeschlagen. Letzter Fehler: ${lastError || 'Unbekannt'}`;
+      }
+    } catch (e: any) {
+      status.aiModel.status = 'error';
+      status.aiModel.latency = Math.round(performance.now() - startAi);
+      status.aiModel.message = e.message;
+    }
+
+    // --- TEST 5: CACHE STATS ---
     try {
         const { rows } = await sql`SELECT COUNT(*) as count FROM google_data_cache`;
         status.cache.count = rows[0].count;
@@ -70,7 +121,7 @@ export async function GET() {
         console.error('Cache count failed', e);
     }
 
-    // --- TEST 5: CRON JOB / UPDATE STATUS ---
+    // --- TEST 6: CRON JOB / UPDATE STATUS ---
     try {
       const { rows } = await sql`SELECT MAX(gsc_last_updated) as last_update FROM landingpages`;
       const lastUpdate = rows[0]?.last_update;
@@ -95,7 +146,7 @@ export async function GET() {
        status.cron.message = 'Prüfung fehlgeschlagen: ' + e.message;
     }
 
-    // --- TEST 6: LIVE DATEN-FLUSS (GSC, GA4 & BING) ---
+    // --- TEST 7: LIVE DATEN-FLUSS (GSC, GA4 & BING) ---
     try {
       const { rows } = await sql`
         SELECT email, domain, gsc_site_url, ga4_property_id 

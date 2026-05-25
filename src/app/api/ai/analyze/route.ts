@@ -7,9 +7,10 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import crypto from 'node:crypto';
 import type { User } from '@/lib/schemas'; 
+import { AI_CONFIG } from '@/lib/ai-config';
 
 const google = createGoogleGenerativeAI({
-  apiKey: process.env.GEMINI_API_KEY || '',
+  apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
 });
 
 export const runtime = 'nodejs';
@@ -430,7 +431,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = streamText({
-      model: google('gemini-2.5-flash'),
+      model: google(AI_CONFIG.primaryModel),
       system: systemPrompt,
       prompt: `Analysiere diese Daten für den Zeitraum ${dateRange}:\n${summaryData}`,
       temperature: 0.4, 

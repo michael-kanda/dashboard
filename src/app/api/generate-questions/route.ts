@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
+import { AI_CONFIG } from '@/lib/ai-config';
 
 // Google AI Konfiguration
 const google = createGoogleGenerativeAI({
-  apiKey: process.env.GEMINI_API_KEY || '',
+  apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
 });
 
 export const runtime = 'nodejs';
@@ -38,8 +39,8 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. API Key prüfen
-    if (!process.env.GEMINI_API_KEY) {
-      console.error('[AI Generate Questions] GEMINI_API_KEY ist nicht gesetzt!');
+    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      console.error('[AI Generate Questions] Gemini API-Key ist nicht gesetzt!');
       return NextResponse.json(
         { message: 'API-Schlüssel nicht konfiguriert' }, 
         { status: 500 }
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
     console.log('[AI Generate Questions] Starte Generierung für:', { domain, keywords: keywordList });
 
     const result = await streamText({
-      model: google('gemini-2.5-flash'),  // ← Geändert: "gemini-2.5-flash" existiert möglicherweise nicht
+      model: google(AI_CONFIG.primaryModel),
       system: "Du bist ein erfahrener SEO-Redakteur. Deine Aufgabe ist es, basierend auf Keywords relevante 'W-Fragen' (Wer, Wie, Was, Wo, Warum) zu generieren, die Nutzer suchen könnten. Formatiere die Antwort als saubere Liste.",
       prompt: `Analysiere die Domain "${domain}" und die folgenden Keywords: ${keywordList}.\n\nGeneriere eine Liste von 10-15 relevanten W-Fragen, die potentielle Besucher dieser Domain in Bezug auf die Keywords haben könnten.`,
       temperature: 0.7,

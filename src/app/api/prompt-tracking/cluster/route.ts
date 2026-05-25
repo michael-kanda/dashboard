@@ -6,10 +6,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateObject } from 'ai';
-import { google } from '@ai-sdk/google';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
 import crypto from 'crypto';
+import { AI_CONFIG, google } from '@/lib/ai-config';
 
 import {
   PromptClusterRequestSchema,
@@ -20,7 +20,7 @@ import {
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-const MODEL_ID = 'gemini-2.5-flash';
+const MODEL_ID = AI_CONFIG.primaryModel;
 
 const SYSTEM_PROMPT = `Du bist ein erfahrener SEO- und Suchintention-Analyst.
 
@@ -68,8 +68,8 @@ export async function POST(req: NextRequest) {
   console.log(`[Prompt Cluster] Auth OK für ${session.user.email}`);
 
   // ── 2. ENV-Check ────────────────────────────────────────────────
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    console.error('[Prompt Cluster] GOOGLE_GENERATIVE_AI_API_KEY fehlt');
+  if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    console.error('[Prompt Cluster] Gemini API-Key fehlt');
     return NextResponse.json(
       { error: 'KI-Service nicht konfiguriert (API-Key fehlt)' },
       { status: 503 }

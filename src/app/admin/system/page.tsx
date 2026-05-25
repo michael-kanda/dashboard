@@ -532,6 +532,28 @@ export default function SystemHealthPage() {
               <h3 className="font-semibold text-heading">Google Auth</h3>
               <p className="text-xs text-muted mt-1">{status.google.message}</p>
             </div>
+
+            <div className="bg-surface p-5 rounded-xl border border-border-subtle shadow-sm">
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-2 bg-sky-50 dark:bg-sky-900/20 rounded-lg"><Robot className="text-sky-600 dark:text-sky-400 text-xl" /></div>
+                {getStatusIcon(status.aiModel?.status || 'pending')}
+              </div>
+              <h3 className="font-semibold text-heading">KI Modell</h3>
+              <p className="text-xs text-muted mt-1">{status.aiModel?.message || 'Prüfe...'}</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-medium">
+                <span className="rounded-md bg-surface-tertiary px-2 py-1 text-body">
+                  Aktiv: {status.aiModel?.activeModel || '-'}
+                </span>
+                <span className="rounded-md bg-surface-tertiary px-2 py-1 text-body">
+                  Fallback: {status.aiModel?.fallbackModel || '-'}
+                </span>
+                {typeof status.aiModel?.latency === 'number' && (
+                  <span className="rounded-md bg-surface-tertiary px-2 py-1 text-body">
+                    {status.aiModel.latency} ms
+                  </span>
+                )}
+              </div>
+            </div>
             
              <div className="bg-surface p-5 rounded-xl border border-border-subtle shadow-sm">
               <div className="flex justify-between items-start mb-4">

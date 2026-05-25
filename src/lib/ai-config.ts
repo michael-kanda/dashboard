@@ -10,14 +10,13 @@ export const AI_CONFIG = {
   // Modell-Kette: Beste zuerst, dann Fallbacks
   models: [
     'gemini-3.1-flash-lite',  // Primary (Free Tier, beste Qualität, aber 20 Req/Tag Limit)
-    'gemini-2.5-flash',        // Fallback 1 (Pay-as-you-go verfügbar)
-    'gemini-2.0-flash',        // Fallback 2 (günstigster Paid, sehr stabil)
+    'gemini-2.5-flash',        // Fallback
   ] as const,
   
   // Shortcuts für direkten Zugriff (Rückwärtskompatibilität)
-  primaryModel: 'gemini-flash-latest' as const,
+  primaryModel: 'gemini-3.1-flash-lite' as const,
   fallbackModel: 'gemini-2.5-flash' as const,
-  lastResortModel: 'gemini-2.0-flash' as const,
+  lastResortModel: 'gemini-2.5-flash' as const,
   
   // Temperature-Presets
   settings: {
@@ -35,7 +34,7 @@ export const AI_CONFIG = {
 // ============================================================================
 
 const google = createGoogleGenerativeAI({
-  apiKey: process.env.GEMINI_API_KEY || '',
+  apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
 });
 
 export { google };
