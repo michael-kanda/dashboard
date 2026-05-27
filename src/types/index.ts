@@ -32,6 +32,7 @@ export interface User {
   project_timeline_active?: boolean | null;
   maintenance_mode?: boolean; 
   brand_keywords?: string[] | null;
+  dashboard_info_text?: string | null;
   settings_show_prompt_tracking?: boolean | null;
 
   // Landingpage Statistiken

@@ -17,11 +17,14 @@ interface ExtendedUser extends User {
   data_max_enabled?: boolean; 
   settings_show_google_ads?: boolean;
   settings_show_prompt_tracking: boolean | null;
+  dashboard_info_text?: string | null;
   google_ads_sheet_id?: string;  // ← NEU
 }
 
 async function loadData(projectId: string, dateRange: string) {
   try {
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dashboard_info_text TEXT NULL`;
+
     const { rows } = await sql`
       SELECT
         u.id::text as id, 
@@ -41,6 +44,7 @@ async function loadData(projectId: string, dateRange: string) {
         u.settings_show_landingpages,
         u.settings_show_google_ads,
         u.settings_show_prompt_tracking,
+        u.dashboard_info_text,
         u.data_max_enabled, 
         u.brand_keywords,
         
@@ -148,6 +152,7 @@ export default async function ProjectPage({
         showLandingPages={projectUser.settings_show_landingpages !== false}
         showGoogleAds={projectUser.settings_show_google_ads === true}
         showPromptTracking={projectUser.settings_show_prompt_tracking === true}
+        dashboardInfoText={projectUser.dashboard_info_text || null}
         dataMaxEnabled={isDataMaxEnabled}
       />
     );

@@ -32,6 +32,7 @@ export async function createTables() {
         google_ads_sheet_id VARCHAR(255),
         favicon_url TEXT NULL,
         brand_keywords TEXT[] DEFAULT NULL,
+        dashboard_info_text TEXT NULL,
         settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
         
         "createdByAdminId" UUID REFERENCES users(id),
@@ -46,6 +47,7 @@ export async function createTables() {
       ADD COLUMN IF NOT EXISTS ansprache VARCHAR(255),
       ADD COLUMN IF NOT EXISTS google_ads_sheet_id VARCHAR(255),
       ADD COLUMN IF NOT EXISTS brand_keywords TEXT[] DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS dashboard_info_text TEXT NULL,
       ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE;
     `;
     console.log('Prompt-Tracking-Spalten in "users" erfolgreich geprüft/erstellt.');

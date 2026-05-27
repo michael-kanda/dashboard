@@ -33,6 +33,7 @@ const DASHBOARD_SECTIONS = [
   { id: 'section-kpis',         label: 'Traffic & Reichweite',  icon: <BarChartFill size={13} /> },
   { id: 'section-verlauf',      label: 'Verlauf & Analyse',     icon: <GraphUpArrow size={13} /> },
   { id: 'section-ki-traffic',   label: 'KI-Traffic',            icon: <Robot size={13} /> },
+  { id: 'section-top-queries',  label: 'Top Suchanfragen',      icon: <Search size={13} /> },
   { id: 'section-landingpages', label: 'Top Landingpages',      icon: <FileEarmarkText size={13} /> },
   { id: 'section-zugriffe',     label: 'Zugriffe nach Quelle',  icon: <PieChartFill size={13} /> },
   { id: 'section-google-ads',   label: 'Google Ads Performance', icon: <Google size={13} /> },

@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Eye, EyeSlash } from 'react-bootstrap-icons';
+import { Check2, Eye, EyeSlash, PencilSquare, X } from 'react-bootstrap-icons';
 import {
   ProjectDashboardData,
   ActiveKpi,
@@ -91,8 +91,13 @@ interface ProjectDashboardProps {
   showLandingPages?: boolean;
   showGoogleAds?: boolean;
   showPromptTracking?: boolean;
+  dashboardInfoText?: string | null;
   dataMaxEnabled?: boolean;
 }
+
+const DEFAULT_DASHBOARD_INFO_TEXT = `• GSC & Google Ads (SERP-Daten): Messen Impressionen und Klicks direkt auf der Google-Suchseite. Diese Daten sind cookie-unabhängig und werden auch bei Cookie-Ablehnung oder im Inkognito-Modus erfasst. GSC filtert dabei seltene Suchanfragen aus Datenschutzgründen heraus (im Schnitt ca. 47 % der Queries). Hinweis: Conversion-Tracking auf der Website ist hingegen consent-pflichtig.
+• Google Analytics (GA4): Misst das Nutzerverhalten direkt auf der Website. Erfassung ist cookie-abhängig und erfordert in der EU eine Einwilligung (DSGVO/TTDSG). Mit Consent Mode v2 sind teilweise modellierte Daten verfügbar.
+• KI-Sichtbarkeit (LLM-Prompts): Basiert auf simulierten Abfragen nach der Seybold-Methodik. Da Sprachmodelle nicht-deterministisch antworten, liefern die Werte eine belastbare Trend-Tendenz - keine statischen Fixwerte. Aussagekräftig ist die Entwicklung über mehrere Messzeitpunkte.`;
 
 function safeKpi(kpi?: KpiDatum) {
   return kpi || { value: 0, change: 0 };
@@ -115,6 +120,7 @@ export default function ProjectDashboard({
   showLandingPages = false,
   showGoogleAds = false,
   showPromptTracking = false,
+  dashboardInfoText = null,
   dataMaxEnabled = true,
 }: ProjectDashboardProps) {
 
@@ -129,12 +135,25 @@ export default function ProjectDashboard({
   const [isUpdating, setIsUpdating] = useState(false);
   const [showAiTrafficDetail, setShowAiTrafficDetail] = useState(false);
   const [showPromptTrackingDetail, setShowPromptTrackingDetail] = useState(false);
+  const [infoText, setInfoText] = useState(dashboardInfoText?.trim() || DEFAULT_DASHBOARD_INFO_TEXT);
+  const [draftInfoText, setDraftInfoText] = useState(dashboardInfoText?.trim() || DEFAULT_DASHBOARD_INFO_TEXT);
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [isSavingInfo, setIsSavingInfo] = useState(false);
+  const [infoSaveError, setInfoSaveError] = useState('');
   const chartRef = useRef<HTMLDivElement>(null);
   const visibilityButtonClass = "visibility-toggle-button inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors";
 
   useEffect(() => {
     setIsUpdating(false);
   }, [dateRange, data, isLoading]);
+
+  useEffect(() => {
+    const nextText = dashboardInfoText?.trim() || DEFAULT_DASHBOARD_INFO_TEXT;
+    setInfoText(nextText);
+    setDraftInfoText(nextText);
+    setIsEditingInfo(false);
+    setInfoSaveError('');
+  }, [dashboardInfoText, projectId]);
 
   const apiErrors = data.apiErrors;
   const kpis = data.kpis;
@@ -201,6 +220,36 @@ export default function ProjectDashboard({
       }
       return next;
     });
+  };
+
+  const handleSaveInfoText = async () => {
+    if (!projectId) return;
+
+    setIsSavingInfo(true);
+    setInfoSaveError('');
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/info-box`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: draftInfoText }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.message || 'Speichern fehlgeschlagen');
+      }
+
+      const payload = await response.json();
+      const nextText = payload.text?.trim() || DEFAULT_DASHBOARD_INFO_TEXT;
+      setInfoText(nextText);
+      setDraftInfoText(nextText);
+      setIsEditingInfo(false);
+    } catch (error: any) {
+      setInfoSaveError(error?.message || 'Speichern fehlgeschlagen');
+    } finally {
+      setIsSavingInfo(false);
+    }
   };
 
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
@@ -280,7 +329,7 @@ export default function ProjectDashboard({
               dateRange={dateRange}
               chartRef={chartRef}
               kpis={exportKpis}
-              googleAdsData={data.googleAdsData}
+              googleAdsData={showGoogleAds ? data.googleAdsData : undefined}
             />
           </div>
         )}
@@ -388,7 +437,7 @@ export default function ProjectDashboard({
         )}
 
         <Trace at="TopQueriesList" />
-        <div className="mt-8 print-queries-list">
+        <div id="section-top-queries" className="mt-8 scroll-mt-20 print-queries-list">
           <TopQueriesList
             queries={data.topQueries ?? []}
             isLoading={isLoading}
@@ -456,6 +505,77 @@ export default function ProjectDashboard({
             error={safeApiErrors?.ga4}
             dateRange={dateRange}
           />
+        </div>
+
+        <div id="section-data-info" className="mt-6 scroll-mt-20 print:hidden">
+          <div className="dashboard-widget-surface rounded-lg p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-heading">Hinweis zur Datenbasis</h3>
+                <p className="text-xs text-muted mt-0.5">Methodik, Datenschutz und Messlogik.</p>
+              </div>
+              {isAdmin && (
+                <div className="flex items-center gap-2 shrink-0">
+                  {isEditingInfo ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleSaveInfoText}
+                        disabled={isSavingInfo}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                      >
+                        <Check2 size={14} />
+                        {isSavingInfo ? 'Speichert...' : 'Speichern'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDraftInfoText(infoText);
+                          setIsEditingInfo(false);
+                          setInfoSaveError('');
+                        }}
+                        disabled={isSavingInfo}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-body transition-colors hover:bg-surface-secondary disabled:opacity-50"
+                      >
+                        <X size={14} />
+                        Abbrechen
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingInfo(true)}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-body transition-colors hover:bg-surface-secondary"
+                    >
+                      <PencilSquare size={14} />
+                      Bearbeiten
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {isEditingInfo ? (
+              <div className="space-y-2">
+                <textarea
+                  value={draftInfoText}
+                  onChange={(event) => setDraftInfoText(event.target.value)}
+                  rows={8}
+                  maxLength={5000}
+                  className="w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm leading-relaxed text-body outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+                />
+                <div className="flex items-center justify-between text-[11px] text-muted">
+                  <span>Leer speichern setzt wieder den Standardtext.</span>
+                  <span>{draftInfoText.length}/5000</span>
+                </div>
+                {infoSaveError && <p className="text-xs text-red-500">{infoSaveError}</p>}
+              </div>
+            ) : (
+              <div className="whitespace-pre-line text-xs sm:text-sm leading-relaxed text-muted">
+                {infoText}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* GOOGLE ADS SEKTION */}

@@ -98,6 +98,7 @@ export async function POST(req: NextRequest) {
     
     // Expliziter Cast zu User
     const project = rows[0] as unknown as User;
+    const googleAdsEnabled = (rows[0] as any).settings_show_google_ads === true;
 
     const data = await getOrFetchGoogleData(project, dateRange);
     if (!data || !data.kpis) return NextResponse.json({ message: 'Keine Daten' }, { status: 400 });
@@ -181,7 +182,7 @@ export async function POST(req: NextRequest) {
 
     // ✅ NEU: Google Ads Daten (aus Frontend/Sheet)
     let googleAdsSection = '';
-    if (googleAdsData?.totals) {
+    if (googleAdsEnabled && googleAdsData?.totals) {
       const adsTotals = googleAdsData.totals;
       const fmtCur = (v: number) => v?.toFixed(2).replace('.', ',') + ' €';
       const adsCpc = adsTotals.clicks > 0 ? adsTotals.cost / adsTotals.clicks : 0;
@@ -282,7 +283,7 @@ export async function POST(req: NextRequest) {
     `;
 
     // --- CACHE LOGIK ---
-    const cacheInputString = `${summaryData}|ROLE:${userRole}|V7_WITH_ADS`;
+    const cacheInputString = `${summaryData}|ROLE:${userRole}|ADS_ENABLED:${googleAdsEnabled}|V8_PROJECT_ADS_VISIBILITY`;
     const inputHash = createHash(cacheInputString);
 
     const { rows: cacheRows } = await sql`
