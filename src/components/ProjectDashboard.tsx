@@ -507,7 +507,47 @@ export default function ProjectDashboard({
           />
         </div>
 
-        <div id="section-data-info" className="mt-6 scroll-mt-20 print:hidden">
+        {/* GOOGLE ADS SEKTION */}
+        <Trace at="GoogleAdsWidget?" />
+        {shouldRenderGoogleAds && (
+          <div id="section-google-ads" className={`mt-8 scroll-mt-20 transition-all duration-300 ${!isGoogleAdsVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
+            {isAdmin && (
+              <div className="flex items-center justify-end mb-2 print:hidden">
+                <button
+                  onClick={() => setIsGoogleAdsVisible(!isGoogleAdsVisible)}
+                  className={visibilityButtonClass}
+                >
+                  {isGoogleAdsVisible ? <EyeSlash size={14} /> : <Eye size={14} />}
+                  {isGoogleAdsVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}
+                </button>
+              </div>
+            )}
+            <div className="relative">
+              <GoogleAdsWidget
+                data={data.googleAdsData!}
+                isLoading={isLoading}
+                dateRange={dateRange}
+              />
+              {!isGoogleAdsVisible && isAdmin && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="overlay-muted-badge backdrop-blur-[1px] px-4 py-2 rounded-lg border text-strong text-xs font-semibold shadow-sm">
+                    🚫 Für Kunden ausgeblendet
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <Trace at="Semrush?" />
+        {hasSemrushConfig && (
+          <div id="section-semrush" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 scroll-mt-20 print-semrush-grid">
+            {hasKampagne1Config && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords projectId={projectId} /></div>}
+            {hasKampagne2Config && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords02 projectId={projectId} /></div>}
+          </div>
+        )}
+
+        <div id="section-data-info" className="mt-8 scroll-mt-20 print:hidden">
           <div className="dashboard-widget-surface rounded-lg p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3 mb-3">
               <div>
@@ -577,46 +617,6 @@ export default function ProjectDashboard({
             )}
           </div>
         </div>
-
-        {/* GOOGLE ADS SEKTION */}
-        <Trace at="GoogleAdsWidget?" />
-        {shouldRenderGoogleAds && (
-          <div id="section-google-ads" className={`mt-8 scroll-mt-20 transition-all duration-300 ${!isGoogleAdsVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
-            {isAdmin && (
-              <div className="flex items-center justify-end mb-2 print:hidden">
-                <button
-                  onClick={() => setIsGoogleAdsVisible(!isGoogleAdsVisible)}
-                  className={visibilityButtonClass}
-                >
-                  {isGoogleAdsVisible ? <EyeSlash size={14} /> : <Eye size={14} />}
-                  {isGoogleAdsVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}
-                </button>
-              </div>
-            )}
-            <div className="relative">
-              <GoogleAdsWidget
-                data={data.googleAdsData!}
-                isLoading={isLoading}
-                dateRange={dateRange}
-              />
-              {!isGoogleAdsVisible && isAdmin && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="overlay-muted-badge backdrop-blur-[1px] px-4 py-2 rounded-lg border text-strong text-xs font-semibold shadow-sm">
-                    🚫 Für Kunden ausgeblendet
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        <Trace at="Semrush?" />
-        {hasSemrushConfig && (
-          <div id="section-semrush" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 scroll-mt-20 print-semrush-grid">
-            {hasKampagne1Config && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords projectId={projectId} /></div>}
-            {hasKampagne2Config && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords02 projectId={projectId} /></div>}
-          </div>
-        )}
 
         <Trace at="ENDE-MainContent" />
       </div>
