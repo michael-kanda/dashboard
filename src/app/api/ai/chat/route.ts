@@ -13,9 +13,58 @@ export const maxDuration = 60;
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+type ChatDateRange = '30d' | '3m' | '6m' | '12m' | '18m' | '24m';
+
 // ============================================================================
 // HELPER: Datumsberechnung
 // ============================================================================
+
+function normalizeDateRange(dateRange: string): ChatDateRange {
+  return ['30d', '3m', '6m', '12m', '18m', '24m'].includes(dateRange)
+    ? dateRange as ChatDateRange
+    : '30d';
+}
+
+function detectRequestedDateRange(message: string): ChatDateRange | null {
+  const normalized = message
+    .toLowerCase()
+    .replace(/[.,;:!?]/g, ' ')
+    .replace(/\s+/g, ' ');
+
+  if (/(24|vierundzwanzig)\s*(monate|monat|m\b)|\b2\s*(jahre|jahr)\b|zwei\s*(jahre|jahr)/.test(normalized)) {
+    return '24m';
+  }
+  if (/(18|achtzehn)\s*(monate|monat|m\b)|anderthalb\s*(jahre|jahr)/.test(normalized)) {
+    return '18m';
+  }
+  if (/(12|zwoelf|zwölf)\s*(monate|monat|m\b)|\b1\s*(jahr|jahre)\b|ein\s*(jahr|jahre)|letzte[nr]?\s*(jahr|12 monate)/.test(normalized)) {
+    return '12m';
+  }
+  if (/(6|sechs)\s*(monate|monat|m\b)|halbjahr|letzte[nr]?\s*6\s*monate/.test(normalized)) {
+    return '6m';
+  }
+  if (/(3|drei)\s*(monate|monat|m\b)|quartal|letzte[nr]?\s*3\s*monate/.test(normalized)) {
+    return '3m';
+  }
+  if (/(30|dreissig|dreißig)\s*(tage|tag|d\b)|letzte[nr]?\s*30\s*tage|letzte[nr]?\s*monat/.test(normalized)) {
+    return '30d';
+  }
+
+  return null;
+}
+
+function getDateRangeLabel(dateRange: string): string {
+  const labels: Record<ChatDateRange, string> = {
+    '30d': 'Letzte 30 Tage',
+    '3m': 'Letzte 3 Monate',
+    '6m': 'Letzte 6 Monate',
+    '12m': 'Letzte 12 Monate',
+    '18m': 'Letzte 18 Monate',
+    '24m': 'Letzte 24 Monate',
+  };
+
+  return labels[normalizeDateRange(dateRange)];
+}
 
 function getDateRanges(dateRange: string) {
   const end = new Date();
@@ -23,10 +72,11 @@ function getDateRanges(dateRange: string) {
 
   const start = new Date(end);
   let days = 30;
-  if (dateRange === '7d') days = 7;
   if (dateRange === '3m') days = 90;
   if (dateRange === '6m') days = 180;
   if (dateRange === '12m') days = 365;
+  if (dateRange === '18m') days = 548;
+  if (dateRange === '24m') days = 730;
   start.setDate(end.getDate() - days);
 
   const startDateStr = start.toISOString().split('T')[0];
@@ -119,10 +169,11 @@ function buildHolidayContext(dateRange: string, country: string = 'AT'): string 
     const start = new Date(end);
     
     let days = 30;
-    if (dateRange === '7d') days = 7;
     if (dateRange === '3m') days = 90;
     if (dateRange === '6m') days = 180;
     if (dateRange === '12m') days = 365;
+    if (dateRange === '18m') days = 548;
+    if (dateRange === '24m') days = 730;
     start.setDate(end.getDate() - days);
 
     // Feiertage im Zeitraum sammeln
@@ -390,7 +441,7 @@ HINWEIS: Conversions sind nur auf Kampagnen- und Anzeigengruppen-Ebene zuverlaes
 
   return `
 PROJEKT: ${user.domain || 'Unbekannt'}
-ZEITRAUM: ${dateRange === '7d' ? 'Letzte 7 Tage' : dateRange === '30d' ? 'Letzte 30 Tage' : dateRange === '3m' ? 'Letzte 3 Monate' : dateRange === '6m' ? 'Letzte 6 Monate' : 'Letztes Jahr'}
+ZEITRAUM: ${getDateRangeLabel(dateRange)}
 
 === HAUPT-KPIs ===
 Nutzer: ${fmt(kpis.totalUsers?.value)} (${pct(kpis.totalUsers?.change)})
@@ -502,6 +553,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nachricht fehlt' }, { status: 400 });
     }
 
+    const selectedDateRange = normalizeDateRange(typeof dateRange === 'string' ? dateRange : '30d');
+    const requestedDateRange = detectRequestedDateRange(message);
+    const effectiveDateRange = requestedDateRange || selectedDateRange;
+
     // 2. Ziel-User bestimmen
     const userId = session.user.id;
     const userRole = session.user.role;
@@ -532,7 +587,7 @@ export async function POST(req: NextRequest) {
     const user = parseResult.data;
 
     // 4. Dashboard-Daten laden (aus Cache)
-    const dashboardData = await getOrFetchGoogleData(user, dateRange);
+    const dashboardData = await getOrFetchGoogleData(user, effectiveDateRange);
     if (!dashboardData) {
       return NextResponse.json({ error: 'Keine Projektdaten verfügbar' }, { status: 400 });
     }
@@ -544,7 +599,7 @@ export async function POST(req: NextRequest) {
     
     if (user.ga4_property_id) {
       try {
-        const dateRanges = getDateRanges(dateRange);
+        const dateRanges = getDateRanges(effectiveDateRange);
         aiTrafficDetail = await getAiTrafficDetailWithComparison(
           user.ga4_property_id,
           dateRanges.current.start,
@@ -564,13 +619,13 @@ export async function POST(req: NextRequest) {
     const domainParts = (user.domain || '').replace(/^https?:\/\//, '').replace(/\/.*$/, '').split('.');
     const tld = domainParts[domainParts.length - 1]?.toUpperCase() || 'AT';
     const userCountry = ['AT', 'DE', 'CH'].includes(tld) ? tld : 'AT';
-    const context = buildChatContext(dashboardData, user, dateRange, aiTrafficDetail, userCountry);
+    const context = buildChatContext(dashboardData, user, effectiveDateRange, aiTrafficDetail, userCountry);
     
     // Feiertage prüfen für Suggested Questions
     const hasHolidays = (() => {
       try {
         const hd = new Holidays(userCountry);
-        const dateRanges = getDateRanges(dateRange);
+        const dateRanges = getDateRanges(effectiveDateRange);
         const start = new Date(dateRanges.current.start);
         const end = new Date(dateRanges.current.end);
         const years = new Set<number>();
@@ -601,6 +656,11 @@ DEINE PERSOENLICHKEIT:
 
 KONTEXT - AKTUELLE PROJEKTDATEN:
 ${context}
+
+ZEITRAUM-STEUERUNG:
+- Im Datepicker ausgewaehlt: ${getDateRangeLabel(selectedDateRange)}
+- Fuer diese Antwort geladen: ${getDateRangeLabel(effectiveDateRange)}
+- Wenn der Nutzer einen Zeitraum nennt, wurde genau dieser Zeitraum aus den Dashboard-Daten geladen. Behaupte dann niemals, dir laegen nur 30 Tage vor.
 
 REGELN:
 1. Beziehe dich IMMER auf die konkreten Zahlen oben
@@ -668,7 +728,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get('projectId') || session.user.id;
-    const dateRange = searchParams.get('dateRange') || '30d';
+    const dateRange = normalizeDateRange(searchParams.get('dateRange') || '30d');
 
     // User laden
     const { rows } = await sql`SELECT * FROM users WHERE id::text = ${projectId}`;
