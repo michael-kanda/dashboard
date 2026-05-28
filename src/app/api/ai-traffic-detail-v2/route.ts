@@ -54,15 +54,17 @@ export async function GET(request: NextRequest) {
 
     // Datumsberechnung
     const end = new Date();
+    end.setDate(end.getDate() - 1);
     const start = new Date();
     let days = 30;
 
     switch (dateRange) {
-      case '7d': days = 7; break;
       case '30d': days = 30; break;
       case '3m': days = 90; break;
       case '6m': days = 180; break;
       case '12m': days = 365; break;
+      case '18m': days = 548; break;
+      case '24m': days = 730; break;
     }
     
     start.setDate(end.getDate() - days);

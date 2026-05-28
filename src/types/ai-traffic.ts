@@ -44,6 +44,8 @@ export interface AiTrafficCardProps {
   error?: string;
   onDetailClick?: () => void;
   onPromptTrackingClick?: () => void;
+  detailOpen?: boolean;
+  promptTrackingOpen?: boolean;
   projectId?: string;
   /** Prompt-Tracking-Daten (für PromptTrackingBridge in der Card). */
   promptTracking?: import('@/lib/dashboard-shared').PromptTrackingResult;

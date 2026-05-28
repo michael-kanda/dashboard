@@ -693,6 +693,13 @@ export async function getAiTrafficExtended(
       pageData.sources.get(source)!.users += users;
     }
 
+    const trendBySourceTotalSessions = trendBySourceRows.reduce((sum, row) =>
+      sum + parseInt(row.metricValues?.[0]?.value || '0', 10), 0);
+    const trendBySourceTotalUsers = trendBySourceRows.reduce((sum, row) =>
+      sum + parseInt(row.metricValues?.[1]?.value || '0', 10), 0);
+    const displayTotalSessions = trendBySourceTotalSessions || totalSessions;
+    const displayTotalUsers = trendBySourceTotalUsers || totalUsers;
+
     // --- User Journey verarbeiten ---
     const journeyMap = new Map<string, Map<string, number>>();
     
@@ -783,7 +790,7 @@ export async function getAiTrafficExtended(
         conversionRate: data.sessions > 0 ? (data.conversions / data.sessions) * 100 : 0,
         avgEngagementTime: data.sessions > 0 ? data.engagementTimeSum / data.sessions : 0,
         engagementRate: data.sessions > 0 ? (data.engagementRateSum / data.sessions) * 100 : 0,
-        percentage: totalSessions > 0 ? (data.sessions / totalSessions) * 100 : 0,
+        percentage: displayTotalSessions > 0 ? (data.sessions / displayTotalSessions) * 100 : 0,
         topPages: Array.from(data.pages.entries())
           .sort((a, b) => b[1] - a[1])
           .slice(0, 5)
@@ -815,7 +822,7 @@ export async function getAiTrafficExtended(
           sessions: data.sessions,
           users: data.users,
           engagementRate: data.sessions > 0 ? (data.engagementRateWeighted / data.sessions) * 100 : 0,
-          percentage: totalSessions > 0 ? (data.sessions / totalSessions) * 100 : 0,
+          percentage: displayTotalSessions > 0 ? (data.sessions / displayTotalSessions) * 100 : 0,
           conversions: data.conversions,
           conversionRate: data.sessions > 0 ? (data.conversions / data.sessions) * 100 : 0,
           topPages,
@@ -883,8 +890,8 @@ export async function getAiTrafficExtended(
     trendBySource.sort((a, b) => a.date.localeCompare(b.date));
 
     return {
-      totalSessions,
-      totalUsers,
+      totalSessions: displayTotalSessions,
+      totalUsers: displayTotalUsers,
       avgEngagementTime,
       bounceRate: avgBounceRate,
       engagementRate: avgEngagementRate,

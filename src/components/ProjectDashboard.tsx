@@ -380,6 +380,8 @@ export default function ProjectDashboard({
               error={safeApiErrors?.ga4}
               onDetailClick={() => setShowAiTrafficDetail(!showAiTrafficDetail)}
               onPromptTrackingClick={shouldRenderPromptTracking ? handlePromptTrackingClick : undefined}
+              detailOpen={showAiTrafficDetail}
+              promptTrackingOpen={showPromptTrackingDetail}
               promptTracking={data.promptTracking}
               promptTrackingEnabled={shouldRenderPromptTracking}
             />

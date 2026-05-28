@@ -9,7 +9,8 @@ import {
   ArrowUp,
   ArrowDown,
   AlertTriangle,
-  ChevronRight,
+  Minus,
+  Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AiTrafficCardProps } from '@/types/ai-traffic';
@@ -99,6 +100,8 @@ export default function AiTrafficCard({
   error,
   onDetailClick,
   onPromptTrackingClick,
+  detailOpen = false,
+  promptTrackingOpen = false,
   projectId,
   promptTracking,
   promptTrackingEnabled = true,
@@ -438,7 +441,7 @@ export default function AiTrafficCard({
             className="group w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 text-white text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             KI-Traffic Analyse
-            <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+            {detailOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
           </button>
           <button
             type="button"
@@ -447,7 +450,7 @@ export default function AiTrafficCard({
             className="group w-full py-2 px-4 bg-surface hover:bg-surface-tertiary border border-border text-body text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
           >
             Prompt Tracking
-            <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+            {promptTrackingOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
           </button>
         </div>
       </div>
