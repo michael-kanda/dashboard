@@ -9,7 +9,8 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowDownUp,
-  Link45deg
+  Link45deg,
+  Download
 } from 'react-bootstrap-icons';
 import { cn } from '@/lib/utils';
 import { type DateRangeOption, getRangeLabel } from '@/components/DateRangeSelector';
@@ -166,30 +167,64 @@ export default function TopQueriesList({
     );
   };
 
+  // ── CSV Export ─────────────────────────────────────────────
+  const handleExportCsv = () => {
+    if (!displayedQueries.length) return;
+    const escape = (val: string) => `"${val.replace(/"/g, '""')}"`;
+    const header = ['Suchanfrage', 'Landingpage', 'Klicks', 'Impressionen', 'CTR (%)', 'Position'];
+    const rows = displayedQueries.map((q) => [
+      escape(q.query),
+      escape(q.url || ''),
+      q.clicks,
+      q.impressions,
+      (q.ctr * 100).toFixed(2).replace('.', ','),
+      q.position.toFixed(1).replace('.', ','),
+    ]);
+    const csv = [header.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `top-suchanfragen-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   // ── Header-Block (Titel + Subtitle + Search) ─────────────
   const renderHeader = (subtitle: React.ReactNode) => (
     <div className="mb-4 flex-shrink-0">
       <div className="flex items-start justify-between gap-4 mb-1.5">
         <h3 className="text-[18px] font-semibold text-heading">Top Suchanfragen</h3>
 
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Query oder Pfad..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 pr-8 py-1.5 text-sm border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint bg-surface"
-          />
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-faint hover:text-body"
-              title="Filter zurücksetzen"
-            >
-              <X size={14} />
-            </button>
-          )}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Query oder Pfad..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8 pr-8 py-1.5 text-sm border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint bg-surface"
+            />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-faint hover:text-body"
+                title="Filter zurücksetzen"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={!displayedQueries.length}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm border border-theme-border-default rounded-md text-body hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors print:hidden"
+            title="Als CSV herunterladen"
+          >
+            <Download size={12} />
+            CSV
+          </button>
         </div>
       </div>
       <p className="text-xs text-muted">{subtitle}</p>

@@ -11,7 +11,8 @@ import {
   ArrowRight,
   XLg,
   ArrowRepeat,
-  Diagram3Fill
+  Diagram3Fill,
+  Download
 } from 'react-bootstrap-icons';
 import { format, subDays, subMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -180,6 +181,41 @@ export default function LandingPageChart({
 
   const formattedDateRange = getDateRangeString(dateRange);
 
+  const handleExportCsv = () => {
+    if (!sortedData.length) return;
+    const escape = (val: string) => `"${(val ?? '').replace(/"/g, '""')}"`;
+    const fmtNum = (n: number, digits = 0) =>
+      n.toFixed(digits).replace('.', ',');
+    const header = [
+      'Pfad',
+      'Neue Nutzer',
+      'Sessions',
+      'Engagement Rate (%)',
+      'CTR (%)',
+      'Conversions',
+      'Top Suchbegriffe (Top 5)',
+    ];
+    const rows = sortedData.map((page) => {
+      const queries = getQueriesForPath(page.path).slice(0, 5).map((q) => q.query).join(' | ');
+      return [
+        escape(page.path || ''),
+        page.newUsers ?? 0,
+        page.sessions ?? 0,
+        page.engagementRate !== undefined ? fmtNum(page.engagementRate, 0) : '',
+        page.ctr !== undefined ? fmtNum(page.ctr, 1) : '',
+        page.conversions ?? 0,
+        escape(queries),
+      ];
+    });
+    const csv = [header.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `top-landingpages-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   return (
     <>
       <div className="dashboard-widget-surface p-5 rounded-xl flex flex-col max-h-[75vh]">
@@ -189,15 +225,27 @@ export default function LandingPageChart({
           <div className="flex items-start justify-between gap-4 mb-1.5">
             <h3 className="text-[18px] font-semibold text-heading">{title}</h3>
 
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Seite oder Suchbegriff..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-sm border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint bg-surface"
-              />
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Seite oder Suchbegriff..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 text-sm border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint bg-surface"
+                />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
+              </div>
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                disabled={!sortedData.length}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm border border-theme-border-default rounded-md text-body hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors print:hidden"
+                title="Als CSV herunterladen"
+              >
+                <Download size={12} />
+                CSV
+              </button>
             </div>
           </div>
 
