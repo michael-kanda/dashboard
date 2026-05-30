@@ -413,7 +413,7 @@ export default function LandingPageChart({
             if (e.target === e.currentTarget) closeFollowUpDetail();
           }}
         >
-          <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden max-h-[85vh] animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-surface rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden max-h-[85vh] animate-in zoom-in-95 duration-200">
 
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-theme-border-subtle bg-surface-secondary flex-shrink-0">

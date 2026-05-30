@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils';
 import type { AiTrafficCardProps } from '@/types/ai-traffic';
 import AiTrafficModelTrendChart from '@/components/AiTrafficModelTrendChart';
 import SourceMiniSparkline from '@/components/SourceMiniSparkline';
-import GeoVisibilityScore from '@/components/GeoVisibilityScore';
 import AiTrafficAnomalyBanner from '@/components/AiTrafficAnomalyBanner';
 import PromptTrackingBridge from '@/components/PromptTrackingBridge';
 import { useAiTrafficExtended } from '@/hooks/useAiTrafficExtended';
@@ -147,18 +146,6 @@ export default function AiTrafficCard({
     return map;
   }, [extendedData]);
 
-  // GEO-Score-Inputs ableiten
-  // Gesamt-Sessions zurückrechnen aus aiSessions + Anteil-%: total = ai / (share/100)
-  const estimatedTotalSessions = useMemo(() => {
-    if (!safePercentage || safePercentage <= 0) return 0;
-    return Math.round(safeTotalSessions / (safePercentage / 100));
-  }, [safeTotalSessions, safePercentage]);
-
-  // Quellen mit substantiellem Traffic (≥ 5 Sessions) zählen
-  const uniqueActiveSources = useMemo(() => {
-    return safeTopAiSources.filter((s) => (s.sessions ?? 0) >= 5).length;
-  }, [safeTopAiSources]);
-
   // Dynamische Datumsberechnung
   const formattedDateRange = useMemo(() => {
     const endDate = new Date();
@@ -247,16 +234,6 @@ export default function AiTrafficCard({
 
           {/* Anomalie-Banner — nur wenn ungewöhnliche Bewegungen erkannt */}
           <AiTrafficAnomalyBanner data={extendedData} />
-
-          {/* GEO-Sichtbarkeits-Score — kompakte Health-Anzeige */}
-          {estimatedTotalSessions > 0 && (
-            <GeoVisibilityScore
-              aiSessions={safeTotalSessions}
-              totalSessions={estimatedTotalSessions}
-              aiSessionsChange={totalSessionsChange}
-              uniqueAiSources={uniqueActiveSources}
-            />
-          )}
 
           {/* Metriken (links) + Top KI-Quellen (rechts) im 2-Spalten-Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
