@@ -344,6 +344,21 @@ export default function PromptTrackingCard({
       </div>
 
       {/* Tabelle */}
+      <div className="flex items-center justify-between gap-3 mb-2 px-2">
+        <span className="text-xs text-muted">
+          {filtered.length} {filtered.length === 1 ? 'Query' : 'Queries'}
+          {filtered.length > limit && ` · ${limit} angezeigt`}
+        </span>
+        <button
+          onClick={handleExport}
+          disabled={filtered.length === 0}
+          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-body hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition print:hidden"
+          title="Tabelle als CSV herunterladen"
+        >
+          <Download className="w-3.5 h-3.5" />
+          CSV
+        </button>
+      </div>
       <div className="overflow-x-auto -mx-2">
         <table className="w-full text-sm">
           <thead>
