@@ -193,7 +193,10 @@ export default function TopQueriesList({
   const renderHeader = (subtitle: React.ReactNode) => (
     <div className="mb-4 flex-shrink-0">
       <div className="flex items-start justify-between gap-4 mb-1.5">
-        <h3 className="text-[18px] font-semibold text-heading">Top Suchanfragen</h3>
+        <h3 className="text-[18px] font-semibold text-heading flex items-center gap-2">
+          <Search size={18} style={{ color: '#FBBC05' }} aria-hidden="true" />
+          Top Suchanfragen
+        </h3>
 
         <div className="flex items-center gap-2">
           <div className="relative">

@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Check2, Eye, EyeSlash, PencilSquare, X, BarChartFill, GraphUpArrow, Robot, Search, FileEarmarkText, PieChartFill, Google } from 'react-bootstrap-icons';
+import { Check2, Eye, EyeSlash, PencilSquare, X } from 'react-bootstrap-icons';
 import {
   ProjectDashboardData,
   ActiveKpi,
@@ -101,39 +101,6 @@ const DEFAULT_DASHBOARD_INFO_TEXT = `• GSC & Google Ads (SERP-Daten): Messen I
 
 function safeKpi(kpi?: KpiDatum) {
   return kpi || { value: 0, change: 0 };
-}
-
-// Google-Brand-Farben für Sektions-Icons (passend zur Sidebar)
-const GOOGLE_COLOR = {
-  blue:   '#4285F4',
-  red:    '#EA4335',
-  yellow: '#FBBC04',
-  green:  '#34A853',
-} as const;
-
-function SectionHeader({
-  icon,
-  label,
-  color,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  color: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 mb-3 print:hidden">
-      <span
-        className="inline-flex items-center justify-center w-7 h-7 rounded-md"
-        style={{ backgroundColor: `${color}1F`, color }}
-        aria-hidden="true"
-      >
-        {icon}
-      </span>
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">
-        {label}
-      </h2>
-    </div>
-  );
 }
 
 export default function ProjectDashboard({
@@ -370,11 +337,6 @@ export default function ProjectDashboard({
         {/* KPI GRID */}
         <Trace at="TableauKpiGrid?" />
         <div id="section-kpis" className="mt-8 scroll-mt-20 print-kpi-grid">
-          <SectionHeader
-            icon={<BarChartFill size={14} />}
-            label="Traffic & Reichweite"
-            color={GOOGLE_COLOR.blue}
-          />
           {extendedKpis && (
             <TableauKpiGrid
               kpis={extendedKpis}
@@ -388,11 +350,6 @@ export default function ProjectDashboard({
 
         <Trace at="KpiTrendChart" />
         <div id="section-verlauf" className="mt-8 scroll-mt-20 print-trend-chart" ref={chartRef}>
-          <SectionHeader
-            icon={<GraphUpArrow size={14} />}
-            label="Verlauf & Analyse"
-            color={GOOGLE_COLOR.green}
-          />
           <KpiTrendChart
             activeKpi={activeKpi}
             onKpiChange={(kpi) => setActiveKpi(kpi as ActiveKpi)}
@@ -404,13 +361,6 @@ export default function ProjectDashboard({
         {/* KI-Traffic Sektion mit Toggle für Detail-Ansicht */}
         <Trace at="AiTrafficCard" />
         <div id="section-ki-traffic" className="grid grid-cols-1 gap-6 mt-8 scroll-mt-20 print-traffic-grid">
-          <div>
-            <SectionHeader
-              icon={<Robot size={14} />}
-              label="KI-Traffic"
-              color={GOOGLE_COLOR.red}
-            />
-          </div>
           <div className="print-ai-card">
             <AiTrafficCard
               projectId={projectId}
@@ -490,11 +440,6 @@ export default function ProjectDashboard({
 
         <Trace at="TopQueriesList" />
         <div id="section-top-queries" className="mt-8 scroll-mt-20 print-queries-list">
-          <SectionHeader
-            icon={<Search size={14} />}
-            label="Top Suchanfragen"
-            color={GOOGLE_COLOR.yellow}
-          />
           <TopQueriesList
             queries={data.topQueries ?? []}
             isLoading={isLoading}
@@ -507,11 +452,6 @@ export default function ProjectDashboard({
         <Trace at="LandingPageChart?" />
         {shouldRenderChart && (
           <div id="section-landingpages" className={`mt-8 scroll-mt-20 transition-all duration-300 ${!isLandingPagesVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
-            <SectionHeader
-              icon={<FileEarmarkText size={14} />}
-              label="Top Landingpages"
-              color={GOOGLE_COLOR.blue}
-            />
             {isAdmin && (
                <div className="flex items-center justify-end mb-2 print:hidden">
                  <button
@@ -545,46 +485,34 @@ export default function ProjectDashboard({
 
         {/* PIE CHARTS */}
         <Trace at="TableauPieCharts" />
-        <div id="section-zugriffe" className="mt-8 scroll-mt-20 print-pie-grid">
-          <SectionHeader
-            icon={<PieChartFill size={14} />}
-            label="Zugriffe nach Quelle"
-            color={GOOGLE_COLOR.green}
+        <div id="section-zugriffe" className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8 scroll-mt-20 print-pie-grid">
+          <TableauPieChart
+            data={data.channelData}
+            title="Zugriffe nach Channel"
+            isLoading={isLoading}
+            error={safeApiErrors?.ga4}
+            dateRange={dateRange}
           />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <TableauPieChart
-              data={data.channelData}
-              title="Zugriffe nach Channel"
-              isLoading={isLoading}
-              error={safeApiErrors?.ga4}
-              dateRange={dateRange}
-            />
-            <TableauPieChart
-              data={data.countryData}
-              title="Zugriffe nach Land"
-              isLoading={isLoading}
-              error={safeApiErrors?.ga4}
-              dateRange={dateRange}
-            />
-            <TableauPieChart
-              data={data.deviceData}
-              title="Zugriffe nach Endgerät"
-              isLoading={isLoading}
-              error={safeApiErrors?.ga4}
-              dateRange={dateRange}
-            />
-          </div>
+          <TableauPieChart
+            data={data.countryData}
+            title="Zugriffe nach Land"
+            isLoading={isLoading}
+            error={safeApiErrors?.ga4}
+            dateRange={dateRange}
+          />
+          <TableauPieChart
+            data={data.deviceData}
+            title="Zugriffe nach Endgerät"
+            isLoading={isLoading}
+            error={safeApiErrors?.ga4}
+            dateRange={dateRange}
+          />
         </div>
 
         {/* GOOGLE ADS SEKTION */}
         <Trace at="GoogleAdsWidget?" />
         {shouldRenderGoogleAds && (
           <div id="section-google-ads" className={`mt-8 scroll-mt-20 transition-all duration-300 ${!isGoogleAdsVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
-            <SectionHeader
-              icon={<Google size={14} />}
-              label="Google Ads Performance"
-              color={GOOGLE_COLOR.red}
-            />
             {isAdmin && (
               <div className="flex items-center justify-end mb-2 print:hidden">
                 <button
@@ -615,16 +543,9 @@ export default function ProjectDashboard({
 
         <Trace at="Semrush?" />
         {hasSemrushConfig && (
-          <div id="section-semrush" className="mt-8 scroll-mt-20 print-semrush-grid">
-            <SectionHeader
-              icon={<Search size={14} />}
-              label="Semrush Keywords"
-              color={GOOGLE_COLOR.blue}
-            />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {hasKampagne1Config && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords projectId={projectId} /></div>}
-              {hasKampagne2Config && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords02 projectId={projectId} /></div>}
-            </div>
+          <div id="section-semrush" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 scroll-mt-20 print-semrush-grid">
+            {hasKampagne1Config && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords projectId={projectId} /></div>}
+            {hasKampagne2Config && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords02 projectId={projectId} /></div>}
           </div>
         )}
 

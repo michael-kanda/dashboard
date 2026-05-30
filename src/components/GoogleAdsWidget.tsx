@@ -9,6 +9,7 @@ import {
   ArrowDown,
   ArrowDownUp,
   Search,
+  Google,
 } from 'react-bootstrap-icons';
 import type { GoogleAdsData, GoogleAdsRow } from '@/lib/dashboard-shared';
 import type { DateRangeOption } from '@/components/DateRangeSelector';
@@ -294,7 +295,10 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
   if (!hasAnyData) {
     return (
       <div className="dashboard-widget-surface rounded-xl p-5">
-        <h3 className="text-[18px] font-semibold text-heading mb-1">Google Ads Performance</h3>
+        <h3 className="text-[18px] font-semibold text-heading mb-1 flex items-center gap-2">
+          <Google size={18} style={{ color: '#EA4335' }} aria-hidden="true" />
+          Google Ads Performance
+        </h3>
         <p className="text-sm text-muted">
           Keine Google Ads-Daten für diesen Zeitraum vorhanden. Stelle sicher, dass Google Ads
           mit GA4 verknüpft ist.
@@ -312,7 +316,10 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="mb-4">
-        <h3 className="text-[18px] font-semibold text-heading mb-1">Google Ads Performance</h3>
+        <h3 className="text-[18px] font-semibold text-heading mb-1 flex items-center gap-2">
+          <Google size={18} style={{ color: '#EA4335' }} aria-hidden="true" />
+          Google Ads Performance
+        </h3>
         <p className="text-xs text-muted">
           Quelle {isSheet ? 'Google Ads' : 'GA4'}
           {dateRangeStr && ` · ${dateRangeStr}`}

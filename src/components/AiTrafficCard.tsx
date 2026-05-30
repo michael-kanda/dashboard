@@ -3,7 +3,6 @@
 
 import React, { useMemo, useState } from 'react';
 import {
-  Cpu,
   TrendingUp,
   Users,
   ArrowUp,
@@ -11,6 +10,7 @@ import {
   AlertTriangle,
   Minus,
   Plus,
+  Bot,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AiTrafficCardProps } from '@/types/ai-traffic';
@@ -197,8 +197,10 @@ export default function AiTrafficCard({
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
         <div className="flex items-center gap-2 min-w-0">
-          <Cpu className="text-purple-600 dark:text-purple-400 w-6 h-6 flex-shrink-0" />
-          <h3 className="text-lg font-semibold text-heading">KI-Traffic</h3>
+          <h3 className="text-lg font-semibold text-heading flex items-center gap-2">
+            <Bot size={20} style={{ color: '#EA4335' }} aria-hidden="true" />
+            KI-Traffic
+          </h3>
         </div>
         {!error && (
           <span className="tone-pill tone-pill--soft tone--purple text-xs px-2.5 py-1 whitespace-nowrap flex-shrink-0">

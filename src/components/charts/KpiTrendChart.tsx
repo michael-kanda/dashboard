@@ -15,7 +15,7 @@ import {
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ChartPoint, ActiveKpi } from '@/lib/dashboard-shared'; 
-import { ArrowLeftRight, CalendarEvent, Filter } from 'react-bootstrap-icons';
+import { ArrowLeftRight, Filter, GraphUpArrow } from 'react-bootstrap-icons';
 import { cn } from '@/lib/utils';
 import { buildHolidayMap, type HolidayInfo } from '@/lib/holidays';
 import type { DailyWeather, WeatherIcon } from '@/lib/weather';
@@ -301,10 +301,8 @@ export default function KpiTrendChart({
       {/* HEADER & CONTROLS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400">
-            <CalendarEvent size={18} />
-          </div>
-          <h3 className="text-lg font-semibold text-heading">
+          <h3 className="text-lg font-semibold text-heading flex items-center gap-2">
+            <GraphUpArrow size={20} style={{ color: '#34A853' }} aria-hidden="true" />
             Verlauf & Analyse
           </h3>
         </div>
