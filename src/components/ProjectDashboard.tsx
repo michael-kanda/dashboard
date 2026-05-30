@@ -604,7 +604,7 @@ export default function ProjectDashboard({
                   onChange={(event) => setDraftInfoText(event.target.value)}
                   rows={8}
                   maxLength={5000}
-                  className="w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm leading-relaxed text-body outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-[11.2px] leading-relaxed text-body outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
                 />
                 <div className="flex items-center justify-between text-[11px] text-muted">
                   <span>Leer speichern setzt wieder den Standardtext.</span>
@@ -613,7 +613,7 @@ export default function ProjectDashboard({
                 {infoSaveError && <p className="text-xs text-red-500">{infoSaveError}</p>}
               </div>
             ) : (
-              <div className="whitespace-pre-line text-xs sm:text-sm leading-relaxed text-muted">
+              <div className="whitespace-pre-line text-[9.6px] sm:text-[11.2px] leading-relaxed text-muted">
                 {infoText}
               </div>
             )}

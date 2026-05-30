@@ -213,7 +213,7 @@ export default function LandingPageChart({
             {searchTerm ? 'Keine Landingpages für diese Suche gefunden' : 'Keine validen Daten'}
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar min-h-0">
+          <div className="flex-1 overflow-y-auto pr-3 custom-scrollbar min-h-0">
             {sortedData.map((page, i) => {
               const newUsers = page.newUsers || 0;
               const sessions = page.sessions || 0;

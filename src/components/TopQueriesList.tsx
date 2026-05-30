@@ -256,7 +256,7 @@ export default function TopQueriesList({
             </p>
           </div>
         ) : (
-          <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
+          <div className="max-h-[600px] overflow-y-auto pr-3 custom-scrollbar">
             <table className="w-full border-collapse table-fixed">
               <colgroup>
                 <col style={{ width: '48%' }} />
