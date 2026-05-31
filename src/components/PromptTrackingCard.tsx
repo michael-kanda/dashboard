@@ -3,9 +3,9 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Sparkles, Download, Search, ExternalLink, Wand2, Loader2, X,
+  Sparkles, Download, Search, ExternalLink, WandSparkles, Loader2, X,
   ChevronDown, ChevronUp, Lightbulb, AlertCircle, Info, TrendingUp,
-  TrendingDown, Minus, FileText, MapPin, MessageCircleQuestion,
+  TrendingDown, Minus, FileText, MapPin, MessageCircleQuestionMark,
   Copy, ClipboardCheck, Target,
 } from 'lucide-react';
 import type {
@@ -206,7 +206,7 @@ export default function PromptTrackingCard({
             className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition print:hidden"
             title={!canCluster ? `Mindestens ${MIN_QUERIES_FOR_AI} Queries nötig` : `${queriesForAi.length} Queries analysieren`}
           >
-            {isClustering ? <><Loader2 className="w-4 h-4 animate-spin" />Analysiere...</> : <><Wand2 className="w-4 h-4" />Mit AI clustern</>}
+            {isClustering ? <><Loader2 className="w-4 h-4 animate-spin" />Analysiere...</> : <><WandSparkles className="w-4 h-4" />Mit AI clustern</>}
           </button>
           <button
             onClick={handleExport}
@@ -567,7 +567,7 @@ function PromptResearchTool({
             disabled={isGeneratingResearch}
             className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-amber-300 bg-surface text-amber-800 hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition dark:text-amber-200 dark:hover:bg-surface-tertiary"
           >
-            {isGeneratingResearch ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+            {isGeneratingResearch ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <WandSparkles className="w-3.5 h-3.5" />}
             Mit DataMax generieren
           </button>
           <button
@@ -852,7 +852,7 @@ function ClassificationRow({
 
       <div className="rounded-md shadow-sm bg-surface-secondary p-3">
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted mb-1">
-          <MessageCircleQuestion className="w-3.5 h-3.5" />
+          <MessageCircleQuestionMark className="w-3.5 h-3.5" />
           <span>Dominanter Frage-Typ</span>
           <span
             title="Welcher Frage-Typ in deinen Long-Tail-Queries dominiert."
@@ -1005,7 +1005,7 @@ function ClusterDisplay({
     <div className="mb-5 rounded-lg border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/50 to-blue-50/50 dark:from-purple-950/20 dark:to-blue-950/20 p-5">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <Wand2 className="w-5 h-5 text-purple-600" />
+          <WandSparkles className="w-5 h-5 text-purple-600" />
           <h4 className="font-semibold text-heading">KI-Analyse: {clusters.length} Cluster erkannt</h4>
           <span className="text-xs text-muted">
             {meta.queriesAnalyzed} Queries · {(meta.elapsedMs / 1000).toFixed(1)}s · {meta.model}
