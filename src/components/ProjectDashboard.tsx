@@ -438,50 +438,55 @@ export default function ProjectDashboard({
           </div>
         )}
 
-        <Trace at="TopQueriesList" />
-        <div id="section-top-queries" className="mt-8 scroll-mt-20 print-queries-list">
-          <TopQueriesList
-            queries={data.topQueries ?? []}
-            isLoading={isLoading}
-            className="h-full"
-            dateRange={dateRange}
-            error={safeApiErrors?.gsc}
-          />
-        </div>
-
-        <Trace at="LandingPageChart?" />
-        {shouldRenderChart && (
-          <div id="section-landingpages" className={`mt-8 scroll-mt-20 transition-all duration-300 ${!isLandingPagesVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
-            {isAdmin && (
-               <div className="flex items-center justify-end mb-2 print:hidden">
-                 <button
-                    onClick={() => setIsLandingPagesVisible(!isLandingPagesVisible)}
-                    className={visibilityButtonClass}
-                 >
-                    {isLandingPagesVisible ? <EyeSlash size={14}/> : <Eye size={14}/>}
-                    {isLandingPagesVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}
-                 </button>
-               </div>
-            )}
-            <div className="print-landing-chart relative">
-               <LandingPageChart
-                 data={cleanLandingPages}
-                 isLoading={isLoading}
-                 title="Top Landingpages"
-                 dateRange={dateRange}
-                 queryData={data.landingPageQueries}
-                 projectId={projectId}
-               />
-               {!isLandingPagesVisible && isAdmin && (
-                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                   <div className="overlay-muted-badge backdrop-blur-[1px] px-4 py-2 rounded-lg border text-strong text-xs font-semibold shadow-sm">
-                     🚫 Für Kunden ausgeblendet
-                   </div>
-                 </div>
-               )}
-            </div>
+        {/* Top Suchanfragen + Top Landingpages — auf Desktop nebeneinander
+            (je 50% Breite), auf Mobile gestapelt. Wenn Landingpages für
+            Kunden ausgeblendet sind und nicht-Admin, fällt TopQueries
+            automatisch auf volle Breite zurück. */}
+        <Trace at="TopQueries+Landingpages" />
+        <div className={`grid grid-cols-1 ${shouldRenderChart ? 'lg:grid-cols-2' : ''} gap-6 mt-8`}>
+          <div id="section-top-queries" className="scroll-mt-20 print-queries-list">
+            <TopQueriesList
+              queries={data.topQueries ?? []}
+              isLoading={isLoading}
+              className="h-full"
+              dateRange={dateRange}
+              error={safeApiErrors?.gsc}
+            />
           </div>
-        )}
+
+          {shouldRenderChart && (
+            <div id="section-landingpages" className={`scroll-mt-20 transition-all duration-300 ${!isLandingPagesVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
+              {isAdmin && (
+                 <div className="flex items-center justify-end mb-2 print:hidden">
+                   <button
+                      onClick={() => setIsLandingPagesVisible(!isLandingPagesVisible)}
+                      className={visibilityButtonClass}
+                   >
+                      {isLandingPagesVisible ? <EyeSlash size={14}/> : <Eye size={14}/>}
+                      {isLandingPagesVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}
+                   </button>
+                 </div>
+              )}
+              <div className="print-landing-chart relative h-full">
+                 <LandingPageChart
+                   data={cleanLandingPages}
+                   isLoading={isLoading}
+                   title="Top Landingpages"
+                   dateRange={dateRange}
+                   queryData={data.landingPageQueries}
+                   projectId={projectId}
+                 />
+                 {!isLandingPagesVisible && isAdmin && (
+                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                     <div className="overlay-muted-badge backdrop-blur-[1px] px-4 py-2 rounded-lg border text-strong text-xs font-semibold shadow-sm">
+                       🚫 Für Kunden ausgeblendet
+                     </div>
+                   </div>
+                 )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* PIE CHARTS */}
         <Trace at="TableauPieCharts" />
