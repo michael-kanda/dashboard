@@ -63,11 +63,11 @@ export default function PromptTrackingBridge({
   if (topPrompts.length === 0) return null;
 
   return (
-    <div className={cn('rounded-md border border-theme-border-default bg-surface p-3', className)}>
+    <div className={cn('rounded-md border border-theme-border-default bg-surface p-3 text-[13px]', className)}>
       <div className="flex items-center justify-between mb-2 gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <MessageSquareQuote className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 flex-shrink-0" />
-          <span className="text-[11px] text-muted font-medium uppercase tracking-wide truncate">
+          <span className="text-[13px] text-muted font-medium uppercase tracking-wide truncate">
             Top-Fragen, mit denen Nutzer dich finden
           </span>
         </div>
@@ -75,7 +75,7 @@ export default function PromptTrackingBridge({
           <button
             type="button"
             onClick={onOpenDetails}
-            className="flex items-center gap-0.5 text-[10px] text-muted hover:text-body transition-colors flex-shrink-0"
+            className="flex items-center gap-0.5 text-[13px] text-muted hover:text-body transition-colors flex-shrink-0"
           >
             Alle Prompts
             <ChevronRight className="w-3 h-3" />
@@ -85,7 +85,7 @@ export default function PromptTrackingBridge({
 
       <div className="space-y-1">
         {topPrompts.map((q, i) => (
-          <div key={`${q.query}-${i}`} className="flex items-center justify-between gap-3 text-xs py-0.5">
+          <div key={`${q.query}-${i}`} className="flex items-center justify-between gap-3 text-[13px] py-0.5">
             <div className="flex items-center gap-1.5 min-w-0 flex-1">
               <span className="text-faint flex-shrink-0">{i + 1}.</span>
               {q.hasGeoReference && (
@@ -109,9 +109,9 @@ export default function PromptTrackingBridge({
             </div>
             <div className="flex items-center gap-2 flex-shrink-0 tabular-nums">
               <span className="text-heading font-medium">{q.clicks.toLocaleString('de-DE')}</span>
-              <span className="text-[10px] text-muted">Klicks</span>
+              <span className="text-[13px] text-muted">Klicks</span>
               <span className="text-faint">·</span>
-              <span className="text-muted">Pos. {q.position.toFixed(0)}</span>
+              <span className="text-muted text-[13px]">Pos. {q.position.toFixed(0)}</span>
             </div>
           </div>
         ))}
