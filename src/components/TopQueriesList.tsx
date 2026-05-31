@@ -276,7 +276,7 @@ export default function TopQueriesList({
     : 0;
 
   return (
-    <div className={cn("dashboard-widget-surface rounded-lg p-5 flex flex-col", className)}>
+    <div className={cn("dashboard-widget-surface rounded-lg p-5 flex flex-col min-h-0", className)}>
       {renderHeader(subtitleParts.join(' · '))}
 
       {/* Tabelle */}
@@ -291,7 +291,7 @@ export default function TopQueriesList({
             </p>
           </div>
         ) : (
-          <div className="max-h-[600px] overflow-y-auto pr-3 custom-scrollbar">
+          <div className="h-full overflow-y-auto pr-3 custom-scrollbar">
             <table className="w-full border-collapse table-fixed">
               <colgroup>
                 <col style={{ width: '48%' }} />

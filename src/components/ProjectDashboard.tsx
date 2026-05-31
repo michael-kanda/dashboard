@@ -443,8 +443,8 @@ export default function ProjectDashboard({
             Kunden ausgeblendet sind und nicht-Admin, fällt TopQueries
             automatisch auf volle Breite zurück. */}
         <Trace at="TopQueries+Landingpages" />
-        <div className={`grid grid-cols-1 ${shouldRenderChart ? 'lg:grid-cols-2' : ''} gap-6 mt-8`}>
-          <div id="section-top-queries" className="scroll-mt-20 print-queries-list">
+        <div className={`grid grid-cols-1 ${shouldRenderChart ? 'lg:grid-cols-2' : ''} gap-6 mt-8 lg:items-stretch`}>
+          <div id="section-top-queries" className="scroll-mt-20 print-queries-list lg:h-[680px]">
             <TopQueriesList
               queries={data.topQueries ?? []}
               isLoading={isLoading}
@@ -455,18 +455,7 @@ export default function ProjectDashboard({
           </div>
 
           {shouldRenderChart && (
-            <div id="section-landingpages" className={`scroll-mt-20 transition-all duration-300 ${!isLandingPagesVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
-              {isAdmin && (
-                 <div className="flex items-center justify-end mb-2 print:hidden">
-                   <button
-                      onClick={() => setIsLandingPagesVisible(!isLandingPagesVisible)}
-                      className={visibilityButtonClass}
-                   >
-                      {isLandingPagesVisible ? <EyeSlash size={14}/> : <Eye size={14}/>}
-                      {isLandingPagesVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}
-                   </button>
-                 </div>
-              )}
+            <div id="section-landingpages" className={`scroll-mt-20 transition-all duration-300 lg:h-[680px] ${!isLandingPagesVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
               <div className="print-landing-chart relative h-full">
                  <LandingPageChart
                    data={cleanLandingPages}
@@ -475,6 +464,15 @@ export default function ProjectDashboard({
                    dateRange={dateRange}
                    queryData={data.landingPageQueries}
                    projectId={projectId}
+                   headerAction={isAdmin ? (
+                     <button
+                       onClick={() => setIsLandingPagesVisible(!isLandingPagesVisible)}
+                       className={visibilityButtonClass}
+                     >
+                       {isLandingPagesVisible ? <EyeSlash size={14}/> : <Eye size={14}/>}
+                       {isLandingPagesVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}
+                     </button>
+                   ) : null}
                  />
                  {!isLandingPagesVisible && isAdmin && (
                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

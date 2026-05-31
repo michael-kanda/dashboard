@@ -42,6 +42,7 @@ interface Props {
   dateRange?: string;
   queryData?: LandingPageQueries;
   projectId?: string;
+  headerAction?: React.ReactNode;
 }
 
 export default function LandingPageChart({
@@ -50,7 +51,8 @@ export default function LandingPageChart({
   title = "Top Landingpages",
   dateRange = '30d',
   queryData,
-  projectId
+  projectId,
+  headerAction
 }: Props) {
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -218,7 +220,7 @@ export default function LandingPageChart({
 
   return (
     <>
-      <div className="dashboard-widget-surface p-5 rounded-xl flex flex-col max-h-[75vh]">
+      <div className="dashboard-widget-surface p-5 rounded-xl flex flex-col h-full min-h-0">
 
         {/* ── Header ──────────────────────────────────────────── */}
         <div className="mb-4 flex-shrink-0">
@@ -226,6 +228,7 @@ export default function LandingPageChart({
             <h3 className="text-[18px] font-semibold text-heading">{title}</h3>
 
             <div className="flex items-center gap-2">
+              {headerAction && <div className="print:hidden">{headerAction}</div>}
               <div className="relative">
                 <input
                   type="text"
