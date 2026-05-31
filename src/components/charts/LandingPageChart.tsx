@@ -286,13 +286,13 @@ export default function LandingPageChart({
               return (
                 <div
                   key={i}
-                  className="py-3.5 border-t border-theme-border-subtle first:border-t-0 group"
+                  className="py-3 border-t border-theme-border-subtle first:border-t-0 group"
                 >
                   {/* Pfad + Hero-Metrik */}
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex-1 min-w-0">
                       <div
-                        className={`text-[15px] font-medium text-strong truncate mb-1 ${hasQueries ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}
+                        className={`text-sm font-medium text-heading truncate mb-1 ${hasQueries ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}
                         onClick={() => hasQueries && toggleExpanded(page.path)}
                         title={page.path}
                       >
@@ -325,8 +325,8 @@ export default function LandingPageChart({
                       )}
                     </div>
 
-                    <div className="text-right flex-shrink-0 min-w-[88px]">
-                      <div className="text-[22px] font-semibold text-heading leading-none">
+                    <div className="text-right flex-shrink-0 min-w-[76px]">
+                      <div className="text-sm font-medium text-strong leading-tight">
                         {newUsers.toLocaleString('de-DE')}
                       </div>
                       <div className="text-[11px] text-faint mt-1">Neue Nutzer</div>
