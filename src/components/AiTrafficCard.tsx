@@ -196,9 +196,25 @@ export default function AiTrafficCard({
 
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
-        <div className="flex items-center gap-2 min-w-0">
-          <Cpu className="text-purple-600 dark:text-purple-400 w-6 h-6 flex-shrink-0" />
+        <div className="min-w-0">
           <h3 className="text-lg font-semibold text-heading">KI-Traffic</h3>
+          <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
+              <defs>
+                <linearGradient id="google-clean-gradient-ai-traffic" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#4285F4" />
+                  <stop offset="25%" stopColor="#4285F4" />
+                  <stop offset="25%" stopColor="#EA4335" />
+                  <stop offset="50%" stopColor="#EA4335" />
+                  <stop offset="50%" stopColor="#FBBC05" />
+                  <stop offset="75%" stopColor="#FBBC05" />
+                  <stop offset="75%" stopColor="#34A853" />
+                  <stop offset="100%" stopColor="#34A853" />
+                </linearGradient>
+              </defs>
+              <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-ai-traffic)" />
+            </svg>
+          </div>
         </div>
         {!error && (
           <span className="tone-pill tone-pill--soft tone--purple text-xs px-2.5 py-1 whitespace-nowrap flex-shrink-0">

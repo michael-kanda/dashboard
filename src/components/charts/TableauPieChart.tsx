@@ -246,7 +246,26 @@ export default function TableauPieChart({
   if (error) {
      return (
       <div className={cn('dashboard-widget-surface rounded-lg p-6 flex flex-col h-[350px]', className)}>
-        <h3 className="text-lg font-semibold text-heading mb-4">{title}</h3>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-heading">{title}</h3>
+          <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
+              <defs>
+                <linearGradient id="google-clean-gradient-pie-error" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#4285F4" />
+                  <stop offset="25%" stopColor="#4285F4" />
+                  <stop offset="25%" stopColor="#EA4335" />
+                  <stop offset="50%" stopColor="#EA4335" />
+                  <stop offset="50%" stopColor="#FBBC05" />
+                  <stop offset="75%" stopColor="#FBBC05" />
+                  <stop offset="75%" stopColor="#34A853" />
+                  <stop offset="100%" stopColor="#34A853" />
+                </linearGradient>
+              </defs>
+              <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-pie-error)" />
+            </svg>
+          </div>
+        </div>
         <div className="flex-grow flex flex-col items-center justify-center text-red-500 gap-2">
           <ExclamationTriangleFill size={24} />
           <p className="text-sm font-medium text-center">{error}</p>
@@ -258,7 +277,26 @@ export default function TableauPieChart({
   if (!chartData || chartData.length === 0) {
     return (
       <div className={cn('dashboard-widget-surface rounded-lg p-6 flex flex-col h-[350px]', className)}>
-        <h3 className="text-lg font-semibold text-heading mb-4 self-start">{title}</h3>
+        <div className="mb-4 self-start">
+          <h3 className="text-lg font-semibold text-heading">{title}</h3>
+          <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
+              <defs>
+                <linearGradient id="google-clean-gradient-pie-empty" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#4285F4" />
+                  <stop offset="25%" stopColor="#4285F4" />
+                  <stop offset="25%" stopColor="#EA4335" />
+                  <stop offset="50%" stopColor="#EA4335" />
+                  <stop offset="50%" stopColor="#FBBC05" />
+                  <stop offset="75%" stopColor="#FBBC05" />
+                  <stop offset="75%" stopColor="#34A853" />
+                  <stop offset="100%" stopColor="#34A853" />
+                </linearGradient>
+              </defs>
+              <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-pie-empty)" />
+            </svg>
+          </div>
+        </div>
         <div className="flex-grow">
            <NoDataState message="Keine Daten für diesen Zeitraum" />
         </div>
@@ -268,9 +306,26 @@ export default function TableauPieChart({
 
   return (
     <div className={cn('dashboard-widget-surface rounded-lg p-6 flex flex-col h-[350px] transition-shadow', className)}>
-      <h3 className="text-lg font-semibold text-heading mb-1 flex-shrink-0">
-        {title}
-      </h3>
+      <div className="mb-1 flex-shrink-0">
+        <h3 className="text-lg font-semibold text-heading">{title}</h3>
+        <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
+            <defs>
+              <linearGradient id="google-clean-gradient-pie-default" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#4285F4" />
+                <stop offset="25%" stopColor="#4285F4" />
+                <stop offset="25%" stopColor="#EA4335" />
+                <stop offset="50%" stopColor="#EA4335" />
+                <stop offset="50%" stopColor="#FBBC05" />
+                <stop offset="75%" stopColor="#FBBC05" />
+                <stop offset="75%" stopColor="#34A853" />
+                <stop offset="100%" stopColor="#34A853" />
+              </linearGradient>
+            </defs>
+            <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-pie-default)" />
+          </svg>
+        </div>
+      </div>
       <div className="flex items-center gap-2 text-xs text-muted mb-2 flex-shrink-0">
         <span className="bg-surface-tertiary px-1.5 py-0.5 rounded text-secondary font-medium">Quelle: GA4</span>
         {dateLabel && (
