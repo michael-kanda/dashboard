@@ -1,6 +1,24 @@
 // src/lib/google-api.ts
 
 import { google } from 'googleapis';
+// ── Globales Retry-/Timeout-Verhalten für ALLE googleapis-Calls ──────────
+// GA4 runReport & GSC query sind POST und werden von gaxios per Default NICHT
+// wiederholt. Da diese Reports rein lesend/idempotent sind, ist Retry sicher.
+google.options({
+  retry: true,
+  retryConfig: {
+    retry: 3,
+    retryDelay: 500,            // Basis; gaxios staffelt exponentiell hoch
+    httpMethodsToRetry: ['GET', 'HEAD', 'PUT', 'OPTIONS', 'DELETE', 'POST'],
+    statusCodesToRetry: [[100, 199], [429, 429], [500, 599]],
+    onRetryAttempt: (err: any) => {
+      const code = err?.response?.status ?? err?.code;
+      const attempt = err?.config?.retryConfig?.currentRetryAttempt ?? '?';
+      console.warn(`[Google API] Retry nach ${code} (Versuch ${attempt})`);
+    },
+  },
+  timeout: 15_000,             // pro Versuch; hängende Verbindung abschneiden
+});
 import { JWT } from 'google-auth-library';
 import { ChartEntry } from '@/lib/dashboard-shared';
 import type { TopQueryData } from '@/types/dashboard';
