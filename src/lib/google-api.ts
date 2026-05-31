@@ -7,24 +7,26 @@ import { google } from 'googleapis';
 google.options({
   retry: true,
   retryConfig: {
-    retry: 3,
-    retryDelay: 500,            // Basis; gaxios staffelt exponentiell hoch
+    // Insgesamt max 2 Versuche (1 Original + 1 Retry) pro Call. Mehr passt
+    // bei parallel laufenden GA4/GSC-Reports nicht zuverlässig in das
+    // Vercel-Function-Budget (60 s auf Pro).
+    retry: 1,
+    retryDelay: 500,
     httpMethodsToRetry: ['GET', 'HEAD', 'PUT', 'OPTIONS', 'DELETE', 'POST'],
     statusCodesToRetry: [[100, 199], [429, 429], [500, 599]],
-    // Retries auch bei abgebrochenen / nicht beantworteten Requests
-    // (z.B. AbortError durch per-Request-Timeout). gaxios-Default ist 2.
-    noResponseRetries: 2,
+    // Auch abgebrochene / nicht beantwortete Requests einmal wiederholen
+    // (AbortError durch per-Request-Timeout).
+    noResponseRetries: 1,
     onRetryAttempt: (err: any) => {
       const code = err?.response?.status ?? err?.code ?? err?.error?.type ?? 'no-response';
       const attempt = err?.config?.retryConfig?.currentRetryAttempt ?? '?';
       console.warn(`[Google API] Retry nach ${code} (Versuch ${attempt})`);
     },
   },
-  // Per-Versuch-Timeout. GA4 runReport antwortet typischerweise in 1-3 s,
-  // bei kalten Properties oder großen Zeiträumen kann es jedoch >15 s dauern.
-  // 30 s lassen genug Headroom, ohne den Vercel-Function-Timeout (60 s, Pro)
-  // zu sprengen.
-  timeout: 30_000,
+  // Per-Versuch-Timeout. Mit retry=1 ergibt sich ein Worst-Case von
+  // 2 × 20 s ≈ 41 s pro Call — bleibt klar unter 60 s Function-Limit
+  // und lässt Headroom für weitere parallele Reports.
+  timeout: 20_000,
 });
 import { JWT } from 'google-auth-library';
 import { ChartEntry } from '@/lib/dashboard-shared';
