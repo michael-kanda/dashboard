@@ -467,7 +467,7 @@ export default function ProjectDashboard({
                    headerAction={isAdmin ? (
                      <button
                        onClick={() => setIsLandingPagesVisible(!isLandingPagesVisible)}
-                       className={visibilityButtonClass}
+                       className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium border border-theme-border-default rounded-md text-body hover:bg-surface-secondary transition-colors print:hidden"
                      >
                        {isLandingPagesVisible ? <EyeSlash size={14}/> : <Eye size={14}/>}
                        {isLandingPagesVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}

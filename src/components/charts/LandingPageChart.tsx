@@ -180,6 +180,12 @@ export default function LandingPageChart({
   const maxNewUsers = sortedData.length > 0
     ? Math.max(...sortedData.map(p => p.newUsers || 0))
     : 0;
+  const totalNewUsers = sortedData.reduce((sum, page) => sum + (page.newUsers || 0), 0);
+  const totalSessions = sortedData.reduce((sum, page) => sum + (page.sessions || 0), 0);
+  const avgCtr = sortedData.length > 0
+    ? sortedData.reduce((sum, page) => sum + (page.ctr || 0), 0) / sortedData.length
+    : 0;
+  const totalConversions = sortedData.reduce((sum, page) => sum + (page.conversions || 0), 0);
 
   const formattedDateRange = getDateRangeString(dateRange);
 
@@ -228,7 +234,6 @@ export default function LandingPageChart({
             <h3 className="text-[18px] font-semibold text-heading">{title}</h3>
 
             <div className="flex items-center gap-2">
-              {headerAction && <div className="print:hidden">{headerAction}</div>}
               <div className="relative">
                 <input
                   type="text"
@@ -404,6 +409,34 @@ export default function LandingPageChart({
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {sortedData.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-theme-border-subtle flex flex-wrap items-center justify-between gap-x-5 gap-y-2 text-xs text-muted">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+              <span>
+                <span className="text-faint">Neue Nutzer gesamt</span>{' '}
+                <span className="text-strong font-medium ml-1">{totalNewUsers.toLocaleString('de-DE')}</span>
+              </span>
+              <span>
+                <span className="text-faint">Sessions gesamt</span>{' '}
+                <span className="text-strong font-medium ml-1">{totalSessions.toLocaleString('de-DE')}</span>
+              </span>
+              <span>
+                <span className="text-faint">Ø CTR</span>{' '}
+                <span className="text-strong font-medium ml-1">{avgCtr.toFixed(1).replace('.', ',')}%</span>
+              </span>
+              <span>
+                <span className="text-faint">Conversions gesamt</span>{' '}
+                <span className="text-strong font-medium ml-1">{totalConversions.toLocaleString('de-DE')}</span>
+              </span>
+            </div>
+            {headerAction && (
+              <div className="print:hidden">
+                {headerAction}
+              </div>
+            )}
           </div>
         )}
       </div>

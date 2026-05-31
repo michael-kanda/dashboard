@@ -301,7 +301,7 @@ export default function TopQueriesList({
                 <col style={{ width: '14%' }} />
               </colgroup>
 
-              <thead className="sticky top-0 z-10">
+              <thead className="sticky top-0 z-10 bg-surface shadow-[0_1px_0_0_var(--dp-border-subtle)]">
                 <tr>
                   {renderSortHeader('query', 'Suchanfrage')}
                   {renderSortHeader('clicks', 'Klicks', true)}
