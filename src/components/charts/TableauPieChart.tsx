@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { ChartEntry } from '@/lib/dashboard-shared';
 import { cn } from '@/lib/utils';
-import { ExclamationTriangleFill, GraphUp, CheckCircleFill, PieChartFill } from 'react-bootstrap-icons'; 
+import { ExclamationTriangleFill, GraphUp, CheckCircleFill } from 'react-bootstrap-icons'; 
 import NoDataState from '@/components/NoDataState';
 
 // Farben definieren
@@ -246,10 +246,7 @@ export default function TableauPieChart({
   if (error) {
      return (
       <div className={cn('dashboard-widget-surface rounded-lg p-6 flex flex-col h-[350px]', className)}>
-        <h3 className="text-lg font-semibold text-heading mb-4 flex items-center gap-2">
-          <PieChartFill size={18} style={{ color: '#34A853' }} aria-hidden="true" />
-          {title}
-        </h3>
+        <h3 className="text-lg font-semibold text-heading mb-4">{title}</h3>
         <div className="flex-grow flex flex-col items-center justify-center text-red-500 gap-2">
           <ExclamationTriangleFill size={24} />
           <p className="text-sm font-medium text-center">{error}</p>
@@ -261,10 +258,7 @@ export default function TableauPieChart({
   if (!chartData || chartData.length === 0) {
     return (
       <div className={cn('dashboard-widget-surface rounded-lg p-6 flex flex-col h-[350px]', className)}>
-        <h3 className="text-lg font-semibold text-heading mb-4 self-start flex items-center gap-2">
-          <PieChartFill size={18} style={{ color: '#34A853' }} aria-hidden="true" />
-          {title}
-        </h3>
+        <h3 className="text-lg font-semibold text-heading mb-4 self-start">{title}</h3>
         <div className="flex-grow">
            <NoDataState message="Keine Daten für diesen Zeitraum" />
         </div>
@@ -274,8 +268,7 @@ export default function TableauPieChart({
 
   return (
     <div className={cn('dashboard-widget-surface rounded-lg p-6 flex flex-col h-[350px] transition-shadow', className)}>
-      <h3 className="text-lg font-semibold text-heading mb-1 flex-shrink-0 flex items-center gap-2">
-        <PieChartFill size={18} style={{ color: '#34A853' }} aria-hidden="true" />
+      <h3 className="text-lg font-semibold text-heading mb-1 flex-shrink-0">
         {title}
       </h3>
       <div className="flex items-center gap-2 text-xs text-muted mb-2 flex-shrink-0">
