@@ -1,4 +1,4 @@
-// src/lib/google-data-loader.ts (v4 — mit Brand-Auto-Detection)
+// src/lib/google-data-loader.ts (v5 — robustere Fehler-/Cache-Behandlung)
 
 import { sql } from '@vercel/postgres';
 import { type User } from '@/lib/schemas';
@@ -208,9 +208,13 @@ export async function getOrFetchGoogleData(
         const promptCacheIsCurrent =
           !cacheEntry.data?.promptTracking ||
           cachedPromptMinWords === DEFAULT_PROMPT_TRACKING_MIN_WORDS;
+        // Defekte Alt-Einträge (mit gespeicherten API-Fehlern) nur kurz vertrauen,
+        // damit ein früher persistiertes Blip-Ergebnis sich von selbst heilt.
+        const cachedHadErrors = !!cacheEntry.data?.apiErrors;
+        const effectiveMaxAgeHours = cachedHadErrors ? 1 : getCacheDuration(dateRange);
 
-        if ((now - lastFetched) / (1000 * 60 * 60) < getCacheDuration(dateRange) && promptCacheIsCurrent) {
-          console.log(`[Google Cache] ✅ HIT für ${user.email}`);
+        if ((now - lastFetched) / (1000 * 60 * 60) < effectiveMaxAgeHours && promptCacheIsCurrent) {
+          console.log(`[Google Cache] ✅ HIT für ${user.email}${cachedHadErrors ? ' (degraded, kurze TTL)' : ''}`);
           return { ...cacheEntry.data, fromCache: true };
         }
         if (!promptCacheIsCurrent) {
@@ -348,9 +352,10 @@ export async function getOrFetchGoogleData(
   if (user.ga4_property_id) {
     try {
       const propertyId = user.ga4_property_id.trim();
-      const gaCurrent = await getAnalyticsData(propertyId, startDateStr, endDateStr);
-      const gaPrevious = await getAnalyticsData(propertyId, prevStartStr, prevEndStr);
 
+      // Aktuelle Periode ist kritisch: schlägt sie fehl, gilt GA4 insgesamt als
+      // fehlgeschlagen (-> apiErrors.ga4, kein Cache-Write am Ende).
+      const gaCurrent = await getAnalyticsData(propertyId, startDateStr, endDateStr);
       currentData = {
         ...currentData,
         sessions: gaCurrent.sessions, totalUsers: gaCurrent.totalUsers,
@@ -358,13 +363,22 @@ export async function getOrFetchGoogleData(
         bounceRate: gaCurrent.bounceRate, newUsers: gaCurrent.newUsers,
         avgEngagementTime: gaCurrent.avgEngagementTime, paidSearch: gaCurrent.paidSearch
       };
-      prevData = {
-        ...prevData,
-        sessions: gaPrevious.sessions, totalUsers: gaPrevious.totalUsers,
-        conversions: gaPrevious.conversions, engagementRate: gaPrevious.engagementRate,
-        bounceRate: gaPrevious.bounceRate, newUsers: gaPrevious.newUsers,
-        avgEngagementTime: gaPrevious.avgEngagementTime, paidSearch: gaPrevious.paidSearch
-      };
+
+      // Vorperiode wird nur für die Veränderungs-Prozente gebraucht. Ein (z.B.
+      // transientes 502-) Fehler hier darf die bereits geholte aktuelle Periode
+      // NICHT mitreißen – sonst wird der ganze GA4-Block durch einen Blip genullt.
+      try {
+        const gaPrevious = await getAnalyticsData(propertyId, prevStartStr, prevEndStr);
+        prevData = {
+          ...prevData,
+          sessions: gaPrevious.sessions, totalUsers: gaPrevious.totalUsers,
+          conversions: gaPrevious.conversions, engagementRate: gaPrevious.engagementRate,
+          bounceRate: gaPrevious.bounceRate, newUsers: gaPrevious.newUsers,
+          avgEngagementTime: gaPrevious.avgEngagementTime, paidSearch: gaPrevious.paidSearch
+        };
+      } catch (e) {
+        console.warn('[GA4] Vorperiode fehlgeschlagen (ignoriert, Veränderungen evtl. ungenau):', e);
+      }
 
       try { aiTraffic = await getAiTrafficData(propertyId, startDateStr, endDateStr); }
       catch (e) { console.warn('[AI Traffic] Fehler (ignoriert):', e); }
@@ -456,14 +470,27 @@ export async function getOrFetchGoogleData(
     apiErrors: Object.keys(apiErrors).length > 0 ? apiErrors : undefined
   };
 
-  try {
-    await sql`
-      INSERT INTO google_data_cache (user_id, date_range, data, last_fetched)
-      VALUES (${userId}::uuid, ${dateRange}, ${JSON.stringify(freshData)}::jsonb, NOW())
-      ON CONFLICT (user_id, date_range)
-      DO UPDATE SET data = ${JSON.stringify(freshData)}::jsonb, last_fetched = NOW();
-    `;
-  } catch (e) { console.error('[Cache Write Error]', e); }
+  // ════════════════════════════════════════════════════════════════════
+  // Cache-Write nur bei "sauberem" Ergebnis.
+  // Kritische Fehler (GSC/GA4) bedeuten i.d.R. genullte KPIs – diese NICHT
+  // persistieren, sonst überschreibt ein transienter 502-Blip den letzten
+  // guten Eintrag und der Kunde sieht stunden-/tagelang Nullen.
+  // Nicht-kritische Quellen (Bing, Ads, Weather) sind hier bewusst egal.
+  // ════════════════════════════════════════════════════════════════════
+  const hasCriticalErrors = !!(apiErrors.ga4 || apiErrors.gsc);
+
+  if (!hasCriticalErrors) {
+    try {
+      await sql`
+        INSERT INTO google_data_cache (user_id, date_range, data, last_fetched)
+        VALUES (${userId}::uuid, ${dateRange}, ${JSON.stringify(freshData)}::jsonb, NOW())
+        ON CONFLICT (user_id, date_range)
+        DO UPDATE SET data = ${JSON.stringify(freshData)}::jsonb, last_fetched = NOW();
+      `;
+    } catch (e) { console.error('[Cache Write Error]', e); }
+  } else {
+    console.warn('[Cache Write] Übersprungen wegen kritischer API-Fehler:', apiErrors);
+  }
 
   return freshData;
 }
