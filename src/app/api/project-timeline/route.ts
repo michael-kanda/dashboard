@@ -145,6 +145,23 @@ export async function GET(req: NextRequest) {
     let gscImpressionTrend: { date: string; value: number }[] = [];
     
     if (project.gsc_site_url) {
+      // Schema-Self-Healing: Tabelle anlegen, falls Cron noch nicht
+      // gelaufen ist. Idempotent, kein Fehler bei Existenz.
+      try {
+        await sql`
+          CREATE TABLE IF NOT EXISTS gsc_daily_data (
+            site_url    TEXT NOT NULL,
+            date        DATE NOT NULL,
+            clicks      INT  NOT NULL DEFAULT 0,
+            impressions INT  NOT NULL DEFAULT 0,
+            updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (site_url, date)
+          );
+        `;
+      } catch (schemaErr) {
+        console.warn('[Project Timeline] Schema-Setup übersprungen:', schemaErr);
+      }
+
       try {
         const { rows: gscRows } = await sql`
           SELECT 
