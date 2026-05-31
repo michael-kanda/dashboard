@@ -353,9 +353,22 @@ export async function getOrFetchGoogleData(
     try {
       const propertyId = user.ga4_property_id.trim();
 
-      // Aktuelle Periode ist kritisch: schlägt sie fehl, gilt GA4 insgesamt als
-      // fehlgeschlagen (-> apiErrors.ga4, kein Cache-Write am Ende).
-      const gaCurrent = await getAnalyticsData(propertyId, startDateStr, endDateStr);
+      // Aktuelle und Vorperiode parallel anstoßen — halbiert die Wall-Clock-
+      // Zeit und reduziert das Risiko, in den Function-Timeout zu laufen.
+      // Die Vorperiode wird über allSettled isoliert: schlägt sie fehl,
+      // bleibt der aktuelle Zeitraum unangetastet.
+      const [currentResult, previousResult] = await Promise.allSettled([
+        getAnalyticsData(propertyId, startDateStr, endDateStr),
+        getAnalyticsData(propertyId, prevStartStr, prevEndStr),
+      ]);
+
+      if (currentResult.status === 'rejected') {
+        // Aktuelle Periode ist kritisch -> nach außen werfen, damit der
+        // GA4-Block insgesamt als fehlgeschlagen markiert wird.
+        throw currentResult.reason;
+      }
+
+      const gaCurrent = currentResult.value;
       currentData = {
         ...currentData,
         sessions: gaCurrent.sessions, totalUsers: gaCurrent.totalUsers,
@@ -364,11 +377,8 @@ export async function getOrFetchGoogleData(
         avgEngagementTime: gaCurrent.avgEngagementTime, paidSearch: gaCurrent.paidSearch
       };
 
-      // Vorperiode wird nur für die Veränderungs-Prozente gebraucht. Ein (z.B.
-      // transientes 502-) Fehler hier darf die bereits geholte aktuelle Periode
-      // NICHT mitreißen – sonst wird der ganze GA4-Block durch einen Blip genullt.
-      try {
-        const gaPrevious = await getAnalyticsData(propertyId, prevStartStr, prevEndStr);
+      if (previousResult.status === 'fulfilled') {
+        const gaPrevious = previousResult.value;
         prevData = {
           ...prevData,
           sessions: gaPrevious.sessions, totalUsers: gaPrevious.totalUsers,
@@ -376,8 +386,8 @@ export async function getOrFetchGoogleData(
           bounceRate: gaPrevious.bounceRate, newUsers: gaPrevious.newUsers,
           avgEngagementTime: gaPrevious.avgEngagementTime, paidSearch: gaPrevious.paidSearch
         };
-      } catch (e) {
-        console.warn('[GA4] Vorperiode fehlgeschlagen (ignoriert, Veränderungen evtl. ungenau):', e);
+      } else {
+        console.warn('[GA4] Vorperiode fehlgeschlagen (ignoriert, Veränderungen evtl. ungenau):', previousResult.reason);
       }
 
       try { aiTraffic = await getAiTrafficData(propertyId, startDateStr, endDateStr); }
@@ -398,11 +408,13 @@ export async function getOrFetchGoogleData(
       } catch (e) { console.warn('[GA4] Konnte Top-Pages nicht laden:', e); }
 
       try {
-        const rawCountry = await getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'country');
+        const [rawCountry, rawChannel, rawDevice] = await Promise.all([
+          getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'country'),
+          getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'sessionDefaultChannelGroup'),
+          getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'deviceCategory'),
+        ]);
         countryData = rawCountry.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
-        const rawChannel = await getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'sessionDefaultChannelGroup');
         channelData = rawChannel.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
-        const rawDevice = await getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'deviceCategory');
         deviceData = rawDevice.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
       } catch (e) { console.error('[GA4 Dimensions Error]', e); }
 

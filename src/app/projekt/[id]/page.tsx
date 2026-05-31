@@ -10,6 +10,12 @@ import ProjectDashboard from '@/components/ProjectDashboard';
 import { DateRangeOption } from '@/components/DateRangeSelector';
 import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
 
+// Vercel-Function-Timeout für diese Seite hochsetzen.
+// Der Default (10 s Hobby / 15 s Pro) reicht nicht aus, wenn GA4 + GSC +
+// Google Ads + Semrush sequenziell geladen werden müssen. 60 s ist das
+// Maximum auf dem Pro-Plan.
+export const maxDuration = 60;
+
 // Erweiterter Typ für unsere Query-Ergebnisse
 interface ExtendedUser extends User {
   assigned_admins?: string;

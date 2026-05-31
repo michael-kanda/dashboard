@@ -11,13 +11,20 @@ google.options({
     retryDelay: 500,            // Basis; gaxios staffelt exponentiell hoch
     httpMethodsToRetry: ['GET', 'HEAD', 'PUT', 'OPTIONS', 'DELETE', 'POST'],
     statusCodesToRetry: [[100, 199], [429, 429], [500, 599]],
+    // Retries auch bei abgebrochenen / nicht beantworteten Requests
+    // (z.B. AbortError durch per-Request-Timeout). gaxios-Default ist 2.
+    noResponseRetries: 2,
     onRetryAttempt: (err: any) => {
-      const code = err?.response?.status ?? err?.code;
+      const code = err?.response?.status ?? err?.code ?? err?.error?.type ?? 'no-response';
       const attempt = err?.config?.retryConfig?.currentRetryAttempt ?? '?';
       console.warn(`[Google API] Retry nach ${code} (Versuch ${attempt})`);
     },
   },
-  timeout: 15_000,             // pro Versuch; hängende Verbindung abschneiden
+  // Per-Versuch-Timeout. GA4 runReport antwortet typischerweise in 1-3 s,
+  // bei kalten Properties oder großen Zeiträumen kann es jedoch >15 s dauern.
+  // 30 s lassen genug Headroom, ohne den Vercel-Function-Timeout (60 s, Pro)
+  // zu sprengen.
+  timeout: 30_000,
 });
 import { JWT } from 'google-auth-library';
 import { ChartEntry } from '@/lib/dashboard-shared';
