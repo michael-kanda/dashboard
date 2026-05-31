@@ -24,7 +24,7 @@ interface PromptTrackingBridgeProps {
   onOpenDetails?: () => void;
   /** Versteckt die Komponente komplett, wenn kein Prompt-Tracking konfiguriert */
   enabled?: boolean;
-  /** Maximale Anzahl Prompts in der Vorschau (default 3) */
+  /** Maximale Anzahl Prompts in der Vorschau (default 5) */
   maxItems?: number;
   /** Nur Non-Brand-Prompts zeigen (interessanter weil "echte" Fragen) — default true */
   nonBrandedOnly?: boolean;
@@ -50,7 +50,7 @@ export default function PromptTrackingBridge({
   data,
   onOpenDetails,
   enabled = true,
-  maxItems = 3,
+  maxItems = 5,
   nonBrandedOnly = true,
   className,
 }: PromptTrackingBridgeProps) {
@@ -63,7 +63,7 @@ export default function PromptTrackingBridge({
   if (topPrompts.length === 0) return null;
 
   return (
-    <div className={cn('rounded-md border border-border-subtle bg-surface-secondary/40 p-3', className)}>
+    <div className={cn('rounded-md border border-theme-border-default bg-surface p-3', className)}>
       <div className="flex items-center justify-between mb-2 gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <MessageSquareQuote className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 flex-shrink-0" />

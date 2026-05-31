@@ -235,149 +235,156 @@ export default function AiTrafficCard({
           {/* Anomalie-Banner — nur wenn ungewöhnliche Bewegungen erkannt */}
           <AiTrafficAnomalyBanner data={extendedData} />
 
-          {/* Metriken (links) + Top KI-Quellen (rechts) im 2-Spalten-Layout */}
+          {/* Metriken + Quellen (links) und Top-Fragen (rechts) im Stil der Vorlage */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
-            {/* Linke Spalte: Sitzungen + Nutzer */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Linke Spalte: Sitzungen + Nutzer + Top KI-Quellen */}
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <TrendingUp className="w-3.5 h-3.5 text-muted" />
+                    <p className="text-[11px] text-muted font-medium uppercase tracking-wide">Sitzungen</p>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <p className="text-2xl font-bold text-heading tabular-nums">
+                      {safeTotalSessions.toLocaleString('de-DE')}
+                    </p>
+                    <ChangeIndicator change={totalSessionsChange} current={safeTotalSessions} label="Sitzungen" />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Users className="w-3.5 h-3.5 text-muted" />
+                    <p className="text-[11px] text-muted font-medium uppercase tracking-wide">Nutzer</p>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <p className="text-2xl font-bold text-heading tabular-nums">
+                      {safeTotalUsers.toLocaleString('de-DE')}
+                    </p>
+                    <ChangeIndicator change={totalUsersChange} current={safeTotalUsers} label="Nutzer" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Top KI-Quellen */}
               <div>
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <TrendingUp className="w-3.5 h-3.5 text-muted" />
-                  <p className="text-[11px] text-muted font-medium uppercase tracking-wide">Sitzungen</p>
-                </div>
-                <div className="flex items-baseline gap-1.5">
-                  <p className="text-2xl font-bold text-heading tabular-nums">
-                    {safeTotalSessions.toLocaleString('de-DE')}
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[11px] text-muted font-medium uppercase tracking-wide">
+                    Top KI-Quellen
                   </p>
-                  <ChangeIndicator change={totalSessionsChange} current={safeTotalSessions} label="Sitzungen" />
+                  {selectedModel && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedModel(undefined)}
+                      className="text-[10px] text-muted hover:text-body underline underline-offset-2 transition-colors"
+                    >
+                      Auswahl zurücksetzen
+                    </button>
+                  )}
                 </div>
-              </div>
+                <div className="space-y-0.5">
+                  {safeTopAiSources.length > 0 ? (
+                    safeTopAiSources.map((source, index) => {
+                      const sourcePercentage = typeof source.percentage === 'number' && !isNaN(source.percentage) ? source.percentage : 0;
+                      const sourceSessions = typeof source.sessions === 'number' && !isNaN(source.sessions) ? source.sessions : 0;
+                      const sourceName = source.source || 'Unbekannt';
+                      const dotColor = getSourceDotColor(sourceName);
+                      const modelKey = normalizeSourceKey(sourceName);
+                      const isSelected = selectedModel === modelKey;
+                      const sparklineValues = sparklinesByModel[modelKey] ?? [];
+                      const extSource = extendedSourceMap.get(modelKey);
+                      const topLp = extSource?.topLandingPage;
+                      const convRate = extSource?.conversionRate ?? 0;
+                      const convCount = extSource?.conversions ?? 0;
+                      const hasSubRow = !!topLp || convCount > 0;
 
-              <div>
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Users className="w-3.5 h-3.5 text-muted" />
-                  <p className="text-[11px] text-muted font-medium uppercase tracking-wide">Nutzer</p>
-                </div>
-                <div className="flex items-baseline gap-1.5">
-                  <p className="text-2xl font-bold text-heading tabular-nums">
-                    {safeTotalUsers.toLocaleString('de-DE')}
-                  </p>
-                  <ChangeIndicator change={totalUsersChange} current={safeTotalUsers} label="Nutzer" />
-                </div>
-              </div>
-            </div>
-
-            {/* Rechte Spalte: Top KI-Quellen */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[11px] text-muted font-medium uppercase tracking-wide">
-                  Top KI-Quellen
-                </p>
-                {selectedModel && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedModel(undefined)}
-                    className="text-[10px] text-muted hover:text-body underline underline-offset-2 transition-colors"
-                  >
-                    Auswahl zurücksetzen
-                  </button>
-                )}
-              </div>
-              <div className="space-y-0.5">
-                {safeTopAiSources.length > 0 ? (
-                  safeTopAiSources.map((source, index) => {
-                    const sourcePercentage = typeof source.percentage === 'number' && !isNaN(source.percentage) ? source.percentage : 0;
-                    const sourceSessions = typeof source.sessions === 'number' && !isNaN(source.sessions) ? source.sessions : 0;
-                    const sourceName = source.source || 'Unbekannt';
-                    const dotColor = getSourceDotColor(sourceName);
-                    const modelKey = normalizeSourceKey(sourceName);
-                    const isSelected = selectedModel === modelKey;
-                    const sparklineValues = sparklinesByModel[modelKey] ?? [];
-                    const extSource = extendedSourceMap.get(modelKey);
-                    const topLp = extSource?.topLandingPage;
-                    const convRate = extSource?.conversionRate ?? 0;
-                    const convCount = extSource?.conversions ?? 0;
-                    // Sub-Zeile nur anzeigen wenn wir Landingpage oder Conversions haben
-                    const hasSubRow = !!topLp || convCount > 0;
-
-                    return (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => setSelectedModel(isSelected ? undefined : modelKey)}
-                        className={cn(
-                          'w-full flex flex-col gap-0.5 text-sm px-2 py-1.5 rounded-md transition-colors text-left',
-                          isSelected
-                            ? 'bg-surface-tertiary ring-1 ring-border'
-                            : 'hover:bg-surface-tertiary/60'
-                        )}
-                        title={`Im Trend-Chart unten anzeigen: ${sourceName}`}
-                      >
-                        {/* Main row */}
-                        <div className="flex items-center justify-between gap-3 w-full">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <div
-                              className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: dotColor }}
-                            />
-                            <span className={cn('truncate', isSelected ? 'text-heading font-medium' : 'text-body')}>
-                              {sourceName}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 flex-shrink-0 tabular-nums">
-                            {sparklineValues.length >= 2 && (
-                              <SourceMiniSparkline
-                                values={sparklineValues}
-                                color={dotColor}
-                                width={50}
-                                height={18}
-                                className="opacity-80"
+                      return (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => setSelectedModel(isSelected ? undefined : modelKey)}
+                          className={cn(
+                            'w-full flex flex-col gap-0.5 text-sm px-2 py-1.5 rounded-md transition-colors text-left',
+                            isSelected
+                              ? 'bg-surface-tertiary ring-1 ring-border'
+                              : 'hover:bg-surface-tertiary/60'
+                          )}
+                          title={`Im Trend-Chart unten anzeigen: ${sourceName}`}
+                        >
+                          <div className="flex items-center justify-between gap-3 w-full">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <div
+                                className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: dotColor }}
                               />
-                            )}
-                            <span className="font-medium text-heading">
-                              {sourceSessions.toLocaleString('de-DE')}
-                            </span>
-                            <span className="text-xs text-muted min-w-[3rem] text-right">
-                              {sourcePercentage.toFixed(1)}%
-                            </span>
+                              <span className={cn('truncate', isSelected ? 'text-heading font-medium' : 'text-body')}>
+                                {sourceName}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 flex-shrink-0 tabular-nums">
+                              {sparklineValues.length >= 2 && (
+                                <SourceMiniSparkline
+                                  values={sparklineValues}
+                                  color={dotColor}
+                                  width={50}
+                                  height={18}
+                                  className="opacity-80"
+                                />
+                              )}
+                              <span className="font-medium text-heading">
+                                {sourceSessions.toLocaleString('de-DE')}
+                              </span>
+                              <span className="text-xs text-muted min-w-[3rem] text-right">
+                                {sourcePercentage.toFixed(1)}%
+                              </span>
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Sub row: Top-Landingpage + Conversion-Rate */}
-                        {hasSubRow && (
-                          <div className="flex items-center justify-between gap-2 pl-4 text-[11px] text-muted">
-                            {topLp ? (
-                              <span className="truncate font-mono" title={topLp.path}>
-                                {topLp.path === '/' ? '/ (Startseite)' : topLp.path}
-                              </span>
-                            ) : (
-                              <span />
-                            )}
-                            {convCount > 0 && (
-                              <span className="flex-shrink-0 tabular-nums">
-                                <span className="text-heading font-medium">{convCount.toLocaleString('de-DE')}</span>
-                                <span className="ml-1">Conv</span>
-                                <span className="text-faint mx-1">·</span>
-                                <span className={cn(
-                                  'font-medium',
-                                  convRate >= 3 ? 'text-green-600 dark:text-green-400' :
-                                  convRate >= 1 ? 'text-amber-600 dark:text-amber-400' :
-                                  'text-muted'
-                                )}>
-                                  {convRate.toFixed(1)}%
+                          {hasSubRow && (
+                            <div className="flex items-center justify-between gap-2 pl-4 text-[11px] text-muted">
+                              {topLp ? (
+                                <span className="truncate font-mono" title={topLp.path}>
+                                  {topLp.path === '/' ? '/ (Startseite)' : topLp.path}
                                 </span>
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })
-                ) : (
-                  <p className="text-sm text-muted italic">Keine KI-Traffic-Daten verfügbar</p>
-                )}
+                              ) : (
+                                <span />
+                              )}
+                              {convCount > 0 && (
+                                <span className="flex-shrink-0 tabular-nums">
+                                  <span className="text-heading font-medium">{convCount.toLocaleString('de-DE')}</span>
+                                  <span className="ml-1">Conv</span>
+                                  <span className="text-faint mx-1">·</span>
+                                  <span className={cn(
+                                    'font-medium',
+                                    convRate >= 3 ? 'text-green-600 dark:text-green-400' :
+                                    convRate >= 1 ? 'text-amber-600 dark:text-amber-400' :
+                                    'text-muted'
+                                  )}>
+                                    {convRate.toFixed(1)}%
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <p className="text-sm text-muted italic">Keine KI-Traffic-Daten verfügbar</p>
+                  )}
+                </div>
               </div>
             </div>
+
+            <PromptTrackingBridge
+              data={promptTracking}
+              enabled={promptTrackingEnabled && !!onPromptTrackingClick}
+              onOpenDetails={onPromptTrackingClick}
+              maxItems={5}
+              className="self-start"
+            />
 
           </div>
 
@@ -387,14 +394,6 @@ export default function AiTrafficCard({
             dateRange={dateRange}
             externalPrimaryModel={selectedModel}
             onPrimaryModelChange={setSelectedModel}
-          />
-
-          {/* Prompt-Tracking-Bridge — Top-Fragen, mit denen Nutzer die Seite finden (AI Mode Proxy).
-              Versteckt sich automatisch wenn keine Daten / nicht aktiviert. */}
-          <PromptTrackingBridge
-            data={promptTracking}
-            enabled={promptTrackingEnabled && !!onPromptTrackingClick}
-            onOpenDetails={onPromptTrackingClick}
           />
 
         </div>
