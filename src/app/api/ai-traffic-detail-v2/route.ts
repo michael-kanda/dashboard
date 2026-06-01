@@ -53,11 +53,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Datumsberechnung
+    // end = gestern (GA4-Daten für heute sind noch unvollständig)
     const end = new Date();
     end.setDate(end.getDate() - 1);
-    const start = new Date();
-    let days = 30;
 
+    let days = 30;
     switch (dateRange) {
       case '30d': days = 30; break;
       case '3m': days = 90; break;
@@ -66,14 +66,18 @@ export async function GET(request: NextRequest) {
       case '18m': days = 548; break;
       case '24m': days = 730; break;
     }
-    
-    start.setDate(end.getDate() - days);
 
-    // Vorperiode für Vergleich
+    // WICHTIG: start IMMER von end ableiten (nicht von "heute").
+    // Sonst entsteht am Monatsersten ein invertierter Range, weil
+    // .getDate() nur den Tag-im-Monat liefert und über Monatsgrenzen kippt.
+    const start = new Date(end);
+    start.setDate(start.getDate() - days);
+
+    // Vorperiode für Vergleich (lückenlos direkt vor dem aktuellen Zeitraum)
     const prevEnd = new Date(start);
     prevEnd.setDate(prevEnd.getDate() - 1);
     const prevStart = new Date(prevEnd);
-    prevStart.setDate(prevEnd.getDate() - days);
+    prevStart.setDate(prevStart.getDate() - days);
 
     const currentStartStr = start.toISOString().split('T')[0];
     const currentEndStr = end.toISOString().split('T')[0];
