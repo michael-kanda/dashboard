@@ -330,6 +330,31 @@ export function detectIntent(path: string): IntentCategory {
   return DEFAULT_INTENT;
 }
 
+/**
+ * Stellt sicher, dass startDate <= endDate ist.
+ *
+ * Hintergrund: Bei einer "Monat bis heute"-Logik wird startDate oft auf den
+ * 1. des aktuellen Monats und endDate auf "gestern" gesetzt (GA4-Daten für
+ * heute sind noch unvollständig). Am 1. eines Monats liegt der Monatsanfang
+ * dann NACH "gestern" -> der Range kippt und GA4 wirft einen 400er
+ * ("start_date must be less than or equal to end_date").
+ *
+ * Diese Funktion fängt das defensiv ab: liegt start nach end, wird start auf
+ * end geklemmt (gültiger 1-Tages-Range) statt die ganze Anfrage abstürzen zu
+ * lassen. Die eigentliche Ursache sollte trotzdem in der aufrufenden
+ * Date-Range-Berechnung (API-Route) behoben werden.
+ */
+function normalizeDateRange(startDate: string, endDate: string): { startDate: string; endDate: string } {
+  if (startDate > endDate) {
+    console.warn(
+      `[AI Traffic V2] Ungültiger Date-Range erkannt (start ${startDate} > end ${endDate}). ` +
+      `startDate wird auf ${endDate} geklemmt. Bitte Date-Range-Berechnung im Caller prüfen.`
+    );
+    return { startDate: endDate, endDate };
+  }
+  return { startDate, endDate };
+}
+
 function parseGa4Date(dateString: string): string {
   const year = dateString.substring(0, 4);
   const month = dateString.substring(4, 6);
@@ -370,6 +395,9 @@ export async function getAiTrafficExtended(
   startDate: string,
   endDate: string
 ): Promise<AiTrafficExtendedData> {
+  // Defensiv: niemals einen invertierten Range an GA4 schicken (sonst 400).
+  ({ startDate, endDate } = normalizeDateRange(startDate, endDate));
+
   const formattedPropertyId = propertyId.startsWith('properties/') 
     ? propertyId 
     : `properties/${propertyId}`;
@@ -929,6 +957,10 @@ export async function getAiTrafficExtendedWithComparison(
   previousEnd: string
 ): Promise<AiTrafficExtendedData> {
   
+  // Defensiv: beide Ranges normalisieren, bevor sie weitergereicht werden.
+  ({ startDate: currentStart, endDate: currentEnd } = normalizeDateRange(currentStart, currentEnd));
+  ({ startDate: previousStart, endDate: previousEnd } = normalizeDateRange(previousStart, previousEnd));
+
   const [currentData, previousData] = await Promise.all([
     getAiTrafficExtended(propertyId, currentStart, currentEnd),
     getAiTrafficExtended(propertyId, previousStart, previousEnd)
