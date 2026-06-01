@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ArrowLeftRight, Cpu, Filter } from 'lucide-react';
+import { ArrowLeftRight, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAiTrafficExtended } from '@/hooks/useAiTrafficExtended';
 
@@ -226,13 +226,8 @@ export default function AiTrafficModelTrendChart({
 
   return (
     <div className={cn('transition-all', className)}>
-      {/* HEADER & CONTROLS */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2">
-          <Cpu className="text-purple-600 dark:text-purple-400 w-4 h-4" />
-          <h4 className="text-sm font-semibold text-heading">Sitzungs-Trend nach KI-Modell</h4>
-        </div>
-
+      {/* CONTROLS — Überschrift kommt aus der AiTrafficCard (vermeidet doppelten Titel) */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mb-4">
         <div className="flex flex-col sm:flex-row gap-2">
           {/* Primary Model Picker */}
           <div className="relative group">
