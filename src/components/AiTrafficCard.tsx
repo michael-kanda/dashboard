@@ -114,28 +114,17 @@ export default function AiTrafficCard({
   }, [extendedData]);
 
   // Top-Fragen aus den PromptTracking-Daten ableiten.
-  // ⚠️ Feldnamen defensiv gemappt — bei Bedarf an die echte PromptTracking-Struktur anpassen.
+  // Top 5 nach Klicks (Tiebreak: bessere Position). position ist ein GSC-Float → für die Anzeige gerundet.
   const topQuestions = useMemo<TopQuestionItem[]>(() => {
-    const source = promptTracking as unknown;
-    const raw: unknown[] = Array.isArray(source)
-      ? source
-      : Array.isArray((source as { items?: unknown[] } | null)?.items)
-      ? (source as { items: unknown[] }).items
-      : Array.isArray((source as { queries?: unknown[] } | null)?.queries)
-      ? (source as { queries: unknown[] }).queries
-      : [];
-
-    return raw
-      .map((entry) => {
-        const q = entry as Record<string, unknown>;
-        return {
-          query: String(q.query ?? q.question ?? q.keyword ?? q.prompt ?? ''),
-          clicks: Number(q.clicks ?? q.clickCount ?? 0) || 0,
-          position: Number(q.position ?? q.avgPosition ?? q.pos ?? 0) || 0,
-        };
-      })
-      .filter((q) => q.query)
-      .slice(0, 5);
+    const queries = promptTracking?.queries ?? [];
+    return [...queries]
+      .sort((a, b) => b.clicks - a.clicks || a.position - b.position)
+      .slice(0, 5)
+      .map((q) => ({
+        query: q.query,
+        clicks: q.clicks,
+        position: Math.round(q.position),
+      }));
   }, [promptTracking]);
 
   // Dynamische Datumsberechnung
