@@ -2,22 +2,13 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import {
-  Cpu,
-  TrendingUp,
-  Users,
-  ArrowUp,
-  ArrowDown,
-  AlertTriangle,
-  Minus,
-  Plus,
-} from 'lucide-react';
+import { AlertTriangle, Minus, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AiTrafficCardProps } from '@/types/ai-traffic';
 import AiTrafficModelTrendChart from '@/components/AiTrafficModelTrendChart';
 import SourceMiniSparkline from '@/components/SourceMiniSparkline';
 import AiTrafficAnomalyBanner from '@/components/AiTrafficAnomalyBanner';
-import PromptTrackingBridge from '@/components/PromptTrackingBridge';
+import AiTrafficTopQuestions, { type TopQuestionItem } from '@/components/AiTrafficTopQuestions';
 import { useAiTrafficExtended } from '@/hooks/useAiTrafficExtended';
 
 // Brand-Farben für KI-Quellen-Dots (konsistent mit AiTrafficModelTrendChart)
@@ -56,35 +47,6 @@ function normalizeSourceKey(source: string): string {
   return source;
 }
 
-/** Vorperiodenwert aus Current + %-Change rückrechnen. */
-function calcPreviousValue(current: number, change?: number): number | null {
-  if (typeof change !== 'number' || !isFinite(change)) return null;
-  if (change === -100) return null; // war 0 davor
-  const previous = current / (1 + change / 100);
-  return Math.round(previous);
-}
-
-// Hilfskomponente für Änderungsindikator mit Vorperiode-Tooltip
-const ChangeIndicator: React.FC<{ change?: number; current: number; label: string }> = ({ change, current, label }) => {
-  if (!change) {
-    return null;
-  }
-  const isPositive = change >= 0;
-  const color = isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-  const Icon = isPositive ? ArrowUp : ArrowDown;
-  const previous = calcPreviousValue(current, change);
-
-  return (
-    <span
-      className={cn('flex items-center text-xs font-medium ml-2 cursor-help', color)}
-      title={previous !== null ? `${label} Vorperiode: ${previous.toLocaleString('de-DE')}` : undefined}
-    >
-      <Icon className="mr-0.5 w-3 h-3" />
-      {Math.abs(change).toFixed(1)}%
-    </span>
-  );
-};
-
 export default function AiTrafficCard({
   totalSessions = 0,
   totalUsers = 0,
@@ -107,11 +69,16 @@ export default function AiTrafficCard({
 }: AiTrafficCardProps) {
 
   const safePercentage = typeof percentage === 'number' && !isNaN(percentage) ? percentage : 0;
-  const safeTotalSessions = typeof totalSessions === 'number' && !isNaN(totalSessions) ? totalSessions : 0;
-  const safeTotalUsers = typeof totalUsers === 'number' && !isNaN(totalUsers) ? totalUsers : 0;
   const safeTopAiSources = Array.isArray(topAiSources) ? topAiSources : [];
-  // Hinweis: trend-Prop wird nicht mehr verwendet — AiTrafficModelTrendChart holt eigene Daten
+
+  // Hinweis: trend-Prop wird nicht mehr verwendet — AiTrafficModelTrendChart holt eigene Daten.
   void trend;
+  // Die großen Sitzungen/Nutzer-KPI-Kacheln entfallen im neuen Layout (siehe Mockup).
+  // Props bleiben für API-Kompatibilität erhalten — bei Bedarf wieder einblendbar.
+  void totalSessions;
+  void totalUsers;
+  void totalSessionsChange;
+  void totalUsersChange;
 
   // Klick-State: synchronisiert Liste ↔ Trend-Chart
   const [selectedModel, setSelectedModel] = useState<string | undefined>(undefined);
@@ -146,6 +113,31 @@ export default function AiTrafficCard({
     return map;
   }, [extendedData]);
 
+  // Top-Fragen aus den PromptTracking-Daten ableiten.
+  // ⚠️ Feldnamen defensiv gemappt — bei Bedarf an die echte PromptTracking-Struktur anpassen.
+  const topQuestions = useMemo<TopQuestionItem[]>(() => {
+    const source = promptTracking as unknown;
+    const raw: unknown[] = Array.isArray(source)
+      ? source
+      : Array.isArray((source as { items?: unknown[] } | null)?.items)
+      ? (source as { items: unknown[] }).items
+      : Array.isArray((source as { queries?: unknown[] } | null)?.queries)
+      ? (source as { queries: unknown[] }).queries
+      : [];
+
+    return raw
+      .map((entry) => {
+        const q = entry as Record<string, unknown>;
+        return {
+          query: String(q.query ?? q.question ?? q.keyword ?? q.prompt ?? ''),
+          clicks: Number(q.clicks ?? q.clickCount ?? 0) || 0,
+          position: Number(q.position ?? q.avgPosition ?? q.pos ?? 0) || 0,
+        };
+      })
+      .filter((q) => q.query)
+      .slice(0, 5);
+  }, [promptTracking]);
+
   // Dynamische Datumsberechnung
   const formattedDateRange = useMemo(() => {
     const endDate = new Date();
@@ -177,7 +169,7 @@ export default function AiTrafficCard({
   // Ladezustand
   if (isLoading) {
     return (
-      <div className={cn("dashboard-widget-surface rounded-lg p-6", className)}>
+      <div className={cn('dashboard-widget-surface rounded-lg p-6', className)}>
         <div className="animate-pulse">
           <div className="h-6 bg-surface-tertiary rounded w-1/3 mb-4"></div>
           <div className="h-16 bg-surface-tertiary rounded mb-4"></div>
@@ -192,10 +184,10 @@ export default function AiTrafficCard({
   }
 
   return (
-    <div className={cn("dashboard-widget-surface rounded-lg p-6 flex flex-col", className)}>
+    <div className={cn('dashboard-widget-surface rounded-lg p-6 flex flex-col', className)}>
 
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
+      {/* Header (volle Breite) */}
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-5">
         <div className="min-w-0">
           <h3 className="text-lg font-semibold text-heading">KI-Traffic</h3>
           <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
@@ -224,17 +216,6 @@ export default function AiTrafficCard({
         )}
       </div>
 
-      {/* Meta-Info: Quelle und Datum */}
-      <div className="flex items-center gap-2 mb-5 text-sm">
-        <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded text-xs font-semibold">
-          Quelle: GA4
-        </span>
-        <span className="text-faint text-xs">•</span>
-        <span className="text-muted text-xs">
-          {formattedDateRange}
-        </span>
-      </div>
-
       {/* Fehler-Zustand */}
       {error ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center my-4">
@@ -245,43 +226,24 @@ export default function AiTrafficCard({
           </p>
         </div>
       ) : (
-        // Normaler Inhalt
         <div className="flex flex-col gap-6 flex-1">
 
           {/* Anomalie-Banner — nur wenn ungewöhnliche Bewegungen erkannt */}
           <AiTrafficAnomalyBanner data={extendedData} />
 
-          {/* Metriken + Quellen (links) und Top-Fragen (rechts) im Stil der Vorlage */}
+          {/* Zwei Spalten: links Quellen + Top-Fragen, rechts Trend + Buttons */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
-            {/* Linke Spalte: Sitzungen + Nutzer + Top KI-Quellen */}
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <TrendingUp className="w-3.5 h-3.5 text-muted" />
-                    <p className="text-[11px] text-muted font-medium uppercase tracking-wide">Sitzungen</p>
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <p className="text-2xl font-bold text-heading tabular-nums">
-                      {safeTotalSessions.toLocaleString('de-DE')}
-                    </p>
-                    <ChangeIndicator change={totalSessionsChange} current={safeTotalSessions} label="Sitzungen" />
-                  </div>
-                </div>
+            {/* ── Spalte 1: Quelle/Datum + Top KI-Quellen + Top-Fragen ── */}
+            <div className="min-w-0 flex flex-col gap-4">
 
-                <div>
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Users className="w-3.5 h-3.5 text-muted" />
-                    <p className="text-[11px] text-muted font-medium uppercase tracking-wide">Nutzer</p>
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <p className="text-2xl font-bold text-heading tabular-nums">
-                      {safeTotalUsers.toLocaleString('de-DE')}
-                    </p>
-                    <ChangeIndicator change={totalUsersChange} current={safeTotalUsers} label="Nutzer" />
-                  </div>
-                </div>
+              {/* Meta-Info: Quelle und Datum */}
+              <div className="flex items-center gap-2 text-sm">
+                <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded text-xs font-semibold">
+                  Quelle: GA4
+                </span>
+                <span className="text-faint text-xs">•</span>
+                <span className="text-muted text-xs">{formattedDateRange}</span>
               </div>
 
               {/* Top KI-Quellen */}
@@ -327,7 +289,7 @@ export default function AiTrafficCard({
                               ? 'bg-surface-tertiary ring-1 ring-border'
                               : 'hover:bg-surface-tertiary/60'
                           )}
-                          title={`Im Trend-Chart unten anzeigen: ${sourceName}`}
+                          title={`Im Trend-Chart anzeigen: ${sourceName}`}
                         >
                           <div className="flex items-center justify-between gap-3 w-full">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -392,60 +354,58 @@ export default function AiTrafficCard({
                   )}
                 </div>
               </div>
+
+              {/* Trennlinie */}
+              <div className="border-t border-border-subtle" />
+
+              {/* Top-Fragen (redesignt, volle Spaltenbreite) */}
+              {promptTrackingEnabled && (
+                <AiTrafficTopQuestions items={topQuestions} />
+              )}
             </div>
 
-            <PromptTrackingBridge
-              data={promptTracking}
-              enabled={promptTrackingEnabled && !!onPromptTrackingClick}
-              onOpenDetails={onPromptTrackingClick}
-              maxItems={5}
-              className="self-start"
-            />
+            {/* ── Spalte 2: Sitzungs-Trend nach KI-Modell + Action-Buttons ── */}
+            <div className="min-w-0 flex flex-col">
+              <p className="text-[11px] text-muted font-medium uppercase tracking-wide mb-3">
+                Sitzungs-Trend nach KI-Modell
+              </p>
+
+              <AiTrafficModelTrendChart
+                projectId={projectId}
+                dateRange={dateRange}
+                externalPrimaryModel={selectedModel}
+                onPrimaryModelChange={setSelectedModel}
+              />
+
+              <p className="text-xs text-muted mt-4">
+                KI-Traffic umfasst Besuche von bekannten KI-Bots wie ChatGPT, Claude, Perplexity und Google Gemini.
+              </p>
+
+              {/* Action-Buttons — an den unteren Rand gezogen für die Balance */}
+              <div className="mt-auto pt-4 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={onDetailClick}
+                  className="group w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 text-white text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  KI-Traffic Analyse
+                  {detailOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={onPromptTrackingClick}
+                  disabled={!onPromptTrackingClick}
+                  className="group w-full py-2 px-4 bg-surface hover:bg-surface-tertiary border border-border text-body text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
+                >
+                  Prompt Tracking
+                  {promptTrackingOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
 
           </div>
-
-          {/* Trend Chart pro KI-Modell (Multi-Line, im Stil von KpiTrendChart) */}
-          <AiTrafficModelTrendChart
-            projectId={projectId}
-            dateRange={dateRange}
-            externalPrimaryModel={selectedModel}
-            onPrimaryModelChange={setSelectedModel}
-          />
-
         </div>
       )}
-
-      {/* Footer Info-Text & Action-Buttons
-       *
-       * Buttons sind bewusst klar hierarchisiert:
-       *  - Primary (KI-Traffic Analyse): solid lila auf weiß → Haupt-Aktion
-       *  - Secondary (Prompt Tracking):  outline mit semibold-Text → optional
-       */}
-      <div className="mt-4 pt-4 border-t border-border-subtle flex flex-col gap-3">
-        <p className="text-xs text-muted">
-          KI-Traffic umfasst Besuche von bekannten KI-Bots wie ChatGPT, Claude, Perplexity und Google Gemini.
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={onDetailClick}
-            className="group w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 text-white text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            KI-Traffic Analyse
-            {detailOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-          </button>
-          <button
-            type="button"
-            onClick={onPromptTrackingClick}
-            disabled={!onPromptTrackingClick}
-            className="group w-full py-2 px-4 bg-surface hover:bg-surface-tertiary border border-border text-body text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
-          >
-            Prompt Tracking
-            {promptTrackingOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
