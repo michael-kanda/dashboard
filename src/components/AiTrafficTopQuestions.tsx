@@ -68,7 +68,7 @@ export default function AiTrafficTopQuestions({
               {/* Klicks */}
               <span className="flex-shrink-0 text-[13px] font-medium text-heading tabular-nums">
                 {item.clicks.toLocaleString('de-DE')}
-                <span className="ml-0.5 text-[11px] font-normal text-muted">Kl.</span>
+                <span className="ml-1 text-[11px] font-normal text-muted">Klicks</span>
               </span>
 
               {/* Position-Chip — Position ist ein GSC-Float, daher hier fürs Display gerundet */}
