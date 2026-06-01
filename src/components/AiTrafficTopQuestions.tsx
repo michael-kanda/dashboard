@@ -18,10 +18,11 @@ export interface TopQuestionItem {
  *   > 10    → neutral
  */
 function positionChipClass(position: number): string {
-  if (position > 0 && position <= 3) {
+  const p = Math.round(position);
+  if (p > 0 && p <= 3) {
     return 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400';
   }
-  if (position > 0 && position <= 10) {
+  if (p > 0 && p <= 10) {
     return 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400';
   }
   return 'bg-surface-tertiary text-muted';
@@ -70,14 +71,14 @@ export default function AiTrafficTopQuestions({
                 <span className="ml-0.5 text-[11px] font-normal text-muted">Kl.</span>
               </span>
 
-              {/* Position-Chip */}
+              {/* Position-Chip — Position ist ein GSC-Float, daher hier fürs Display gerundet */}
               <span
                 className={cn(
-                  'flex-shrink-0 w-[46px] text-center text-[11px] font-medium px-1.5 py-0.5 rounded-md tabular-nums',
+                  'flex-shrink-0 min-w-[46px] text-center text-[11px] font-medium px-1.5 py-0.5 rounded-md tabular-nums whitespace-nowrap',
                   positionChipClass(item.position)
                 )}
               >
-                Pos. {item.position}
+                Pos. {Math.round(item.position)}
               </span>
             </div>
           ))}
