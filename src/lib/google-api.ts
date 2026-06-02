@@ -1,6 +1,7 @@
 // src/lib/google-api.ts
 
 import { google } from 'googleapis';
+import { buildAiTrafficDimensionFilter } from './ai-sources';
 // ── Globales Retry-/Timeout-Verhalten für ALLE googleapis-Calls ──────────
 // GA4 runReport & GSC query sind POST und werden von gaxios per Default NICHT
 // wiederholt. Da diese Reports rein lesend/idempotent sind, ist Retry sicher.
@@ -457,22 +458,6 @@ export async function getAiTrafficData(
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
-  const AI_SOURCES = [
-    'chatgpt.com',
-    'chat.openai.com',
-    'openai.com',
-    'claude.ai',
-    'anthropic.com',
-    'gemini.google.com',
-    'bard.google.com',
-    'perplexity.ai',
-    'bing.com/chat',
-    'copilot.microsoft.com',
-    'you.com',
-    'poe.com',
-    'character.ai',
-  ];
-
   try {
     const response = await analytics.properties.runReport({
       property: formattedPropertyId,
@@ -480,20 +465,7 @@ export async function getAiTrafficData(
         dateRanges: [{ startDate, endDate }],
         dimensions: [{ name: 'sessionSource' }, { name: 'date' }],
         metrics: [{ name: 'sessions' }, { name: 'totalUsers' }],
-        dimensionFilter: {
-          orGroup: {
-            expressions: AI_SOURCES.map((source) => ({
-              filter: {
-                fieldName: 'sessionSource',
-                stringFilter: {
-                  matchType: 'CONTAINS',
-                  value: source,
-                  caseSensitive: false,
-                },
-              },
-            })),
-          },
-        },
+        dimensionFilter: buildAiTrafficDimensionFilter(),
         orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
         limit: '1000',
       },
