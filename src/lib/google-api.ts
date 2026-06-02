@@ -1,7 +1,7 @@
 // src/lib/google-api.ts
 
 import { google } from 'googleapis';
-import { buildAiTrafficDimensionFilter } from './ai-sources';
+import { buildAiTrafficDimensionFilter, normalizeSource } from './ai-sources';
 // ── Globales Retry-/Timeout-Verhalten für ALLE googleapis-Calls ──────────
 // GA4 runReport & GSC query sind POST und werden von gaxios per Default NICHT
 // wiederholt. Da diese Reports rein lesend/idempotent sind, ist Retry sicher.
@@ -480,7 +480,7 @@ export async function getAiTrafficData(
     const trendMap = new Map<number, number>();
 
     for (const row of rows) {
-      const source = row.dimensionValues?.[0]?.value || 'unknown';
+      const source = normalizeSource(row.dimensionValues?.[0]?.value || 'unknown');
       const dateStr = row.dimensionValues?.[1]?.value || '';
       const sessions = parseInt(row.metricValues?.[0]?.value || '0', 10);
       const users = parseInt(row.metricValues?.[1]?.value || '0', 10);
