@@ -58,9 +58,13 @@ export interface AiSourceData {
   sessions: number;
   users: number;
   percentage: number;
+  conversions: number;
+  conversionRate: number; // in % (conversions / sessions * 100)
+  topLandingPage?: { path: string; sessions: number; conversions: number };
   topPages: {
     path: string;
     sessions: number;
+    conversions?: number;
   }[];
 }
 
@@ -827,6 +831,26 @@ export default function AiTrafficDetailCard({
                           </div>
                         </div>
                       </div>
+
+                      {source.conversions > 0 && (
+                        <div className="flex items-center justify-between mb-3 text-xs">
+                          <span className="text-muted">Conversions</span>
+                          <span className="font-medium text-heading tabular-nums">
+                            {source.conversions.toLocaleString('de-DE')}
+                            <span className="text-faint mx-1">·</span>
+                            <span
+                              className={cn(
+                                'font-medium',
+                                source.conversionRate >= 3 ? 'text-green-600' :
+                                source.conversionRate >= 1 ? 'text-amber-600' :
+                                'text-muted'
+                              )}
+                            >
+                              {source.conversionRate.toFixed(1)}%
+                            </span>
+                          </span>
+                        </div>
+                      )}
 
                       {cleanTopPages.length > 0 && (
                         <div>
