@@ -432,7 +432,8 @@ export async function getAiTrafficExtended(
       journeyResponse,
       eventsResponse,
       scrollResponse,
-      trendBySourceResponse
+      trendBySourceResponse,
+      sourceTotalsResponse
     ] = await Promise.all([
       
       // 1. Hauptdaten: Source + Landingpage + Metriken (inkl. engagementRate)
@@ -567,6 +568,28 @@ export async function getAiTrafficExtended(
           orderBys: [{ dimension: { dimensionName: 'date' } }],
           limit: '10000'
         },
+      }).catch(() => ({ data: { rows: [] } })),
+
+      // 7. Pro-Quelle-Totals OHNE Landingpage-Dimension.
+      //    Grund: Der Hauptreport (1) nutzt sessionSource × landingPagePlusQueryString.
+      //    Diese hohe Kardinalität triggert in GA4 das (other)-Row-/Cardinality-Limit,
+      //    wodurch pro Quelle aufsummierte Sitzungen UNTER dem wahren Wert liegen und die
+      //    daraus berechnete conversionRate (conversions/sessions) zu hoch ausfällt.
+      //    Dieser flache Report liefert die korrekten Pro-Quelle-Zahlen.
+      analytics.properties.runReport({
+        property: formattedPropertyId,
+        requestBody: {
+          dateRanges: [{ startDate, endDate }],
+          dimensions: [{ name: 'sessionSource' }],
+          metrics: [
+            { name: 'sessions' },
+            { name: 'totalUsers' },
+            { name: 'conversions' }
+          ],
+          dimensionFilter: aiSourceFilter,
+          orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+          limit: '1000'
+        },
       }).catch(() => ({ data: { rows: [] } }))
     ]);
 
@@ -580,6 +603,27 @@ export async function getAiTrafficExtended(
     const eventsRows = eventsResponse.data.rows || [];
     const scrollRows = scrollResponse.data.rows || [];
     const trendBySourceRows = trendBySourceResponse.data.rows || [];
+    const sourceTotalsRows = sourceTotalsResponse.data.rows || [];
+
+    // --- Akkurate Pro-Quelle-Totals (aus dem flachen Source-only-Report) ---
+    // Numerator und Denominator stammen hier aus derselben niedrig-kardinalen
+    // Abfrage, daher kein (other)-Undercount. Wird unten für sessions/users/
+    // conversions/conversionRate/percentage der Quellen verwendet.
+    const sourceTotals = new Map<string, { sessions: number; users: number; conversions: number }>();
+    let sourceTotalsSessionsSum = 0;
+    for (const row of sourceTotalsRows) {
+      const s = normalizeSource(row.dimensionValues?.[0]?.value || 'unknown');
+      const sessions = parseInt(row.metricValues?.[0]?.value || '0', 10);
+      const users = parseInt(row.metricValues?.[1]?.value || '0', 10);
+      const conversions = parseInt(row.metricValues?.[2]?.value || '0', 10);
+      const prev = sourceTotals.get(s) || { sessions: 0, users: 0, conversions: 0 };
+      sourceTotals.set(s, {
+        sessions: prev.sessions + sessions,
+        users: prev.users + users,
+        conversions: prev.conversions + conversions,
+      });
+      sourceTotalsSessionsSum += sessions;
+    }
 
     // --- Aggregations-Maps ---
     const sourceMap = new Map<string, {
@@ -827,10 +871,22 @@ export async function getAiTrafficExtended(
       .sort((a, b) => b.sessions - a.sessions);
 
     // Sources
-    const sources = Array.from(sourceMap.entries())
-      .map(([source, data]) => {
-        const sortedPages = Array.from(data.pages.entries())
-          .sort((a, b) => b[1].sessions - a[1].sessions);
+    // Schlüssel-Union aus Landingpage-Aggregation (für topPages) und dem flachen
+    // Source-only-Report (für korrekte Totals) — so geht keine Quelle verloren,
+    // selbst wenn ihre Landingpage-Zeilen ins (other)-Bucket gefallen sind.
+    const allSourceKeys = new Set<string>([
+      ...Array.from(sourceMap.keys()),
+      ...Array.from(sourceTotals.keys()),
+    ]);
+    const sourcePercentageDenominator =
+      sourceTotalsSessionsSum > 0 ? sourceTotalsSessionsSum : displayTotalSessions;
+
+    const sources = Array.from(allSourceKeys)
+      .map((source) => {
+        const data = sourceMap.get(source);
+        const sortedPages = data
+          ? Array.from(data.pages.entries()).sort((a, b) => b[1].sessions - a[1].sessions)
+          : [];
         const topPages = sortedPages
           .slice(0, 5)
           .map(([path, vals]) => ({
@@ -845,14 +901,27 @@ export async function getAiTrafficExtended(
               conversions: sortedPages[0][1].conversions,
             }
           : undefined;
+
+        // Korrekte Totals bevorzugen; Fallback auf die Landingpage-Aggregation,
+        // falls der Source-only-Report leer/fehlerhaft war.
+        const accurate = sourceTotals.get(source);
+        const sourceSessions = accurate?.sessions ?? data?.sessions ?? 0;
+        const sourceUsers = accurate?.users ?? data?.users ?? 0;
+        const sourceConversions = accurate?.conversions ?? data?.conversions ?? 0;
+
+        // engagementRate kommt weiterhin aus der gewichteten Landingpage-Aggregation
+        // (source-only-Report enthält die Metrik nicht).
+        const engRateWeighted = data?.engagementRateWeighted ?? 0;
+        const engRateBaseSessions = data?.sessions ?? 0;
+
         return {
           source,
-          sessions: data.sessions,
-          users: data.users,
-          engagementRate: data.sessions > 0 ? (data.engagementRateWeighted / data.sessions) * 100 : 0,
-          percentage: displayTotalSessions > 0 ? (data.sessions / displayTotalSessions) * 100 : 0,
-          conversions: data.conversions,
-          conversionRate: data.sessions > 0 ? (data.conversions / data.sessions) * 100 : 0,
+          sessions: sourceSessions,
+          users: sourceUsers,
+          engagementRate: engRateBaseSessions > 0 ? (engRateWeighted / engRateBaseSessions) * 100 : 0,
+          percentage: sourcePercentageDenominator > 0 ? (sourceSessions / sourcePercentageDenominator) * 100 : 0,
+          conversions: sourceConversions,
+          conversionRate: sourceSessions > 0 ? (sourceConversions / sourceSessions) * 100 : 0,
           topPages,
           topLandingPage,
         };
