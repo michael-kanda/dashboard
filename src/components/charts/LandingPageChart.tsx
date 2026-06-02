@@ -229,8 +229,8 @@ export default function LandingPageChart({
       <div className="dashboard-widget-surface p-5 rounded-xl flex flex-col h-full min-h-0">
 
         {/* ── Header ──────────────────────────────────────────── */}
-        <div className="mb-4 flex-shrink-0">
-          <div className="flex items-start justify-between gap-4 mb-1.5">
+        <div className="mb-6 flex-shrink-0">
+          <div className="flex items-start justify-between gap-4 mb-3">
             <div>
               <h3 className="text-[18px] font-semibold text-heading">{title}</h3>
               <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
@@ -276,7 +276,7 @@ export default function LandingPageChart({
             </div>
           </div>
 
-          <p className="text-xs text-muted">
+          <p className="text-xs text-muted mt-2">
             Sortiert nach Neuen Nutzern · Quelle GA4 + GSC · {formattedDateRange}
             {queryData && ' · Mit Suchbegriffen'}
           </p>

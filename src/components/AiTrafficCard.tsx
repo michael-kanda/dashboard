@@ -371,11 +371,11 @@ export default function AiTrafficCard({
               </p>
 
               {/* Action-Buttons — an den unteren Rand gezogen für die Balance */}
-              <div className="mt-auto pt-4 flex flex-col gap-2">
+              <div className="mt-auto pt-4 grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={onDetailClick}
-                  className="group w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 text-white text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="group w-full py-2 px-4 bg-surface hover:bg-surface-tertiary border border-border text-body text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   KI-Traffic Analyse
                   {detailOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}

@@ -444,7 +444,7 @@ export default function ProjectDashboard({
             automatisch auf volle Breite zurück. */}
         <Trace at="TopQueries+Landingpages" />
         <div className={`grid grid-cols-1 ${shouldRenderChart ? 'lg:grid-cols-2' : ''} gap-6 mt-8 lg:items-stretch`}>
-          <div id="section-top-queries" className="scroll-mt-20 print-queries-list lg:h-[680px]">
+          <div id="section-top-queries" className="scroll-mt-20 print-queries-list lg:h-[816px]">
             <TopQueriesList
               queries={data.topQueries ?? []}
               isLoading={isLoading}
@@ -455,7 +455,7 @@ export default function ProjectDashboard({
           </div>
 
           {shouldRenderChart && (
-            <div id="section-landingpages" className={`scroll-mt-20 transition-all duration-300 lg:h-[680px] ${!isLandingPagesVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
+            <div id="section-landingpages" className={`scroll-mt-20 transition-all duration-300 lg:h-[816px] ${!isLandingPagesVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
               <div className="print-landing-chart relative h-full">
                  <LandingPageChart
                    data={cleanLandingPages}

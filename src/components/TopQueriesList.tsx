@@ -148,7 +148,7 @@ export default function TopQueriesList({
       <th
         onClick={() => handleSort(field)}
         className={cn(
-          "px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider cursor-pointer select-none border-b border-theme-border-subtle hover:text-body transition-colors bg-surface",
+          "sticky top-0 z-30 px-2 py-3 text-[11px] font-medium uppercase tracking-wider cursor-pointer select-none border-b border-theme-border-subtle hover:text-body transition-colors bg-surface shadow-[0_1px_0_rgba(148,163,184,0.22)]",
           rightAligned ? "text-right" : "text-left",
           isActive ? "text-body" : "text-faint"
         )}
@@ -191,8 +191,8 @@ export default function TopQueriesList({
 
   // ── Header-Block (Titel + Subtitle + Search) ─────────────
   const renderHeader = (subtitle: React.ReactNode) => (
-    <div className="mb-4 flex-shrink-0">
-      <div className="flex items-start justify-between gap-4 mb-1.5">
+    <div className="mb-6 flex-shrink-0">
+      <div className="flex items-start justify-between gap-4 mb-3">
         <div>
           <h3 className="text-[18px] font-semibold text-heading">Top Suchanfragen</h3>
           <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
@@ -246,7 +246,7 @@ export default function TopQueriesList({
           </button>
         </div>
       </div>
-      <p className="text-xs text-muted">{subtitle}</p>
+      <p className="text-xs text-muted mt-2">{subtitle}</p>
     </div>
   );
 
@@ -320,7 +320,7 @@ export default function TopQueriesList({
                 <col style={{ width: '14%' }} />
               </colgroup>
 
-              <thead className="sticky top-0 z-20 bg-surface">
+              <thead className="bg-surface">
                 <tr>
                   {renderSortHeader('query', 'Suchanfrage')}
                   {renderSortHeader('clicks', 'Klicks', true)}
