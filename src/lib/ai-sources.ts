@@ -27,6 +27,19 @@ export const AI_SOURCES = [
 /** GA4 Default-Channel-Group-Wert für KI-Assistenten (nativ seit 13.05.2026). */
 export const AI_ASSISTANT_CHANNEL = 'AI Assistant';
 
+/** Anzeige-Label für KI-Traffic ohne identifizierbare Quelle. */
+export const AI_OTHER_SOURCE = 'Sonstige KI';
+
+/**
+ * GA4-Platzhalter-/Müllwerte, die nicht als eigene Quelle taugen. Im
+ * KI-Traffic-Kontext ist jede Zeile bereits KI-Traffic — hier landen also
+ * z. B. AI-Assistant-Sessions mit gestripptem Referrer (sessionSource
+ * "(direct)") oder fehlender Quelle.
+ */
+const UNATTRIBUTED_SOURCES = new Set([
+  '', '(not set)', '(not provided)', '(none)', '(direct)', 'unknown',
+]);
+
 /** Gruppiert verwandte Roh-Quellen auf einen kanonischen Anzeige-Key. */
 export function normalizeSource(source: string): string {
   const lower = source.toLowerCase();
@@ -38,6 +51,15 @@ export function normalizeSource(source: string): string {
   if (lower.includes('you.com')) return 'you.com';
   if (lower.includes('poe')) return 'poe.com';
   if (lower.includes('character')) return 'character.ai';
+
+  // Mittelweg: NUR echte Platzhalter-/Müllwerte in den Sammel-Bucket.
+  // Echte (aber unbekannte) Domains bleiben erhalten, damit neue KI-Tools
+  // in der Liste sichtbar werden und ggf. in AI_SOURCES aufgenommen werden
+  // können — statt sie hinter "Sonstige KI" zu verstecken.
+  if (UNATTRIBUTED_SOURCES.has(lower.trim())) {
+    return AI_OTHER_SOURCE;
+  }
+
   return source;
 }
 
