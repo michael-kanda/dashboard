@@ -3,6 +3,7 @@
 
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
+import { normalizeSource, buildAiTrafficDimensionFilter } from './ai-sources';
 
 // ============================================================================
 // TYPEN
@@ -362,29 +363,8 @@ function parseGa4Date(dateString: string): string {
   return `${year}-${month}-${day}`;
 }
 
-function normalizeSource(source: string): string {
-  const lower = source.toLowerCase();
-  
-  if (lower.includes('chatgpt') || lower.includes('openai')) return 'chatgpt.com';
-  if (lower.includes('claude') || lower.includes('anthropic')) return 'claude.ai';
-  if (lower.includes('perplexity')) return 'perplexity.ai';
-  if (lower.includes('gemini') || lower.includes('bard')) return 'gemini.google.com';
-  if (lower.includes('copilot') || lower.includes('bing')) return 'copilot.microsoft.com';
-  if (lower.includes('you.com')) return 'you.com';
-  if (lower.includes('poe')) return 'poe.com';
-  if (lower.includes('character')) return 'character.ai';
-  
-  return source;
-}
-
-const AI_SOURCES = [
-  'chatgpt.com', 'chat.openai.com', 'openai.com',
-  'claude.ai', 'anthropic.com',
-  'gemini.google.com', 'bard.google.com',
-  'perplexity.ai',
-  'bing.com/chat', 'copilot.microsoft.com',
-  'you.com', 'poe.com', 'character.ai'
-];
+// normalizeSource, AI_SOURCES und der KI-Traffic-Filter kommen jetzt zentral
+// aus '@/lib/ai-sources' (siehe Import oben).
 
 // ============================================================================
 // HAUPTFUNKTION
@@ -405,21 +385,9 @@ export async function getAiTrafficExtended(
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
-  // AI Source Filter für alle Requests
-  const aiSourceFilter = {
-    orGroup: {
-      expressions: AI_SOURCES.map(source => ({
-        filter: {
-          fieldName: 'sessionSource',
-          stringFilter: {
-            matchType: 'CONTAINS' as const,
-            value: source,
-            caseSensitive: false
-          }
-        }
-      }))
-    }
-  };
+  // Kombinierter KI-Traffic-Filter (Referrer-Domains ODER nativer GA4
+  // "AI Assistant"-Channel) — zentral aus '@/lib/ai-sources'.
+  const aiSourceFilter = buildAiTrafficDimensionFilter();
 
   try {
     // =========================================================================
