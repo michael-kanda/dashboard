@@ -182,21 +182,79 @@ export async function getAiTrafficWithLandingPages(
     });
 
     // =========================================================================
+    // REPORT 3: Pro-Quelle-Totals OHNE Landingpage-Dimension
+    // =========================================================================
+    // Report 1 nutzt sessionSource × landingPagePlusQueryString. Diese hohe
+    // Kardinalität triggert in GA4 das (other)-Row-Limit, wodurch pro Quelle
+    // aufsummierte Sitzungen UNTER dem wahren Wert liegen und eine daraus
+    // berechnete conversionRate zu hoch ausfällt. Dieser flache Report liefert
+    // die korrekten Pro-Quelle-Zahlen (sessions/users/conversions).
+    const sourceTotalsResponse = await analytics.properties.runReport({
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [{ name: 'sessionSource' }],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'totalUsers' },
+          { name: 'conversions' }
+        ],
+        dimensionFilter: {
+          orGroup: {
+            expressions: AI_SOURCES.map(source => ({
+              filter: {
+                fieldName: 'sessionSource',
+                stringFilter: {
+                  matchType: 'CONTAINS',
+                  value: source,
+                  caseSensitive: false
+                }
+              }
+            }))
+          }
+        },
+        orderBys: [
+          { metric: { metricName: 'sessions' }, desc: true }
+        ],
+        limit: '1000'
+      },
+    }).catch(() => ({ data: { rows: [] as any[] } }));
+
+    // =========================================================================
     // DATEN VERARBEITEN
     // =========================================================================
     
     const mainRows = mainResponse.data.rows || [];
     const trendRows = trendResponse.data.rows || [];
+    const sourceTotalsRows = sourceTotalsResponse.data.rows || [];
 
     if (mainRows.length === 0) {
       return emptyResult;
+    }
+
+    // Akkurate Pro-Quelle-Totals aus dem flachen Report (kein (other)-Undercount).
+    const sourceTotals = new Map<string, { sessions: number; users: number; conversions: number }>();
+    let sourceTotalsSessionsSum = 0;
+    for (const row of sourceTotalsRows) {
+      const s = normalizeSource(row.dimensionValues?.[0]?.value || 'unknown');
+      const sessions = parseInt(row.metricValues?.[0]?.value || '0', 10);
+      const users = parseInt(row.metricValues?.[1]?.value || '0', 10);
+      const conversions = parseInt(row.metricValues?.[2]?.value || '0', 10);
+      const prev = sourceTotals.get(s) || { sessions: 0, users: 0, conversions: 0 };
+      sourceTotals.set(s, {
+        sessions: prev.sessions + sessions,
+        users: prev.users + users,
+        conversions: prev.conversions + conversions,
+      });
+      sourceTotalsSessionsSum += sessions;
     }
 
     // Aggregations-Maps
     const sourceMap = new Map<string, {
       sessions: number;
       users: number;
-      pages: Map<string, number>;
+      conversions: number;
+      pages: Map<string, { sessions: number; conversions: number }>;
     }>();
 
     const pageMap = new Map<string, {
@@ -240,12 +298,17 @@ export async function getAiTrafficWithLandingPages(
 
       // Source aggregieren
       if (!sourceMap.has(source)) {
-        sourceMap.set(source, { sessions: 0, users: 0, pages: new Map() });
+        sourceMap.set(source, { sessions: 0, users: 0, conversions: 0, pages: new Map() });
       }
       const sourceData = sourceMap.get(source)!;
       sourceData.sessions += sessions;
       sourceData.users += users;
-      sourceData.pages.set(path, (sourceData.pages.get(path) || 0) + sessions);
+      sourceData.conversions += conversions;
+      const existingSourcePage = sourceData.pages.get(path) || { sessions: 0, conversions: 0 };
+      sourceData.pages.set(path, {
+        sessions: existingSourcePage.sessions + sessions,
+        conversions: existingSourcePage.conversions + conversions,
+      });
 
       // Page aggregieren
       if (!pageMap.has(path)) {
@@ -283,17 +346,49 @@ export async function getAiTrafficWithLandingPages(
     const avgBounceRate = totalSessions > 0 ? (totalBounceRate / totalSessions) * 100 : 0;
 
     // Sources Array erstellen
-    const sources: AiSourceData[] = Array.from(sourceMap.entries())
-      .map(([source, data]) => ({
-        source,
-        sessions: data.sessions,
-        users: data.users,
-        percentage: totalSessions > 0 ? (data.sessions / totalSessions) * 100 : 0,
-        topPages: Array.from(data.pages.entries())
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([path, sessions]) => ({ path, sessions }))
-      }))
+    // Schlüssel-Union aus Landingpage-Aggregation (für topPages) und flachem
+    // Source-only-Report (für korrekte Totals).
+    const allSourceKeys = new Set<string>([
+      ...Array.from(sourceMap.keys()),
+      ...Array.from(sourceTotals.keys()),
+    ]);
+    const sourcePercentageDenominator =
+      sourceTotalsSessionsSum > 0 ? sourceTotalsSessionsSum : totalSessions;
+
+    const sources: AiSourceData[] = Array.from(allSourceKeys)
+      .map((source) => {
+        const data = sourceMap.get(source);
+        const sortedPages = data
+          ? Array.from(data.pages.entries()).sort((a, b) => b[1].sessions - a[1].sessions)
+          : [];
+
+        // Korrekte Totals bevorzugen, Fallback auf Landingpage-Aggregation.
+        const accurate = sourceTotals.get(source);
+        const srcSessions = accurate?.sessions ?? data?.sessions ?? 0;
+        const srcUsers = accurate?.users ?? data?.users ?? 0;
+        const srcConversions = accurate?.conversions ?? data?.conversions ?? 0;
+
+        const topLandingPage = sortedPages[0]
+          ? {
+              path: sortedPages[0][0],
+              sessions: sortedPages[0][1].sessions,
+              conversions: sortedPages[0][1].conversions,
+            }
+          : undefined;
+
+        return {
+          source,
+          sessions: srcSessions,
+          users: srcUsers,
+          percentage: sourcePercentageDenominator > 0 ? (srcSessions / sourcePercentageDenominator) * 100 : 0,
+          conversions: srcConversions,
+          conversionRate: srcSessions > 0 ? (srcConversions / srcSessions) * 100 : 0,
+          topLandingPage,
+          topPages: sortedPages
+            .slice(0, 5)
+            .map(([path, vals]) => ({ path, sessions: vals.sessions, conversions: vals.conversions })),
+        };
+      })
       .sort((a, b) => b.sessions - a.sessions);
 
     // Landingpages Array erstellen
