@@ -254,14 +254,26 @@ export default function AiTrafficCard({
                 <div className="space-y-0.5">
                   {safeTopAiSources.length > 0 ? (
                     safeTopAiSources.map((source, index) => {
-                      const sourcePercentage = typeof source.percentage === 'number' && !isNaN(source.percentage) ? source.percentage : 0;
-                      const sourceSessions = typeof source.sessions === 'number' && !isNaN(source.sessions) ? source.sessions : 0;
                       const sourceName = source.source || 'Unbekannt';
                       const dotColor = getSourceDotColor(sourceName);
                       const modelKey = normalizeSourceKey(sourceName);
                       const isSelected = selectedModel === modelKey;
                       const sparklineValues = sparklinesByModel[modelKey] ?? [];
                       const extSource = extendedSourceMap.get(modelKey);
+
+                      // Alle Zahlen einer Zeile aus derselben Quelle ziehen. Ist v2-Extended
+                      // geladen, gewinnt es – sonst widersprechen sich die (bis 24 h) gecachte
+                      // Session-Zahl aus dem Haupt-Loader und die frische Conv.-Rate aus v2
+                      // (dort gilt conversionRate = conversions / sessions, also nur konsistent,
+                      // wenn die danebenstehende Session-Zahl ebenfalls aus v2 stammt).
+                      const sourceSessions =
+                        typeof extSource?.sessions === 'number' && !isNaN(extSource.sessions)
+                          ? extSource.sessions
+                          : (typeof source.sessions === 'number' && !isNaN(source.sessions) ? source.sessions : 0);
+                      const sourcePercentage =
+                        typeof extSource?.percentage === 'number' && !isNaN(extSource.percentage)
+                          ? extSource.percentage
+                          : (typeof source.percentage === 'number' && !isNaN(source.percentage) ? source.percentage : 0);
                       const topLp = extSource?.topLandingPage;
                       const convRate = extSource?.conversionRate ?? 0;
                       const convCount = extSource?.conversions ?? 0;
