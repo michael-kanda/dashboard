@@ -4,6 +4,7 @@
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 import type { AiTrafficDetailData, AiLandingPageData, AiSourceData } from '@/components/AiTrafficDetailCard';
+import { normalizeSource, buildAiTrafficDimensionFilter } from './ai-sources';
 
 // ============================================================================
 // AUTHENTIFIZIERUNG
@@ -43,16 +44,8 @@ function createAuth(): JWT {
 // KONSTANTEN
 // ============================================================================
 
-const AI_SOURCES = [
-  'chatgpt.com', 'chat.openai.com', 'openai.com',
-  'claude.ai', 'anthropic.com',
-  'gemini.google.com', 'bard.google.com',
-  'perplexity.ai',
-  'bing.com/chat', 'copilot.microsoft.com',
-  'you.com',
-  'poe.com',
-  'character.ai'
-];
+// AI_SOURCES, normalizeSource und der KI-Traffic-Filter kommen jetzt zentral
+// aus '@/lib/ai-sources' (siehe Import oben).
 
 // ============================================================================
 // HELPER
@@ -63,22 +56,6 @@ function parseGa4Date(dateString: string): string {
   const month = dateString.substring(4, 6);
   const day = dateString.substring(6, 8);
   return `${year}-${month}-${day}`;
-}
-
-function normalizeSource(source: string): string {
-  const lower = source.toLowerCase();
-  
-  // Gruppiere ähnliche Quellen
-  if (lower.includes('chatgpt') || lower.includes('openai')) return 'chatgpt.com';
-  if (lower.includes('claude') || lower.includes('anthropic')) return 'claude.ai';
-  if (lower.includes('perplexity')) return 'perplexity.ai';
-  if (lower.includes('gemini') || lower.includes('bard')) return 'gemini.google.com';
-  if (lower.includes('copilot') || lower.includes('bing')) return 'copilot.microsoft.com';
-  if (lower.includes('you.com')) return 'you.com';
-  if (lower.includes('poe')) return 'poe.com';
-  if (lower.includes('character')) return 'character.ai';
-  
-  return source;
 }
 
 // ============================================================================
@@ -96,6 +73,10 @@ export async function getAiTrafficWithLandingPages(
     
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
+
+  // Kombinierter KI-Traffic-Filter (Referrer-Domains ODER nativer GA4
+  // "AI Assistant"-Channel) — zentral aus '@/lib/ai-sources', für alle Reports.
+  const aiTrafficFilter = buildAiTrafficDimensionFilter();
 
   // Default Return
   const emptyResult: AiTrafficDetailData = {
@@ -128,20 +109,7 @@ export async function getAiTrafficWithLandingPages(
           { name: 'bounceRate' },
           { name: 'conversions' }
         ],
-        dimensionFilter: {
-          orGroup: {
-            expressions: AI_SOURCES.map(source => ({
-              filter: {
-                fieldName: 'sessionSource',
-                stringFilter: {
-                  matchType: 'CONTAINS',
-                  value: source,
-                  caseSensitive: false
-                }
-              }
-            }))
-          }
-        },
+        dimensionFilter: aiTrafficFilter,
         orderBys: [
           { metric: { metricName: 'sessions' }, desc: true }
         ],
@@ -161,20 +129,7 @@ export async function getAiTrafficWithLandingPages(
           { name: 'sessions' },
           { name: 'totalUsers' }
         ],
-        dimensionFilter: {
-          orGroup: {
-            expressions: AI_SOURCES.map(source => ({
-              filter: {
-                fieldName: 'sessionSource',
-                stringFilter: {
-                  matchType: 'CONTAINS',
-                  value: source,
-                  caseSensitive: false
-                }
-              }
-            }))
-          }
-        },
+        dimensionFilter: aiTrafficFilter,
         orderBys: [
           { dimension: { dimensionName: 'date' } }
         ]
@@ -199,20 +154,7 @@ export async function getAiTrafficWithLandingPages(
           { name: 'totalUsers' },
           { name: 'conversions' }
         ],
-        dimensionFilter: {
-          orGroup: {
-            expressions: AI_SOURCES.map(source => ({
-              filter: {
-                fieldName: 'sessionSource',
-                stringFilter: {
-                  matchType: 'CONTAINS',
-                  value: source,
-                  caseSensitive: false
-                }
-              }
-            }))
-          }
-        },
+        dimensionFilter: aiTrafficFilter,
         orderBys: [
           { metric: { metricName: 'sessions' }, desc: true }
         ],
