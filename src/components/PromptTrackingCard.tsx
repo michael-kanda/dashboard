@@ -6,7 +6,7 @@ import {
   Sparkles, Download, Search, ExternalLink, WandSparkles, Loader2, X,
   ChevronDown, ChevronUp, Lightbulb, AlertCircle, Info, TrendingUp,
   TrendingDown, Minus, FileText, MapPin, MessageCircleQuestionMark,
-  Copy, ClipboardCheck, Target,
+  Copy, ClipboardCheck,
 } from 'lucide-react';
 import type {
   ProjectDashboardData,
@@ -37,6 +37,28 @@ type SortMode = 'impressions' | 'clicks' | 'ctr' | 'position' | 'wordCount';
 
 const MAX_QUERIES_FOR_AI = 200;
 const MIN_QUERIES_FOR_AI = 5;
+
+function GoogleCleanUnderline({ id }: { id: string }) {
+  return (
+    <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#4285F4" />
+            <stop offset="25%" stopColor="#4285F4" />
+            <stop offset="25%" stopColor="#EA4335" />
+            <stop offset="50%" stopColor="#EA4335" />
+            <stop offset="50%" stopColor="#FBBC05" />
+            <stop offset="75%" stopColor="#FBBC05" />
+            <stop offset="75%" stopColor="#34A853" />
+            <stop offset="100%" stopColor="#34A853" />
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="12" rx="6" fill={`url(#${id})`} />
+      </svg>
+    </div>
+  );
+}
 
 export default function PromptTrackingCard({
   data, dashboardData, domain, dateRange, isAdmin = false,
@@ -92,12 +114,9 @@ export default function PromptTrackingCard({
   if (!data || data.totals.totalQueries === 0) {
     return (
       <div className="dashboard-widget-surface prompt-tracking-card rounded-lg p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-5 h-5 text-purple-500" />
-          <h3 className="text-lg font-semibold text-heading">Prompt Tracking (GSC)</h3>
-          <span className="tone-pill tone-pill--soft tone--purple">
-            AI Mode Proxy
-          </span>
+        <div className="mb-3">
+          <h3 className="text-lg font-semibold text-heading">Prompt Tracking</h3>
+          <GoogleCleanUnderline id="google-clean-gradient-prompt-tracking-empty" />
         </div>
         <p className="text-muted text-sm">
           Keine prompt-ähnlichen Suchanfragen im gewählten Zeitraum gefunden.
@@ -173,20 +192,21 @@ export default function PromptTrackingCard({
   return (
     <div className="dashboard-widget-surface prompt-tracking-card rounded-lg p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+      <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
         <div className="flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Sparkles className="w-5 h-5 text-purple-500" />
+          <div>
             <h3 className="text-lg font-semibold text-heading">Prompt Tracking</h3>
-            <span className="prompt-pill prompt-pill-purple">
-              GSC Proxy
-            </span>
-            <span className="prompt-pill prompt-pill-slate">
-              ≥{data.minWords} Wörter
-            </span>
+            <GoogleCleanUnderline id="google-clean-gradient-prompt-tracking" />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap mt-3 text-xs">
+            <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded font-semibold">Quelle: GSC</span>
+            <span className="text-faint">•</span>
+            <span className="text-muted">AI Mode Proxy</span>
+            <span className="text-faint">•</span>
+            <span className="text-muted">≥{data.minWords} Wörter</span>
             {data.brandKeywordsUsed && data.brandKeywordsUsed.length > 0 && (
               <span
-                className="prompt-pill prompt-pill-blue"
+                className="bg-surface-tertiary text-body px-2 py-0.5 rounded font-medium"
                 title={`Brand-Keywords: ${data.brandKeywordsUsed.join(', ')}`}
               >
                 {data.brandKeywordsUsed.length} Brand-Keywords
@@ -203,7 +223,7 @@ export default function PromptTrackingCard({
           <button
             onClick={handleCluster}
             disabled={!canCluster || isClustering}
-            className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition print:hidden"
+            className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-border text-body bg-surface hover:bg-surface-tertiary disabled:opacity-50 disabled:cursor-not-allowed transition print:hidden"
             title={!canCluster ? `Mindestens ${MIN_QUERIES_FOR_AI} Queries nötig` : `${queriesForAi.length} Queries analysieren`}
           >
             {isClustering ? <><Loader2 className="w-4 h-4 animate-spin" />Analysiere...</> : <><WandSparkles className="w-4 h-4" />Mit AI clustern</>}
@@ -545,18 +565,21 @@ function PromptResearchTool({
   };
 
   return (
-    /* ── Clean surface card with amber left accent for "Admin only" ── */
-    <section className="mt-5 mb-5 rounded-lg shadow-card bg-surface-secondary dark:bg-surface-tertiary p-4 print:hidden border-l-4 border-l-amber-400 dark:border-l-amber-500">
-      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-4">
+    <section className="mt-6 mb-5 dashboard-widget-surface rounded-lg p-6 print:hidden">
+      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-6">
         <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Target className="w-5 h-5 text-amber-600" />
-            <h3 className="font-semibold text-heading">Prompt Research Tool</h3>
-            <span className="tone-pill tone-pill--outline tone--amber">
-              Nur Admins
-            </span>
+          <div>
+            <h3 className="text-lg font-semibold text-heading">Prompt Research Tool</h3>
+            <GoogleCleanUnderline id="google-clean-gradient-prompt-research" />
           </div>
-          <p className="text-xs text-muted mt-1 leading-relaxed">
+          <div className="flex items-center gap-2 flex-wrap mt-3 text-xs">
+            <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded font-semibold">Nur Admins</span>
+            <span className="text-faint">•</span>
+            <span className="text-muted">GSC + GA4</span>
+            <span className="text-faint">•</span>
+            <span className="text-muted">Decision-Prompts</span>
+          </div>
+          <p className="text-xs text-muted mt-2 leading-relaxed">
             Research-Workflow aus Projekt-Setup, GA4/GSC-Signalen, Quick-Wins und gerankten Decision-Prompts.
           </p>
         </div>
@@ -565,7 +588,7 @@ function PromptResearchTool({
             type="button"
             onClick={handleGenerateResearch}
             disabled={isGeneratingResearch}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-amber-300 bg-surface text-amber-800 hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition dark:text-amber-200 dark:hover:bg-surface-tertiary"
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border bg-surface text-body hover:bg-surface-tertiary disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {isGeneratingResearch ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <WandSparkles className="w-3.5 h-3.5" />}
             Mit DataMax generieren
@@ -573,7 +596,7 @@ function PromptResearchTool({
           <button
             type="button"
             onClick={handleCopy}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-amber-600 text-white hover:bg-amber-700 transition"
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border bg-surface text-body hover:bg-surface-tertiary transition"
           >
             {copied ? <ClipboardCheck className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
             {copied ? 'Kopiert' : 'Prompts kopieren'}
@@ -691,7 +714,7 @@ function PromptResearchTool({
       <div className="space-y-2">
         {displayedOpportunities.map((item) => (
           <div key={`${item.rank}-${item.topic}-${item.intent}`} className="grid grid-cols-[44px_1fr] lg:grid-cols-[44px_120px_1fr_110px] gap-3 rounded-md shadow-sm bg-surface p-3">
-            <div className="text-lg font-bold tabular-nums text-amber-700 dark:text-amber-300">#{item.rank}</div>
+            <div className="text-lg font-bold tabular-nums text-heading">#{item.rank}</div>
             <div className="hidden lg:block">
               <div className="text-[10px] uppercase tracking-wide font-semibold text-muted">{item.intent}</div>
               <div className="text-xs font-medium tabular-nums text-body">Score {item.score}</div>
@@ -726,7 +749,7 @@ function ResearchStep({ step, title, lines }: { step: string; title: string; lin
   return (
     <div className="rounded-md shadow-sm bg-surface p-3">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 tabular-nums">{step}</span>
+        <span className="text-[10px] font-bold text-muted tabular-nums">{step}</span>
         <span className="text-sm font-semibold text-heading">{title}</span>
       </div>
       <ul className="space-y-1">
@@ -757,7 +780,7 @@ function SetupField({
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="px-3 py-2 text-sm rounded-md border border-border bg-surface text-body focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+        className="px-3 py-2 text-sm rounded-md border border-border bg-surface text-body focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
       />
     </label>
   );

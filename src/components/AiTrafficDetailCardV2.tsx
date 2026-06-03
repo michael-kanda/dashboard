@@ -129,8 +129,8 @@ const TabButton: React.FC<{
   active: boolean; onClick: () => void; icon: React.ReactNode; label: string;
 }> = ({ active, onClick, icon, label }) => (
   <button onClick={onClick} className={cn(
-    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-    active ? "bg-purple-600 text-white shadow-sm" : "text-secondary hover:bg-surface-tertiary"
+    "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+    active ? "bg-surface-tertiary text-heading shadow-sm" : "text-secondary hover:bg-surface-tertiary"
   )}>
     {icon}{label}
   </button>
@@ -289,7 +289,7 @@ export default function AiTrafficDetailCardV2({
 
   // LOADING
   if (isLoading) return (
-    <div className={cn("dashboard-widget-surface rounded-2xl overflow-hidden", className)}>
+    <div className={cn("dashboard-widget-surface rounded-lg p-6 overflow-hidden", className)}>
       <div className="p-6 animate-pulse">
         <div className="h-8 bg-surface-tertiary rounded w-1/3 mb-6" />
         <div className="grid grid-cols-6 gap-4 mb-6">{[...Array(6)].map((_, i) => <div key={i} className="h-24 bg-surface-secondary rounded-xl" />)}</div>
@@ -323,26 +323,41 @@ export default function AiTrafficDetailCardV2({
 
   // MAIN RENDER
   return (
-    <div className={cn("dashboard-widget-surface rounded-2xl overflow-hidden", className)}>
+    <div className={cn("dashboard-widget-surface rounded-lg p-6 overflow-hidden", className)}>
       
       {/* HEADER */}
-      <div className="px-6 pt-6 pb-4 border-b border-border-subtle">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
-              <Bot className="text-white" size={24} /></div>
-            <div><h2 className="text-xl font-bold text-heading">KI-Traffic Analyse</h2>
-              <p className="text-sm text-muted">Intent-Kategorisierung & User-Journey</p></div>
+      <div className="pb-5 border-b border-border-subtle">
+        <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
+          <div className="min-w-0">
+            <h3 className="text-lg font-semibold text-heading">KI-Traffic Analyse</h3>
+            <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
+                <defs>
+                  <linearGradient id="google-clean-gradient-ai-traffic-analysis" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#4285F4" />
+                    <stop offset="25%" stopColor="#4285F4" />
+                    <stop offset="25%" stopColor="#EA4335" />
+                    <stop offset="50%" stopColor="#EA4335" />
+                    <stop offset="50%" stopColor="#FBBC05" />
+                    <stop offset="75%" stopColor="#FBBC05" />
+                    <stop offset="75%" stopColor="#34A853" />
+                    <stop offset="100%" stopColor="#34A853" />
+                  </linearGradient>
+                </defs>
+                <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-ai-traffic-analysis)" />
+              </svg>
+            </div>
+            <p className="text-xs text-muted mt-2">Intent-Kategorisierung & User-Journey</p>
           </div>
-          <button onClick={() => setIsExpanded(!isExpanded)} className="p-2 hover:bg-surface-tertiary rounded-lg">
+          <button onClick={() => setIsExpanded(!isExpanded)} className="p-2 hover:bg-surface-tertiary rounded-md text-body">
             {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}</button>
         </div>
-        <div className="flex items-center gap-3 text-xs">
-          <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded font-semibold">GA4</span>
+        <div className="flex items-center gap-3 text-xs flex-wrap">
+          <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded text-xs font-semibold">Quelle: GA4</span>
           <span className="text-faint">•</span>
           <span className="text-muted">{formattedDateRange}</span>
           {onRefresh && <><span className="text-faint">•</span>
-            <button onClick={onRefresh} className="text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1">
+            <button onClick={onRefresh} className="text-body hover:text-heading font-medium flex items-center gap-1">
               <RefreshCcw size={12} />Aktualisieren</button></>}
         </div>
       </div>
@@ -350,7 +365,7 @@ export default function AiTrafficDetailCardV2({
       {isExpanded && (
         <>
           {/* KPI GRID */}
-          <div className="px-6 py-5 bg-gradient-to-b from-gray-50/50 to-white dark:bg-surface-tertiary dark:from-transparent dark:to-transparent">
+          <div className="py-5">
             <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
               <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border border-purple-200/60 dark:border-purple-700/30">
                 <div className="flex items-center gap-2 mb-1"><TrendingUp className="text-purple-600" size={16} />
@@ -391,7 +406,7 @@ export default function AiTrafficDetailCardV2({
           </div>
 
           {/* TABS */}
-          <div className="px-6 py-3 border-b border-border-subtle flex items-center gap-2 overflow-x-auto">
+          <div className="py-3 border-b border-border-subtle flex items-center gap-2 overflow-x-auto">
             <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<BarChart3 size={14} />} label="Übersicht" />
             <TabButton active={activeTab === 'intent'} onClick={() => setActiveTab('intent')} icon={<Target size={14} />} label="Intent-Analyse" />
             <TabButton active={activeTab === 'journey'} onClick={() => setActiveTab('journey')} icon={<Waypoints size={14} />} label="User-Journey" />
@@ -400,7 +415,7 @@ export default function AiTrafficDetailCardV2({
           </div>
 
           {/* TAB CONTENT */}
-          <div className="px-6 py-5">
+          <div className="py-5">
             
             {/* OVERVIEW TAB */}
             {activeTab === 'overview' && (
@@ -657,7 +672,7 @@ export default function AiTrafficDetailCardV2({
           </div>
 
           {/* FOOTER */}
-          <div className="px-6 py-4 bg-surface-secondary border-t border-border-subtle">
+          <div className="pt-4 border-t border-border-subtle">
             <div className="flex items-start gap-2 text-xs text-muted">
               <Info size={14} className="text-faint mt-0.5 shrink-0" />
               <p><strong>Intent-Kategorisierung:</strong> Seiten werden automatisch anhand ihrer URL-Struktur kategorisiert.
