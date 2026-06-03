@@ -368,6 +368,11 @@ export default function ProjectDashboard({
           />
         </div>
 
+        <Trace at="GoogleGenAiVisibilityCard?" />
+        <div id="section-google-genai" className="mt-8 scroll-mt-20 print:hidden">
+          <GoogleGenAiVisibilityCard data={data.googleGenAi} />
+        </div>
+
         {/* KI-Traffic Sektion mit Toggle für Detail-Ansicht */}
         <Trace at="AiTrafficCard" />
         <div id="section-ki-traffic" className="grid grid-cols-1 gap-6 mt-8 scroll-mt-20 print-traffic-grid">
@@ -396,11 +401,6 @@ export default function ProjectDashboard({
               promptTrackingEnabled={shouldRenderPromptTracking}
             />
           </div>
-        </div>
-
-        <Trace at="GoogleGenAiVisibilityCard?" />
-        <div id="section-google-genai" className="mt-8 scroll-mt-20 print:hidden">
-          <GoogleGenAiVisibilityCard data={data.googleGenAi} />
         </div>
 
         {/* KI-Traffic Detail-Ansicht (ausklappbar) */}

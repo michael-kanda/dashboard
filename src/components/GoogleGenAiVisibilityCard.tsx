@@ -11,7 +11,6 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Cpu, InfoCircle, Search } from 'react-bootstrap-icons';
 import type { GoogleGenAiPerformanceData } from '@/lib/dashboard-shared';
 import { cn } from '@/lib/utils';
 
@@ -76,10 +75,7 @@ export default function GoogleGenAiVisibilityCard({ data, className }: GoogleGen
     <div className={cn('dashboard-widget-surface rounded-lg p-6', className)}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <Search className="text-[#4285F4]" size={18} />
-            <h3 className="text-lg font-semibold text-heading">Google GenAI Sichtbarkeit</h3>
-          </div>
+          <h3 className="text-lg font-semibold text-heading">Google GenAI Sichtbarkeit</h3>
           <GoogleCleanUnderline id="google-clean-gradient-genai-visibility" />
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
             <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded font-semibold">
@@ -96,8 +92,7 @@ export default function GoogleGenAiVisibilityCard({ data, className }: GoogleGen
           </div>
         </div>
 
-        <div className="flex items-center gap-3 rounded-lg bg-surface-secondary px-4 py-3">
-          <Cpu className="text-[#34A853]" size={18} />
+        <div className="rounded-lg bg-surface-secondary px-4 py-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">GenAI-Impressions</p>
             <div className="flex items-center gap-2">
@@ -112,14 +107,11 @@ export default function GoogleGenAiVisibilityCard({ data, className }: GoogleGen
 
       {!hasData ? (
         <div className="mt-5 rounded-lg border border-dashed border-border-subtle bg-surface-secondary p-4">
-          <div className="flex items-start gap-3">
-            <InfoCircle className="mt-0.5 shrink-0 text-[#FBBC05]" size={18} />
-            <div>
-              <p className="text-sm font-semibold text-heading">Noch keine offiziellen Google-GenAI-Daten sichtbar</p>
-              <p className="mt-1 text-sm text-muted leading-relaxed">
-                {data?.message || 'Google rollt den neuen Search-Console-Report schrittweise aus. Sobald die Property freigeschaltet ist oder die API passende Search-Appearance-Daten liefert, wird dieser Block automatisch befuellt.'}
-              </p>
-            </div>
+          <div>
+            <p className="text-sm font-semibold text-heading">Noch keine offiziellen Google-GenAI-Daten sichtbar</p>
+            <p className="mt-1 text-sm text-muted leading-relaxed">
+              {data?.message || 'Google rollt den neuen Search-Console-Report schrittweise aus. Sobald die Property freigeschaltet ist oder die API passende Search-Appearance-Daten liefert, wird dieser Block automatisch befuellt.'}
+            </p>
           </div>
         </div>
       ) : (
