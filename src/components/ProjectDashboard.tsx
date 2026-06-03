@@ -29,6 +29,7 @@ import LandingPageChart from '@/components/charts/LandingPageChart';
 import { aggregateLandingPages } from '@/lib/utils';
 import { DataMaxChat } from '@/components/datamax';
 import GoogleAdsWidget from '@/components/GoogleAdsWidget';
+import GoogleGenAiVisibilityCard from '@/components/GoogleGenAiVisibilityCard';
 
 // PromptTrackingCard dynamisch nur Client-Side laden – verhindert
 // Hydration-Mismatches bei den Number-Formatierungen / shareTrend-Visuals.
@@ -52,6 +53,7 @@ if (typeof window === 'undefined') {
     AiTrafficDetailWidgetV2, TopQueriesList, SemrushTopKeywords,
     SemrushTopKeywords02, GlobalHeader, ProjectTimelineWidget,
     AiAnalysisWidget, LandingPageChart, DataMaxChat, GoogleAdsWidget,
+    GoogleGenAiVisibilityCard,
   };
   for (const [name, comp] of Object.entries(_components)) {
     if (typeof comp === 'undefined') {
@@ -96,8 +98,10 @@ interface ProjectDashboardProps {
 }
 
 const DEFAULT_DASHBOARD_INFO_TEXT = `• GSC & Google Ads (SERP-Daten): Messen Impressionen und Klicks direkt auf der Google-Suchseite. Diese Daten sind cookie-unabhängig und werden auch bei Cookie-Ablehnung oder im Inkognito-Modus erfasst. GSC filtert dabei seltene Suchanfragen aus Datenschutzgründen heraus (im Schnitt ca. 47 % der Queries). Hinweis: Conversion-Tracking auf der Website ist hingegen consent-pflichtig.
+• Google GenAI-Sichtbarkeit: Misst offizielle Search-Console-Impressions in generativen Google-Sucherlebnissen wie AI Overviews und AI Mode, sofern die Property bereits im Rollout ist und genug Daten vorhanden sind. Diese Werte zeigen Sichtbarkeit in Google-GenAI, nicht Website-Besuche.
 • Google Analytics (GA4): Misst das Nutzerverhalten direkt auf der Website. Erfassung ist cookie-abhängig und erfordert in der EU eine Einwilligung (DSGVO/TTDSG). Mit Consent Mode v2 sind teilweise modellierte Daten verfügbar.
-• KI-Sichtbarkeit (LLM-Prompts): Basiert auf simulierten Abfragen nach der Seybold-Methodik. Da Sprachmodelle nicht-deterministisch antworten, liefern die Werte eine belastbare Trend-Tendenz - keine statischen Fixwerte. Aussagekräftig ist die Entwicklung über mehrere Messzeitpunkte.`;
+• KI-Traffic (GA4): Misst echte Website-Besuche von bekannten KI-Quellen wie ChatGPT, Perplexity, Gemini, Copilot oder Claude, sofern der Referrer oder die Quelle in GA4 erkennbar ist.
+• Prompt Tracking / Prompt Research: Nutzt GSC-Queries und KI-generierte Decision-Prompts als Research- und Optimierungsinstrument. Es ist ein AI-Mode-Proxy bzw. Testverfahren, aber kein offizieller Sichtbarkeitswert von Google.`;
 
 function safeKpi(kpi?: KpiDatum) {
   return kpi || { value: 0, change: 0 };
@@ -168,10 +172,15 @@ export default function ProjectDashboard({
     bounceRate: safeKpi(kpis.bounceRate),
     newUsers: safeKpi(kpis.newUsers),
     avgEngagementTime: safeKpi(kpis.avgEngagementTime),
+    genAiImpressions: safeKpi(kpis.genAiImpressions),
   } : undefined;
 
   const allChartData = {
     ...(data.charts || {}),
+    genAiImpressions: (data.googleGenAi?.trend ?? []).map(item => ({
+      date: item.date,
+      value: item.impressions
+    })),
     aiTraffic: (data.aiTraffic?.trend ?? []).map(item => ({
       date: item.date,
       value: (item as any).value ?? (item as any).sessions ?? 0
@@ -193,9 +202,10 @@ export default function ProjectDashboard({
       { label: 'Engagement', value: extendedKpis.engagementRate.value.toFixed(1), change: extendedKpis.engagementRate.change, unit: '%' },
       { label: 'Conversions', value: extendedKpis.conversions.value.toLocaleString('de-DE'), change: extendedKpis.conversions.change },
       { label: 'KI-Traffic', value: (data.aiTraffic?.totalUsers || 0).toLocaleString('de-DE'), change: data.aiTraffic?.totalUsersChange || 0 },
+      { label: 'Google GenAI', value: (data.googleGenAi?.totalImpressions || 0).toLocaleString('de-DE'), change: data.googleGenAi?.impressionsChange || 0 },
       { label: 'Ø Zeit', value: extendedKpis.avgEngagementTime.value.toLocaleString('de-DE'), change: extendedKpis.avgEngagementTime.change },
     ];
-  }, [extendedKpis, data.aiTraffic]);
+  }, [extendedKpis, data.aiTraffic, data.googleGenAi]);
 
   const handleDateRangeChange = (range: DateRangeOption) => {
     if (range === dateRange) return;
@@ -386,6 +396,11 @@ export default function ProjectDashboard({
               promptTrackingEnabled={shouldRenderPromptTracking}
             />
           </div>
+        </div>
+
+        <Trace at="GoogleGenAiVisibilityCard?" />
+        <div id="section-google-genai" className="mt-8 scroll-mt-20 print:hidden">
+          <GoogleGenAiVisibilityCard data={data.googleGenAi} />
         </div>
 
         {/* KI-Traffic Detail-Ansicht (ausklappbar) */}

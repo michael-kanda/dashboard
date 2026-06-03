@@ -22,6 +22,7 @@ export type ActiveKpi =
   | 'newUsers'
   | 'avgEngagementTime'
   | 'aiTraffic'
+  | 'genAiImpressions'
   | 'paidSearch';
 
 export const KPI_TAB_META: Record<string, { label: string; color: string }> = {
@@ -34,6 +35,7 @@ export const KPI_TAB_META: Record<string, { label: string; color: string }> = {
   bounceRate:        { label: 'Bounce Rate',     color: '#ef4444' },
   newUsers:          { label: 'Neue Nutzer',     color: '#06b6d4' },
   avgEngagementTime: { label: 'Ø Zeit',          color: '#6366f1' },
+  genAiImpressions:  { label: 'Google GenAI',    color: '#4285f4' },
   paidSearch:        { label: 'Paid Search',     color: '#14b8a6' },
 };
 
@@ -46,7 +48,7 @@ export interface ChartEntry {
 export interface BingDataPoint { date: string; clicks: number; impressions: number; }
 
 export interface ApiErrorStatus {
-  gsc?: string; ga4?: string; semrush?: string; bing?: string;
+  gsc?: string; ga4?: string; semrush?: string; bing?: string; genAi?: string;
 }
 
 export interface LandingPageQueryData { query: string; clicks: number; impressions: number; }
@@ -87,6 +89,29 @@ export interface GoogleAdsData {
   adRows?: GoogleAdsRow[];
   searchQueryRows?: GoogleAdsRow[];
   source?: 'ga4' | 'sheet';
+}
+
+export interface GoogleGenAiTrendPoint {
+  date: number;
+  impressions: number;
+}
+
+export interface GoogleGenAiBreakdownItem {
+  key: string;
+  impressions: number;
+}
+
+export interface GoogleGenAiPerformanceData {
+  status: 'available' | 'unavailable' | 'api_unsupported';
+  message: string;
+  totalImpressions: number;
+  impressionsChange?: number;
+  trend: GoogleGenAiTrendPoint[];
+  topPages: GoogleGenAiBreakdownItem[];
+  countries: GoogleGenAiBreakdownItem[];
+  devices: GoogleGenAiBreakdownItem[];
+  detectedAppearances: string[];
+  source: 'gsc-search-appearance' | 'gsc-report-rollout';
 }
 
 // ── Prompt Tracking Types ─────────────────────────────────────────
@@ -169,6 +194,7 @@ export interface ProjectDashboardData {
     bounceRate?: KpiDatum;
     newUsers?: KpiDatum;
     avgEngagementTime?: KpiDatum;
+    genAiImpressions?: KpiDatum;
     paidSearch?: KpiDatum;
   };
   charts?: {
@@ -182,6 +208,7 @@ export interface ProjectDashboardData {
     newUsers?: ChartPoint[];
     avgEngagementTime?: ChartPoint[];
     aiTraffic?: ChartPoint[];
+    genAiImpressions?: ChartPoint[];
     paidSearch?: ChartPoint[];
   };
   topQueries?: TopQueryData[];
@@ -191,6 +218,7 @@ export interface ProjectDashboardData {
   landingPageQueries?: LandingPageQueries;
   weatherData?: Record<string, DailyWeather>;
   googleAdsData?: GoogleAdsData;
+  googleGenAi?: GoogleGenAiPerformanceData;
   promptTracking?: PromptTrackingResult;
   countryData?: ChartEntry[];
   channelData?: ChartEntry[];
@@ -212,6 +240,7 @@ export function normalizeFlatKpis(input?: ProjectDashboardData['kpis']) {
     bounceRate:        input?.bounceRate        ?? ZERO_KPI,
     newUsers:          input?.newUsers          ?? ZERO_KPI,
     avgEngagementTime: input?.avgEngagementTime ?? ZERO_KPI,
+    genAiImpressions:  input?.genAiImpressions  ?? ZERO_KPI,
     paidSearch:        input?.paidSearch        ?? ZERO_KPI,
   };
 }

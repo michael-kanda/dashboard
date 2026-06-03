@@ -237,6 +237,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const genAi = data.googleGenAi;
+    const genAiTrend = genAi?.trend || [];
+    let genAiTrendInfo = genAi?.message || 'Keine Google-GenAI-Daten verfügbar';
+    if (genAiTrend.length >= 7) {
+      const recentWeek = genAiTrend.slice(-7).reduce((sum: number, t: any) => sum + (t.impressions || t.value || 0), 0);
+      const previousWeek = genAiTrend.slice(-14, -7).reduce((sum: number, t: any) => sum + (t.impressions || t.value || 0), 0);
+      if (previousWeek > 0) {
+        const trendChange = ((recentWeek - previousWeek) / previousWeek * 100).toFixed(1);
+        genAiTrendInfo = `Letzte 7 Tage: ${recentWeek} GenAI-Impressions (${Number(trendChange) >= 0 ? '+' : ''}${trendChange}% vs. Vorwoche)`;
+      } else {
+        genAiTrendInfo = `Letzte 7 Tage: ${recentWeek} GenAI-Impressions`;
+      }
+    }
+
+    const genAiTopPages = genAi?.topPages?.length
+      ? genAi.topPages.slice(0, 5).map((page: any) => `- ${page.key}: ${fmt(page.impressions)} GenAI-Impressions`).join('\n')
+      : 'Keine Top-Seiten verfügbar';
+
+    const genAiStatusLabel = genAi?.status === 'available'
+      ? 'verfügbar'
+      : genAi?.status === 'api_unsupported'
+        ? 'Report/Rollout noch nicht per API sichtbar'
+        : 'nicht verfügbar oder zu wenig Daten';
+
     const summaryData = `
       DOMAIN: ${project.domain}
       ZEITPLAN STATUS: ${timelineInfo}
@@ -253,6 +277,7 @@ export async function POST(req: NextRequest) {
       - Conversions: ${fmt(kpis.conversions?.value)} (${change(kpis.conversions?.change)}%)
       - Interaktionsrate: ${fmt(kpis.engagementRate?.value)}%
       - KI-Anteil am Traffic: ${aiShare}%
+      - Google GenAI-Impressions: ${fmt(genAi?.totalImpressions || 0)} (${change(genAi?.impressionsChange)}%)
       
       TOP KEYWORDS (Traffic):
       ${topKeywords}
@@ -273,6 +298,20 @@ export async function POST(req: NextRequest) {
       
       KI-QUELLEN (Woher kommen die Besucher?):
       ${aiTrafficSources}
+
+      ===== GOOGLE GENAI SICHTBARKEIT (Search Console) =====
+      Status: ${genAiStatusLabel}
+      Offizielle GenAI-Impressions: ${fmt(genAi?.totalImpressions || 0)} (${change(genAi?.impressionsChange)}%)
+      Quelle/Report: AI Overviews / AI Mode, sofern Search Console Property freigeschaltet ist
+      Trend: ${genAiTrendInfo}
+      Erkannte Search-Appearances: ${genAi?.detectedAppearances?.join(', ') || 'keine'}
+      Top-Seiten in Google GenAI:
+      ${genAiTopPages}
+
+      METHODIK-HINWEIS:
+      Google GenAI Sichtbarkeit = offizielle Search-Console-Impressions in generativen Google-Sucherlebnissen.
+      KI-Traffic = echte Website-Besuche in GA4 von KI-Quellen.
+      Prompt Tracking = Research/Proxy auf Basis von GSC-Queries und simulierten Decision-Prompts.
       
       INTERPRETATION:
       - ChatGPT/OpenAI = Nutzer haben in ChatGPT nach Infos gesucht und wurden auf diese Seite verwiesen
@@ -283,7 +322,7 @@ export async function POST(req: NextRequest) {
     `;
 
     // --- CACHE LOGIK ---
-    const cacheInputString = `${summaryData}|ROLE:${userRole}|ADS_ENABLED:${googleAdsEnabled}|V8_PROJECT_ADS_VISIBILITY`;
+    const cacheInputString = `${summaryData}|ROLE:${userRole}|ADS_ENABLED:${googleAdsEnabled}|V9_GOOGLE_GENAI_VISIBILITY`;
     const inputHash = createHash(cacheInputString);
 
     const { rows: cacheRows } = await sql`
@@ -369,7 +408,10 @@ export async function POST(req: NextRequest) {
         3. <h4...>KI-Traffic Status:</h4>
            Zeige: Gesamt-Sessions, Top 3 Quellen (ChatGPT, Perplexity, etc.), Trend.
            Nutze das lila Design: ${aiTrafficTemplate}
-        ${googleAdsSection ? `3b. <h4...>Google Ads:</h4>
+        3b. <h4...>Google GenAI Sichtbarkeit:</h4>
+           Zeige offizielle Google-GenAI-Impressions, Status und Top-Seiten.
+           Wenn der Report nicht verfügbar ist, klar sagen: "noch nicht im Rollout/API sichtbar" statt Werte zu schätzen.
+        ${googleAdsSection ? `3c. <h4...>Google Ads:</h4>
            <ul...>
              <li...>Kosten, Klicks, CPC, Conversions als KPI-Liste.
            </ul...>` : ''}
@@ -385,6 +427,8 @@ export async function POST(req: NextRequest) {
            Basierend auf den KI-Traffic Daten:
            - Welche KI-Plattformen bringen Traffic?
            - Ist der KI-Anteil am Gesamttraffic steigend/fallend?
+           - Google GenAI Sichtbarkeit separat interpretieren: offizielle Impressions in AI Overviews / AI Mode, nicht GA4-Sessions.
+           - Prompt Tracking nur als Research/Proxy einordnen, nicht als offiziellen Wert.
            - Konkrete Empfehlungen zur Verbesserung der KI-Sichtbarkeit (strukturierte Daten, FAQ-Seiten, etc.)
         ${googleAdsSection ? `6. <h4...>Google Ads Performance:</h4>
            Analysiere die GOOGLE ADS Daten:
@@ -405,6 +449,7 @@ export async function POST(req: NextRequest) {
              <li...>Nutzer & Klassische Besucher.
              <li...>Conversions (Erreichte Ziele) & Engagement.
              <li...>KI-Sichtbarkeit: Füge hinzu: <br><span class="text-xs text-purple-600 block mt-0.5">🤖 Ihre Inhalte werden von KI-Assistenten (ChatGPT, Gemini, Perplexity) gefunden und empfohlen!</span>
+             <li...>Google GenAI: Zeige offizielle Google-GenAI-Impressions nur, wenn verfügbar. Wenn nicht verfügbar, positiv und transparent erklären, dass Google den neuen Report schrittweise ausrollt.
            </ul...>
         ${googleAdsSection ? `2b. <h4...>Ihre Google Werbung (Überblick):</h4>
            <ul...>
@@ -421,6 +466,7 @@ export async function POST(req: NextRequest) {
         5. <h4...>Zukunft: KI-Sichtbarkeit:</h4>
            Erkläre dem Kunden positiv und verständlich:
            - "${fmt(data.aiTraffic?.totalUsers || 0)} Besucher kamen über KI-Assistenten wie ChatGPT"
+           - Google GenAI separat erklären: "Sichtbarkeit in AI Overviews / AI Mode" bedeutet Impressionen auf Google, nicht automatisch Besucher.
            - "Das bedeutet: Wenn Menschen KI-Tools nach [Branche/Thema] fragen, werden SIE empfohlen!"
            - "Dieser Trend wächst stark - wir positionieren Sie optimal dafür."
         ${googleAdsSection ? `6. <h4...>Ihre Google Werbung:</h4>

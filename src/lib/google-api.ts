@@ -30,7 +30,7 @@ google.options({
   timeout: 20_000,
 });
 import { JWT } from 'google-auth-library';
-import { ChartEntry } from '@/lib/dashboard-shared';
+import { ChartEntry, type GoogleGenAiPerformanceData, type GoogleGenAiBreakdownItem } from '@/lib/dashboard-shared';
 import type { TopQueryData } from '@/types/dashboard';
 
 // --- Typdefinitionen ---
@@ -221,6 +221,148 @@ export async function getSearchConsoleData(
   } catch (error) {
     console.error('GSC Error:', error);
     throw error;
+  }
+}
+
+const GEN_AI_SEARCH_APPEARANCE_MATCHERS = [
+  'ai overview',
+  'ai overviews',
+  'ai mode',
+  'generative ai',
+  'gen ai',
+  'search generative',
+];
+
+function isGenAiSearchAppearance(value: string): boolean {
+  const normalized = value.toLowerCase();
+  return GEN_AI_SEARCH_APPEARANCE_MATCHERS.some((needle) => normalized.includes(needle));
+}
+
+function emptyGoogleGenAiPerformance(message: string): GoogleGenAiPerformanceData {
+  return {
+    status: 'unavailable',
+    message,
+    totalImpressions: 0,
+    trend: [],
+    topPages: [],
+    countries: [],
+    devices: [],
+    detectedAppearances: [],
+    source: 'gsc-report-rollout',
+  };
+}
+
+async function queryGenAiDimension(
+  searchconsole: any,
+  siteUrl: string,
+  startDate: string,
+  endDate: string,
+  appearances: string[],
+  dimension: 'date' | 'page' | 'country' | 'device',
+  rowLimit = 25000
+): Promise<GoogleGenAiBreakdownItem[]> {
+  const aggregate = new Map<string, number>();
+
+  for (const appearance of appearances) {
+    const res = await searchconsole.searchanalytics.query({
+      siteUrl,
+      requestBody: {
+        startDate,
+        endDate,
+        dimensions: [dimension],
+        rowLimit,
+        type: 'web',
+        dimensionFilterGroups: [{
+          groupType: 'and',
+          filters: [{
+            dimension: 'searchAppearance',
+            operator: 'equals',
+            expression: appearance,
+          }],
+        }],
+      },
+    });
+
+    for (const row of res.data.rows || []) {
+      const key = row.keys?.[0] || '(unbekannt)';
+      aggregate.set(key, (aggregate.get(key) || 0) + (row.impressions || 0));
+    }
+  }
+
+  return Array.from(aggregate.entries())
+    .map(([key, impressions]) => ({ key, impressions }))
+    .sort((a, b) => b.impressions - a.impressions);
+}
+
+export async function getGoogleGenAiPerformanceData(
+  siteUrl: string,
+  startDate: string,
+  endDate: string
+): Promise<GoogleGenAiPerformanceData> {
+  const auth = createAuth();
+  const searchconsole = google.searchconsole({ version: 'v1', auth });
+
+  try {
+    const appearanceRes = await searchconsole.searchanalytics.query({
+      siteUrl,
+      requestBody: {
+        startDate,
+        endDate,
+        dimensions: ['searchAppearance'],
+        rowLimit: 25000,
+        type: 'web',
+      },
+    });
+
+    const allAppearances = (appearanceRes.data.rows || [])
+      .map((row) => row.keys?.[0])
+      .filter((value): value is string => typeof value === 'string' && value.length > 0);
+
+    const genAiAppearances = allAppearances.filter(isGenAiSearchAppearance);
+
+    if (genAiAppearances.length === 0) {
+      return emptyGoogleGenAiPerformance(
+        'Der Google-GenAI-Report ist fuer diese Property noch nicht per API/Search-Appearance sichtbar oder es gibt zu wenige Impressionen.'
+      );
+    }
+
+    const [dates, pages, countries, devices] = await Promise.all([
+      queryGenAiDimension(searchconsole, siteUrl, startDate, endDate, genAiAppearances, 'date'),
+      queryGenAiDimension(searchconsole, siteUrl, startDate, endDate, genAiAppearances, 'page', 100),
+      queryGenAiDimension(searchconsole, siteUrl, startDate, endDate, genAiAppearances, 'country', 100),
+      queryGenAiDimension(searchconsole, siteUrl, startDate, endDate, genAiAppearances, 'device', 100),
+    ]);
+
+    const trend = dates
+      .map((item) => ({
+        date: parseGscDate(item.key),
+        impressions: item.impressions,
+      }))
+      .sort((a, b) => a.date - b.date);
+
+    const totalImpressions = trend.reduce((sum, point) => sum + point.impressions, 0);
+
+    return {
+      status: totalImpressions > 0 ? 'available' : 'unavailable',
+      message: totalImpressions > 0
+        ? 'Offizielle Google-GenAI-Sichtbarkeit aus Search Console Search-Appearance-Daten.'
+        : 'Google-GenAI-Daten wurden erkannt, aber im Zeitraum liegen keine Impressionen vor.',
+      totalImpressions,
+      trend,
+      topPages: pages.slice(0, 10),
+      countries: countries.slice(0, 10),
+      devices: devices.slice(0, 10),
+      detectedAppearances: genAiAppearances,
+      source: 'gsc-search-appearance',
+    };
+  } catch (error: any) {
+    console.warn('[Google GenAI] Report/API nicht verfuegbar:', error?.message || error);
+    return {
+      ...emptyGoogleGenAiPerformance(
+        'Der neue Google-GenAI-Report ist offiziell angekuendigt, aber fuer diese Property/API-Abfrage noch nicht verfuegbar.'
+      ),
+      status: 'api_unsupported',
+    };
   }
 }
 

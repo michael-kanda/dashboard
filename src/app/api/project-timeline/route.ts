@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
         },
         gscImpressionTrend: generateTrendData(demoStartDate, demoDurationMonths, 800, 1200),
         aiTrafficTrend: generateTrendData(demoStartDate, demoDurationMonths, 50, 180),
+        genAiImpressionTrend: generateTrendData(demoStartDate, demoDurationMonths, 20, 90),
         topMovers: [
           {
             url: 'https://demo-shop.de/produkte/sneaker-collection',
@@ -204,6 +205,7 @@ export async function GET(req: NextRequest) {
 
     // 4. AI Traffic Trend (ab Projektstart) - aus Cache
     let aiTrafficTrend: { date: string; value: number }[] = [];
+    let genAiImpressionTrend: { date: string; value: number }[] = [];
     
     try {
       const { rows: cacheRows } = await sql`
@@ -221,8 +223,17 @@ export async function GET(req: NextRequest) {
             value: point.sessions || point.value || 0
           }));
       }
+
+      if (cacheRows.length > 0 && cacheRows[0].data?.googleGenAi?.trend) {
+        genAiImpressionTrend = cacheRows[0].data.googleGenAi.trend
+          .filter((point: any) => new Date(point.date) >= projectStartDate)
+          .map((point: any) => ({
+            date: new Date(point.date).toISOString().split('T')[0],
+            value: point.impressions || point.value || 0
+          }));
+      }
     } catch (e) {
-      console.warn('[Project Timeline] AI Traffic Trend nicht verfügbar:', e);
+      console.warn('[Project Timeline] KI/GenAI Trend nicht verfügbar:', e);
     }
 
     // 5. Top Movers (Landingpages mit größtem Impressionen-Zuwachs)
@@ -260,6 +271,7 @@ export async function GET(req: NextRequest) {
       },
       gscImpressionTrend,
       aiTrafficTrend,
+      genAiImpressionTrend,
       topMovers
     };
 

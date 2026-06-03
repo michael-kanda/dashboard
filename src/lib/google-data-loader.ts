@@ -4,6 +4,7 @@ import { sql } from '@vercel/postgres';
 import { type User } from '@/lib/schemas';
 import {
   getSearchConsoleData,
+  getGoogleGenAiPerformanceData,
   getAnalyticsData,
   getTopQueries,
   getAiTrafficData,
@@ -30,6 +31,7 @@ import {
   PromptTrackingShareBucket,
   PromptTrackingPrevious,
 } from '@/lib/dashboard-shared';
+import type { GoogleGenAiPerformanceData } from '@/lib/dashboard-shared';
 import type { TopQueryData, ChartPoint } from '@/types/dashboard';
 
 import { getDemoAnalyticsData } from '@/lib/demo-data';
@@ -208,17 +210,21 @@ export async function getOrFetchGoogleData(
         const promptCacheIsCurrent =
           !cacheEntry.data?.promptTracking ||
           cachedPromptMinWords === DEFAULT_PROMPT_TRACKING_MIN_WORDS;
+        const genAiCacheIsCurrent = !user.gsc_site_url || cacheEntry.data?.googleGenAi !== undefined;
         // Defekte Alt-Einträge (mit gespeicherten API-Fehlern) nur kurz vertrauen,
         // damit ein früher persistiertes Blip-Ergebnis sich von selbst heilt.
         const cachedHadErrors = !!cacheEntry.data?.apiErrors;
         const effectiveMaxAgeHours = cachedHadErrors ? 1 : getCacheDuration(dateRange);
 
-        if ((now - lastFetched) / (1000 * 60 * 60) < effectiveMaxAgeHours && promptCacheIsCurrent) {
+        if ((now - lastFetched) / (1000 * 60 * 60) < effectiveMaxAgeHours && promptCacheIsCurrent && genAiCacheIsCurrent) {
           console.log(`[Google Cache] ✅ HIT für ${user.email}${cachedHadErrors ? ' (degraded, kurze TTL)' : ''}`);
           return { ...cacheEntry.data, fromCache: true };
         }
         if (!promptCacheIsCurrent) {
           console.log(`[Google Cache] 🔄 MISS wegen Prompt-Tracking-Schwelle (${cachedPromptMinWords} → ${DEFAULT_PROMPT_TRACKING_MIN_WORDS})`);
+        }
+        if (!genAiCacheIsCurrent) {
+          console.log('[Google Cache] 🔄 MISS wegen fehlendem Google-GenAI-Datenblock');
         }
       }
     } catch (error) {
@@ -263,6 +269,7 @@ export async function getOrFetchGoogleData(
   let apiErrors: ApiErrorStatus = {};
   let landingPageQueries: LandingPageQueries = {};
   let googleAdsData: GoogleAdsData | undefined;
+  let googleGenAi: GoogleGenAiPerformanceData | undefined;
   let promptTracking: PromptTrackingResult | undefined;
 
   if (user.gsc_site_url) {
@@ -283,6 +290,23 @@ export async function getOrFetchGoogleData(
 
       topQueries = await getTopQueries(user.gsc_site_url, startDateStr, endDateStr);
       landingPageQueries = await getQueriesByLandingPageObject(user.gsc_site_url, startDateStr, endDateStr, 5);
+
+      try {
+        const [genAiCurrent, genAiPrevious] = await Promise.all([
+          getGoogleGenAiPerformanceData(user.gsc_site_url, startDateStr, endDateStr),
+          getGoogleGenAiPerformanceData(user.gsc_site_url, prevStartStr, prevEndStr),
+        ]);
+        googleGenAi = {
+          ...genAiCurrent,
+          impressionsChange: calculateChange(
+            genAiCurrent.totalImpressions,
+            genAiPrevious.totalImpressions
+          ),
+        };
+      } catch (e: any) {
+        console.warn('[Google GenAI] Fehler (ignoriert):', e);
+        apiErrors.genAi = e?.message || 'Google GenAI Report nicht verfügbar';
+      }
 
       try {
         const { keywords: brandKeywords, autoDetected } = await getBrandKeywordsForUser(
@@ -462,6 +486,7 @@ export async function getOrFetchGoogleData(
       bounceRate: { value: parseFloat((currentData.bounceRate.total * 100).toFixed(2)), change: calculateChange(currentData.bounceRate.total, prevData.bounceRate.total) },
       newUsers: { value: currentData.newUsers.total, change: calculateChange(currentData.newUsers.total, prevData.newUsers.total) },
       avgEngagementTime: { value: currentData.avgEngagementTime.total, change: calculateChange(currentData.avgEngagementTime.total, prevData.avgEngagementTime.total) },
+      genAiImpressions: { value: googleGenAi?.totalImpressions || 0, change: googleGenAi?.impressionsChange || 0 },
       paidSearch: { value: currentData.paidSearch.total, change: calculateChange(currentData.paidSearch.total, prevData.paidSearch.total) }
     },
     charts: {
@@ -474,11 +499,12 @@ export async function getOrFetchGoogleData(
       bounceRate: currentData.bounceRate.daily || [],
       newUsers: currentData.newUsers.daily || [],
       avgEngagementTime: currentData.avgEngagementTime.daily || [],
+      genAiImpressions: (googleGenAi?.trend || []).map(point => ({ date: point.date, value: point.impressions })),
       paidSearch: currentData.paidSearch.daily || []
     },
     topQueries, landingPageQueries, topConvertingPages,
     aiTraffic, countryData, channelData, deviceData,
-    bingData, weatherData, googleAdsData, promptTracking,
+    bingData, weatherData, googleAdsData, googleGenAi, promptTracking,
     apiErrors: Object.keys(apiErrors).length > 0 ? apiErrors : undefined
   };
 

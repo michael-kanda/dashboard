@@ -58,6 +58,7 @@ interface TimelineData {
   };
   gscImpressionTrend: TrendPoint[];
   aiTrafficTrend?: TrendPoint[];
+  genAiImpressionTrend?: TrendPoint[];
   topMovers?: TopMover[];
 }
 
@@ -133,7 +134,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
 
   if (error || !data || !data.project) return null;
 
-  const { project, progress, gscImpressionTrend, aiTrafficTrend, topMovers } = data;
+  const { project, progress, gscImpressionTrend, aiTrafficTrend, genAiImpressionTrend, topMovers } = data;
   const { counts, percentage } = progress;
   
   // Projekt-Zeitraum
@@ -148,11 +149,11 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
   const timeElapsedPercentage = Math.max(0, Math.min(100, (elapsedProjectDays / totalProjectDays) * 100));
   
   // Daten zusammenführen (null für fehlende GSC Daten, damit Chart nicht auf 0 fällt)
-  const chartDataMap = new Map<string, { date: number; impressions: number | null; aiTraffic: number }>();
+  const chartDataMap = new Map<string, { date: number; impressions: number | null; aiTraffic: number; genAiImpressions: number }>();
   
   gscImpressionTrend.forEach(d => {
     const timestamp = new Date(d.date).getTime();
-    chartDataMap.set(d.date, { date: timestamp, impressions: d.value, aiTraffic: 0 });
+    chartDataMap.set(d.date, { date: timestamp, impressions: d.value, aiTraffic: 0, genAiImpressions: 0 });
   });
 
   if (aiTrafficTrend) {
@@ -164,7 +165,24 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
         chartDataMap.set(d.date, { 
           date: new Date(d.date).getTime(), 
           impressions: null, 
-          aiTraffic: d.value 
+          aiTraffic: d.value,
+          genAiImpressions: 0
+        });
+      }
+    });
+  }
+
+  if (genAiImpressionTrend) {
+    genAiImpressionTrend.forEach(d => {
+      const entry = chartDataMap.get(d.date);
+      if (entry) {
+        entry.genAiImpressions = d.value;
+      } else {
+        chartDataMap.set(d.date, {
+          date: new Date(d.date).getTime(),
+          impressions: null,
+          aiTraffic: 0,
+          genAiImpressions: d.value
         });
       }
     });
@@ -183,13 +201,16 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
   // Trends berechnen
   const gscTrend = calculateTrendDirection(gscImpressionTrend);
   const aiTrend = calculateTrendDirection(aiTrafficTrend || []);
+  const genAiTrend = calculateTrendDirection(genAiImpressionTrend || []);
   
   // Summen & Prozentuale Änderung berechnen
   const totalGscImpressions = gscImpressionTrend.reduce((acc, curr) => acc + curr.value, 0);
   const totalAiSessions = aiTrafficTrend?.reduce((acc, curr) => acc + curr.value, 0) || 0;
+  const totalGenAiImpressions = genAiImpressionTrend?.reduce((acc, curr) => acc + curr.value, 0) || 0;
   
   const gscChangePercent = calculatePercentageChange(gscImpressionTrend);
   const aiChangePercent = calculatePercentageChange(aiTrafficTrend);
+  const genAiChangePercent = calculatePercentageChange(genAiImpressionTrend);
 
   // Helper Components
   const TrendIcon = ({ direction, colorClass }: { direction: 'up' | 'down' | 'neutral', colorClass: string }) => {
@@ -284,7 +305,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
           </div>
 
           {/* NEU: KI Trend & GSC Trend Icons mit Zahlen und Change Badge */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3 gap-3 pt-2">
             {/* GSC Summary */}
             <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100 shadow-sm">
                <div className="flex items-center gap-2 mb-2 text-blue-600">
@@ -312,6 +333,20 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
                     {new Intl.NumberFormat('de-DE', { notation: 'compact', maximumFractionDigits: 1 }).format(totalAiSessions)}
                   </span>
                   <ChangeBadge change={aiChangePercent} />
+               </div>
+            </div>
+
+            <div className="bg-sky-50/50 rounded-xl p-3 border border-sky-100 shadow-sm">
+               <div className="flex items-center gap-2 mb-2 text-sky-600">
+                  <Cpu size={14} />
+                  <span className="text-xs font-bold uppercase tracking-wide opacity-80">Google GenAI</span>
+               </div>
+               <div className="flex items-end gap-2">
+                  <div className="mb-1"><TrendIcon direction={genAiTrend} colorClass="text-sky-600" /></div>
+                  <span className="text-xl font-bold text-heading leading-none">
+                    {new Intl.NumberFormat('de-DE', { notation: 'compact', maximumFractionDigits: 1 }).format(totalGenAiImpressions)}
+                  </span>
+                  <ChangeBadge change={genAiChangePercent} />
                </div>
             </div>
           </div>
@@ -364,6 +399,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
             <div className="flex gap-3 text-[10px]">
                <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> GSC</div>
                <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500"></span> KI</div>
+               <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-500"></span> GenAI</div>
             </div>
           </div>
 
@@ -380,6 +416,10 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
                       <linearGradient id="colorAi" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
                         <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorGenAi" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#4285f4" stopOpacity={0.25}/>
+                        <stop offset="95%" stopColor="#4285f4" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
@@ -403,10 +443,10 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px', backgroundColor: 'rgba(255,255,255,0.95)' }}
                       labelFormatter={(v) => format(new Date(v), 'd. MMM yyyy', { locale: de })}
                       formatter={(value: any, name: string) => {
-                        if (value === null || value === undefined) return ['Keine Daten (verzögert)', name === 'impressions' ? 'GSC Impressionen' : 'KI Sitzungen'];
+                        if (value === null || value === undefined) return ['Keine Daten (verzögert)', name === 'impressions' ? 'GSC Impressionen' : name === 'genAiImpressions' ? 'Google GenAI Impressionen' : 'KI Sitzungen'];
                         return [
                           new Intl.NumberFormat('de-DE').format(value), 
-                          name === 'impressions' ? 'GSC Impressionen' : 'KI Sitzungen'
+                          name === 'impressions' ? 'GSC Impressionen' : name === 'genAiImpressions' ? 'Google GenAI Impressionen' : 'KI Sitzungen'
                         ];
                       }}
                     />
@@ -428,6 +468,16 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
                       strokeWidth={2} 
                       fillOpacity={1} 
                       fill="url(#colorAi)" 
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="genAiImpressions"
+                      name="genAiImpressions"
+                      stroke="#4285f4"
+                      strokeWidth={2}
+                      strokeDasharray="4 4"
+                      fillOpacity={1}
+                      fill="url(#colorGenAi)"
                     />
                     {/* Reference Line für HEUTE */}
                     <ReferenceLine 

@@ -28,6 +28,7 @@ const KPI_CONFIG: Record<string, { label: string; color: string; gradientId: str
   totalUsers: { label: 'Besucher', color: '#0ea5e9', gradientId: 'gradSky' },     
   sessions: { label: 'Sessions', color: '#06b6d4', gradientId: 'gradCyan' },       
   aiTraffic: { label: 'KI-Traffic', color: '#7c3aed', gradientId: 'gradAi' },
+  genAiImpressions: { label: 'Google GenAI', color: '#4285f4', gradientId: 'gradGoogleGenAi' },
   engagementRate: { label: 'Interaktionsrate', color: '#ec4899', gradientId: 'gradPink' },
   conversions: { label: 'Conversions', color: '#10b981', gradientId: 'gradEmerald' },   
   avgEngagementTime: { label: 'Ø Verweildauer', color: '#f59e0b', gradientId: 'gradAmber' },
