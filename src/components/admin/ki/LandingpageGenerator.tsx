@@ -45,6 +45,14 @@ interface LandingpageGeneratorProps {
   domain?: string;
   keywords?: Keyword[];
   loadingKeywords?: boolean;
+  contentBrief?: {
+    landingpage?: string;
+    topic?: string;
+    region?: string;
+    targetAudience?: string;
+    goal?: string;
+    brandMode?: string;
+  };
 }
 
 type ToneOfVoice = 'professional' | 'casual' | 'technical' | 'emotional';
@@ -78,6 +86,7 @@ export default function LandingPageGenerator({
   domain = '',
   keywords = [],
   loadingKeywords = false,
+  contentBrief,
 }: LandingpageGeneratorProps) {
   
   // --- STATES ---
@@ -355,7 +364,18 @@ export default function LandingPageGenerator({
           keywords: getAllKeywords(),
           targetAudience: targetAudience.trim() || undefined,
           productContext: productContext.trim(),
-          customInstructions: customInstructions.trim(),
+          customInstructions: [
+            contentBrief
+              ? `Content Brief:
+- Zielseite: ${contentBrief.landingpage || 'nicht definiert'}
+- Thema: ${contentBrief.topic || topic}
+- Region: ${contentBrief.region || 'nicht definiert'}
+- Zielgruppe: ${contentBrief.targetAudience || targetAudience || 'nicht definiert'}
+- Ziel: ${contentBrief.goal || 'nicht definiert'}
+- Brand-Modus: ${contentBrief.brandMode === 'without-brand' ? 'ohne direkte Brand-Nennung arbeiten, außer Fakten erfordern es' : 'Brand/Domain darf sinnvoll genutzt werden'}`
+              : '',
+            customInstructions.trim(),
+          ].filter(Boolean).join('\n\n'),
           toneOfVoice: tone,
           contextData,
           domain,

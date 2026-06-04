@@ -40,6 +40,24 @@ interface Keyword {
   impressions: number;
 }
 
+interface ContentBrief {
+  landingpage: string;
+  topic: string;
+  region: string;
+  targetAudience: string;
+  goal: 'research' | 'optimize' | 'generate';
+  brandMode: 'with-brand' | 'without-brand';
+}
+
+interface ToolRun {
+  id: number;
+  tool: string;
+  dataSources?: string[];
+  contentBrief?: Partial<ContentBrief>;
+  resultPreview?: string;
+  createdAt: string;
+}
+
 type Tab = 'questions' | 'ctr' | 'gap' | 'spy' | 'trends' | 'schema' | 'news' | 'landingpage' | 'ai-visibility'; // ERWEITERT
 
 // Länder-Optionen
@@ -80,6 +98,18 @@ export default function KiToolPage() {
   // News Crawler Topic State
   const [newsTopic, setNewsTopic] = useState('');
 
+  // Zentraler Content Brief für alle Werkzeuge
+  const [contentBrief, setContentBrief] = useState<ContentBrief>({
+    landingpage: '',
+    topic: '',
+    region: 'AT',
+    targetAudience: '',
+    goal: 'research',
+    brandMode: 'with-brand',
+  });
+  const [toolRuns, setToolRuns] = useState<ToolRun[]>([]);
+  const [loadingRuns, setLoadingRuns] = useState(false);
+
   const outputRef = useRef<HTMLDivElement>(null);
 
   // --- 1. PROJEKTE LADEN ---
@@ -109,6 +139,7 @@ export default function KiToolPage() {
       setTrendTopic('');
       setCustomKeywords('');
       setNewsTopic('');
+      setToolRuns([]);
       return;
     }
 
@@ -121,6 +152,11 @@ export default function KiToolPage() {
             cleanDomain = `https://${cleanDomain}`;
         }
         setAnalyzeUrl(cleanDomain);
+        setContentBrief(prev => ({
+          ...prev,
+          landingpage: prev.landingpage || cleanDomain,
+          topic: prev.topic || project.domain,
+        }));
     }
 
     // Keywords nur für 'questions', 'gap' und 'landingpage' laden
@@ -163,6 +199,26 @@ export default function KiToolPage() {
 
   }, [selectedProjectId, projects, activeTab]);
 
+  useEffect(() => {
+    if (!selectedProjectId) return;
+
+    async function fetchToolRuns() {
+      setLoadingRuns(true);
+      try {
+        const res = await fetch(`/api/admin/ki-tool-runs?projectId=${selectedProjectId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setToolRuns(data.runs || []);
+      } catch (error) {
+        console.error('KI-Tool-Verlauf konnte nicht geladen werden:', error);
+      } finally {
+        setLoadingRuns(false);
+      }
+    }
+
+    fetchToolRuns();
+  }, [selectedProjectId]);
+
   const toggleKeyword = (query: string) => {
     setSelectedKeywords(prev => {
       return prev.includes(query) 
@@ -191,6 +247,61 @@ export default function KiToolPage() {
     }
     
     return selected;
+  };
+
+  const updateContentBrief = <K extends keyof ContentBrief>(key: K, value: ContentBrief[K]) => {
+    setContentBrief(prev => ({ ...prev, [key]: value }));
+  };
+
+  const getToolLabel = (tab: Tab) => {
+    const labels: Record<Tab, string> = {
+      questions: 'Fragen Generator',
+      ctr: 'CTR Booster',
+      gap: 'Content Gap',
+      spy: 'Competitor Spy',
+      trends: 'Trend Radar',
+      schema: 'Schema Analyzer',
+      news: 'News-Crawler',
+      landingpage: 'Landingpage Generator',
+      'ai-visibility': 'KI-Antworttest',
+    };
+    return labels[tab];
+  };
+
+  const getDataSources = (tab: Tab) => {
+    const sources = new Set<string>();
+    if (selectedKeywords.length > 0 || keywords.length > 0) sources.add('GSC');
+    if (tab === 'news') sources.add('Google Custom Search');
+    if (tab === 'trends') sources.add('Google Trends');
+    if (tab === 'spy' || tab === 'gap' || tab === 'schema') sources.add('Crawl');
+    if (tab === 'questions' || tab === 'gap' || tab === 'schema' || tab === 'spy') sources.add('KI');
+    return Array.from(sources);
+  };
+
+  const saveToolRun = async (tool: Tab, inputs: Record<string, unknown>, resultText: string) => {
+    if (!selectedProjectId || !resultText.trim()) return;
+
+    try {
+      const res = await fetch('/api/admin/ki-tool-runs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: selectedProjectId,
+          tool: getToolLabel(tool),
+          inputs,
+          dataSources: getDataSources(tool),
+          contentBrief,
+          resultText,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.run) setToolRuns(prev => [data.run, ...prev].slice(0, 12));
+      }
+    } catch (error) {
+      console.error('KI-Tool-Lauf konnte nicht gespeichert werden:', error);
+    }
   };
 
   // --- GENERIERUNGS-LOGIK ---
@@ -284,17 +395,22 @@ export default function KiToolPage() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
+      let streamedContent = '';
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         const chunkValue = decoder.decode(value, { stream: true });
+        streamedContent += chunkValue;
         setGeneratedContent((prev) => prev + chunkValue);
         
         if (outputRef.current) {
             outputRef.current.scrollTop = outputRef.current.scrollHeight;
         }
       }
+
+      await saveToolRun(activeTab, body, streamedContent);
+      toast.success(`${getToolLabel(activeTab)} gespeichert.`);
 
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
@@ -371,6 +487,14 @@ export default function KiToolPage() {
                 setTrendTopic('');
                 setCustomKeywords('');
                 setNewsTopic('');
+                setContentBrief({
+                  landingpage: '',
+                  topic: '',
+                  region: 'AT',
+                  targetAudience: '',
+                  goal: 'research',
+                  brandMode: 'with-brand',
+                });
               }}
               disabled={loadingProjects}
             >
@@ -385,6 +509,161 @@ export default function KiToolPage() {
               <Grid size={16} />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* WORKFLOW + CONTENT BRIEF */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <div className="xl:col-span-8 bg-surface rounded-2xl shadow-sm border border-theme-border-subtle p-5">
+          <div className="flex flex-wrap gap-3 mb-5">
+            {[
+              ['01 Setup', 'Projekt, Zielseite, Thema'],
+              ['02 Daten', 'GSC, GA4, Crawl, News'],
+              ['03 Analyse', 'Gaps, Trends, KI-Antworten'],
+              ['04 Brief', 'Struktur, Fragen, Quellen'],
+              ['05 Output', 'Content, Schema, CTR'],
+            ].map(([title, text], index) => (
+              <div key={title} className="flex-1 min-w-[140px] rounded-xl bg-surface-secondary px-3 py-2 border border-theme-border-subtle">
+                <div className="text-xs font-bold text-indigo-600">{title}</div>
+                <div className="text-[11px] text-muted mt-0.5">{text}</div>
+                <div className={`mt-2 h-1 rounded-full ${index === 0 ? 'bg-indigo-500' : 'bg-surface-tertiary'}`} />
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">Zielseite / Landingpage</label>
+              <input
+                value={contentBrief.landingpage}
+                onChange={(e) => updateContentBrief('landingpage', e.target.value)}
+                placeholder="https://domain.at/leistung oder /zielseite"
+                className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-body"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">Thema</label>
+              <input
+                value={contentBrief.topic}
+                onChange={(e) => {
+                  updateContentBrief('topic', e.target.value);
+                  if (!trendTopic) setTrendTopic(e.target.value);
+                  if (!newsTopic) setNewsTopic(e.target.value);
+                }}
+                placeholder="z.B. Führerscheinentzug Österreich"
+                className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-body"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">Region</label>
+              <select
+                value={contentBrief.region}
+                onChange={(e) => {
+                  updateContentBrief('region', e.target.value);
+                  setTrendCountry(e.target.value);
+                }}
+                className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-body"
+              >
+                {COUNTRIES.map(country => (
+                  <option key={country.code} value={country.code}>{country.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">Zielgruppe</label>
+              <input
+                value={contentBrief.targetAudience}
+                onChange={(e) => updateContentBrief('targetAudience', e.target.value)}
+                placeholder="z.B. Entscheider, Mandanten, lokale Kunden"
+                className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-body"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-theme-border-subtle">
+            <div className="flex rounded-xl border border-theme-border-default overflow-hidden bg-surface-secondary">
+              {[
+                ['research', 'Recherche'],
+                ['optimize', 'Optimieren'],
+                ['generate', 'Generieren'],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => updateContentBrief('goal', value as ContentBrief['goal'])}
+                  className={`px-3 py-2 text-xs font-semibold transition-colors ${contentBrief.goal === value ? 'bg-indigo-600 text-white' : 'text-secondary hover:text-body'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex rounded-xl border border-theme-border-default overflow-hidden bg-surface-secondary">
+              {[
+                ['with-brand', 'Mit Brand'],
+                ['without-brand', 'Ohne Brand'],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => updateContentBrief('brandMode', value as ContentBrief['brandMode'])}
+                  className={`px-3 py-2 text-xs font-semibold transition-colors ${contentBrief.brandMode === value ? 'bg-purple-600 text-white' : 'text-secondary hover:text-body'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="text-xs text-muted">
+              Brief wird bei Tool-Läufen mitgespeichert und dient als gemeinsame Arbeitsgrundlage.
+            </div>
+          </div>
+        </div>
+
+        <div className="xl:col-span-4 bg-surface rounded-2xl shadow-sm border border-theme-border-subtle p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-bold text-heading">Tool-Verlauf</h2>
+              <p className="text-xs text-muted">Gespeicherte Läufe für dieses Projekt</p>
+            </div>
+            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
+              {toolRuns.length}
+            </span>
+          </div>
+
+          {loadingRuns ? (
+            <div className="text-sm text-muted py-8 text-center">Lade Verlauf...</div>
+          ) : toolRuns.length > 0 ? (
+            <div className="space-y-2 max-h-[260px] overflow-y-auto custom-scrollbar pr-1">
+              {toolRuns.map(run => (
+                <div key={run.id} className="rounded-xl bg-surface-secondary border border-theme-border-subtle p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-body truncate">{run.tool}</span>
+                    <span className="text-[11px] text-faint whitespace-nowrap">
+                      {new Date(run.createdAt).toLocaleDateString('de-AT')}
+                    </span>
+                  </div>
+                  {run.contentBrief?.topic && (
+                    <div className="text-xs text-indigo-600 mt-1 truncate">{run.contentBrief.topic}</div>
+                  )}
+                  {run.dataSources && run.dataSources.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {run.dataSources.map(source => (
+                        <span key={source} className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-surface text-muted border border-theme-border-subtle">
+                          {source}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl bg-surface-secondary border border-dashed border-theme-border-default p-5 text-center">
+              <FileText className="text-2xl text-faint mx-auto mb-2" />
+              <p className="text-sm text-muted">Noch keine gespeicherten KI-Läufe.</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -849,6 +1128,7 @@ export default function KiToolPage() {
               domain={selectedProject?.domain || ''}
               keywords={keywords}
               loadingKeywords={loadingData}
+              contentBrief={contentBrief}
             />
           )}
 
