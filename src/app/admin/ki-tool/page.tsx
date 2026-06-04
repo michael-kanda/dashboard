@@ -116,6 +116,7 @@ export default function KiToolPage() {
   const [loadingRuns, setLoadingRuns] = useState(false);
 
   const outputRef = useRef<HTMLDivElement>(null);
+  const toolsContentRef = useRef<HTMLDivElement>(null);
 
   const workflowSteps = [
     { step: '01', title: 'Setup', text: 'Projekt, Zielseite, Thema, Region und Brand-Modus festlegen.' },
@@ -334,6 +335,35 @@ export default function KiToolPage() {
     if (tab === 'questions' || tab === 'gap' || tab === 'schema' || tab === 'spy') sources.add('KI');
     return Array.from(sources);
   };
+
+  const openToolFromSetup = (tool: Tab) => {
+    const setupTopic = contentBrief.topic.trim();
+    const setupLandingpage = contentBrief.landingpage.trim();
+
+    if (setupLandingpage && (tool === 'gap' || tool === 'schema')) {
+      setAnalyzeUrl(setupLandingpage);
+    }
+
+    if (setupTopic) {
+      if (tool === 'news') setNewsTopic(setupTopic);
+      if (tool === 'trends') setTrendTopic(setupTopic);
+      if ((tool === 'questions' || tool === 'gap') && !customKeywords.trim()) {
+        setCustomKeywords(setupTopic);
+      }
+    }
+
+    setActiveTab(tool);
+    setSuiteView('tools');
+    toast.info(`${getToolLabel(tool)} geöffnet.`);
+  };
+
+  useEffect(() => {
+    if (suiteView !== 'tools') return;
+
+    window.setTimeout(() => {
+      toolsContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }, [suiteView, activeTab]);
 
   const saveToolRun = async (tool: Tab, inputs: Record<string, unknown>, resultText: string) => {
     if (!selectedProjectId || !resultText.trim()) return;
@@ -795,10 +825,7 @@ export default function KiToolPage() {
                   <button
                     key={id}
                     type="button"
-                    onClick={() => {
-                      setActiveTab(id as Tab);
-                      setSuiteView('tools');
-                    }}
+                    onClick={() => openToolFromSetup(id as Tab)}
                     className="rounded-lg bg-surface-secondary border border-theme-border-subtle p-4 text-left transition-all hover:bg-surface hover:shadow-sm"
                   >
                     <div className="text-sm font-bold text-heading">{label}</div>
@@ -912,7 +939,7 @@ export default function KiToolPage() {
             <button
               key={item.id}
               type="button"
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => openToolFromSetup(item.id)}
               className={`group rounded-lg border p-4 text-left transition-all ${
                 activeTab === item.id
                   ? 'border-theme-border-default bg-surface shadow-sm'
@@ -936,6 +963,7 @@ export default function KiToolPage() {
       </div>
 
       {/* MAIN CONTENT AREA */}
+      <div ref={toolsContentRef} />
       {!selectedProjectId ? (
         <div className="text-center py-20 bg-surface-secondary rounded-2xl border border-dashed border-theme-border-default">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface shadow-sm mb-4">

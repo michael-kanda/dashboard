@@ -131,6 +131,23 @@ export default function LandingPageGenerator({
   
   const outputRef = useRef<HTMLDivElement>(null);
 
+  React.useEffect(() => {
+    if (!contentBrief) return;
+
+    const briefTopic = contentBrief.topic?.trim();
+    const briefAudience = contentBrief.targetAudience?.trim();
+
+    if (briefTopic) {
+      setTopic((current) => current.trim() ? current : briefTopic);
+      setCustomKeywords((current) => current.trim() ? current : briefTopic);
+      setNewsTopic((current) => current.trim() ? current : briefTopic);
+    }
+
+    if (briefAudience) {
+      setTargetAudience((current) => current.trim() ? current : briefAudience);
+    }
+  }, [contentBrief?.topic, contentBrief?.targetAudience]);
+
   // --- KEYWORD ANALYSE (für Frontend-Anzeige) ---
   const keywordAnalysis = React.useMemo(() => {
     if (!keywords || keywords.length === 0) return null;
