@@ -20,6 +20,7 @@ import {
   CodeSquare,
   Newspaper,
   FileText,
+  ArrowRight,
   Robot // NEU: Icon für KI-Sichtbarkeit
 } from 'react-bootstrap-icons';
 import CtrBooster from '@/components/admin/ki/CtrBooster';
@@ -665,9 +666,17 @@ export default function KiToolPage() {
               ))}
             </div>
 
-            <div className="text-xs text-muted">
+            <div className="text-xs text-muted flex-1 min-w-[240px]">
               Brief wird bei Tool-Läufen mitgespeichert und dient als gemeinsame Arbeitsgrundlage.
             </div>
+            <button
+              type="button"
+              onClick={() => setSuiteView('tools')}
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-[#188BDB] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1479BF]"
+            >
+              Weiter zu Tools
+              <ArrowRight size={14} />
+            </button>
           </div>
         </div>
 
