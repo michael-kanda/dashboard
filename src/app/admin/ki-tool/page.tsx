@@ -59,6 +59,7 @@ interface ToolRun {
 }
 
 type Tab = 'questions' | 'ctr' | 'gap' | 'spy' | 'trends' | 'schema' | 'news' | 'landingpage' | 'ai-visibility'; // ERWEITERT
+type SuiteView = 'setup' | 'tools';
 
 // Länder-Optionen
 const COUNTRIES = [
@@ -69,6 +70,7 @@ const COUNTRIES = [
 ];
 
 export default function KiToolPage() {
+  const [suiteView, setSuiteView] = useState<SuiteView>('setup');
   const [activeTab, setActiveTab] = useState<Tab>('questions');
   
   const [projects, setProjects] = useState<Project[]>([]);
@@ -111,6 +113,26 @@ export default function KiToolPage() {
   const [loadingRuns, setLoadingRuns] = useState(false);
 
   const outputRef = useRef<HTMLDivElement>(null);
+
+  const workflowSteps = [
+    { step: '01', title: 'Setup', text: 'Projekt, Zielseite, Thema, Region und Brand-Modus festlegen.' },
+    { step: '02', title: 'Daten', text: 'GSC, GA4, Crawl, News, Trends und bestehende Tool-Läufe bündeln.' },
+    { step: '03', title: 'Analyse', text: 'Quick Wins, Buy Intent, Content Gaps und KI-Antwortsignale bewerten.' },
+    { step: '04', title: 'Brief', text: 'Eine gemeinsame Content-Grundlage für Struktur, Quellen und Zielgruppe erstellen.' },
+    { step: '05', title: 'Output', text: 'Landingpage, Fragen, Schema, CTR-Ideen oder Research-Ergebnisse erzeugen.' },
+  ];
+
+  const toolItems: Array<{ id: Tab; label: string; description: string; icon: React.ReactNode }> = [
+    { id: 'questions', label: 'Fragen', description: 'Suchintentionen und FAQ-Ideen', icon: <ChatText size={18} /> },
+    { id: 'gap', label: 'Gap Analyse', description: 'Fehlende Inhalte aufdecken', icon: <FileEarmarkBarGraph size={18} /> },
+    { id: 'spy', label: 'Competitor Spy', description: 'Seiten und Konkurrenz analysieren', icon: <Binoculars size={18} /> },
+    { id: 'schema', label: 'Schema Analyzer', description: 'Strukturierte Daten prüfen', icon: <CodeSquare size={18} /> },
+    { id: 'news', label: 'News-Crawler', description: 'Aktuelle Quellen recherchieren', icon: <Newspaper size={18} /> },
+    { id: 'landingpage', label: 'Landingpage', description: 'SEO-Content aus Brief und Daten', icon: <FileText size={18} /> },
+    { id: 'ai-visibility', label: 'KI-Antworttest', description: 'KI-Erwähnungen und Signale prüfen', icon: <Robot size={18} /> },
+    { id: 'trends', label: 'Trend Radar', description: 'Themenbewegungen erkennen', icon: <GraphUpArrow size={18} /> },
+    { id: 'ctr', label: 'CTR Booster', description: 'Titel und Snippets optimieren', icon: <RocketTakeoff size={18} /> },
+  ];
 
   // --- 1. PROJEKTE LADEN ---
   useEffect(() => {
@@ -512,23 +534,52 @@ export default function KiToolPage() {
         </div>
       </div>
 
-      {/* WORKFLOW + CONTENT BRIEF */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <div className="xl:col-span-8 bg-surface rounded-2xl shadow-sm border border-theme-border-subtle p-5">
-          <div className="flex flex-wrap gap-3 mb-5">
-            {[
-              ['01 Setup', 'Projekt, Zielseite, Thema'],
-              ['02 Daten', 'GSC, GA4, Crawl, News'],
-              ['03 Analyse', 'Gaps, Trends, KI-Antworten'],
-              ['04 Brief', 'Struktur, Fragen, Quellen'],
-              ['05 Output', 'Content, Schema, CTR'],
-            ].map(([title, text], index) => (
-              <div key={title} className="flex-1 min-w-[140px] rounded-xl bg-surface-secondary px-3 py-2 border border-theme-border-subtle">
-                <div className="text-xs font-bold text-indigo-600">{title}</div>
-                <div className="text-[11px] text-muted mt-0.5">{text}</div>
-                <div className={`mt-2 h-1 rounded-full ${index === 0 ? 'bg-indigo-500' : 'bg-surface-tertiary'}`} />
+      <div className="dashboard-widget-surface rounded-lg p-2 flex flex-col sm:flex-row gap-2">
+        {[
+          { id: 'setup' as SuiteView, label: 'Setup', description: '5 Schritte und Content Brief' },
+          { id: 'tools' as SuiteView, label: 'Tools', description: 'Generatoren, Analyse und Research' },
+        ].map(item => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setSuiteView(item.id)}
+            className={`flex-1 rounded-md border px-4 py-3 text-left transition-all ${
+              suiteView === item.id
+                ? 'border-theme-border-default bg-surface-secondary text-strong shadow-sm'
+                : 'border-transparent text-muted hover:bg-surface-secondary/70 hover:text-body'
+            }`}
+          >
+            <div className="text-sm font-bold">{item.label}</div>
+            <div className="text-xs mt-0.5">{item.description}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* SETUP */}
+      {suiteView === 'setup' && (
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="xl:col-span-8 dashboard-widget-surface rounded-lg p-5">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
+            {workflowSteps.map((item, index) => (
+              <div key={item.step} className="rounded-lg bg-surface-secondary/80 border border-theme-border-subtle p-3 min-h-[124px]">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold text-muted">{item.step}</span>
+                  <span className={`h-2 w-2 rounded-full ${index === 0 ? 'bg-indigo-500' : 'bg-surface-tertiary'}`} />
+                </div>
+                <h3 className="text-sm font-bold text-heading mt-3">{item.title}</h3>
+                <p className="text-xs text-muted leading-relaxed mt-1">{item.text}</p>
               </div>
             ))}
+          </div>
+
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-base font-bold text-heading">Content Brief</h2>
+              <p className="text-xs text-muted">Diese Angaben werden als gemeinsamer Kontext an die Tools übergeben.</p>
+            </div>
+            <span className="hidden sm:inline-flex text-[11px] font-semibold px-2 py-1 rounded-md bg-surface-secondary text-muted border border-theme-border-subtle">
+              Standard
+            </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -620,7 +671,7 @@ export default function KiToolPage() {
           </div>
         </div>
 
-        <div className="xl:col-span-4 bg-surface rounded-2xl shadow-sm border border-theme-border-subtle p-5">
+        <div className="xl:col-span-4 dashboard-widget-surface rounded-lg p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="font-bold text-heading">Tool-Verlauf</h2>
@@ -666,113 +717,52 @@ export default function KiToolPage() {
           )}
         </div>
       </div>
+      )}
 
-      {/* TABS */}
-      <div className="border-b border-theme-border-default">
-        <nav className="-mb-px flex space-x-8 overflow-x-auto">
+      {suiteView === 'tools' && (
+      <>
+      {/* TOOL AUSWAHL */}
+      <div className="dashboard-widget-surface rounded-lg p-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 className="text-base font-bold text-heading">Tool-Sammlung</h2>
+            <p className="text-xs text-muted">Wähle ein Werkzeug. Der Content Brief aus dem Setup bleibt als Kontext erhalten.</p>
+          </div>
           <button
-            onClick={() => setActiveTab('questions')}
-            className={`
-              flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'questions' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
-            `}
+            type="button"
+            onClick={() => setSuiteView('setup')}
+            className="hidden sm:inline-flex items-center rounded-md border border-theme-border-default bg-surface px-3 py-2 text-xs font-semibold text-body hover:bg-surface-secondary transition-colors"
           >
-            <ChatText size={18} />
-            Fragen
+            Setup bearbeiten
           </button>
+        </div>
 
-          <button
-            onClick={() => setActiveTab('gap')}
-            className={`
-              flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'gap' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
-            `}
-          >
-            <FileEarmarkBarGraph size={18} />
-            Gap Analyse
-          </button>
-
-          <button
-            onClick={() => setActiveTab('spy')}
-            className={`
-              flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'spy' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
-            `}
-          >
-            <Binoculars size={18} />
-            Competitor Spy
-          </button>
-
-          <button
-            onClick={() => setActiveTab('schema')}
-            className={`
-              flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'schema' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
-            `}
-          >
-            <CodeSquare size={18} />
-            Schema Analyzer
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('news')} 
-            className={`
-              flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'news' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
-            `}
-          >
-            <Newspaper size={18} />
-            News-Crawler
-          </button>
-
-          {/* Landingpage Generator Tab */}
-          <button
-            onClick={() => setActiveTab('landingpage')}
-            className={`
-              flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'landingpage' ? 'border-purple-500 text-purple-600' : 'border-transparent text-muted hover:text-body'}
-            `}
-          >
-            <FileText size={18} />
-            Landingpage
-          </button>
-
-          {/* NEU: AI Visibility Check Tab */}
-          <button
-            onClick={() => setActiveTab('ai-visibility')}
-            className={`
-              flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'ai-visibility' ? 'border-purple-500 text-purple-600' : 'border-transparent text-muted hover:text-body'}
-            `}
-          >
-            <Robot size={18} />
-            KI-Sichtbarkeit
-            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-600 text-[10px] font-bold">NEU</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('trends')}
-            className={`
-              flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'trends' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
-            `}
-          >
-            <GraphUpArrow size={18} />
-            Trend Radar
-            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600 text-[10px] font-bold">BETA</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('ctr')}
-            className={`
-              flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-              ${activeTab === 'ctr' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-muted hover:text-body'}
-            `}
-          >
-            <RocketTakeoff size={18} />
-            CTR Booster
-          </button>
-        </nav>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+          {toolItems.map(item => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setActiveTab(item.id)}
+              className={`group rounded-lg border p-4 text-left transition-all ${
+                activeTab === item.id
+                  ? 'border-theme-border-default bg-surface shadow-sm'
+                  : 'border-theme-border-subtle bg-surface-secondary/60 hover:bg-surface-secondary hover:shadow-sm'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
+                  activeTab === item.id ? 'bg-surface-tertiary text-indigo-600 border border-theme-border-default' : 'bg-surface text-muted border border-theme-border-subtle group-hover:text-body'
+                }`}>
+                  {item.icon}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-heading">{item.label}</div>
+                  <div className="text-xs text-muted mt-0.5 leading-relaxed">{item.description}</div>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* MAIN CONTENT AREA */}
@@ -1042,10 +1032,7 @@ export default function KiToolPage() {
 
               {/* RECHTER BEREICH: OUTPUT */}
               <div className="lg:col-span-8">
-                  <div className="bg-surface border border-theme-border-subtle shadow-xl rounded-2xl p-8 h-full min-h-[600px] flex flex-col relative overflow-hidden">
-                     <div className="absolute top-0 right-0 w-64 h-64 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
-                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
-
+                  <div className="dashboard-widget-surface rounded-lg p-6 h-full min-h-[600px] flex flex-col relative overflow-hidden">
                      <h2 className="text-lg font-semibold text-strong mb-4 z-10 flex items-center gap-2">
                        {activeTab === 'news' ? 'News-Crawler Report' :
                         activeTab === 'trends' ? 'Keyword Trends' :
@@ -1142,7 +1129,11 @@ export default function KiToolPage() {
         </div>
       )}
 
-      {/* --- MODUL INFO-BOXEN (Volle Breite, immer sichtbar) --- */}
+      </>
+      )}
+
+      {false && (
+      /* --- Alte Modul-Info-Boxen bleiben bewusst deaktiviert, weil die Tool-Karten diese Rolle übernehmen. --- */
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-10 border-t border-theme-border-default animate-in fade-in slide-in-from-bottom-4 duration-500">
         
         {/* Box 1: Fragen */}
@@ -1290,6 +1281,7 @@ export default function KiToolPage() {
         </div>
 
       </div>
+      )}
       
       <style jsx global>{`
         @keyframes indeterminate-bar {
