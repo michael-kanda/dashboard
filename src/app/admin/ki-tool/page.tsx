@@ -636,98 +636,180 @@ export default function KiToolPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <div>
-              <h2 className="text-base font-bold text-heading">Content Brief</h2>
-              <p className="text-xs text-muted">Diese Angaben werden als gemeinsamer Kontext an die Tools übergeben.</p>
-            </div>
-            <span className="hidden sm:inline-flex text-[11px] font-semibold px-2 py-1 rounded-md bg-surface-secondary text-muted border border-theme-border-subtle">
-              Standard
-            </span>
-          </div>
+          {setupStepIndex === 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-base font-bold text-heading">Setup-Felder</h2>
+                  <p className="text-xs text-muted">Grunddaten für Projekt, Zielseite und Thema festlegen.</p>
+                </div>
+                <span className="hidden sm:inline-flex text-[11px] font-semibold px-2 py-1 rounded-md bg-surface-secondary text-muted border border-theme-border-subtle">
+                  Schritt 01
+                </span>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">Zielseite / Landingpage</label>
-              <input
-                value={contentBrief.landingpage}
-                onChange={(e) => updateContentBrief('landingpage', e.target.value)}
-                placeholder="https://domain.at/leistung oder /zielseite"
-                className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-body"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">Zielseite / Landingpage</label>
+                  <input
+                    value={contentBrief.landingpage}
+                    onChange={(e) => updateContentBrief('landingpage', e.target.value)}
+                    placeholder="https://domain.at/leistung oder /zielseite"
+                    className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-body"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">Thema</label>
+                  <input
+                    value={contentBrief.topic}
+                    onChange={(e) => {
+                      updateContentBrief('topic', e.target.value);
+                      if (!trendTopic) setTrendTopic(e.target.value);
+                      if (!newsTopic) setNewsTopic(e.target.value);
+                    }}
+                    placeholder="z.B. Keramikversiegelung"
+                    className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-body"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">Region</label>
+                  <select
+                    value={contentBrief.region}
+                    onChange={(e) => {
+                      updateContentBrief('region', e.target.value);
+                      setTrendCountry(e.target.value);
+                    }}
+                    className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-body"
+                  >
+                    {COUNTRIES.map(country => (
+                      <option key={country.code} value={country.code}>{country.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">Zielgruppe</label>
+                  <input
+                    value={contentBrief.targetAudience}
+                    onChange={(e) => updateContentBrief('targetAudience', e.target.value)}
+                    placeholder="z.B. lokale Kunden"
+                    className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-body"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">Thema</label>
-              <input
-                value={contentBrief.topic}
-                onChange={(e) => {
-                  updateContentBrief('topic', e.target.value);
-                  if (!trendTopic) setTrendTopic(e.target.value);
-                  if (!newsTopic) setNewsTopic(e.target.value);
-                }}
-                placeholder="z.B. Führerscheinentzug Österreich"
-                className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-body"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">Region</label>
-              <select
-                value={contentBrief.region}
-                onChange={(e) => {
-                  updateContentBrief('region', e.target.value);
-                  setTrendCountry(e.target.value);
-                }}
-                className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-body"
-              >
-                {COUNTRIES.map(country => (
-                  <option key={country.code} value={country.code}>{country.label}</option>
+          )}
+
+          {setupStepIndex === 1 && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-base font-bold text-heading">Datenbasis</h2>
+                <p className="text-xs text-muted">Diese Quellen werden je nach Tool genutzt oder vorbereitet.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {[
+                  ['Projekt', selectedProject?.domain || 'Noch kein Projekt gewählt'],
+                  ['GSC-Keywords', keywords.length > 0 ? `${keywords.length} Keywords geladen` : 'Werden in passenden Tools geladen'],
+                  ['Tool-Verlauf', toolRuns.length > 0 ? `${toolRuns.length} gespeicherte Läufe` : 'Noch keine gespeicherten Läufe'],
+                  ['Crawl-Daten', 'Für Gap, Spy und Schema'],
+                  ['News & Trends', 'Für News-Crawler und Trend Radar'],
+                  ['KI-Daten', 'Für Fragen, Analyse und Antworttests'],
+                ].map(([title, text]) => (
+                  <div key={title} className="rounded-lg bg-surface-secondary border border-theme-border-subtle p-4">
+                    <div className="text-xs font-bold text-heading">{title}</div>
+                    <div className="text-xs text-muted mt-1 leading-relaxed">{text}</div>
+                  </div>
                 ))}
-              </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">Zielgruppe</label>
-              <input
-                value={contentBrief.targetAudience}
-                onChange={(e) => updateContentBrief('targetAudience', e.target.value)}
-                placeholder="z.B. Entscheider, Mandanten, lokale Kunden"
-                className="w-full p-3 bg-surface-secondary border border-theme-border-default rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-body"
-              />
+          )}
+
+          {setupStepIndex === 2 && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-base font-bold text-heading">Analyse-Ziel</h2>
+                <p className="text-xs text-muted">Lege fest, wie DataPeak die Daten priorisieren soll.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {[
+                  ['research', 'Recherche', 'Themen, Fragen und Chancen sammeln.'],
+                  ['optimize', 'Optimieren', 'Bestehende Seiten, CTR und Gaps verbessern.'],
+                  ['generate', 'Generieren', 'Direkt verwertbare Inhalte vorbereiten.'],
+                ].map(([value, label, text]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => updateContentBrief('goal', value as ContentBrief['goal'])}
+                    className={`rounded-lg border p-4 text-left transition-all ${contentBrief.goal === value ? 'bg-surface border-indigo-300 shadow-sm' : 'bg-surface-secondary border-theme-border-subtle hover:bg-surface'}`}
+                  >
+                    <div className="text-sm font-bold text-heading">{label}</div>
+                    <div className="text-xs text-muted mt-1 leading-relaxed">{text}</div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {setupStepIndex === 3 && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-base font-bold text-heading">Brief schärfen</h2>
+                <p className="text-xs text-muted">Brand-Modus und Brief-Zusammenfassung prüfen.</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  ['with-brand', 'Mit Brand', 'Domain/Brand darf aktiv in Empfehlungen und Outputs vorkommen.'],
+                  ['without-brand', 'Ohne Brand', 'Neutraler Research-Modus ohne direkte Brand-Nennung.'],
+                ].map(([value, label, text]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => updateContentBrief('brandMode', value as ContentBrief['brandMode'])}
+                    className={`min-w-[220px] flex-1 rounded-lg border p-4 text-left transition-all ${contentBrief.brandMode === value ? 'bg-surface border-purple-300 shadow-sm' : 'bg-surface-secondary border-theme-border-subtle hover:bg-surface'}`}
+                  >
+                    <div className="text-sm font-bold text-heading">{label}</div>
+                    <div className="text-xs text-muted mt-1 leading-relaxed">{text}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="rounded-lg bg-surface-secondary border border-theme-border-subtle p-4 text-xs text-body leading-relaxed">
+                <strong>Thema:</strong> {contentBrief.topic || 'nicht definiert'} · <strong>Zielseite:</strong> {contentBrief.landingpage || 'nicht definiert'} · <strong>Zielgruppe:</strong> {contentBrief.targetAudience || 'nicht definiert'}
+              </div>
+            </div>
+          )}
+
+          {setupStepIndex === 4 && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-base font-bold text-heading">Output auswählen</h2>
+                <p className="text-xs text-muted">Wähle den nächsten konkreten Arbeitsschritt.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {[
+                  ['landingpage', 'Landingpage erstellen', 'SEO-Content aus Brief und Daten generieren.'],
+                  ['gap', 'Gap Analyse starten', 'Zielseite gegen Thema und Keywords prüfen.'],
+                  ['questions', 'Fragen generieren', 'FAQ- und Suchintentionen vorbereiten.'],
+                  ['ctr', 'CTR optimieren', 'Titel und Snippets verbessern.'],
+                  ['schema', 'Schema prüfen', 'Strukturierte Daten analysieren.'],
+                  ['ai-visibility', 'KI-Antworttest', 'Erwähnungen in KI-Antworten prüfen.'],
+                ].map(([id, label, text]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab(id as Tab);
+                      setSuiteView('tools');
+                    }}
+                    className="rounded-lg bg-surface-secondary border border-theme-border-subtle p-4 text-left transition-all hover:bg-surface hover:shadow-sm"
+                  >
+                    <div className="text-sm font-bold text-heading">{label}</div>
+                    <div className="text-xs text-muted mt-1 leading-relaxed">{text}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-theme-border-subtle">
-            <div className="flex rounded-xl border border-theme-border-default overflow-hidden bg-surface-secondary">
-              {[
-                ['research', 'Recherche'],
-                ['optimize', 'Optimieren'],
-                ['generate', 'Generieren'],
-              ].map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => updateContentBrief('goal', value as ContentBrief['goal'])}
-                  className={`px-3 py-2 text-xs font-semibold transition-colors ${contentBrief.goal === value ? 'bg-indigo-600 text-white' : 'text-secondary hover:text-body'}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex rounded-xl border border-theme-border-default overflow-hidden bg-surface-secondary">
-              {[
-                ['with-brand', 'Mit Brand'],
-                ['without-brand', 'Ohne Brand'],
-              ].map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => updateContentBrief('brandMode', value as ContentBrief['brandMode'])}
-                  className={`px-3 py-2 text-xs font-semibold transition-colors ${contentBrief.brandMode === value ? 'bg-purple-600 text-white' : 'text-secondary hover:text-body'}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
 
             <div className="text-xs text-muted flex-1 min-w-[240px]">
               Brief wird bei Tool-Läufen mitgespeichert und dient als gemeinsame Arbeitsgrundlage.
