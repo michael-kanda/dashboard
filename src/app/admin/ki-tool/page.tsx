@@ -21,6 +21,7 @@ import {
   Newspaper,
   FileText,
   ArrowRight,
+  ArrowLeft,
   Robot // NEU: Icon für KI-Sichtbarkeit
 } from 'react-bootstrap-icons';
 import CtrBooster from '@/components/admin/ki/CtrBooster';
@@ -72,6 +73,7 @@ const COUNTRIES = [
 
 export default function KiToolPage() {
   const [suiteView, setSuiteView] = useState<SuiteView>('setup');
+  const [setupStepIndex, setSetupStepIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<Tab>('questions');
   
   const [projects, setProjects] = useState<Project[]>([]);
@@ -122,6 +124,38 @@ export default function KiToolPage() {
     { step: '04', title: 'Brief', text: 'Eine gemeinsame Content-Grundlage für Struktur, Quellen und Zielgruppe erstellen.' },
     { step: '05', title: 'Output', text: 'Landingpage, Fragen, Schema, CTR-Ideen oder Research-Ergebnisse erzeugen.' },
   ];
+
+  const setupStepDetails = [
+    {
+      title: 'Setup definieren',
+      text: 'Lege zuerst fest, worum es geht. Diese Eingaben bilden die Basis für alle späteren Analysen und Generatoren.',
+      bullets: ['Zielseite oder Landingpage', 'Thema und Region', 'Zielgruppe und Brand-Modus'],
+    },
+    {
+      title: 'Datenbasis vorbereiten',
+      text: 'Hier wird sichtbar, welche Signale später in die Tools einfließen. GSC-Keywords werden je nach Tool automatisch geladen.',
+      bullets: ['GSC-Keywords und Suchintentionen', 'Crawl- und Wettbewerbsdaten', 'News, Trends und gespeicherte Tool-Läufe'],
+    },
+    {
+      title: 'Analyse ausrichten',
+      text: 'Bestimme, ob die Suite eher recherchieren, optimieren oder direkt generieren soll.',
+      bullets: ['Quick Wins und Content Gaps', 'Buy-Intent und Conversion-Nähe', 'KI-Antwortsignale und Trendchancen'],
+    },
+    {
+      title: 'Content Brief schärfen',
+      text: 'Der Brief ist die gemeinsame Arbeitsgrundlage. Je sauberer er ist, desto weniger generisch werden die Ergebnisse.',
+      bullets: ['Struktur, Quellen und Zielgruppe', 'Brand-Nennung mit oder ohne Marke', 'Klare Vorgaben für spätere Outputs'],
+    },
+    {
+      title: 'Output wählen',
+      text: 'Erst jetzt geht es in die Tools. Dort wählst du passend zum Setup das konkrete Werkzeug aus.',
+      bullets: ['Landingpage, Fragen oder CTR', 'Gap, Spy, Schema oder News', 'KI-Antworttest und Trend Radar'],
+    },
+  ];
+
+  const currentSetupStep = workflowSteps[setupStepIndex];
+  const currentSetupDetail = setupStepDetails[setupStepIndex];
+  const isLastSetupStep = setupStepIndex === workflowSteps.length - 1;
 
   const toolItems: Array<{ id: Tab; label: string; description: string; icon: React.ReactNode }> = [
     { id: 'questions', label: 'Fragen', description: 'Suchintentionen und FAQ-Ideen', icon: <ChatText size={18} /> },
@@ -562,15 +596,44 @@ export default function KiToolPage() {
         <div className="xl:col-span-8 dashboard-widget-surface rounded-lg p-5">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
             {workflowSteps.map((item, index) => (
-              <div key={item.step} className="rounded-lg bg-surface-secondary/80 border border-theme-border-subtle p-3 min-h-[124px]">
+              <button
+                key={item.step}
+                type="button"
+                onClick={() => setSetupStepIndex(index)}
+                className={`rounded-lg border p-3 min-h-[124px] text-left transition-all ${
+                  setupStepIndex === index
+                    ? 'bg-surface border-theme-border-default shadow-sm'
+                    : 'bg-surface-secondary/80 border-theme-border-subtle hover:bg-surface-secondary'
+                }`}
+              >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] font-bold text-muted">{item.step}</span>
-                  <span className={`h-2 w-2 rounded-full ${index === 0 ? 'bg-indigo-500' : 'bg-surface-tertiary'}`} />
+                  <span className={`h-2 w-2 rounded-full ${setupStepIndex === index ? 'bg-indigo-500' : 'bg-surface-tertiary'}`} />
                 </div>
                 <h3 className="text-sm font-bold text-heading mt-3">{item.title}</h3>
                 <p className="text-xs text-muted leading-relaxed mt-1">{item.text}</p>
-              </div>
+              </button>
             ))}
+          </div>
+
+          <div className="rounded-lg bg-surface-secondary/70 border border-theme-border-subtle p-4 mb-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-[11px] font-bold text-indigo-600">{currentSetupStep.step} {currentSetupStep.title}</div>
+                <h2 className="text-base font-bold text-heading mt-1">{currentSetupDetail.title}</h2>
+                <p className="text-sm text-muted leading-relaxed mt-1">{currentSetupDetail.text}</p>
+              </div>
+              <span className="shrink-0 text-[11px] font-semibold px-2 py-1 rounded-md bg-surface text-muted border border-theme-border-subtle">
+                Schritt {setupStepIndex + 1}/5
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-4">
+              {currentSetupDetail.bullets.map((bullet) => (
+                <div key={bullet} className="rounded-md bg-surface border border-theme-border-subtle px-3 py-2 text-xs font-medium text-body">
+                  {bullet}
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="flex items-center justify-between gap-4 mb-4">
@@ -669,12 +732,28 @@ export default function KiToolPage() {
             <div className="text-xs text-muted flex-1 min-w-[240px]">
               Brief wird bei Tool-Läufen mitgespeichert und dient als gemeinsame Arbeitsgrundlage.
             </div>
+            {setupStepIndex > 0 && (
+              <button
+                type="button"
+                onClick={() => setSetupStepIndex((step) => Math.max(0, step - 1))}
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-theme-border-default bg-surface px-4 py-2 text-xs font-semibold text-body shadow-sm transition-colors hover:bg-surface-secondary"
+              >
+                <ArrowLeft size={14} />
+                Zurück
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => setSuiteView('tools')}
+              onClick={() => {
+                if (isLastSetupStep) {
+                  setSuiteView('tools');
+                  return;
+                }
+                setSetupStepIndex((step) => Math.min(workflowSteps.length - 1, step + 1));
+              }}
               className="inline-flex items-center justify-center gap-2 rounded-md bg-[#188BDB] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1479BF]"
             >
-              Weiter zu Tools
+              {isLastSetupStep ? 'Setup abschließen' : `Weiter zu ${workflowSteps[setupStepIndex + 1].title}`}
               <ArrowRight size={14} />
             </button>
           </div>
