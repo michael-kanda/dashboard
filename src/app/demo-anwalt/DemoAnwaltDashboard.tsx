@@ -1,261 +1,287 @@
-'use client';
+import type { ReactNode } from 'react';
 
-import { useMemo, useState } from 'react';
-import ProjectDashboard from '@/components/ProjectDashboard';
-import type { DateRangeOption } from '@/components/DateRangeSelector';
-import type {
-  GoogleAdsData,
-  ProjectDashboardData,
-} from '@/lib/dashboard-shared';
-
-const DAY = 24 * 60 * 60 * 1000;
-const START = Date.UTC(2026, 3, 13);
-
-function trend(values: number[]) {
-  return values.map((value, index) => ({
-    date: START + index * DAY,
-    value,
-  }));
-}
-
-function aiTrend(values: number[]) {
-  return values.map((sessions, index) => ({
-    date: START + index * DAY,
-    sessions,
-  }));
-}
-
-function genAiTrend(values: number[]) {
-  return values.map((impressions, index) => ({
-    date: START + index * DAY,
-    impressions,
-  }));
-}
-
-const googleAdsRows: GoogleAdsData['rows'] = [
-  {
-    campaign: 'Demo | Rechtsanwalt Wien',
-    adGroup: 'Verkehrsrecht',
-    adName: 'Fuehrerschein Soforthilfe',
-    keyword: 'fuehrerschein entzogen anwalt',
-    searchQuery: 'fuehrerschein entzogen anwalt wien',
-    landingPage: '/verkehrsrecht/fuehrerschein-entzug/',
-    cost: 312.4,
-    clicks: 74,
-    impressions: 1840,
-    cpc: 4.22,
-    roas: 6.1,
-    conversions: 11,
-    sessions: 69,
-    engagedSessions: 48,
-  },
-  {
-    campaign: 'Demo | Rechtsanwalt Wien',
-    adGroup: 'Familienrecht',
-    adName: 'Scheidung Erstberatung',
-    keyword: 'scheidungsanwalt wien',
-    searchQuery: 'scheidungsanwalt wien erstberatung',
-    landingPage: '/familienrecht/scheidung/',
-    cost: 428.9,
-    clicks: 91,
-    impressions: 2210,
-    cpc: 4.71,
-    roas: 4.8,
-    conversions: 14,
-    sessions: 86,
-    engagedSessions: 61,
-  },
-  {
-    campaign: 'Demo | Rechtsanwalt Wien',
-    adGroup: 'Erbrecht',
-    adName: 'Testament Beratung',
-    keyword: 'erbrecht anwalt wien',
-    searchQuery: 'anwalt erbrecht testament wien',
-    landingPage: '/erbrecht/testament/',
-    cost: 226.3,
-    clicks: 43,
-    impressions: 1190,
-    cpc: 5.26,
-    roas: 5.4,
-    conversions: 7,
-    sessions: 41,
-    engagedSessions: 31,
-  },
+const kpis = [
+  { label: 'Klicks', value: '1.848', change: '+14,7 %', tone: 'text-emerald-600' },
+  { label: 'Impressionen', value: '48.210', change: '+22,4 %', tone: 'text-emerald-600' },
+  { label: 'Nutzer', value: '2.474', change: '+10,5 %', tone: 'text-emerald-600' },
+  { label: 'Conversions', value: '184', change: '+18,9 %', tone: 'text-emerald-600' },
+  { label: 'KI-Traffic', value: '86', change: '+42,6 %', tone: 'text-violet-600' },
+  { label: 'Google GenAI', value: '1.430', change: '+38,2 %', tone: 'text-blue-600' },
 ];
 
-const googleAdsData: GoogleAdsData = {
-  rows: googleAdsRows,
-  landingPageRows: googleAdsRows,
-  campaignRows: googleAdsRows,
-  adGroupRows: googleAdsRows,
-  adRows: googleAdsRows,
-  searchQueryRows: googleAdsRows,
-  totals: {
-    cost: 967.6,
-    clicks: 208,
-    impressions: 5240,
-    avgCpc: 4.65,
-    roas: 5.4,
-    conversions: 32,
-    sessions: 196,
-    engagedSessions: 140,
-    interactionRate: 3.97,
-  },
-  conversionsByCampaign: {
-    'Demo | Rechtsanwalt Wien': 32,
-  },
-  conversionsByAdGroup: {
-    Verkehrsrecht: 11,
-    Familienrecht: 14,
-    Erbrecht: 7,
-  },
-  conversionsByQuery: {
-    'fuehrerschein entzogen anwalt wien': 11,
-    'scheidungsanwalt wien erstberatung': 14,
-    'anwalt erbrecht testament wien': 7,
-  },
-  source: 'sheet',
-};
+const queries = [
+  ['rechtsanwalt wien', '214', '8.240', '2,6 %', '7,8'],
+  ['fuehrerschein entzogen anwalt', '168', '2.980', '5,6 %', '3,2'],
+  ['scheidungsanwalt wien erstberatung', '132', '2.140', '6,2 %', '2,9'],
+  ['anwalt erbrecht testament', '96', '1.740', '5,5 %', '4,1'],
+  ['strafverteidiger wien', '84', '1.960', '4,3 %', '5,6'],
+];
 
-const demoData: ProjectDashboardData = {
-  kpis: {
-    clicks: { value: 1848, change: 14.7 },
-    impressions: { value: 48210, change: 22.4 },
-    sessions: { value: 3216, change: 12.8 },
-    totalUsers: { value: 2474, change: 10.5 },
-    newUsers: { value: 1986, change: 9.3 },
-    conversions: { value: 184, change: 18.9 },
-    engagementRate: { value: 67.4, change: 6.2 },
-    bounceRate: { value: 32.6, change: -5.4 },
-    avgEngagementTime: { value: 104, change: 11.6 },
-    genAiImpressions: { value: 1430, change: 38.2 },
-    paidSearch: { value: 208, change: 16.1 },
-  },
-  charts: {
-    clicks: trend([42, 45, 39, 51, 48, 52, 58, 61, 55, 63, 66, 64, 71, 70, 76, 73, 79, 84, 82, 88, 91, 90, 94, 99, 103, 101, 108, 112, 118, 121]),
-    impressions: trend([1120, 1185, 1094, 1260, 1315, 1380, 1440, 1492, 1520, 1588, 1635, 1690, 1722, 1780, 1840, 1905, 1960, 2012, 2070, 2135, 2200, 2260, 2314, 2380, 2445, 2510, 2580, 2640, 2705, 2780]),
-    sessions: trend([82, 88, 84, 96, 101, 97, 106, 111, 108, 115, 119, 122, 128, 131, 126, 135, 141, 144, 149, 151, 156, 160, 164, 169, 172, 176, 181, 184, 189, 194]),
-    totalUsers: trend([61, 66, 64, 72, 76, 73, 80, 82, 81, 87, 91, 92, 96, 99, 97, 103, 107, 111, 114, 116, 119, 123, 126, 129, 132, 136, 139, 142, 146, 151]),
-    conversions: trend([4, 5, 4, 6, 5, 7, 6, 8, 7, 8, 9, 8, 10, 9, 11, 10, 12, 12, 11, 13, 14, 13, 15, 16, 15, 17, 18, 18, 19, 20]),
-    engagementRate: trend([58, 59, 61, 60, 62, 63, 64, 62, 65, 66, 64, 67, 68, 66, 69, 68, 70, 69, 71, 70, 72, 73, 71, 74, 73, 75, 74, 76, 75, 77]),
-    bounceRate: trend([41, 40, 39, 40, 38, 37, 36, 38, 35, 34, 36, 33, 32, 34, 31, 32, 30, 31, 29, 30, 28, 27, 29, 26, 27, 25, 26, 24, 25, 23]),
-    newUsers: trend([49, 53, 50, 57, 61, 58, 64, 66, 65, 69, 72, 74, 77, 79, 78, 82, 85, 88, 91, 92, 95, 98, 100, 103, 106, 109, 111, 114, 117, 121]),
-    avgEngagementTime: trend([76, 78, 81, 79, 83, 86, 88, 84, 90, 92, 89, 94, 96, 95, 99, 101, 98, 103, 105, 104, 107, 109, 108, 111, 113, 112, 115, 117, 119, 121]),
-    paidSearch: trend([4, 5, 3, 6, 7, 6, 8, 7, 9, 10, 8, 11, 10, 12, 13, 11, 14, 13, 15, 16, 14, 17, 16, 18, 19, 17, 20, 21, 22, 23]),
-  },
-  topQueries: [
-    { query: 'rechtsanwalt wien', clicks: 214, impressions: 8240, ctr: 2.6, position: 7.8, url: '/rechtsanwalt-wien/' },
-    { query: 'fuehrerschein entzogen anwalt', clicks: 168, impressions: 2980, ctr: 5.6, position: 3.2, url: '/verkehrsrecht/fuehrerschein-entzug/' },
-    { query: 'scheidungsanwalt wien erstberatung', clicks: 132, impressions: 2140, ctr: 6.2, position: 2.9, url: '/familienrecht/scheidung/' },
-    { query: 'anwalt erbrecht testament', clicks: 96, impressions: 1740, ctr: 5.5, position: 4.1, url: '/erbrecht/testament/' },
-    { query: 'strafverteidiger wien', clicks: 84, impressions: 1960, ctr: 4.3, position: 5.6, url: '/strafrecht/' },
-    { query: 'arbeitsrecht kuendigung anwalt', clicks: 73, impressions: 1560, ctr: 4.7, position: 6.4, url: '/arbeitsrecht/kuendigung/' },
-    { query: 'unterhaltsrecht anwalt wien', clicks: 51, impressions: 970, ctr: 5.3, position: 4.8, url: '/familienrecht/unterhalt/' },
-  ],
-  topConvertingPages: [
-    { path: '/verkehrsrecht/fuehrerschein-entzug/', conversions: 39, conversionRate: 7.8, engagementRate: 72.4, sessions: 498, newUsers: 344, ctr: 5.6 },
-    { path: '/familienrecht/scheidung/', conversions: 34, conversionRate: 6.9, engagementRate: 70.1, sessions: 493, newUsers: 381, ctr: 6.2 },
-    { path: '/rechtsanwalt-wien/', conversions: 31, conversionRate: 4.4, engagementRate: 63.8, sessions: 704, newUsers: 552, ctr: 2.6 },
-    { path: '/erbrecht/testament/', conversions: 22, conversionRate: 6.1, engagementRate: 69.3, sessions: 361, newUsers: 278, ctr: 5.5 },
-    { path: '/strafrecht/', conversions: 18, conversionRate: 5.8, engagementRate: 66.7, sessions: 309, newUsers: 244, ctr: 4.3 },
-  ],
-  landingPageQueries: {
-    '/verkehrsrecht/fuehrerschein-entzug/': [
-      { query: 'fuehrerschein entzogen anwalt', clicks: 168, impressions: 2980 },
-      { query: 'fuehrerschein entzogen oesterreich', clicks: 74, impressions: 1860 },
-    ],
-    '/familienrecht/scheidung/': [
-      { query: 'scheidungsanwalt wien erstberatung', clicks: 132, impressions: 2140 },
-      { query: 'scheidung kosten anwalt', clicks: 49, impressions: 980 },
-    ],
-  },
-  aiTraffic: {
-    totalSessions: 86,
-    totalUsers: 61,
-    totalSessionsChange: 42.6,
-    totalUsersChange: 36.4,
-    sessionsBySource: {
-      ChatGPT: 39,
-      Perplexity: 22,
-      Gemini: 14,
-      Copilot: 8,
-      Claude: 3,
-    },
-    topAiSources: [
-      { source: 'ChatGPT', sessions: 39, users: 28, percentage: 45.3 },
-      { source: 'Perplexity', sessions: 22, users: 17, percentage: 25.6 },
-      { source: 'Gemini', sessions: 14, users: 10, percentage: 16.3 },
-      { source: 'Copilot', sessions: 8, users: 5, percentage: 9.3 },
-    ],
-    trend: aiTrend([1, 2, 1, 2, 2, 3, 2, 4, 3, 4, 5, 3, 5, 4, 5, 6, 5, 7, 6, 8, 7, 8, 9, 8, 10, 9, 11, 12, 11, 13]),
-  },
-  googleGenAi: {
-    status: 'available',
-    message: 'Demo-Daten: fiktive Search-Console-Sichtbarkeit in Google GenAI.',
-    totalImpressions: 1430,
-    impressionsChange: 38.2,
-    trend: genAiTrend([12, 14, 13, 18, 21, 19, 24, 28, 27, 32, 35, 36, 39, 42, 44, 48, 51, 54, 58, 61, 64, 68, 72, 74, 79, 83, 86, 91, 96, 101]),
-    topPages: [
-      { key: '/verkehrsrecht/fuehrerschein-entzug/', impressions: 442 },
-      { key: '/familienrecht/scheidung/', impressions: 318 },
-      { key: '/rechtsanwalt-wien/', impressions: 286 },
-      { key: '/erbrecht/testament/', impressions: 194 },
-      { key: '/strafrecht/', impressions: 128 },
-    ],
-    countries: [
-      { key: 'AT', impressions: 1294 },
-      { key: 'DE', impressions: 96 },
-      { key: 'CH', impressions: 40 },
-    ],
-    devices: [
-      { key: 'mobile', impressions: 914 },
-      { key: 'desktop', impressions: 432 },
-      { key: 'tablet', impressions: 84 },
-    ],
-    detectedAppearances: ['AI Overview', 'AI Mode'],
-    source: 'gsc-search-appearance',
-  },
-  googleAdsData,
-  countryData: [
-    { name: 'Oesterreich', value: 2741, fill: '#188BDB' },
-    { name: 'Deutschland', value: 294, fill: '#34A853' },
-    { name: 'Schweiz', value: 112, fill: '#FBBC05' },
-    { name: 'Sonstige', value: 69, fill: '#EA4335' },
-  ],
-  channelData: [
-    { name: 'Organic Search', value: 1842, fill: '#188BDB' },
-    { name: 'Direct', value: 521, fill: '#34A853' },
-    { name: 'Paid Search', value: 196, fill: '#FBBC05' },
-    { name: 'AI Referrals', value: 86, fill: '#8B5CF6' },
-    { name: 'Referral', value: 71, fill: '#EA4335' },
-  ],
-  deviceData: [
-    { name: 'Mobile', value: 2014, fill: '#188BDB' },
-    { name: 'Desktop', value: 1028, fill: '#34A853' },
-    { name: 'Tablet', value: 174, fill: '#FBBC05' },
-  ],
-  apiErrors: {},
-};
+const landingPages = [
+  ['/verkehrsrecht/fuehrerschein-entzug/', '498', '39', '7,8 %'],
+  ['/familienrecht/scheidung/', '493', '34', '6,9 %'],
+  ['/rechtsanwalt-wien/', '704', '31', '4,4 %'],
+  ['/erbrecht/testament/', '361', '22', '6,1 %'],
+  ['/strafrecht/', '309', '18', '5,8 %'],
+];
+
+const aiSources = [
+  ['ChatGPT', 39, '45 %', '#10a37f'],
+  ['Perplexity', 22, '26 %', '#6366f1'],
+  ['Gemini', 14, '16 %', '#4285f4'],
+  ['Copilot', 8, '9 %', '#00a4ef'],
+];
+
+const channelData = [
+  ['Organic Search', '1.842', '57 %'],
+  ['Direct', '521', '16 %'],
+  ['Paid Search', '196', '6 %'],
+  ['AI Referrals', '86', '3 %'],
+];
+
+function GoogleUnderline() {
+  return (
+    <div className="mt-1 h-[10px] w-48 overflow-hidden rounded-full" aria-hidden="true">
+      <div
+        className="h-full w-full"
+        style={{
+          background: 'linear-gradient(90deg,#4285F4 0 25%,#EA4335 25% 50%,#FBBC05 50% 75%,#34A853 75% 100%)',
+        }}
+      />
+    </div>
+  );
+}
+
+function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return (
+    <section className={`rounded-lg bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.08)] ${className}`}>
+      {children}
+    </section>
+  );
+}
+
+function Bar({ value, color = 'bg-blue-500' }: { value: number; color?: string }) {
+  return (
+    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className={`h-full rounded-full ${color}`} style={{ width: `${value}%` }} />
+    </div>
+  );
+}
 
 export default function DemoAnwaltDashboard() {
-  const [dateRange, setDateRange] = useState<DateRangeOption>('30d');
-  const dashboardData = useMemo(() => demoData, []);
-
   return (
-    <ProjectDashboard
-      data={dashboardData}
-      isLoading={false}
-      dateRange={dateRange}
-      onDateRangeChange={setDateRange}
-      domain="kanzlei-demo.at"
-      userRole="BENUTZER"
-      userEmail="demo@datapeak.at"
-      userAnsprache="Willkommen in der oeffentlichen Demo"
-      showLandingPages
-      showGoogleAds
-      showPromptTracking={false}
-      dashboardInfoText="Demo-Hinweis: Diese oeffentliche Ansicht verwendet ausschliesslich fiktive Werte fuer eine Rechtsanwaltskanzlei. Es werden keine echten Kunden-, Google- oder Backend-Daten geladen."
-      dataMaxEnabled={false}
-    />
+    <main className="min-h-screen bg-[#f8fafc] text-slate-800">
+      <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
+        <header className="mb-6 rounded-lg bg-white p-6 shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="mb-2 inline-flex rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-700">
+                Oeffentliche Demo
+              </div>
+              <h1 className="text-2xl font-semibold text-slate-900">DataPeak Dashboard fuer Rechtsanwaltskanzleien</h1>
+              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
+                Fiktive Live-Ansicht fuer kanzlei-demo.at. Diese Seite zeigt typische SEO-, GA4-, Google-Ads-,
+                KI-Traffic- und Google-GenAI-Kennzahlen ohne Login und ohne echte Kundendaten.
+              </p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+              <p className="font-semibold text-slate-900">Zeitraum</p>
+              <p className="text-slate-600">13.05.2026 - 06.06.2026</p>
+            </div>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
+          {kpis.map((kpi) => (
+            <Card key={kpi.label}>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{kpi.label}</p>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <span className="text-3xl font-semibold tabular-nums text-slate-900">{kpi.value}</span>
+                <span className={`text-sm font-semibold ${kpi.tone}`}>{kpi.change}</span>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_1fr]">
+          <Card>
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Verlauf & Analyse</h2>
+                <GoogleUnderline />
+              </div>
+              <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">Quelle: GA4 + GSC</span>
+            </div>
+            <div className="grid grid-cols-12 items-end gap-2">
+              {[42, 48, 39, 55, 63, 58, 71, 76, 84, 91, 99, 108, 121, 116, 132, 146, 151, 164].map((height, index) => (
+                <div key={index} className="flex h-56 items-end">
+                  <div
+                    className="w-full rounded-t-md bg-gradient-to-t from-blue-500 to-violet-500"
+                    style={{ height: `${Math.max(18, height)}px` }}
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-sm text-slate-600">
+              Der Demo-Trend zeigt wachsende organische Sichtbarkeit, steigende Conversion-Qualitaet und zusaetzliche Nachfrage aus KI-Quellen.
+            </p>
+          </Card>
+
+          <Card>
+            <h2 className="text-lg font-semibold text-slate-900">Google GenAI Sichtbarkeit</h2>
+            <GoogleUnderline />
+            <div className="mt-5 rounded-lg bg-blue-50 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700">GenAI-Impressions</p>
+              <div className="mt-2 flex items-end justify-between gap-3">
+                <span className="text-4xl font-semibold text-slate-900">1.430</span>
+                <span className="rounded-md bg-emerald-100 px-2 py-1 text-sm font-semibold text-emerald-700">+38,2 %</span>
+              </div>
+            </div>
+            <div className="mt-5 space-y-3">
+              {landingPages.slice(0, 4).map((page, index) => (
+                <div key={page[0]}>
+                  <div className="mb-1 flex justify-between gap-3 text-xs">
+                    <span className="truncate font-mono text-slate-700">{page[0]}</span>
+                    <span className="font-semibold text-slate-900">{[442, 318, 286, 194][index]}</span>
+                  </div>
+                  <Bar value={[88, 63, 57, 39][index]} color="bg-blue-500" />
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <Card>
+            <h2 className="text-lg font-semibold text-slate-900">KI-Traffic</h2>
+            <GoogleUnderline />
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-slate-50 p-4">
+                <p className="text-[11px] font-semibold uppercase text-slate-500">Sitzungen</p>
+                <p className="mt-2 text-3xl font-semibold text-slate-900">86</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-4">
+                <p className="text-[11px] font-semibold uppercase text-slate-500">Nutzer</p>
+                <p className="mt-2 text-3xl font-semibold text-slate-900">61</p>
+              </div>
+            </div>
+            <div className="mt-5 space-y-3">
+              {aiSources.map(([source, sessions, share, color]) => (
+                <div key={source as string} className="flex items-center gap-3">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color as string }} />
+                  <span className="flex-1 text-sm font-medium text-slate-700">{source}</span>
+                  <span className="text-sm font-semibold tabular-nums text-slate-900">{sessions}</span>
+                  <span className="w-12 text-right text-xs text-slate-500">{share}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="text-lg font-semibold text-slate-900">Google Ads Performance</h2>
+            <GoogleUnderline />
+            <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {[
+                ['Ad Spend', '967,60 EUR'],
+                ['Klicks', '208'],
+                ['Conversions', '32'],
+                ['ROAS', '5,4'],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg bg-slate-50 p-3">
+                  <p className="text-[11px] font-semibold uppercase text-slate-500">{label}</p>
+                  <p className="mt-2 text-xl font-semibold text-slate-900">{value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 space-y-3 text-sm">
+              {['Verkehrsrecht', 'Familienrecht', 'Erbrecht'].map((item, index) => (
+                <div key={item} className="flex items-center justify-between gap-3 rounded-md border border-slate-100 px-3 py-2">
+                  <span className="font-medium text-slate-700">{item}</span>
+                  <span className="font-semibold text-slate-900">{[11, 14, 7][index]} Conversions</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <Card>
+            <h2 className="text-lg font-semibold text-slate-900">Top Suchanfragen</h2>
+            <p className="mt-1 text-sm text-slate-500">Quelle GSC · Sortiert nach Klicks</p>
+            <div className="mt-5 overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="text-[11px] uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="pb-3">Suchanfrage</th>
+                    <th className="pb-3 text-right">Klicks</th>
+                    <th className="pb-3 text-right">Impr.</th>
+                    <th className="pb-3 text-right">CTR</th>
+                    <th className="pb-3 text-right">Pos.</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {queries.map((row) => (
+                    <tr key={row[0]}>
+                      <td className="max-w-[260px] truncate py-3 font-medium text-slate-800">{row[0]}</td>
+                      <td className="py-3 text-right tabular-nums">{row[1]}</td>
+                      <td className="py-3 text-right tabular-nums">{row[2]}</td>
+                      <td className="py-3 text-right tabular-nums">{row[3]}</td>
+                      <td className="py-3 text-right tabular-nums">{row[4]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="text-lg font-semibold text-slate-900">Top Landingpages</h2>
+            <p className="mt-1 text-sm text-slate-500">Sortiert nach Conversion-Leistung</p>
+            <div className="mt-5 space-y-3">
+              {landingPages.map((page, index) => (
+                <div key={page[0]} className="rounded-lg border border-slate-100 p-3">
+                  <div className="flex justify-between gap-3">
+                    <span className="truncate font-mono text-sm text-slate-800">{page[0]}</span>
+                    <span className="font-semibold text-slate-900">{page[2]} Conv.</span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
+                    <span>{page[1]} Sitzungen</span>
+                    <span>{page[3]} Conversion-Rate</span>
+                  </div>
+                  <div className="mt-3">
+                    <Bar value={[78, 69, 44, 61, 58][index]} color="bg-violet-500" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {['Zugriffe nach Channel', 'Zugriffe nach Land', 'Zugriffe nach Endgeraet'].map((title, cardIndex) => (
+            <Card key={title}>
+              <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+              <div className="mt-5 space-y-4">
+                {(cardIndex === 0 ? channelData : cardIndex === 1 ? [['Oesterreich', '2.741', '85 %'], ['Deutschland', '294', '9 %'], ['Schweiz', '112', '3 %']] : [['Mobile', '2.014', '63 %'], ['Desktop', '1.028', '32 %'], ['Tablet', '174', '5 %']]).map((row, index) => (
+                  <div key={row[0]}>
+                    <div className="mb-1 flex justify-between text-sm">
+                      <span className="font-medium text-slate-700">{row[0]}</span>
+                      <span className="text-slate-500">{row[1]}</span>
+                    </div>
+                    <Bar value={[85, 32, 18, 10][index] ?? 8} color={cardIndex === 0 && index === 3 ? 'bg-violet-500' : 'bg-sky-500'} />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <footer className="mt-6 rounded-lg bg-white p-5 text-xs leading-relaxed text-slate-500 shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
+          Demo-Hinweis: GSC und Google Ads messen Impressionen und Klicks auf der Google-Suchseite.
+          GA4 misst Website-Nutzung consent-abhaengig. KI-Sichtbarkeit und Prompt Research liefern Trend-Tendenzen,
+          keine statischen Fixwerte. Alle Werte auf dieser Seite sind fiktiv.
+        </footer>
+      </div>
+    </main>
   );
 }
