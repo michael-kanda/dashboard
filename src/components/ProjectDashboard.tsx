@@ -393,7 +393,7 @@ export default function ProjectDashboard({
               isLoading={isLoading}
               dateRange={dateRange}
               error={safeApiErrors?.ga4}
-              onDetailClick={() => setShowAiTrafficDetail(!showAiTrafficDetail)}
+              onDetailClick={projectId ? () => setShowAiTrafficDetail(!showAiTrafficDetail) : undefined}
               onPromptTrackingClick={shouldRenderPromptTracking ? handlePromptTrackingClick : undefined}
               detailOpen={showAiTrafficDetail}
               promptTrackingOpen={showPromptTrackingDetail}
@@ -405,7 +405,7 @@ export default function ProjectDashboard({
 
         {/* KI-Traffic Detail-Ansicht (ausklappbar) */}
         <Trace at="AiTrafficDetailWidgetV2?" />
-        {showAiTrafficDetail && hasAiTraffic && (
+        {showAiTrafficDetail && hasAiTraffic && projectId && (
           <div className="mt-8 animate-in slide-in-from-top-4 duration-300 print:hidden">
             <AiTrafficDetailWidgetV2
               projectId={projectId}

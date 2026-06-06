@@ -41,10 +41,17 @@ async function fetchExtended(projectId: string | undefined, dateRange: string): 
 
 export function useAiTrafficExtended(projectId: string | undefined, dateRange: string) {
   const [data, setData] = useState<AiTrafficExtendedData | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(Boolean(projectId));
   const [error, setError] = useState<string | undefined>(undefined);
 
   const load = useCallback(async (force = false) => {
+    if (!projectId) {
+      setData(undefined);
+      setError(undefined);
+      setIsLoading(false);
+      return;
+    }
+
     const key = cacheKey(projectId, dateRange);
     const cached = cache.get(key);
     const now = Date.now();

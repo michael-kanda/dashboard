@@ -16,10 +16,11 @@ export default auth(async (req) => {
   const isApiRoute = nextUrl.pathname.startsWith('/api');
   const isLoginRoute = nextUrl.pathname.startsWith('/login');
   const isMaintenancePage = nextUrl.pathname === '/maintenance';
+  const isPublicDemoRoute = nextUrl.pathname.startsWith('/demo-anwalt');
   const isStaticAsset = nextUrl.pathname.match(/\.(.*)$/);
 
   // Wenn es eine API, Login oder statische Datei ist -> Durchlassen
-  if (isApiRoute || isLoginRoute || isStaticAsset) {
+  if (isApiRoute || isLoginRoute || isPublicDemoRoute || isStaticAsset) {
     return;
   }
 

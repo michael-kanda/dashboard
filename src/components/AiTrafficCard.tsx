@@ -387,7 +387,8 @@ export default function AiTrafficCard({
                 <button
                   type="button"
                   onClick={onDetailClick}
-                  className="group w-full py-2 px-4 bg-surface hover:bg-surface-tertiary border border-border text-body text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  disabled={!onDetailClick}
+                  className="group w-full py-2 px-4 bg-surface hover:bg-surface-tertiary border border-border text-body text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
                 >
                   KI-Traffic Analyse
                   {detailOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
