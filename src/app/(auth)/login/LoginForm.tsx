@@ -16,8 +16,10 @@ import {
 import { motion } from 'framer-motion';
 
 const loginIntroHtml = `
+  <p style="text-align: justify; font-weight: normal;">
   DataPeak bringt zusammen, was zusammengehört: Deine wichtigsten Insights
   aus Google Search Console und GA4 auf einem einzigen, zentralen Dashboard.
+</p>
 `;
 
 function LoginVisualCard() {
