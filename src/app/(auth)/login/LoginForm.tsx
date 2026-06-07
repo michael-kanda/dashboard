@@ -22,19 +22,19 @@ const loginIntroHtml = `
 
 function LoginVisualCard() {
   return (
-    <aside className="hidden h-[624px] w-full max-w-[460px] shrink-0 rounded-xl bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
+    <aside className="hidden h-full w-full bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
       <div className="relative h-full overflow-hidden rounded-xl bg-[#188bdb] px-10 py-16">
         <div
           className="relative z-20 max-w-[360px] text-[16px] font-semibold leading-[1.22] text-white"
           dangerouslySetInnerHTML={{ __html: loginIntroHtml }}
         />
-        <div className="absolute inset-x-0 bottom-28 z-10 mx-auto h-[310px] w-[390px] max-w-[86%]">
+        <div className="absolute inset-x-0 bottom-[18%] z-10 mx-auto h-[42%] min-h-[280px] w-[78%] max-w-[560px]">
           <Image
             src="/traffic.webp"
             alt="DataPeak Traffic Dashboard Karten"
             fill
             className="object-contain drop-shadow-[0_18px_22px_rgba(15,23,42,0.25)]"
-            sizes="390px"
+            sizes="50vw"
             priority
           />
         </div>
@@ -96,9 +96,10 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-white px-4 py-8 text-[#111827] sm:px-8 lg:px-10">
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-[920px] items-center justify-between gap-10">
-        <section className="flex min-h-[540px] w-full max-w-[390px] flex-col justify-center">
+    <div className="h-screen w-screen overflow-hidden bg-white text-[#111827]">
+      <div className="grid h-full w-full grid-cols-1 lg:grid-cols-2">
+        <section className="flex h-full w-full items-center justify-center px-6 py-8 sm:px-10 lg:px-14">
+          <div className="w-full max-w-[390px]">
           {!isSuccess ? (
             <>
               <div className="mb-20 flex justify-center lg:justify-start">
@@ -230,6 +231,7 @@ export default function LoginForm() {
               </div>
             </div>
           )}
+          </div>
         </section>
 
         <LoginVisualCard />
