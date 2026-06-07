@@ -1,16 +1,21 @@
 // src/app/(auth)/login/page.tsx
-import Image from 'next/image';
 import { Suspense } from 'react';
 import LoginForm from './LoginForm';
 
-// Verbesserte Loading-Komponente mit gleichem Layout wie LoginForm
 function LoginLoading() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-xl">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-[45px] w-[180px] bg-gray-200 animate-pulse rounded" />
-          <p className="mt-2 text-gray-600">Wird geladen...</p>
+    <div className="min-h-screen bg-white px-4 py-8 sm:px-8 lg:px-10">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-[920px] items-center justify-between gap-10">
+        <div className="w-full max-w-[390px] animate-pulse space-y-10">
+          <div className="h-[74px] w-[230px] rounded-lg bg-slate-100" />
+          <div className="space-y-5">
+            <div className="h-[72px] rounded-lg bg-slate-100" />
+            <div className="h-[72px] rounded-lg bg-slate-100" />
+            <div className="h-[51px] rounded-lg bg-slate-100" />
+          </div>
+        </div>
+        <div className="hidden min-h-[624px] w-full max-w-[460px] rounded-xl bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
+          <div className="h-full rounded-xl bg-[#188bdb]" />
         </div>
       </div>
     </div>
