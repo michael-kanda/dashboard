@@ -16,9 +16,9 @@ import {
 import { motion } from 'framer-motion';
 
 const loginIntroHtml = `
-  <p style="text-align: justify; font-weight: normal;">
-  DataPeak bringt zusammen, was zusammengehört: Deine wichtigsten Insights
-  aus Google Search Console und GA4 auf einem einzigen, zentralen Dashboard.
+<h3 style="font-weight: normal; margin-bottom: 0.5em;">DataPeak bringt zusammen, was zusammengehört:</h3>
+<p style="text-align: justify; font-weight: normal; margin-top: 0;">
+  Deine wichtigsten Insights aus Google Search Console und GA4 auf einem einzigen, zentralen Dashboard.
 </p>
 `;
 
