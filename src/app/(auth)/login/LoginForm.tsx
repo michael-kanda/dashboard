@@ -23,20 +23,22 @@ const loginIntroHtml = `
 function LoginVisualCard() {
   return (
     <aside className="hidden h-full w-full bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
-      <div className="flex h-full flex-col overflow-hidden rounded-xl bg-[#188bdb] px-[clamp(40px,5vw,76px)] pb-[clamp(56px,7vh,92px)] pt-[clamp(86px,11vh,132px)]">
-        <div
-          className="max-w-[380px] text-[16px] font-semibold leading-[1.22] text-white"
-          dangerouslySetInnerHTML={{ __html: loginIntroHtml }}
-        />
-        <div className="relative mx-auto mt-[clamp(72px,11vh,128px)] min-h-0 w-[82%] max-w-[560px] flex-1">
-          <Image
-            src="/traffic.webp"
-            alt="DataPeak Traffic Dashboard Karten"
-            fill
-            className="object-contain drop-shadow-[0_18px_22px_rgba(15,23,42,0.25)]"
-            sizes="50vw"
-            priority
+      <div className="flex h-full items-center justify-center overflow-hidden rounded-xl bg-[#188bdb] px-[clamp(40px,5vw,76px)] py-[clamp(48px,7vh,92px)]">
+        <div className="flex w-full max-w-[620px] flex-col items-center">
+          <div
+            className="w-full max-w-[430px] self-start text-[16px] font-semibold leading-[1.22] text-white"
+            dangerouslySetInnerHTML={{ __html: loginIntroHtml }}
           />
+          <div className="relative mt-10 h-[clamp(320px,44vh,500px)] w-full">
+            <Image
+              src="/traffic.webp"
+              alt="DataPeak Traffic Dashboard Karten"
+              fill
+              className="object-contain drop-shadow-[0_18px_22px_rgba(15,23,42,0.25)]"
+              sizes="50vw"
+              priority
+            />
+          </div>
         </div>
       </div>
     </aside>
