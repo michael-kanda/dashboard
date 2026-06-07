@@ -26,9 +26,9 @@ function LoginVisualCard() {
   return (
     <aside className="hidden h-full w-full bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
       <div className="flex h-full items-center justify-center overflow-hidden rounded-xl bg-[#188bdb] px-[clamp(40px,5vw,76px)] py-[clamp(48px,7vh,92px)]">
-        <div className="flex w-full max-w-[620px] flex-col items-center">
+        <div className="flex w-full max-w-[620px] flex-col items-stretch">
           <div
-            className="w-full max-w-[430px] self-start text-[16px] font-semibold leading-[1.22] text-white"
+            className="w-full text-[16px] font-semibold leading-[1.22] text-white"
             dangerouslySetInnerHTML={{ __html: loginIntroHtml }}
           />
           <div className="relative mt-10 h-[clamp(320px,44vh,500px)] w-full">
