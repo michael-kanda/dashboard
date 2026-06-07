@@ -14,7 +14,7 @@ function LoginLoading() {
             <div className="h-[51px] rounded-lg bg-slate-100" />
           </div>
         </div>
-        <div className="hidden min-h-[624px] w-full max-w-[460px] rounded-xl bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
+        <div className="hidden h-[624px] w-full max-w-[460px] shrink-0 rounded-xl bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
           <div className="h-full rounded-xl bg-[#188bdb]" />
         </div>
       </div>

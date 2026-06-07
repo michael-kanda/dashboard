@@ -22,13 +22,13 @@ const loginIntroHtml = `
 
 function LoginVisualCard() {
   return (
-    <aside className="hidden min-h-[624px] w-full max-w-[460px] rounded-xl bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
+    <aside className="hidden h-[624px] w-full max-w-[460px] shrink-0 rounded-xl bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
       <div className="relative h-full overflow-hidden rounded-xl bg-[#188bdb] px-10 py-16">
         <div
-          className="relative z-10 max-w-[360px] text-[16px] font-semibold leading-[1.22] text-white"
+          className="relative z-20 max-w-[360px] text-[16px] font-semibold leading-[1.22] text-white"
           dangerouslySetInnerHTML={{ __html: loginIntroHtml }}
         />
-        <div className="absolute inset-x-0 bottom-24 z-10 mx-auto h-[310px] w-[390px] max-w-[86%]">
+        <div className="absolute inset-x-0 bottom-28 z-10 mx-auto h-[310px] w-[390px] max-w-[86%]">
           <Image
             src="/traffic.webp"
             alt="DataPeak Traffic Dashboard Karten"
