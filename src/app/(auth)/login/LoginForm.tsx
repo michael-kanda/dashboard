@@ -15,23 +15,15 @@ import {
 } from 'react-bootstrap-icons';
 import { motion } from 'framer-motion';
 
-const loginIntroHtml = `
-<h3 style="font-size: 1.5rem; font-weight: normal; margin-bottom: 0.5em;">DataPeak bringt zusammen, was zusammengehört</h3>
-`;
-
 function LoginVisualCard() {
   return (
     <aside className="hidden h-full w-full bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
       <div className="flex h-full items-center justify-center overflow-hidden rounded-xl bg-[#188bdb] px-[clamp(40px,5vw,76px)] py-[clamp(48px,7vh,92px)]">
         <div className="flex w-full max-w-[620px] flex-col items-stretch">
-          <div
-            className="w-full text-[16px] font-semibold leading-[1.22] text-white"
-            dangerouslySetInnerHTML={{ __html: loginIntroHtml }}
-          />
-          <div className="relative mt-10 h-[clamp(320px,44vh,500px)] w-full">
+          <div className="relative h-[clamp(360px,62vh,680px)] w-full">
             <Image
-              src="/traffic.webp"
-              alt="DataPeak Traffic Dashboard Karten"
+              src="/login-image.webp"
+              alt="DataPeak Login Visual"
               fill
               className="object-contain drop-shadow-[0_18px_22px_rgba(15,23,42,0.25)]"
               sizes="50vw"
@@ -101,21 +93,24 @@ export default function LoginForm() {
       <div className="grid h-full w-full grid-cols-1 lg:grid-cols-2">
         <section className="flex h-full w-full items-center justify-center px-6 py-8 sm:px-10 lg:px-14">
           <div className="w-full max-w-[390px]">
-          {!isSuccess ? (
-            <>
-              <div className="mb-20 flex justify-center lg:justify-start">
-                <div className="relative h-[74px] w-[230px]">
-                  <Image
-                    src="/logo-data-peak.webp"
-                    alt="DataPeak"
-                    fill
-                    className="object-contain"
-                    priority
-                  />
+            {!isSuccess ? (
+              <>
+                <div className="mb-14">
+                  <div className="relative h-[74px] w-[230px]">
+                    <Image
+                      src="/logo-data-peak.webp"
+                      alt="DataPeak"
+                      fill
+                      className="object-contain"
+                      priority
+                    />
+                  </div>
+                  <p className="m-0 text-left text-[18px] font-semibold leading-tight text-[#344054]">
+                    Loggen Sie sich in Ihren Account ein
+                  </p>
                 </div>
-              </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-5">
                 <motion.div
                   className="space-y-4"
                   animate={{ x: shake % 2 === 1 ? [0, -10, 10, -8, 8, 0] : 0 }}
