@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { LocalSeoData, LocalSeoLocationData } from '@/lib/dashboard-shared';
+import austriaGeoJson from '../../public/maps/austria-bundeslaender.geojson';
 
 interface LocalSeoMapWidgetProps {
   data?: LocalSeoData;
@@ -21,44 +22,86 @@ function getScoreColor(score: number) {
   return '#ef4444';
 }
 
-const AUSTRIA_REGION_PATHS = [
-  {
-    id: 'vorarlberg',
-    path: 'M50 236 L66 213 L86 204 L106 224 L103 263 L78 284 L54 268 Z',
-  },
-  {
-    id: 'tirol',
-    path: 'M101 217 L147 230 L184 205 L245 207 L277 226 L314 218 L337 244 L309 272 L255 263 L225 281 L178 265 L136 282 L96 262 Z',
-  },
-  {
-    id: 'salzburg',
-    path: 'M304 185 L346 154 L383 188 L392 237 L366 276 L323 257 L337 221 Z',
-  },
-  {
-    id: 'oberoesterreich',
-    path: 'M343 151 L398 99 L433 119 L474 104 L520 143 L500 185 L441 202 L400 181 L374 197 Z',
-  },
-  {
-    id: 'niederoesterreich',
-    path: 'M500 88 L544 53 L616 86 L681 72 L739 105 L768 160 L742 214 L672 202 L628 231 L572 206 L507 226 L486 179 L516 151 Z',
-  },
-  {
-    id: 'wien',
-    path: 'M689 149 L724 140 L734 166 L698 174 Z',
-  },
-  {
-    id: 'burgenland',
-    path: 'M728 205 L769 221 L759 274 L779 315 L735 346 L704 304 L724 260 Z',
-  },
-  {
-    id: 'steiermark',
-    path: 'M454 236 L507 219 L565 243 L626 230 L692 251 L716 312 L674 357 L601 350 L556 324 L503 337 L452 305 L420 267 Z',
-  },
-  {
-    id: 'kaernten',
-    path: 'M285 275 L342 270 L388 292 L452 304 L503 337 L444 368 L368 352 L310 339 L262 306 Z',
-  },
-];
+type GeoPoint = [number, number];
+type GeoRing = GeoPoint[];
+type GeoPolygon = GeoRing[];
+type GeoMultiPolygon = GeoPolygon[];
+type AustriaFeature = {
+  id?: string;
+  properties?: { name?: string };
+  geometry: {
+    type: 'Polygon' | 'MultiPolygon';
+    coordinates: GeoPolygon | GeoMultiPolygon;
+  };
+};
+
+const MAP_VIEWBOX = { width: 820, height: 420, padding: 34 };
+const austriaFeatures = (austriaGeoJson as { features: AustriaFeature[] }).features;
+
+const austriaBounds = (() => {
+  const xs: number[] = [];
+  const ys: number[] = [];
+  const collectPoints = (coordinates: unknown) => {
+    if (!Array.isArray(coordinates)) return;
+    if (typeof coordinates[0] === 'number' && typeof coordinates[1] === 'number') {
+      xs.push(coordinates[0]);
+      ys.push(coordinates[1]);
+      return;
+    }
+    coordinates.forEach(collectPoints);
+  };
+
+  austriaFeatures.forEach((feature) => collectPoints(feature.geometry.coordinates));
+
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys),
+  };
+})();
+
+function mapGeoPoint([x, y]: GeoPoint) {
+  const scale = Math.min(
+    (MAP_VIEWBOX.width - MAP_VIEWBOX.padding * 2) / (austriaBounds.maxX - austriaBounds.minX),
+    (MAP_VIEWBOX.height - MAP_VIEWBOX.padding * 2) / (austriaBounds.maxY - austriaBounds.minY)
+  );
+  const mapWidth = (austriaBounds.maxX - austriaBounds.minX) * scale;
+  const mapHeight = (austriaBounds.maxY - austriaBounds.minY) * scale;
+  const offsetX = (MAP_VIEWBOX.width - mapWidth) / 2;
+  const offsetY = (MAP_VIEWBOX.height - mapHeight) / 2;
+
+  return {
+    x: (x - austriaBounds.minX) * scale + offsetX,
+    y: (austriaBounds.maxY - y) * scale + offsetY,
+  };
+}
+
+function ringToPath(ring: GeoRing) {
+  return ring
+    .map((point, index) => {
+      const mapped = mapGeoPoint(point);
+      return `${index === 0 ? 'M' : 'L'}${mapped.x.toFixed(1)} ${mapped.y.toFixed(1)}`;
+    })
+    .join(' ')
+    .concat(' Z');
+}
+
+function featureToPath(feature: AustriaFeature) {
+  if (feature.geometry.type === 'Polygon') {
+    return (feature.geometry.coordinates as GeoPolygon).map(ringToPath).join(' ');
+  }
+
+  return (feature.geometry.coordinates as GeoMultiPolygon)
+    .map((polygon) => polygon.map(ringToPath).join(' '))
+    .join(' ');
+}
+
+const AUSTRIA_REGION_PATHS = austriaFeatures.map((feature) => ({
+  id: feature.id || feature.properties?.name || 'austria-region',
+  name: feature.properties?.name || 'Bundesland',
+  path: featureToPath(feature),
+}));
 
 function projectToAustriaSvg(location: LocalSeoLocationData) {
   const knownCityCoordinates: Record<string, { lat: number; lng: number }> = {
@@ -131,7 +174,15 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
           <svg viewBox="0 0 820 420" role="img" aria-label="Local SEO Karte Österreich" className="h-full min-h-[340px] w-full">
             <g className="fill-white stroke-slate-700 dark:fill-slate-800 dark:stroke-slate-300">
               {AUSTRIA_REGION_PATHS.map((region) => (
-                <path key={region.id} d={region.path} strokeWidth="2" strokeLinejoin="round" />
+                <path
+                  key={region.id}
+                  d={region.path}
+                  fillRule="evenodd"
+                  strokeWidth="1.6"
+                  strokeLinejoin="round"
+                >
+                  <title>{region.name}</title>
+                </path>
               ))}
             </g>
             {locations.map((location) => {
