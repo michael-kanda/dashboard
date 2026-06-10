@@ -21,6 +21,24 @@ function getScoreColor(score: number) {
   return '#ef4444';
 }
 
+const AUSTRIA_OUTLINE_PATH = [
+  'M70 230',
+  'C98 188 145 166 190 179',
+  'C232 191 248 153 292 163',
+  'C336 174 350 133 395 144',
+  'C436 154 462 121 507 141',
+  'C550 160 581 146 617 171',
+  'C654 196 686 179 728 206',
+  'C761 228 790 230 808 252',
+  'C775 284 718 310 660 300',
+  'C618 292 595 326 543 315',
+  'C495 305 470 337 419 320',
+  'C374 305 334 333 289 310',
+  'C251 291 222 304 184 277',
+  'C147 251 106 263 70 230',
+  'Z',
+].join(' ');
+
 function projectToAustriaSvg(location: LocalSeoLocationData) {
   const knownCityCoordinates: Record<string, { lat: number; lng: number }> = {
     wien: { lat: 48.2082, lng: 16.3738 },
@@ -42,10 +60,10 @@ function projectToAustriaSvg(location: LocalSeoLocationData) {
   const minLat = 46.3;
   const maxLat = 49.1;
   const x = ((lng - minLng) / (maxLng - minLng)) * 720 + 40;
-  const y = 300 - ((lat - minLat) / (maxLat - minLat)) * 220;
+  const y = 330 - ((lat - minLat) / (maxLat - minLat)) * 250;
   return {
     x: Math.max(45, Math.min(760, x)),
-    y: Math.max(55, Math.min(295, y)),
+    y: Math.max(70, Math.min(315, y)),
   };
 }
 
@@ -88,18 +106,17 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.25fr_0.9fr]">
-        <div className="min-h-[320px] rounded-lg bg-surface-secondary p-4">
-          <svg viewBox="0 0 820 360" role="img" aria-label="Local SEO Karte Österreich" className="h-full min-h-[300px] w-full">
+        <div className="min-h-[360px] rounded-lg bg-surface-secondary p-4">
+          <svg viewBox="0 0 820 420" role="img" aria-label="Local SEO Karte Österreich" className="h-full min-h-[340px] w-full">
             <path
-              d="M61 194 C96 157 137 156 176 169 C208 180 230 143 270 153 C312 164 319 134 361 141 C397 147 419 120 453 134 C497 153 520 139 557 159 C594 179 632 163 671 181 C714 201 745 199 778 221 C739 252 686 264 632 251 C590 242 551 278 503 266 C461 256 440 286 395 271 C353 257 319 286 279 266 C242 247 212 264 176 241 C139 218 96 226 61 194 Z"
-              fill="var(--dp-surface)"
-              stroke="var(--dp-border)"
+              d={AUSTRIA_OUTLINE_PATH}
+              className="fill-white stroke-slate-300 dark:fill-slate-800 dark:stroke-slate-600"
               strokeWidth="3"
             />
             <path
-              d="M135 201 C230 185 315 199 402 184 C493 169 592 190 702 210"
+              d="M138 235 C238 207 327 226 412 205 C505 183 596 207 711 235"
               fill="none"
-              stroke="var(--dp-border)"
+              className="stroke-slate-300 dark:stroke-slate-600"
               strokeDasharray="7 9"
               strokeWidth="2"
             />
@@ -110,6 +127,7 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
               const radius = Math.max(12, Math.min(26, 12 + location.impressions / 600));
               return (
                 <g key={location.id} className="cursor-pointer" onClick={() => setSelectedId(location.id)}>
+                  <title>{location.name}</title>
                   <circle cx={point.x} cy={point.y} r={radius + 7} fill={color} opacity={isSelected ? 0.18 : 0.08} />
                   <circle cx={point.x} cy={point.y} r={radius} fill={color} stroke="#fff" strokeWidth="3" />
                   <text
@@ -122,20 +140,30 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
                   >
                     {location.score}
                   </text>
-                  <text
-                    x={point.x}
-                    y={point.y + radius + 19}
-                    textAnchor="middle"
-                    fontSize="12"
-                    fontWeight="700"
-                    fill="var(--dp-text)"
-                  >
-                    {location.name}
-                  </text>
                 </g>
               );
             })}
           </svg>
+          <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted">
+            {locations.map((location) => (
+              <button
+                key={`legend-${location.id}`}
+                type="button"
+                onClick={() => setSelectedId(location.id)}
+                className={`rounded-md border px-2 py-1 text-left transition-colors ${
+                  selected?.id === location.id
+                    ? 'border-indigo-300 bg-indigo-50 text-slate-900 dark:border-indigo-700 dark:bg-indigo-950/30 dark:text-slate-100'
+                    : 'border-border-subtle bg-surface hover:bg-surface-tertiary'
+                }`}
+              >
+                <span
+                  className="mr-1 inline-block h-2 w-2 rounded-full"
+                  style={{ backgroundColor: getScoreColor(location.score) }}
+                />
+                {location.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="space-y-4">
