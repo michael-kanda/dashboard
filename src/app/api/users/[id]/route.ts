@@ -21,42 +21,42 @@ type ProjectLocationPayload = {
 function normalizeProjectLocations(value: unknown): ProjectLocationPayload[] {
   if (!Array.isArray(value)) return [];
 
-  return value
-    .map((raw, index) => {
-      if (!raw || typeof raw !== 'object') return null;
-      const item = raw as Record<string, unknown>;
-      const name = typeof item.name === 'string' ? item.name.trim() : '';
-      if (!name) return null;
+  return value.reduce<ProjectLocationPayload[]>((locations, raw, index) => {
+    if (!raw || typeof raw !== 'object') return locations;
+    const item = raw as Record<string, unknown>;
+    const name = typeof item.name === 'string' ? item.name.trim() : '';
+    if (!name) return locations;
 
-      const splitList = (listValue: unknown) => {
-        if (Array.isArray(listValue)) {
-          return listValue.map((entry) => String(entry).trim()).filter(Boolean);
-        }
-        if (typeof listValue === 'string') {
-          return listValue.split(',').map((entry) => entry.trim()).filter(Boolean);
-        }
-        return [];
-      };
+    const splitList = (listValue: unknown) => {
+      if (Array.isArray(listValue)) {
+        return listValue.map((entry) => String(entry).trim()).filter(Boolean);
+      }
+      if (typeof listValue === 'string') {
+        return listValue.split(',').map((entry) => entry.trim()).filter(Boolean);
+      }
+      return [];
+    };
 
-      const toNumberOrNull = (numValue: unknown) => {
-        if (numValue === null || numValue === undefined || numValue === '') return null;
-        const parsed = Number(numValue);
-        return Number.isFinite(parsed) ? parsed : null;
-      };
+    const toNumberOrNull = (numValue: unknown) => {
+      if (numValue === null || numValue === undefined || numValue === '') return null;
+      const parsed = Number(numValue);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
 
-      return {
-        id: typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `location-${index + 1}`,
-        name,
-        postalCode: typeof item.postalCode === 'string' ? item.postalCode.trim() : '',
-        city: typeof item.city === 'string' ? item.city.trim() : '',
-        country: typeof item.country === 'string' && item.country.trim() ? item.country.trim() : 'AT',
-        lat: toNumberOrNull(item.lat),
-        lng: toNumberOrNull(item.lng),
-        landingPages: splitList(item.landingPages),
-        keywords: splitList(item.keywords),
-      };
-    })
-    .filter((item): item is ProjectLocationPayload => Boolean(item));
+    locations.push({
+      id: typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `location-${index + 1}`,
+      name,
+      postalCode: typeof item.postalCode === 'string' ? item.postalCode.trim() : '',
+      city: typeof item.city === 'string' ? item.city.trim() : '',
+      country: typeof item.country === 'string' && item.country.trim() ? item.country.trim() : 'AT',
+      lat: toNumberOrNull(item.lat),
+      lng: toNumberOrNull(item.lng),
+      landingPages: splitList(item.landingPages),
+      keywords: splitList(item.keywords),
+    });
+
+    return locations;
+  }, []);
 }
 
 // Handler zum Abrufen eines einzelnen Benutzers
