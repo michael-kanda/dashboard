@@ -21,23 +21,44 @@ function getScoreColor(score: number) {
   return '#ef4444';
 }
 
-const AUSTRIA_OUTLINE_PATH = [
-  'M70 230',
-  'C98 188 145 166 190 179',
-  'C232 191 248 153 292 163',
-  'C336 174 350 133 395 144',
-  'C436 154 462 121 507 141',
-  'C550 160 581 146 617 171',
-  'C654 196 686 179 728 206',
-  'C761 228 790 230 808 252',
-  'C775 284 718 310 660 300',
-  'C618 292 595 326 543 315',
-  'C495 305 470 337 419 320',
-  'C374 305 334 333 289 310',
-  'C251 291 222 304 184 277',
-  'C147 251 106 263 70 230',
-  'Z',
-].join(' ');
+const AUSTRIA_REGION_PATHS = [
+  {
+    id: 'vorarlberg',
+    path: 'M50 236 L66 213 L86 204 L106 224 L103 263 L78 284 L54 268 Z',
+  },
+  {
+    id: 'tirol',
+    path: 'M101 217 L147 230 L184 205 L245 207 L277 226 L314 218 L337 244 L309 272 L255 263 L225 281 L178 265 L136 282 L96 262 Z',
+  },
+  {
+    id: 'salzburg',
+    path: 'M304 185 L346 154 L383 188 L392 237 L366 276 L323 257 L337 221 Z',
+  },
+  {
+    id: 'oberoesterreich',
+    path: 'M343 151 L398 99 L433 119 L474 104 L520 143 L500 185 L441 202 L400 181 L374 197 Z',
+  },
+  {
+    id: 'niederoesterreich',
+    path: 'M500 88 L544 53 L616 86 L681 72 L739 105 L768 160 L742 214 L672 202 L628 231 L572 206 L507 226 L486 179 L516 151 Z',
+  },
+  {
+    id: 'wien',
+    path: 'M689 149 L724 140 L734 166 L698 174 Z',
+  },
+  {
+    id: 'burgenland',
+    path: 'M728 205 L769 221 L759 274 L779 315 L735 346 L704 304 L724 260 Z',
+  },
+  {
+    id: 'steiermark',
+    path: 'M454 236 L507 219 L565 243 L626 230 L692 251 L716 312 L674 357 L601 350 L556 324 L503 337 L452 305 L420 267 Z',
+  },
+  {
+    id: 'kaernten',
+    path: 'M285 275 L342 270 L388 292 L452 304 L503 337 L444 368 L368 352 L310 339 L262 306 Z',
+  },
+];
 
 function projectToAustriaSvg(location: LocalSeoLocationData) {
   const knownCityCoordinates: Record<string, { lat: number; lng: number }> = {
@@ -108,18 +129,11 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.25fr_0.9fr]">
         <div className="min-h-[360px] rounded-lg bg-surface-secondary p-4">
           <svg viewBox="0 0 820 420" role="img" aria-label="Local SEO Karte Österreich" className="h-full min-h-[340px] w-full">
-            <path
-              d={AUSTRIA_OUTLINE_PATH}
-              className="fill-white stroke-slate-300 dark:fill-slate-800 dark:stroke-slate-600"
-              strokeWidth="3"
-            />
-            <path
-              d="M138 235 C238 207 327 226 412 205 C505 183 596 207 711 235"
-              fill="none"
-              className="stroke-slate-300 dark:stroke-slate-600"
-              strokeDasharray="7 9"
-              strokeWidth="2"
-            />
+            <g className="fill-white stroke-slate-700 dark:fill-slate-800 dark:stroke-slate-300">
+              {AUSTRIA_REGION_PATHS.map((region) => (
+                <path key={region.id} d={region.path} strokeWidth="2" strokeLinejoin="round" />
+              ))}
+            </g>
             {locations.map((location) => {
               const point = projectToAustriaSvg(location);
               const color = getScoreColor(location.score);
