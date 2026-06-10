@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { LocalSeoData, LocalSeoLocationData } from '@/lib/dashboard-shared';
-import austriaGeoJson from '../../public/maps/austria-bundeslaender.geojson';
+import austriaGeoJson from '@/data/austria-bundeslaender.geojson';
 
 interface LocalSeoMapWidgetProps {
   data?: LocalSeoData;
@@ -36,7 +36,7 @@ type AustriaFeature = {
 };
 
 const MAP_VIEWBOX = { width: 820, height: 420, padding: 34 };
-const austriaFeatures = (austriaGeoJson as { features: AustriaFeature[] }).features;
+const austriaFeatures = (austriaGeoJson as unknown as { features: AustriaFeature[] }).features;
 
 const austriaBounds = (() => {
   const xs: number[] = [];
