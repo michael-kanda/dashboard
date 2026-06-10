@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect, ChangeEvent } from 'react';
-import { User } from '@/types';
+import { User, ProjectLocation } from '@/types';
 import { 
   Pencil, 
   ArrowRepeat, 
@@ -51,8 +51,44 @@ interface ApiPayload {
   project_duration_months: number | null; 
   project_timeline_active: boolean;
   settings_show_prompt_tracking: boolean;
+  project_locations: ProjectLocation[];
   maintenance_mode: boolean; // NEU
   password?: string; 
+}
+
+const createEmptyLocation = (): ProjectLocation => ({
+  id: `location-${Date.now()}`,
+  name: '',
+  postalCode: '',
+  city: '',
+  country: 'AT',
+  lat: null,
+  lng: null,
+  landingPages: [],
+  keywords: [],
+});
+
+function normalizeLocations(locations?: ProjectLocation[] | null): ProjectLocation[] {
+  if (!Array.isArray(locations)) return [];
+  return locations.map((location, index) => ({
+    id: location.id || `location-${index + 1}`,
+    name: location.name || '',
+    postalCode: location.postalCode || '',
+    city: location.city || '',
+    country: location.country || 'AT',
+    lat: typeof location.lat === 'number' ? location.lat : null,
+    lng: typeof location.lng === 'number' ? location.lng : null,
+    landingPages: Array.isArray(location.landingPages) ? location.landingPages : [],
+    keywords: Array.isArray(location.keywords) ? location.keywords : [],
+  }));
+}
+
+function listToCsv(items?: string[]) {
+  return Array.isArray(items) ? items.join(', ') : '';
+}
+
+function csvToList(value: string) {
+  return value.split(',').map((item) => item.trim()).filter(Boolean);
 }
 
 
@@ -78,6 +114,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
   });
 
   const [password, setPassword] = useState('');
+  const [projectLocations, setProjectLocations] = useState<ProjectLocation[]>([]);
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -108,6 +145,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
       };
       
       setFormData(newFormData);
+      setProjectLocations(normalizeLocations(user.project_locations));
       setPassword('');
       setMessage('');
       setSuccessMessage('');
@@ -129,6 +167,24 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         [name]: value
       }));
     }
+  };
+
+  const updateProjectLocation = (
+    index: number,
+    field: keyof ProjectLocation,
+    value: string | number | null | string[]
+  ) => {
+    setProjectLocations((prev) => prev.map((location, locationIndex) => (
+      locationIndex === index ? { ...location, [field]: value } : location
+    )));
+  };
+
+  const addProjectLocation = () => {
+    setProjectLocations((prev) => [...prev, createEmptyLocation()]);
+  };
+
+  const removeProjectLocation = (index: number) => {
+    setProjectLocations((prev) => prev.filter((_, locationIndex) => locationIndex !== index));
   };
 
 
@@ -160,6 +216,17 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         project_duration_months: parseInt(formData.project_duration_months, 10) || 6,
         project_timeline_active: formData.project_timeline_active,
         settings_show_prompt_tracking: formData.settings_show_prompt_tracking,
+        project_locations: projectLocations
+          .map((location) => ({
+            ...location,
+            name: location.name.trim(),
+            postalCode: location.postalCode?.trim() || '',
+            city: location.city?.trim() || '',
+            country: location.country?.trim() || 'AT',
+            landingPages: Array.isArray(location.landingPages) ? location.landingPages.filter(Boolean) : [],
+            keywords: Array.isArray(location.keywords) ? location.keywords.filter(Boolean) : [],
+          }))
+          .filter((location) => location.name),
         maintenance_mode: formData.maintenance_mode, // NEU
       };
       
@@ -209,6 +276,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         settings_show_prompt_tracking: Boolean(updatedUser.settings_show_prompt_tracking),
         maintenance_mode: Boolean(updatedUser.maintenance_mode), // NEU
       });
+      setProjectLocations(normalizeLocations(updatedUser.project_locations));
       setPassword('');
       setMessage('');
       setSuccessMessage('✅ Benutzer erfolgreich aktualisiert!');
@@ -545,6 +613,145 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
               <p className="mt-1 text-xs text-gray-400">
                 Admins sehen Prompt Tracking weiterhin, wenn GSC-Daten vorhanden sind. Diese Einstellung steuert die Kundenansicht.
               </p>
+            </fieldset>
+
+            {/* --- Standorte / Local SEO --- */}
+            <fieldset className="border-t pt-4 mt-4">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div>
+                  <legend className="text-sm font-medium text-gray-700">Standorte / Local SEO</legend>
+                  <p className="mt-1 text-xs text-gray-400">
+                    Optional: Standorte mit PLZ, Zielseiten und lokalen Keywords für das Local-SEO-Widget.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addProjectLocation}
+                  disabled={isSubmitting}
+                  className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-md border border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50"
+                >
+                  Standort hinzufügen
+                </button>
+              </div>
+
+              {projectLocations.length === 0 ? (
+                <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 p-3 text-sm text-gray-500">
+                  Noch keine Standorte hinterlegt. Ohne Standorte bleibt das Local-SEO-Widget ausgeblendet.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {projectLocations.map((location, index) => (
+                    <div key={location.id || index} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <div className="flex items-center justify-between gap-3 mb-3">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          Standort {index + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeProjectLocation(index)}
+                          disabled={isSubmitting}
+                          className="text-xs font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
+                        >
+                          Entfernen
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600">Name *</label>
+                          <input
+                            type="text"
+                            value={location.name}
+                            onChange={(event) => updateProjectLocation(index, 'name', event.target.value)}
+                            placeholder="z.B. Wien Innenstadt"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 placeholder:text-gray-400"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600">PLZ</label>
+                          <input
+                            type="text"
+                            value={location.postalCode || ''}
+                            onChange={(event) => updateProjectLocation(index, 'postalCode', event.target.value)}
+                            placeholder="z.B. 1010"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 placeholder:text-gray-400"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600">Stadt</label>
+                          <input
+                            type="text"
+                            value={location.city || ''}
+                            onChange={(event) => updateProjectLocation(index, 'city', event.target.value)}
+                            placeholder="z.B. Wien"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 placeholder:text-gray-400"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600">Land</label>
+                          <input
+                            type="text"
+                            value={location.country || 'AT'}
+                            onChange={(event) => updateProjectLocation(index, 'country', event.target.value)}
+                            placeholder="AT"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 placeholder:text-gray-400"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600">Latitude</label>
+                          <input
+                            type="number"
+                            step="0.000001"
+                            value={location.lat ?? ''}
+                            onChange={(event) => updateProjectLocation(index, 'lat', event.target.value === '' ? null : Number(event.target.value))}
+                            placeholder="48.2082"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 placeholder:text-gray-400"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600">Longitude</label>
+                          <input
+                            type="number"
+                            step="0.000001"
+                            value={location.lng ?? ''}
+                            onChange={(event) => updateProjectLocation(index, 'lng', event.target.value === '' ? null : Number(event.target.value))}
+                            placeholder="16.3738"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 placeholder:text-gray-400"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-medium text-gray-600">Landingpages (kommagetrennt)</label>
+                          <input
+                            type="text"
+                            value={listToCsv(location.landingPages)}
+                            onChange={(event) => updateProjectLocation(index, 'landingPages', csvToList(event.target.value))}
+                            placeholder="/rechtsanwalt-wien/, /standort-wien/"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 placeholder:text-gray-400"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-medium text-gray-600">Keywords/Aliase (kommagetrennt)</label>
+                          <input
+                            type="text"
+                            value={listToCsv(location.keywords)}
+                            onChange={(event) => updateProjectLocation(index, 'keywords', csvToList(event.target.value))}
+                            placeholder="wien, 1010, innere stadt, rechtsanwalt wien"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 placeholder:text-gray-400"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </fieldset>
 
             {/* --- Konfiguration --- */}

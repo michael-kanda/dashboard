@@ -27,6 +27,8 @@ import {
   ApiErrorStatus,
   ConvertingPageData,
   LandingPageQueries,
+  LocalSeoData,
+  LocalSeoLocationConfig,
   PromptTrackingResult,
   PromptTrackingShareBucket,
   PromptTrackingPrevious,
@@ -73,6 +75,113 @@ const INITIAL_DATA: RawApiData = {
   avgEngagementTime: { total: 0, daily: [] },
   paidSearch: { total: 0, daily: [] }
 };
+
+function normalizeForMatch(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss');
+}
+
+function normalizePath(value: string) {
+  if (!value) return '';
+  try {
+    const parsed = value.startsWith('http') ? new URL(value).pathname : value;
+    return parsed.endsWith('/') && parsed.length > 1 ? parsed.slice(0, -1) : parsed;
+  } catch {
+    return value.endsWith('/') && value.length > 1 ? value.slice(0, -1) : value;
+  }
+}
+
+function buildLocalSeoData(
+  locations: LocalSeoLocationConfig[] | null | undefined,
+  topQueries: TopQueryData[],
+  topConvertingPages: ConvertingPageData[],
+  cityData: ChartEntry[]
+): LocalSeoData | undefined {
+  const activeLocations = Array.isArray(locations)
+    ? locations.filter((location) => location?.name?.trim())
+    : [];
+  if (activeLocations.length === 0) return undefined;
+
+  const dataLocations = activeLocations.map((location, index) => {
+    const terms = [
+      location.name,
+      location.postalCode,
+      location.city,
+      ...(location.keywords || []),
+    ]
+      .map((term) => normalizeForMatch(String(term || '').trim()))
+      .filter(Boolean);
+    const landingPaths = (location.landingPages || []).map(normalizePath).filter(Boolean);
+
+    const matchedQueries = topQueries.filter((query) => {
+      const queryText = normalizeForMatch(query.query || '');
+      const queryPath = normalizePath(query.url || '');
+      return terms.some((term) => queryText.includes(term)) ||
+        landingPaths.some((path) => queryPath === path || queryPath.includes(path));
+    });
+
+    const matchedPages = topConvertingPages.filter((page) => {
+      const pagePath = normalizePath(page.path || '');
+      return landingPaths.some((path) => pagePath === path || pagePath.includes(path));
+    });
+
+    const cityNeedle = normalizeForMatch(location.city || location.name || '');
+    const cityEntry = cityData.find((entry) => normalizeForMatch(entry.name || '') === cityNeedle);
+
+    const clicks = matchedQueries.reduce((sum, query) => sum + (query.clicks || 0), 0);
+    const impressions = matchedQueries.reduce((sum, query) => sum + (query.impressions || 0), 0);
+    const weightedPositionSum = matchedQueries.reduce(
+      (sum, query) => sum + ((query.position || 0) * (query.impressions || 0)),
+      0
+    );
+    const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
+    const position = impressions > 0 ? weightedPositionSum / impressions : null;
+    const pageSessions = matchedPages.reduce((sum, page) => sum + (page.sessions || 0), 0);
+    const pageConversions = matchedPages.reduce((sum, page) => sum + (page.conversions || 0), 0);
+    const sessions = Math.max(cityEntry?.value || 0, pageSessions);
+    const conversions = Math.max(cityEntry?.subValue2 || 0, pageConversions);
+    const score = Math.max(0, Math.min(100, Math.round(
+      (ctr * 8) +
+      (position ? Math.max(0, 35 - position * 2) : 0) +
+      Math.min(25, impressions / 120) +
+      Math.min(20, conversions * 3)
+    )));
+
+    return {
+      ...location,
+      id: location.id || `location-${index + 1}`,
+      score,
+      clicks,
+      impressions,
+      ctr,
+      position,
+      sessions,
+      conversions,
+      topQueries: matchedQueries
+        .sort((a, b) => b.impressions - a.impressions)
+        .slice(0, 5),
+      topLandingPages: matchedPages
+        .sort((a, b) => (b.conversions || 0) - (a.conversions || 0))
+        .slice(0, 5),
+    };
+  });
+
+  return {
+    locations: dataLocations,
+    totals: {
+      clicks: dataLocations.reduce((sum, location) => sum + location.clicks, 0),
+      impressions: dataLocations.reduce((sum, location) => sum + location.impressions, 0),
+      sessions: dataLocations.reduce((sum, location) => sum + location.sessions, 0),
+      conversions: dataLocations.reduce((sum, location) => sum + location.conversions, 0),
+    },
+  };
+}
 
 function buildShareTrend(
   allDaily: ChartPoint[],
@@ -263,6 +372,7 @@ export async function getOrFetchGoogleData(
   let topConvertingPages: ConvertingPageData[] = [];
   let aiTraffic: AiTrafficData | undefined;
   let countryData: ChartEntry[] = [];
+  let cityData: ChartEntry[] = [];
   let channelData: ChartEntry[] = [];
   let deviceData: ChartEntry[] = [];
   let bingData: any[] = [];
@@ -432,12 +542,14 @@ export async function getOrFetchGoogleData(
       } catch (e) { console.warn('[GA4] Konnte Top-Pages nicht laden:', e); }
 
       try {
-        const [rawCountry, rawChannel, rawDevice] = await Promise.all([
+        const [rawCountry, rawCity, rawChannel, rawDevice] = await Promise.all([
           getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'country'),
+          getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'city'),
           getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'sessionDefaultChannelGroup'),
           getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'deviceCategory'),
         ]);
         countryData = rawCountry.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
+        cityData = rawCity.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
         channelData = rawChannel.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
         deviceData = rawDevice.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
       } catch (e) { console.error('[GA4 Dimensions Error]', e); }
@@ -503,6 +615,7 @@ export async function getOrFetchGoogleData(
       paidSearch: currentData.paidSearch.daily || []
     },
     topQueries, landingPageQueries, topConvertingPages,
+    localSeo: buildLocalSeoData((user as any).project_locations, topQueries, topConvertingPages, cityData),
     aiTraffic, countryData, channelData, deviceData,
     bingData, weatherData, googleAdsData, googleGenAi, promptTracking,
     apiErrors: Object.keys(apiErrors).length > 0 ? apiErrors : undefined

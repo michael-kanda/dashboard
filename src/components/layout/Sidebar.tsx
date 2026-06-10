@@ -13,7 +13,7 @@ import {
   BoxArrowRight, BoxArrowInRight, HddNetwork, Magic,
   ChevronLeft, ChevronRight, SunFill, MoonStarsFill,
   ChevronDown, ChevronUp,
-  BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search, Google
+  BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search, Google, GeoAlt
 } from 'react-bootstrap-icons';
 
 // ═══════════════════════════════════════════════════════
@@ -32,6 +32,7 @@ interface NavItem {
 const DASHBOARD_SECTIONS = [
   { id: 'section-kpis',         label: 'Traffic & Reichweite',  icon: <BarChartFill size={13} /> },
   { id: 'section-verlauf',      label: 'Verlauf & Analyse',     icon: <GraphUpArrow size={13} /> },
+  { id: 'section-local-seo',    label: 'Lokale Sichtbarkeit',   icon: <GeoAlt size={13} /> },
   { id: 'section-google-genai', label: 'Google GenAI Sichtbarkeit', icon: <Google size={13} /> },
   { id: 'section-ki-traffic',   label: 'KI-Traffic',            icon: <Robot size={13} /> },
   { id: 'section-top-queries',  label: 'Top Suchanfragen',      icon: <Search size={13} /> },

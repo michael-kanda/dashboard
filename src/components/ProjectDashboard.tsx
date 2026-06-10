@@ -30,6 +30,7 @@ import { aggregateLandingPages } from '@/lib/utils';
 import { DataMaxChat } from '@/components/datamax';
 import GoogleAdsWidget from '@/components/GoogleAdsWidget';
 import GoogleGenAiVisibilityCard from '@/components/GoogleGenAiVisibilityCard';
+import LocalSeoMapWidget from '@/components/LocalSeoMapWidget';
 
 // PromptTrackingCard dynamisch nur Client-Side laden – verhindert
 // Hydration-Mismatches bei den Number-Formatierungen / shareTrend-Visuals.
@@ -53,7 +54,7 @@ if (typeof window === 'undefined') {
     AiTrafficDetailWidgetV2, TopQueriesList, SemrushTopKeywords,
     SemrushTopKeywords02, GlobalHeader, ProjectTimelineWidget,
     AiAnalysisWidget, LandingPageChart, DataMaxChat, GoogleAdsWidget,
-    GoogleGenAiVisibilityCard,
+    GoogleGenAiVisibilityCard, LocalSeoMapWidget,
   };
   for (const [name, comp] of Object.entries(_components)) {
     if (typeof comp === 'undefined') {
@@ -367,6 +368,12 @@ export default function ProjectDashboard({
             weatherData={data.weatherData}
           />
         </div>
+
+        {data.localSeo?.locations?.length ? (
+          <div id="section-local-seo" className="mt-8 scroll-mt-20 print:hidden">
+            <LocalSeoMapWidget data={data.localSeo} />
+          </div>
+        ) : null}
 
         <Trace at="GoogleGenAiVisibilityCard?" />
         <div id="section-google-genai" className="mt-8 scroll-mt-20 print:hidden">

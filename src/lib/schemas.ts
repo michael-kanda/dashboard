@@ -43,6 +43,17 @@ export const UserSchema = z.object({
   brand_keywords: z.array(z.string()).nullable().optional(),
   dashboard_info_text: z.string().nullable().optional(),
   settings_show_prompt_tracking: z.boolean().nullable().optional().default(false),
+  project_locations: z.array(z.object({
+    id: z.string().optional(),
+    name: z.string(),
+    postalCode: z.string().optional(),
+    city: z.string().optional(),
+    country: z.string().optional(),
+    lat: z.number().nullable().optional(),
+    lng: z.number().nullable().optional(),
+    landingPages: z.array(z.string()).optional(),
+    keywords: z.array(z.string()).optional(),
+  })).nullable().optional(),
 });
 
 // Schema für die Projekt-Übersicht (User + KPIs)

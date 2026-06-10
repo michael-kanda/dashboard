@@ -29,6 +29,7 @@ interface UserWithAssignments extends Omit<User, 'assigned_projects'> {
 async function getUserData(id: string): Promise<UserWithAssignments | null> {
   try {
     console.log('[getUserData] 🔍 Suche Benutzer mit ID:', id);
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
     // 1. Benutzerdaten laden
     const { rows: users } = await sql`
       SELECT
@@ -50,7 +51,8 @@ async function getUserData(id: string): Promise<UserWithAssignments | null> {
         project_duration_months,
         project_timeline_active::boolean as project_timeline_active,
         settings_show_prompt_tracking::boolean as settings_show_prompt_tracking,
-        brand_keywords
+        brand_keywords,
+        COALESCE(project_locations, '[]'::jsonb) as project_locations
       FROM users
       WHERE id::text = ${id}`;
       

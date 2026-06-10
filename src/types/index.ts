@@ -34,6 +34,7 @@ export interface User {
   brand_keywords?: string[] | null;
   dashboard_info_text?: string | null;
   settings_show_prompt_tracking?: boolean | null;
+  project_locations?: ProjectLocation[] | null;
 
   // Landingpage Statistiken
   landingpages_count?: number;
@@ -44,6 +45,18 @@ export interface User {
 
   // Aggregierte Reichweiten-Änderung (Summe GSC Impression Change)
   total_impression_change?: number;
+}
+
+export interface ProjectLocation {
+  id?: string;
+  name: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
+  lat?: number | null;
+  lng?: number | null;
+  landingPages?: string[];
+  keywords?: string[];
 }
 
 // Rest bleibt gleich...

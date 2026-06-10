@@ -34,6 +34,7 @@ export async function createTables() {
         brand_keywords TEXT[] DEFAULT NULL,
         dashboard_info_text TEXT NULL,
         settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
+        project_locations JSONB DEFAULT '[]'::jsonb,
         
         "createdByAdminId" UUID REFERENCES users(id),
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -48,7 +49,8 @@ export async function createTables() {
       ADD COLUMN IF NOT EXISTS google_ads_sheet_id VARCHAR(255),
       ADD COLUMN IF NOT EXISTS brand_keywords TEXT[] DEFAULT NULL,
       ADD COLUMN IF NOT EXISTS dashboard_info_text TEXT NULL,
-      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE;
+      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb;
     `;
     console.log('Prompt-Tracking-Spalten in "users" erfolgreich geprüft/erstellt.');
 

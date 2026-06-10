@@ -24,12 +24,14 @@ interface ExtendedUser extends User {
   settings_show_google_ads?: boolean;
   settings_show_prompt_tracking: boolean | null;
   dashboard_info_text?: string | null;
+  project_locations?: any[] | null;
   google_ads_sheet_id?: string;  // ← NEU
 }
 
 async function loadData(projectId: string, dateRange: string) {
   try {
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dashboard_info_text TEXT NULL`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
 
     const { rows } = await sql`
       SELECT
@@ -53,6 +55,7 @@ async function loadData(projectId: string, dateRange: string) {
         u.dashboard_info_text,
         u.data_max_enabled, 
         u.brand_keywords,
+        COALESCE(u.project_locations, '[]'::jsonb) as project_locations,
         
         -- E-Mail des Erstellers holen
         creator.email as creator_email,

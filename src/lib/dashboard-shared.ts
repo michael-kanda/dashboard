@@ -220,11 +220,46 @@ export interface ProjectDashboardData {
   googleAdsData?: GoogleAdsData;
   googleGenAi?: GoogleGenAiPerformanceData;
   promptTracking?: PromptTrackingResult;
+  localSeo?: LocalSeoData;
   countryData?: ChartEntry[];
   channelData?: ChartEntry[];
   deviceData?: ChartEntry[];
   apiErrors?: ApiErrorStatus;
   fromCache?: boolean;
+}
+
+export interface LocalSeoLocationConfig {
+  id?: string;
+  name: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
+  lat?: number | null;
+  lng?: number | null;
+  landingPages?: string[];
+  keywords?: string[];
+}
+
+export interface LocalSeoLocationData extends LocalSeoLocationConfig {
+  score: number;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number | null;
+  sessions: number;
+  conversions: number;
+  topQueries: TopQueryData[];
+  topLandingPages: ConvertingPageData[];
+}
+
+export interface LocalSeoData {
+  locations: LocalSeoLocationData[];
+  totals: {
+    clicks: number;
+    impressions: number;
+    sessions: number;
+    conversions: number;
+  };
 }
 
 export const ZERO_KPI: KpiDatum = { value: 0, change: 0 };

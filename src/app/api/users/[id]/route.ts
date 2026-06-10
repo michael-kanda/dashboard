@@ -6,6 +6,59 @@ import { auth } from '@/lib/auth';
 import { User } from '@/types';
 export const revalidate = 0;
 
+type ProjectLocationPayload = {
+  id?: string;
+  name: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
+  lat?: number | null;
+  lng?: number | null;
+  landingPages?: string[];
+  keywords?: string[];
+};
+
+function normalizeProjectLocations(value: unknown): ProjectLocationPayload[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((raw, index) => {
+      if (!raw || typeof raw !== 'object') return null;
+      const item = raw as Record<string, unknown>;
+      const name = typeof item.name === 'string' ? item.name.trim() : '';
+      if (!name) return null;
+
+      const splitList = (listValue: unknown) => {
+        if (Array.isArray(listValue)) {
+          return listValue.map((entry) => String(entry).trim()).filter(Boolean);
+        }
+        if (typeof listValue === 'string') {
+          return listValue.split(',').map((entry) => entry.trim()).filter(Boolean);
+        }
+        return [];
+      };
+
+      const toNumberOrNull = (numValue: unknown) => {
+        if (numValue === null || numValue === undefined || numValue === '') return null;
+        const parsed = Number(numValue);
+        return Number.isFinite(parsed) ? parsed : null;
+      };
+
+      return {
+        id: typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `location-${index + 1}`,
+        name,
+        postalCode: typeof item.postalCode === 'string' ? item.postalCode.trim() : '',
+        city: typeof item.city === 'string' ? item.city.trim() : '',
+        country: typeof item.country === 'string' && item.country.trim() ? item.country.trim() : 'AT',
+        lat: toNumberOrNull(item.lat),
+        lng: toNumberOrNull(item.lng),
+        landingPages: splitList(item.landingPages),
+        keywords: splitList(item.keywords),
+      };
+    })
+    .filter((item): item is ProjectLocationPayload => Boolean(item));
+}
+
 // Handler zum Abrufen eines einzelnen Benutzers
 export async function GET(
   request: NextRequest,
@@ -13,6 +66,7 @@ export async function GET(
 ) {
   const { id: targetUserId } = await params; 
   try {
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
     const session = await auth(); 
     
     // Berechtigungsprüfung: Admins ODER der Benutzer selbst
@@ -56,7 +110,8 @@ export async function GET(
         project_timeline_active::boolean as project_timeline_active,
         maintenance_mode::boolean as maintenance_mode,
         brand_keywords,
-        settings_show_prompt_tracking::boolean as settings_show_prompt_tracking
+        settings_show_prompt_tracking::boolean as settings_show_prompt_tracking,
+        COALESCE(project_locations, '[]'::jsonb) as project_locations
       FROM users
       WHERE id = ${targetUserId}::uuid;
     `;
@@ -91,6 +146,7 @@ export async function PUT(
 ) {
   const { id: targetUserId } = await params;
   try {
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
     const session = await auth(); 
     
     if (!session?.user) {
@@ -130,7 +186,8 @@ export async function PUT(
         project_duration_months,
         project_timeline_active,
         maintenance_mode, // NEU
-        settings_show_prompt_tracking
+        settings_show_prompt_tracking,
+        project_locations
     } = body;
 
     if (!email) {
@@ -207,6 +264,7 @@ export async function PUT(
     const promptTrackingVisible = typeof settings_show_prompt_tracking === 'boolean'
       ? settings_show_prompt_tracking
       : targetUser.settings_show_prompt_tracking === true;
+    const normalizedProjectLocations = normalizeProjectLocations(project_locations);
 
     const { rows } = password && password.trim().length > 0
       ? // Query MIT Passwort
@@ -230,6 +288,7 @@ export async function PUT(
             project_timeline_active = ${timelineActive},
             maintenance_mode = ${maintenanceActive},
             settings_show_prompt_tracking = ${promptTrackingVisible},
+            project_locations = ${JSON.stringify(normalizedProjectLocations)}::jsonb,
             password = ${await bcrypt.hash(password, 10)}
           WHERE id = ${targetUserId}::uuid
           RETURNING
@@ -239,7 +298,8 @@ export async function PUT(
             google_ads_sheet_id,
             mandant_id, permissions, favicon_url,
             project_start_date, project_duration_months, project_timeline_active,
-            maintenance_mode, brand_keywords, settings_show_prompt_tracking;
+            maintenance_mode, brand_keywords, settings_show_prompt_tracking,
+            COALESCE(project_locations, '[]'::jsonb) as project_locations;
         `
       : // Query OHNE Passwort
         await sql<User>`
@@ -261,7 +321,8 @@ export async function PUT(
             project_duration_months = ${duration},
             project_timeline_active = ${timelineActive},
             maintenance_mode = ${maintenanceActive},
-            settings_show_prompt_tracking = ${promptTrackingVisible}
+            settings_show_prompt_tracking = ${promptTrackingVisible},
+            project_locations = ${JSON.stringify(normalizedProjectLocations)}::jsonb
           WHERE id = ${targetUserId}::uuid
           RETURNING
             id::text as id, email, role, domain, ansprache,
@@ -270,11 +331,18 @@ export async function PUT(
             google_ads_sheet_id,
             mandant_id, permissions, favicon_url,
             project_start_date, project_duration_months, project_timeline_active,
-            maintenance_mode, brand_keywords, settings_show_prompt_tracking;
+            maintenance_mode, brand_keywords, settings_show_prompt_tracking,
+            COALESCE(project_locations, '[]'::jsonb) as project_locations;
         `;
 
     if (rows.length === 0) {
       return NextResponse.json({ message: "Update fehlgeschlagen. Benutzer nicht gefunden." }, { status: 404 });
+    }
+
+    try {
+      await sql`DELETE FROM google_data_cache WHERE user_id = ${targetUserId}::uuid`;
+    } catch (cacheError) {
+      console.warn(`[PUT /api/users/${targetUserId}] Cache konnte nicht invalidiert werden:`, cacheError);
     }
 
     console.log(`✅ [PUT /api/users/${targetUserId}] Benutzer erfolgreich aktualisiert:`, rows[0].email);
