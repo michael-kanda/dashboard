@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { LocalSeoData, LocalSeoLocationData } from '@/lib/dashboard-shared';
-import austriaGeoJson from '@/data/austria-bundeslaender.geojson';
+import austriaGeoJson from '@/data/austria-bundeslaender.json';
 
 interface LocalSeoMapWidgetProps {
   data?: LocalSeoData;
