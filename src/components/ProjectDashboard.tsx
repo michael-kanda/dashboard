@@ -148,7 +148,7 @@ const Trace = ({ at }: { at: string }) => {
   return null;
 };
 
-interface ProjectDashboardProps {
+export interface ProjectDashboardProps {
   data: ProjectDashboardData;
   isLoading: boolean;
   dateRange: DateRangeOption;
@@ -181,6 +181,18 @@ const DEFAULT_DASHBOARD_INFO_TEXT = `• GSC & Google Ads (SERP-Daten): Messen I
 
 function safeKpi(kpi?: KpiDatum) {
   return kpi || { value: 0, change: 0 };
+}
+
+function isTransientGa4Message(message?: string | null) {
+  if (!message) return false;
+  const lower = message.toLowerCase();
+  return (
+    lower.includes('aborted') ||
+    lower.includes('timeout') ||
+    lower.includes('econnreset') ||
+    lower.includes('socket hang up') ||
+    lower.includes('fetch failed')
+  );
 }
 
 export default function ProjectDashboard({
@@ -343,7 +355,10 @@ export default function ProjectDashboard({
   const hasSemrushConfig = !!semrushTrackingId || !!semrushTrackingId02;
   const hasKampagne1Config = !!semrushTrackingId;
   const hasKampagne2Config = !!semrushTrackingId02;
-  const safeApiErrors = (apiErrors as any) || {};
+  const safeApiErrors = { ...((apiErrors as any) || {}) };
+  if (isTransientGa4Message(safeApiErrors.ga4)) {
+    delete safeApiErrors.ga4;
+  }
 
   const hasAiTraffic = (data.aiTraffic?.totalSessions ?? 0) > 0;
 

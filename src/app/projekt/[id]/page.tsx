@@ -2,13 +2,11 @@
 
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { Suspense } from 'react';
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
 import { sql } from '@vercel/postgres';
 import { User } from '@/lib/schemas';
-import ProjectDashboard from '@/components/ProjectDashboard';
+import ProjectDashboardClient from '@/components/ProjectDashboardClient';
 import { DateRangeOption } from '@/components/DateRangeSelector';
-import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
 
 // Vercel-Function-Timeout für diese Seite hochsetzen.
 // 120 s, abgestimmt auf die GA4-Cache-Schicht in lib/google-api.ts:
@@ -133,20 +131,11 @@ export default async function ProjectPage({
   const isDataMaxEnabled = projectUser.data_max_enabled !== false;
 
   console.log('[PAGE-TRACE] computed flags: timelineActive=', timelineActive, 'isDataMaxEnabled=', isDataMaxEnabled);
-  console.log('[PAGE-TRACE] about to create JSX elements');
-
-  let skeletonEl, dashboardEl, suspenseEl;
-  try {
-    skeletonEl = <DashboardSkeleton />;
-    console.log('[PAGE-TRACE] ✓ created DashboardSkeleton element');
-  } catch (e) {
-    console.error('[PAGE-TRACE] ✗ FAILED creating DashboardSkeleton element:', e);
-    throw e;
-  }
+  console.log('[PAGE-TRACE] about to create client-only dashboard element');
   
   try {
-    dashboardEl = (
-      <ProjectDashboard
+    const dashboardEl = (
+      <ProjectDashboardClient
         data={dashboardData}
         isLoading={false}
         dateRange={dateRange}
@@ -169,24 +158,10 @@ export default async function ProjectPage({
         dataMaxEnabled={isDataMaxEnabled}
       />
     );
-    console.log('[PAGE-TRACE] ✓ created ProjectDashboard element');
+    console.log('[PAGE-TRACE] ✓ created ProjectDashboardClient element');
+    return dashboardEl;
   } catch (e) {
-    console.error('[PAGE-TRACE] ✗ FAILED creating ProjectDashboard element:', e);
+    console.error('[PAGE-TRACE] ✗ FAILED creating ProjectDashboardClient element:', e);
     throw e;
   }
-  
-  try {
-    suspenseEl = (
-      <Suspense fallback={skeletonEl}>
-        {dashboardEl}
-      </Suspense>
-    );
-    console.log('[PAGE-TRACE] ✓ created Suspense element');
-  } catch (e) {
-    console.error('[PAGE-TRACE] ✗ FAILED creating Suspense element:', e);
-    throw e;
-  }
-  
-  console.log('[PAGE-TRACE] returning JSX tree');
-  return suspenseEl;
 }
