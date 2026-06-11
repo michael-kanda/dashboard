@@ -10,7 +10,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
 } from 'recharts';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -311,27 +310,6 @@ export default function AiTrafficModelTrendChart({
               }
             />
 
-            <Legend
-              verticalAlign="top"
-              height={36}
-              content={() => (
-                <div className="flex flex-wrap justify-center gap-2 mb-3">
-                  {primaryConfig && (
-                    <div className="flex items-center gap-2 text-xs font-medium text-secondary bg-surface-secondary px-2 py-1 rounded-full border border-border-subtle">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: primaryConfig.color }} />
-                      {primaryConfig.label}
-                    </div>
-                  )}
-                  {compareConfig && (
-                    <div className="flex items-center gap-2 text-xs font-medium text-secondary bg-surface-secondary px-2 py-1 rounded-full border border-border-subtle">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: compareConfig.color }} />
-                      {compareConfig.label}
-                    </div>
-                  )}
-                </div>
-              )}
-            />
-
             {primaryConfig && (
               <Area
                 type="monotone"
@@ -361,6 +339,21 @@ export default function AiTrafficModelTrendChart({
             )}
           </AreaChart>
         </ResponsiveContainer>
+      </div>
+
+      <div className="mt-3 flex flex-wrap justify-center gap-2">
+        {primaryConfig && (
+          <div className="flex items-center gap-2 text-xs font-medium text-secondary bg-surface-secondary px-2 py-1 rounded-full border border-border-subtle">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: primaryConfig.color }} />
+            {primaryConfig.label}
+          </div>
+        )}
+        {compareConfig && (
+          <div className="flex items-center gap-2 text-xs font-medium text-secondary bg-surface-secondary px-2 py-1 rounded-full border border-border-subtle">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: compareConfig.color }} />
+            {compareConfig.label}
+          </div>
+        )}
       </div>
     </div>
   );
