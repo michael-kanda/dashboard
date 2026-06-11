@@ -492,6 +492,9 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
             {displayLocations.map((location) => {
               const point = projectToAustriaSvg(location);
               const isSelected = selected?.id === location.id;
+              const label = location.name.length > 28 ? `${location.name.slice(0, 25)}...` : location.name;
+              const labelWidth = Math.min(190, Math.max(88, label.length * 6.4 + 26));
+              const labelX = point.x > MAP_VIEWBOX.width - 190 ? -labelWidth - 17 : 18;
               return (
                 <g
                   key={location.id}
@@ -501,12 +504,35 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                   onPointerDown={(event) => handlePinPointerDown(event, location.id || '')}
                 >
                   <title>{location.name}</title>
-                  <g transform="scale(0.22) translate(-50 -30)">
+                  <g transform="scale(0.44) translate(-50 -30)">
                     <ellipse cx="50" cy="78" rx="32" ry="13" fill="#6B7280" opacity={isSelected ? '0.35' : '0.25'} />
                     <g fill={isSelected ? '#111827' : '#4B5563'}>
                       <rect x="46.5" y="44" width="7" height="30" rx="3.5" />
                       <circle cx="50" cy="30" r="18" />
                     </g>
+                  </g>
+                  <g className="pointer-events-none" transform={`translate(${labelX} -38)`}>
+                    <path
+                      d={labelX < 0 ? `M${labelWidth} 24 L${labelWidth + 9} 32 L${labelWidth - 2} 31 Z` : 'M0 24 L-9 32 L2 31 Z'}
+                      fill="white"
+                      className="stroke-slate-200 dark:fill-slate-900 dark:stroke-slate-700"
+                      strokeWidth="1"
+                    />
+                    <rect
+                      width={labelWidth}
+                      height="30"
+                      rx="7"
+                      fill="white"
+                      className="stroke-slate-200 drop-shadow-sm dark:fill-slate-900 dark:stroke-slate-700"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x="13"
+                      y="19"
+                      className="fill-slate-800 text-[11px] font-semibold dark:fill-slate-100"
+                    >
+                      {label}
+                    </text>
                   </g>
                 </g>
               );
