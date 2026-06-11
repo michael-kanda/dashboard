@@ -16,15 +16,24 @@
 //     und wie ein "weicher" Ausfall behandelt: Stale-Cache ausliefern statt
 //     500er. Ohne Cache -> 503 mit klarer Meldung (KEIN Cooldown, da kein
 //     Quota-Problem vorliegt).
+//
+//  UMBAU (Stale-While-Revalidate):
+//  5. Existiert IRGENDEIN Cache-Eintrag (egal wie alt), wird er SOFORT
+//     ausgeliefert und die Aktualisierung läuft nach der Response im
+//     Hintergrund (waitUntil). Nur der allererste Aufruf pro Property/
+//     Zeitraum lädt synchron — bei großen Properties dauert ein einzelner
+//     GA4-Report 30–50 s, das ist synchron nicht zumutbar.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
+import { waitUntil } from '@vercel/functions';
 import { getAiTrafficExtendedWithComparison } from '@/lib/ai-traffic-extended-v2';
 
-// Vercel: dem mehrstufigen GA4-Report genug Zeit geben. Muss größer sein als
-// die Summe der GA4-Client-Timeouts (siehe Hinweis unten bei den Fehler-Helpern).
-export const maxDuration = 60;
+// 120 s: greift nur noch beim synchronen Erstaufruf ohne Cache und für den
+// Hintergrund-Refresh (waitUntil zählt zur Function-Laufzeit). Muss größer
+// sein als TOTAL_GA4_BUDGET_MS (100 s) in der V2-Lib.
+export const maxDuration = 120;
 
 const QUOTA_COOLDOWN_MS = 55 * 60 * 1000;
 // GA4-Daten aktualisieren sich nur periodisch — ein paar Minuten Cache sind
@@ -253,25 +262,65 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 2) Quota im Cooldown? -> wenn möglich (auch ältere) Cache-Daten liefern,
-    //    sonst quotaLimited. So sieht der Nutzer Daten statt eines Fehlers.
+    // 2) Cooldown-Status holen (für SWR-Entscheidung und Schritt 2b).
     const cooldownUntil = await getCooldownUntil(ga4PropertyId);
-    if (cooldownUntil > Date.now()) {
-      if (cached) {
-        return NextResponse.json({
-          success: true,
-          data: cached.payload,
-          cached: true,
-          stale: true,
-          meta: {
-            dateRange,
-            cacheAgeMs: cached.ageMs,
-            retryAfterMs: Math.max(0, cooldownUntil - Date.now()),
-            currentPeriod: { start: currentStartStr, end: currentEndStr },
-            previousPeriod: { start: prevStartStr, end: prevEndStr }
+    const cooldownActive = cooldownUntil > Date.now();
+
+    // 2a) STALE-WHILE-REVALIDATE: Es gibt einen Cache-Eintrag (älter als TTL,
+    //     egal wie alt) -> SOFORT ausliefern. Aktualisierung läuft nach der
+    //     Response im Hintergrund (waitUntil), sofern keine Quota-Sperre
+    //     aktiv ist. Der Nutzer wartet damit nie auf GA4, sobald einmal
+    //     Daten existieren — bei großen Properties dauert ein Report 30–50 s.
+    if (cached) {
+      if (!cooldownActive && !inFlightRequests.has(cacheKey)) {
+        const refreshTask = (async () => {
+          try {
+            console.log(`[AI Traffic V2] Hintergrund-Refresh startet für ${ga4PropertyId}`);
+            const fresh = await getAiTrafficExtendedWithComparison(
+              ga4PropertyId,
+              currentStartStr,
+              currentEndStr,
+              prevStartStr,
+              prevEndStr
+            );
+            await writeCache(cacheKey, fresh);
+            console.log(`[AI Traffic V2] Hintergrund-Refresh OK für ${ga4PropertyId}`);
+          } catch (error) {
+            if (isGa4QuotaError(error)) {
+              await setCooldown(ga4PropertyId);
+              console.warn('[AI Traffic V2] Quota-Cooldown im Hintergrund-Refresh aktiviert:', getQuotaMessage(error));
+            } else {
+              console.warn('[AI Traffic V2] Hintergrund-Refresh fehlgeschlagen:', getQuotaMessage(error));
+            }
+          } finally {
+            inFlightRequests.delete(cacheKey);
           }
-        });
+        })();
+        inFlightRequests.set(cacheKey, refreshTask);
+        try {
+          waitUntil(refreshTask);
+        } catch {
+          // Außerhalb von Vercel (lokal/Tests): fire-and-forget genügt.
+        }
       }
+      return NextResponse.json({
+        success: true,
+        data: cached.payload,
+        cached: true,
+        stale: true,
+        revalidating: !cooldownActive,
+        meta: {
+          dateRange,
+          cacheAgeMs: cached.ageMs,
+          ...(cooldownActive ? { retryAfterMs: Math.max(0, cooldownUntil - Date.now()) } : {}),
+          currentPeriod: { start: currentStartStr, end: currentEndStr },
+          previousPeriod: { start: prevStartStr, end: prevEndStr }
+        }
+      });
+    }
+
+    // 2b) Kein Cache UND Quota im Cooldown -> klare quotaLimited-Antwort.
+    if (cooldownActive) {
       return quotaLimitedResponse(
         cooldownUntil,
         'GA4-Quota ist vorübergehend erschöpft. Die KI-Traffic-Detaildaten werden später automatisch wieder geladen.'
@@ -280,7 +329,9 @@ export async function GET(request: NextRequest) {
 
     console.log(`[AI Traffic V2] Loading data for ${ga4PropertyId}`);
 
-    // 3) Frisch laden (mit In-Flight-Dedup innerhalb der Instanz).
+    // 3) ERSTAUFRUF ohne Cache: synchron laden (mit In-Flight-Dedup innerhalb
+    //    der Instanz). Kann bei großen Properties lange dauern — passiert pro
+    //    Property/Zeitraum aber nur ein einziges Mal, danach greift SWR.
     const requestPromise = inFlightRequests.get(cacheKey) || getAiTrafficExtendedWithComparison(
       ga4PropertyId,
       currentStartStr,
