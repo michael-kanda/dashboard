@@ -38,11 +38,12 @@ google.options({
       console.warn(`[Google API] Retry nach ${code} (Versuch ${attempt})`);
     },
   },
-  // Per-Versuch-Timeout (Timeouts werden nicht retried, s.o.) — bleibt unter
-  // dem 60-s-Function-Limit, GA4-Parallelität wird zusätzlich per Semaphore
-  // (ga4RunReport) begrenzt, damit mehrere Reports nicht gleichzeitig die
-  // GA4-Concurrent-Slots blockieren und sich gegenseitig ins Timeout drängen.
-  timeout: 45_000,
+  // Per-Versuch-Timeout (Timeouts werden nicht retried, s.o.). 30 s statt der
+  // alten 20 s — genug Luft für schwere Reports, aber klein genug, dass
+  // mehrere (teils wartende) Calls zusammen nicht die 60-s-Function-Wall-Time
+  // sprengen. GA4-Calls bekommen unten zusätzlich ein hartes Gesamtbudget
+  // pro Call (Wartezeit + Request) über ga4RunReport.
+  timeout: 30_000,
 });
 import { JWT } from 'google-auth-library';
 import { ChartEntry, type GoogleGenAiPerformanceData, type GoogleGenAiBreakdownItem } from '@/lib/dashboard-shared';
@@ -50,13 +51,27 @@ import type { TopQueryData } from '@/types/dashboard';
 
 // --- Typdefinitionen ---
 
-// ── GA4-Wrapper: Concurrency-Limit + GA4-sichere Request-Optionen ─────────
+// ── GA4-Wrapper: Concurrency-Limit + Gesamtbudget pro Call ────────────────
 // GA4 drosselt gleichzeitige Requests pro Property hart ("Exhausted concurrent
 // requests quota"). Die Projekt-Seite feuert mehrere Reports parallel
-// (Promise.all/allSettled) — die warten sich dann gegenseitig in die 45-s-
-// Timeouts. Lösung: Semaphore, max. 2 GA4-runReports gleichzeitig pro warmer
-// Lambda-Instanz. Wartende Calls kosten kein GA4-Budget, nur etwas Latenz.
-const GA4_MAX_CONCURRENT = 2;
+// (Promise.all/allSettled) — die warten sich dann gegenseitig in die Timeouts.
+//
+// Zwei Schutzmechanismen:
+//  1. Semaphore: max. 3 GA4-runReports gleichzeitig pro warmer Lambda-Instanz.
+//  2. GESAMTBUDGET pro Call (Wartezeit in der Queue + Request zusammen):
+//     Ohne dieses Budget bilden Semaphore + 45-s-Timeouts bei einem Schwall
+//     paralleler Reports Ketten, deren Wall-Time die 60-s-Function-Grenze
+//     sprengt (Vercel Runtime Timeout — schlimmer als ein einzelner
+//     fehlgeschlagener Report). Mit Budget gilt: Jeder Call ist nach max.
+//     ~40 s entweder fertig oder sauber gescheitert, egal wie lang die Queue
+//     ist. Wer zu lange gewartet hat, scheitert SOFORT statt noch einen
+//     Request zu starten — die Caller degradieren das per try/catch bzw.
+//     allSettled zu leeren Widgets.
+const GA4_MAX_CONCURRENT = 3;
+const GA4_TIMEOUT_MS = 30_000;      // max. Timeout pro Request
+const GA4_CALL_BUDGET_MS = 40_000;  // Queue-Wartezeit + Request zusammen
+const GA4_MIN_TIMEOUT_MS = 5_000;   // darunter lohnt kein Request-Start mehr
+
 let ga4ActiveSlots = 0;
 const ga4SlotQueue: Array<() => void> = [];
 
@@ -82,7 +97,6 @@ function releaseGa4Slot(): void {
 // kein 5xx-Retry (verbrennt Tokens der winzigen Server-Error-Quota, 10/h pro
 // Property), kein 429-Retry. Nur 408 und echte Netzwerkfehler.
 const GA4_REQUEST_OPTIONS = {
-  timeout: 45_000,
   retryConfig: {
     retry: 1,
     retryDelay: 500,
@@ -102,11 +116,22 @@ async function ga4RunReport(
   analytics: analyticsdata_v1beta.Analyticsdata,
   request: analyticsdata_v1beta.Params$Resource$Properties$Runreport
 ): Promise<{ data: analyticsdata_v1beta.Schema$RunReportResponse }> {
+  const enqueuedAt = Date.now();
   await acquireGa4Slot();
   try {
+    const remainingMs = GA4_CALL_BUDGET_MS - (Date.now() - enqueuedAt);
+    if (remainingMs < GA4_MIN_TIMEOUT_MS) {
+      // Fail-Fast: lieber dieser eine Report leer als die ganze Function in
+      // den Vercel-Runtime-Timeout. Caller fangen das per try/catch /
+      // allSettled ab und degradieren das betroffene Widget.
+      throw new Error(
+        `[GA4] Zeitbudget erschöpft (${Math.round((Date.now() - enqueuedAt) / 1000)}s in Warteschlange) — Report übersprungen.`
+      );
+    }
+    const timeout = Math.min(GA4_TIMEOUT_MS, remainingMs);
     return (await analytics.properties.runReport(
       request,
-      GA4_REQUEST_OPTIONS as any
+      { ...GA4_REQUEST_OPTIONS, timeout } as any
     )) as unknown as { data: analyticsdata_v1beta.Schema$RunReportResponse };
   } finally {
     releaseGa4Slot();
