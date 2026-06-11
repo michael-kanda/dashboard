@@ -13,7 +13,6 @@ import {
   KpiDatum
 } from '@/lib/dashboard-shared';
 
-import TableauKpiGrid from '@/components/TableauKpiGrid';
 import AiTrafficDetailWidgetV2 from '@/components/AiTrafficDetailWidgetV2';
 import { type DateRangeOption } from '@/components/DateRangeSelector';
 import TopQueriesList from '@/components/TopQueriesList';
@@ -36,6 +35,27 @@ const PromptTrackingCard = dynamic(
     loading: () => (
       <div className="dashboard-widget-surface rounded-lg p-6">
         <div className="animate-pulse text-muted text-sm">Prompt-Tracking lädt…</div>
+      </div>
+    ),
+  }
+);
+
+const TableauKpiGrid = dynamic(
+  () => import('@/components/TableauKpiGrid'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-8">
+        <div className="dashboard-widget-surface rounded-xl p-5">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 w-48 rounded bg-surface-tertiary" />
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="h-40 rounded-lg bg-surface-tertiary" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     ),
   }

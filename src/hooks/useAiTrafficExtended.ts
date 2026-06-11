@@ -13,7 +13,7 @@ import type { AiTrafficExtendedData } from '@/lib/ai-traffic-extended-v2';
 
 interface CacheEntry {
   data?: AiTrafficExtendedData | null;
-  promise?: Promise<AiTrafficExtendedData | null | undefined>;
+  promise?: Promise<FetchExtendedResult>;
   error?: string;
   timestamp: number;
   retryAfterMs?: number;
@@ -22,6 +22,12 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 60_000; // 1 min — selber Visit, gleicher Filter → kein Refetch
 const QUOTA_CACHE_TTL_MS = 55 * 60 * 1000;
+const TRANSIENT_CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface FetchExtendedResult {
+  data: AiTrafficExtendedData | null | undefined;
+  retryAfterMs?: number;
+}
 
 function isAbortError(error: unknown) {
   if (error instanceof DOMException && error.name === 'AbortError') return true;
@@ -35,7 +41,7 @@ function cacheKey(projectId: string | undefined, dateRange: string): string {
   return `${projectId ?? 'default'}::${dateRange}`;
 }
 
-async function fetchExtended(projectId: string | undefined, dateRange: string): Promise<AiTrafficExtendedData | null | undefined> {
+async function fetchExtended(projectId: string | undefined, dateRange: string): Promise<FetchExtendedResult> {
   const params = new URLSearchParams({ dateRange });
   if (projectId) params.set('projectId', projectId);
   const response = await fetch(`/api/ai-traffic-detail-v2?${params.toString()}`);
@@ -46,10 +52,13 @@ async function fetchExtended(projectId: string | undefined, dateRange: string): 
   }
   const result = await response.json();
   if (result?.quotaLimited) {
-    return null;
+    return { data: null, retryAfterMs: result.retryAfterMs ?? QUOTA_CACHE_TTL_MS };
+  }
+  if (result?.transient) {
+    return { data: null, retryAfterMs: result.retryAfterMs ?? TRANSIENT_CACHE_TTL_MS };
   }
   if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-  return result.data || undefined;
+  return { data: result.data || undefined };
 }
 
 export function useAiTrafficExtended(projectId: string | undefined, dateRange: string) {
@@ -89,7 +98,7 @@ export function useAiTrafficExtended(projectId: string | undefined, dateRange: s
       setIsLoading(true);
       try {
         const result = await cached.promise;
-        setData(result || undefined);
+        setData(result.data || undefined);
         setError(undefined);
       } catch (err) {
         if (isAbortError(err)) return;
@@ -109,10 +118,10 @@ export function useAiTrafficExtended(projectId: string | undefined, dateRange: s
     try {
       const result = await promise;
       const cacheEntry: CacheEntry = { timestamp: Date.now() };
-      if (result !== undefined) cacheEntry.data = result;
-      if (result === null) cacheEntry.retryAfterMs = QUOTA_CACHE_TTL_MS;
+      if (result.data !== undefined) cacheEntry.data = result.data;
+      if (result.data === null) cacheEntry.retryAfterMs = result.retryAfterMs ?? TRANSIENT_CACHE_TTL_MS;
       cache.set(key, cacheEntry);
-      setData(result || undefined);
+      setData(result.data || undefined);
       setError(undefined);
     } catch (err) {
       if (isAbortError(err)) {

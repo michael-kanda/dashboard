@@ -16,12 +16,6 @@ function formatPercent(value: number) {
   return `${(value || 0).toFixed(1)} %`;
 }
 
-function getScoreColor(score: number) {
-  if (score >= 70) return '#22c55e';
-  if (score >= 45) return '#f59e0b';
-  return '#ef4444';
-}
-
 type GeoPoint = [number, number];
 type GeoRing = GeoPoint[];
 type GeoPolygon = GeoRing[];
@@ -208,6 +202,17 @@ const cityPointOverrides = austriaFeatures.reduce<Record<string, { x: number; y:
   return points;
 }, {});
 
+const knownCitySvgPoints: Record<string, { x: number; y: number }> = {
+  wien: { x: 704, y: 203 },
+  vienna: { x: 704, y: 203 },
+  graz: { x: 610, y: 295 },
+  leoben: { x: 580, y: 250 },
+  linz: { x: 430, y: 182 },
+  salzburg: { x: 316, y: 258 },
+  innsbruck: { x: 202, y: 278 },
+  klagenfurt: { x: 520, y: 326 },
+};
+
 function GoogleCleanUnderline({ id }: { id: string }) {
   return (
     <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
@@ -242,6 +247,11 @@ function projectToAustriaSvg(location: LocalSeoLocationData) {
     klagenfurt: { lat: 46.6247, lng: 14.3053 },
   };
   const cityKey = (location.city || location.name || '').toLowerCase().trim();
+  const manualOverrideKey = Object.keys(knownCitySvgPoints).find((key) => cityKey === key || cityKey.includes(key));
+  if (manualOverrideKey) {
+    return knownCitySvgPoints[manualOverrideKey];
+  }
+
   const cityOverrideKey = Object.keys(cityPointOverrides).find((key) => cityKey === key || cityKey.includes(key));
   if (cityOverrideKey) {
     const point = cityPointOverrides[cityOverrideKey];
@@ -329,7 +339,7 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
                   onClick={() => setSelectedId(location.id)}
                 >
                   <title>{location.name}</title>
-                  <g transform="scale(0.46) translate(-50 -74)">
+                  <g transform="scale(0.28) translate(-50 -30)">
                     <ellipse cx="50" cy="78" rx="32" ry="13" fill="#6B7280" opacity={isSelected ? '0.35' : '0.25'} />
                     <g fill={isSelected ? '#111827' : '#4B5563'}>
                       <rect x="46.5" y="44" width="7" height="30" rx="3.5" />
@@ -354,7 +364,7 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
               >
                 <span
                   className="mr-1 inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: getScoreColor(location.score) }}
+                  style={{ backgroundColor: selected?.id === location.id ? '#111827' : '#4B5563' }}
                 />
                 {location.name}
               </button>

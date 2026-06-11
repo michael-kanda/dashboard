@@ -49,6 +49,7 @@ function vercelWaitUntil(task: Promise<unknown>): void {
 export const maxDuration = 120;
 
 const QUOTA_COOLDOWN_MS = 55 * 60 * 1000;
+const TRANSIENT_RETRY_AFTER_MS = 5 * 60 * 1000;
 // GA4-Daten aktualisieren sich nur periodisch — ein paar Minuten Cache sind
 // fachlich unkritisch und sparen massiv GA4-Calls.
 const CACHE_TTL_MS = 30 * 60 * 1000;
@@ -178,6 +179,16 @@ function quotaLimitedResponse(cooldownUntil: number, message: string) {
     data: null,
     quotaLimited: true,
     retryAfterMs,
+    error: message,
+  });
+}
+
+function transientGa4Response(message: string) {
+  return NextResponse.json({
+    success: false,
+    data: null,
+    transient: true,
+    retryAfterMs: TRANSIENT_RETRY_AFTER_MS,
     error: message,
   });
 }
@@ -366,12 +377,7 @@ export async function GET(request: NextRequest) {
       // kein Cooldown — beim nächsten Aufruf darf sofort neu versucht werden.
       if (isTransientGa4Error(error)) {
         console.warn('[AI Traffic V2 API] Transienter GA4-Fehler (Timeout/Abort):', getQuotaMessage(error));
-        return NextResponse.json({
-          success: false,
-          data: null,
-          transient: true,
-          error: 'GA4 hat nicht rechtzeitig geantwortet (Timeout). Bitte in ein paar Minuten erneut versuchen.'
-        }, { status: 503 });
+        return transientGa4Response('GA4 hat nicht rechtzeitig geantwortet. Die KI-Traffic-Trends werden gleich erneut versucht.');
       }
       throw error;
     } finally {
