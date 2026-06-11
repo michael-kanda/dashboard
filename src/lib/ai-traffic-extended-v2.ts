@@ -387,13 +387,17 @@ function parseGa4Date(dateString: string): string {
 // ("The operation was aborted."), den gaxios NICHT retried (abgebrochene
 // Requests werden nie wiederholt). Wir setzen das Timeout deshalb explizit pro
 // Request — Request-Optionen überschreiben die globale Konfiguration.
-const GA4_TIMEOUT_MS = 45_000;
+// 60 s pro Request: Bei großen Properties (beobachtet: 337078709) braucht der
+// Hauptreport mit dem 14-Expression-OR-Filter über 6+ Monate real 30–50 s.
+const GA4_TIMEOUT_MS = 60_000;
 // Gesamtbudget für ALLE GA4-Calls eines Dashboard-Loads. Muss DEUTLICH unter
-// der maxDuration der API-Route (60s) liegen: Auth, 2 Postgres-Queries,
-// Cache-Write und JSON-Serialisierung brauchen ebenfalls Zeit. 42s GA4-Budget
-// lässt ~18s Headroom — sonst droht der Vercel Runtime Timeout (60s), der die
-// ganze Function killt statt nur einzelne Reports zu degradieren.
-const TOTAL_GA4_BUDGET_MS = 42_000;
+// der maxDuration der API-Route liegen (jetzt 120 s in route.ts): Auth,
+// Postgres und Serialisierung brauchen ebenfalls Zeit. Das Budget greift nur
+// noch beim ERSTAUFRUF ohne Cache — danach liefert die Route per
+// Stale-While-Revalidate sofort aus und refresht im Hintergrund. Beobachtet:
+// Vergleichs-Totals ~30 s + Hauptreport ~30–50 s bei großen Properties; mit
+// 42 s Budget bekam der Hauptreport nur ~11 s und starb (timeout: 11190).
+const TOTAL_GA4_BUDGET_MS = 100_000;
 // Unter diesem Restbudget werden optionale Reports übersprungen statt gestartet.
 const OPTIONAL_REPORT_MIN_BUDGET_MS = 5_000;
 
