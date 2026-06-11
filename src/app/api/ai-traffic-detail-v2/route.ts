@@ -27,8 +27,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
-import { waitUntil } from '@vercel/functions';
 import { getAiTrafficExtendedWithComparison } from '@/lib/ai-traffic-extended-v2';
+
+// Hintergrund-Tasks nach der Response am Leben halten (SWR-Refresh), OHNE
+// Paket-Abhängigkeit: derselbe Mechanismus, den @vercel/functions intern
+// nutzt. Fehlt der Context (lokal/Tests), läuft der Task fire-and-forget.
+function vercelWaitUntil(task: Promise<unknown>): void {
+  try {
+    const ctx = (globalThis as any)[Symbol.for('@vercel/request-context')]?.get?.();
+    if (ctx && typeof ctx.waitUntil === 'function') {
+      ctx.waitUntil(task);
+    }
+  } catch {
+    // Best-Effort: Task läuft als fire-and-forget weiter.
+  }
+}
 
 // 120 s: greift nur noch beim synchronen Erstaufruf ohne Cache und für den
 // Hintergrund-Refresh (waitUntil zählt zur Function-Laufzeit). Muss größer
@@ -297,11 +310,7 @@ export async function GET(request: NextRequest) {
           }
         })();
         inFlightRequests.set(cacheKey, refreshTask);
-        try {
-          waitUntil(refreshTask);
-        } catch {
-          // Außerhalb von Vercel (lokal/Tests): fire-and-forget genügt.
-        }
+        vercelWaitUntil(refreshTask);
       }
       return NextResponse.json({
         success: true,
