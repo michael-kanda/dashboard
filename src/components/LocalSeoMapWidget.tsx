@@ -302,7 +302,6 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
             </g>
             {locations.map((location) => {
               const point = projectToAustriaSvg(location);
-              const color = getScoreColor(location.score);
               const isSelected = selected?.id === location.id;
               return (
                 <g
@@ -312,14 +311,13 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
                   onClick={() => setSelectedId(location.id)}
                 >
                   <title>{location.name}</title>
-                  <circle cx="0" cy="-9" r={isSelected ? 18 : 15} fill={color} opacity={isSelected ? 0.18 : 0.1} />
-                  <path
-                    d="M0 10 C-11 -4 -15 -10 -15 -18 C-15 -27 -8 -34 0 -34 C8 -34 15 -27 15 -18 C15 -10 11 -4 0 10 Z"
-                    fill={color}
-                    stroke="#fff"
-                    strokeWidth="3"
-                  />
-                  <circle cx="0" cy="-18" r="5" fill="#fff" />
+                  <g transform="translate(-35 -70)">
+                    <ellipse cx="50" cy="78" rx="32" ry="13" fill="#6B7280" opacity={isSelected ? '0.35' : '0.25'} />
+                    <g fill={isSelected ? '#111827' : '#4B5563'}>
+                      <rect x="46.5" y="44" width="7" height="30" rx="3.5" />
+                      <circle cx="50" cy="30" r="18" />
+                    </g>
+                  </g>
                 </g>
               );
             })}
@@ -348,7 +346,7 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
 
         <div className="space-y-4">
           <div className="rounded-lg border border-border-subtle bg-surface p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Standort-Ranking</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Standorte</p>
             <div className="mt-3 space-y-2">
               {rankedLocations.map((location, index) => (
                 <button
@@ -365,12 +363,6 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
                     <span className="text-xs font-semibold text-muted">#{index + 1}</span>
                     <span className="truncate text-sm font-semibold text-heading">{location.name}</span>
                   </span>
-                  <span
-                    className="rounded-md px-2 py-1 text-xs font-semibold text-white"
-                    style={{ backgroundColor: getScoreColor(location.score) }}
-                  >
-                    {location.score}
-                  </span>
                 </button>
               ))}
             </div>
@@ -378,19 +370,13 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
 
           {selected && (
             <div className="rounded-lg border border-border-subtle bg-surface p-4">
-              <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="mb-3">
                 <div>
                   <h4 className="text-base font-semibold text-heading">{selected.name}</h4>
                   <p className="text-xs text-muted">
                     {[selected.postalCode, selected.city, selected.country].filter(Boolean).join(' · ')}
                   </p>
                 </div>
-                <span
-                  className="rounded-md px-2 py-1 text-xs font-semibold text-white"
-                  style={{ backgroundColor: getScoreColor(selected.score) }}
-                >
-                  Score {selected.score}
-                </span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
