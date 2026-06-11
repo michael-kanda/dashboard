@@ -3,6 +3,9 @@
 import { google } from 'googleapis';
 import type { analyticsdata_v1beta } from 'googleapis';
 import { sql } from '@vercel/postgres';
+// Für Hintergrund-Refresh nach der Response (SWR). Falls noch nicht
+// installiert: npm i @vercel/functions
+import { waitUntil } from '@vercel/functions';
 import { buildAiTrafficDimensionFilter, normalizeSource } from './ai-sources';
 // ── Globales Retry-/Timeout-Verhalten für ALLE googleapis-Calls ──────────
 // GA4 runReport & GSC query sind POST und werden von gaxios per Default NICHT
@@ -58,13 +61,76 @@ import type { TopQueryData } from '@/types/dashboard';
 // (ga4_ai_traffic_cache: cache_key PK, payload JSONB, created_at) mit eigenen
 // Key-Präfixen — keine zusätzliche Migration nötig.
 //
-// Verhalten:
+// Verhalten (Stale-While-Revalidate):
 //  - Frischer Cache (< TTL): sofort ausliefern, kein GA4-Call.
-//  - Cache-Miss/abgelaufen: frisch laden, Cache aktualisieren.
-//  - Frischer Load scheitert (Timeout etc.): STALE-Cache ausliefern, falls
-//    vorhanden — Daten von vor einer Stunde sind besser als ein leeres Widget.
+//  - Stale-Cache (< MAX_AGE): SOFORT ausliefern und die Aktualisierung im
+//    Hintergrund (waitUntil, nach der Response) anstoßen. Der Nutzer wartet
+//    nie auf GA4, sobald einmal Daten existieren — bei dieser Property
+//    dauert ein einzelner Report 30+ s, das ist synchron nicht zumutbar.
+//  - Kein (brauchbarer) Cache: synchron laden (langsamer Erstaufruf).
+//  - Frischer Load scheitert: Stale-Cache als letzter Fallback.
 //  - Postgres-Probleme blockieren NIE den Hauptpfad (fail-open).
 const GA4_RESULT_CACHE_TTL_MS = 30 * 60 * 1000;
+const GA4_RESULT_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Dedup pro warmer Instanz: derselbe Key wird nicht mehrfach parallel refresht.
+const ga4RefreshesInFlight = new Set<string>();
+
+function scheduleGa4BackgroundRefresh<T>(cacheKey: string, fetcher: () => Promise<T>): void {
+  if (ga4RefreshesInFlight.has(cacheKey)) return;
+  ga4RefreshesInFlight.add(cacheKey);
+  const task = (async () => {
+    try {
+      const fresh = await fetcher();
+      await writeGa4ResultCache(cacheKey, fresh);
+      console.log(`[GA4 Cache] Hintergrund-Refresh OK: ${cacheKey}`);
+    } catch (err) {
+      console.warn(
+        `[GA4 Cache] Hintergrund-Refresh fehlgeschlagen (${cacheKey}):`,
+        err instanceof Error ? err.message : err
+      );
+    } finally {
+      ga4RefreshesInFlight.delete(cacheKey);
+    }
+  })();
+  try {
+    // Hält die Function nach der Response am Leben, bis der Refresh fertig ist.
+    waitUntil(task);
+  } catch {
+    // Außerhalb von Vercel (lokal/Tests): fire-and-forget genügt.
+  }
+}
+
+async function withGa4ResultCache<T>(cacheKey: string, fetcher: () => Promise<T>): Promise<T> {
+  const cached = await readGa4ResultCache(cacheKey);
+
+  // 1) Frisch -> direkt raus.
+  if (cached && cached.ageMs < GA4_RESULT_CACHE_TTL_MS) {
+    return cached.payload as T;
+  }
+
+  // 2) Stale, aber brauchbar -> sofort ausliefern, Refresh im Hintergrund.
+  if (cached && cached.ageMs < GA4_RESULT_CACHE_MAX_AGE_MS) {
+    scheduleGa4BackgroundRefresh(cacheKey, fetcher);
+    return cached.payload as T;
+  }
+
+  // 3) Kein brauchbarer Cache -> synchron laden (Erstaufruf, kann dauern).
+  try {
+    const fresh = await fetcher();
+    await writeGa4ResultCache(cacheKey, fresh);
+    return fresh;
+  } catch (error) {
+    if (cached) {
+      console.warn(
+        `[GA4 Cache] Frischer Load fehlgeschlagen — liefere Stale-Cache (${Math.round(cached.ageMs / 60000)} Min alt) für ${cacheKey}:`,
+        error instanceof Error ? error.message : error
+      );
+      return cached.payload as T;
+    }
+    throw error;
+  }
+}
 
 async function readGa4ResultCache(cacheKey: string): Promise<{ payload: any; ageMs: number } | null> {
   try {
@@ -95,26 +161,7 @@ async function writeGa4ResultCache(cacheKey: string, payload: any): Promise<void
   }
 }
 
-async function withGa4ResultCache<T>(cacheKey: string, fetcher: () => Promise<T>): Promise<T> {
-  const cached = await readGa4ResultCache(cacheKey);
-  if (cached && cached.ageMs < GA4_RESULT_CACHE_TTL_MS) {
-    return cached.payload as T;
-  }
-  try {
-    const fresh = await fetcher();
-    await writeGa4ResultCache(cacheKey, fresh);
-    return fresh;
-  } catch (error) {
-    if (cached) {
-      console.warn(
-        `[GA4 Cache] Frischer Load fehlgeschlagen — liefere Stale-Cache (${Math.round(cached.ageMs / 60000)} Min alt) für ${cacheKey}:`,
-        error instanceof Error ? error.message : error
-      );
-      return cached.payload as T;
-    }
-    throw error;
-  }
-}
+
 
 // --- Typdefinitionen ---
 
