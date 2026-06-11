@@ -1,5 +1,15 @@
 // src/app/api/ai-traffic-detail-v2/route.ts
 // API Route für erweiterte KI-Traffic Analyse mit Intent & Journey
+//
+// UMBAU (Quota-Härtung):
+//  1. Persistenter Cooldown in Postgres statt In-Memory-Map (funktioniert über
+//     mehrere Vercel-Lambda-Instanzen hinweg).
+//  2. Postgres-Result-Cache (Default 30 Min). Eliminiert den Großteil der
+//     GA4-Calls und ist die nachhaltigste Quota-Entlastung.
+//  3. Stale-While-Cooldown: Ist die Quota gesperrt, werden vorhandene (auch
+//     ältere) Cache-Daten ausgeliefert statt eines Fehlers.
+//
+//  Voraussetzung: Migration db/migrations/ga4_cache_cooldown.sql ausführen.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
@@ -7,7 +17,13 @@ import { sql } from '@vercel/postgres';
 import { getAiTrafficExtendedWithComparison } from '@/lib/ai-traffic-extended-v2';
 
 const QUOTA_COOLDOWN_MS = 55 * 60 * 1000;
-const quotaCooldownUntil = new Map<string, number>();
+// GA4-Daten aktualisieren sich nur periodisch — ein paar Minuten Cache sind
+// fachlich unkritisch und sparen massiv GA4-Calls.
+const CACHE_TTL_MS = 30 * 60 * 1000;
+
+// In-Memory-Dedup nur als Best-Effort-Optimierung INNERHALB einer warmen
+// Instanz. Der eigentliche instanzübergreifende Schutz läuft über DB-Cooldown
+// und DB-Cache.
 const inFlightRequests = new Map<string, Promise<any>>();
 
 function getQuotaMessage(error: unknown) {
@@ -22,9 +38,80 @@ function isGa4QuotaError(error: unknown) {
   return status === 429 || message.includes('quota') || message.includes('resource_exhausted');
 }
 
-function quotaLimitedResponse(ga4PropertyId: string, message: string) {
-  const retryAfterMs = Math.max(0, (quotaCooldownUntil.get(ga4PropertyId) || Date.now()) - Date.now());
+// ---------------------------------------------------------------------------
+// Persistenter Cooldown (Postgres)
+// ---------------------------------------------------------------------------
 
+/** Liefert den Cooldown-Endzeitpunkt (ms epoch) oder 0, wenn keiner aktiv ist. */
+async function getCooldownUntil(propertyId: string): Promise<number> {
+  try {
+    const { rows } = await sql`
+      SELECT cooldown_until FROM ga4_quota_cooldown WHERE property_id = ${propertyId}
+    `;
+    if (rows.length === 0) return 0;
+    return new Date(rows[0].cooldown_until).getTime();
+  } catch (err) {
+    // Cache-/Cooldown-Infrastruktur darf den Hauptpfad nie blockieren.
+    console.warn('[AI Traffic V2] Cooldown-Lookup fehlgeschlagen:', err);
+    return 0;
+  }
+}
+
+async function setCooldown(propertyId: string): Promise<number> {
+  const until = Date.now() + QUOTA_COOLDOWN_MS;
+  try {
+    await sql`
+      INSERT INTO ga4_quota_cooldown (property_id, cooldown_until)
+      VALUES (${propertyId}, ${new Date(until).toISOString()})
+      ON CONFLICT (property_id)
+      DO UPDATE SET cooldown_until = EXCLUDED.cooldown_until
+    `;
+  } catch (err) {
+    console.warn('[AI Traffic V2] Cooldown-Schreiben fehlgeschlagen:', err);
+  }
+  return until;
+}
+
+// ---------------------------------------------------------------------------
+// Result-Cache (Postgres)
+// ---------------------------------------------------------------------------
+
+interface CacheHit {
+  payload: any;
+  ageMs: number;
+}
+
+async function readCache(cacheKey: string): Promise<CacheHit | null> {
+  try {
+    const { rows } = await sql`
+      SELECT payload, created_at FROM ga4_ai_traffic_cache WHERE cache_key = ${cacheKey}
+    `;
+    if (rows.length === 0) return null;
+    return {
+      payload: rows[0].payload,
+      ageMs: Date.now() - new Date(rows[0].created_at).getTime(),
+    };
+  } catch (err) {
+    console.warn('[AI Traffic V2] Cache-Lookup fehlgeschlagen:', err);
+    return null;
+  }
+}
+
+async function writeCache(cacheKey: string, payload: any): Promise<void> {
+  try {
+    await sql`
+      INSERT INTO ga4_ai_traffic_cache (cache_key, payload, created_at)
+      VALUES (${cacheKey}, ${JSON.stringify(payload)}::jsonb, now())
+      ON CONFLICT (cache_key)
+      DO UPDATE SET payload = EXCLUDED.payload, created_at = EXCLUDED.created_at
+    `;
+  } catch (err) {
+    console.warn('[AI Traffic V2] Cache-Schreiben fehlgeschlagen:', err);
+  }
+}
+
+function quotaLimitedResponse(cooldownUntil: number, message: string) {
+  const retryAfterMs = Math.max(0, cooldownUntil - Date.now());
   return NextResponse.json({
     success: false,
     data: null,
@@ -71,18 +158,10 @@ export async function GET(request: NextRequest) {
 
     if (!ga4PropertyId) {
       console.warn(`[AI Traffic V2] No GA4 Property ID found. ProjectId: ${projectId}, User: ${session.user.email}`);
-      return NextResponse.json({ 
-        data: null, 
-        error: 'Keine GA4 Property ID gefunden' 
+      return NextResponse.json({
+        data: null,
+        error: 'Keine GA4 Property ID gefunden'
       });
-    }
-
-    const cooldownUntil = quotaCooldownUntil.get(ga4PropertyId) || 0;
-    if (cooldownUntil > Date.now()) {
-      return quotaLimitedResponse(
-        ga4PropertyId,
-        'GA4-Quota ist vorübergehend erschöpft. Die KI-Traffic-Detaildaten werden später automatisch wieder geladen.'
-      );
     }
 
     // Datumsberechnung
@@ -117,19 +196,60 @@ export async function GET(request: NextRequest) {
     const prevStartStr = prevStart.toISOString().split('T')[0];
     const prevEndStr = prevEnd.toISOString().split('T')[0];
 
-    console.log(`[AI Traffic V2] Loading data for ${ga4PropertyId}`);
-    // console.log(`[AI Traffic V2] Current: ${currentStartStr} - ${currentEndStr}`);
-    // console.log(`[AI Traffic V2] Previous: ${prevStartStr} - ${prevEndStr}`);
+    const cacheKey = `${ga4PropertyId}:${currentStartStr}:${currentEndStr}:${prevStartStr}:${prevEndStr}`;
 
-    const requestKey = `${ga4PropertyId}:${currentStartStr}:${currentEndStr}:${prevStartStr}:${prevEndStr}`;
-    const requestPromise = inFlightRequests.get(requestKey) || getAiTrafficExtendedWithComparison(
+    // 1) Frischer Cache? -> sofort ausliefern, kein GA4-Call.
+    const cached = await readCache(cacheKey);
+    if (cached && cached.ageMs < CACHE_TTL_MS) {
+      return NextResponse.json({
+        success: true,
+        data: cached.payload,
+        cached: true,
+        meta: {
+          dateRange,
+          cacheAgeMs: cached.ageMs,
+          currentPeriod: { start: currentStartStr, end: currentEndStr },
+          previousPeriod: { start: prevStartStr, end: prevEndStr }
+        }
+      });
+    }
+
+    // 2) Quota im Cooldown? -> wenn möglich (auch ältere) Cache-Daten liefern,
+    //    sonst quotaLimited. So sieht der Nutzer Daten statt eines Fehlers.
+    const cooldownUntil = await getCooldownUntil(ga4PropertyId);
+    if (cooldownUntil > Date.now()) {
+      if (cached) {
+        return NextResponse.json({
+          success: true,
+          data: cached.payload,
+          cached: true,
+          stale: true,
+          meta: {
+            dateRange,
+            cacheAgeMs: cached.ageMs,
+            retryAfterMs: Math.max(0, cooldownUntil - Date.now()),
+            currentPeriod: { start: currentStartStr, end: currentEndStr },
+            previousPeriod: { start: prevStartStr, end: prevEndStr }
+          }
+        });
+      }
+      return quotaLimitedResponse(
+        cooldownUntil,
+        'GA4-Quota ist vorübergehend erschöpft. Die KI-Traffic-Detaildaten werden später automatisch wieder geladen.'
+      );
+    }
+
+    console.log(`[AI Traffic V2] Loading data for ${ga4PropertyId}`);
+
+    // 3) Frisch laden (mit In-Flight-Dedup innerhalb der Instanz).
+    const requestPromise = inFlightRequests.get(cacheKey) || getAiTrafficExtendedWithComparison(
       ga4PropertyId,
       currentStartStr,
       currentEndStr,
       prevStartStr,
       prevEndStr
     );
-    inFlightRequests.set(requestKey, requestPromise);
+    inFlightRequests.set(cacheKey, requestPromise);
 
     let data;
     try {
@@ -137,18 +257,38 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       if (isGa4QuotaError(error)) {
         const message = getQuotaMessage(error);
-        quotaCooldownUntil.set(ga4PropertyId, Date.now() + QUOTA_COOLDOWN_MS);
+        const until = await setCooldown(ga4PropertyId);
         console.warn('[AI Traffic V2 API] GA4 quota cooldown aktiviert:', message);
-        return quotaLimitedResponse(ga4PropertyId, message);
+        // Stale-Cache bevorzugen, falls vorhanden.
+        if (cached) {
+          return NextResponse.json({
+            success: true,
+            data: cached.payload,
+            cached: true,
+            stale: true,
+            meta: {
+              dateRange,
+              cacheAgeMs: cached.ageMs,
+              retryAfterMs: Math.max(0, until - Date.now()),
+              currentPeriod: { start: currentStartStr, end: currentEndStr },
+              previousPeriod: { start: prevStartStr, end: prevEndStr }
+            }
+          });
+        }
+        return quotaLimitedResponse(until, message);
       }
       throw error;
     } finally {
-      inFlightRequests.delete(requestKey);
+      inFlightRequests.delete(cacheKey);
     }
 
-    return NextResponse.json({ 
+    // 4) Erfolgreich -> Cache aktualisieren.
+    await writeCache(cacheKey, data);
+
+    return NextResponse.json({
       success: true,
       data,
+      cached: false,
       meta: {
         dateRange,
         currentPeriod: { start: currentStartStr, end: currentEndStr },
