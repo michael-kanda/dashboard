@@ -1,6 +1,7 @@
 // src/lib/google-api.ts
 
 import { google } from 'googleapis';
+import type { analyticsdata_v1beta } from 'googleapis';
 import { buildAiTrafficDimensionFilter, normalizeSource } from './ai-sources';
 // ── Globales Retry-/Timeout-Verhalten für ALLE googleapis-Calls ──────────
 // GA4 runReport & GSC query sind POST und werden von gaxios per Default NICHT
@@ -91,11 +92,22 @@ const GA4_REQUEST_OPTIONS = {
   },
 };
 
-/** Einheitlicher Einstiegspunkt für ALLE GA4-runReport-Calls dieser Datei. */
-async function ga4RunReport(analytics: any, request: any): Promise<any> {
+/**
+ * Einheitlicher Einstiegspunkt für ALLE GA4-runReport-Calls dieser Datei.
+ * Rückgabetyp ist bewusst auf das RunReport-Schema typisiert, damit die
+ * Typinferenz an den Aufrufstellen (rows.map((row) => ...)) erhalten bleibt —
+ * sonst schlägt noImplicitAny im Build zu.
+ */
+async function ga4RunReport(
+  analytics: analyticsdata_v1beta.Analyticsdata,
+  request: analyticsdata_v1beta.Params$Resource$Properties$Runreport
+): Promise<{ data: analyticsdata_v1beta.Schema$RunReportResponse }> {
   await acquireGa4Slot();
   try {
-    return await analytics.properties.runReport(request, GA4_REQUEST_OPTIONS as any);
+    return (await analytics.properties.runReport(
+      request,
+      GA4_REQUEST_OPTIONS as any
+    )) as unknown as { data: analyticsdata_v1beta.Schema$RunReportResponse };
   } finally {
     releaseGa4Slot();
   }
