@@ -3,9 +3,22 @@
 import { google } from 'googleapis';
 import type { analyticsdata_v1beta } from 'googleapis';
 import { sql } from '@vercel/postgres';
-// Für Hintergrund-Refresh nach der Response (SWR). Falls noch nicht
-// installiert: npm i @vercel/functions
-import { waitUntil } from '@vercel/functions';
+
+// Hintergrund-Tasks nach der Response am Leben halten (SWR-Refresh), OHNE
+// Paket-Abhängigkeit: Das ist exakt der Mechanismus, den @vercel/functions
+// intern nutzt — der Vercel-Runtime-Request-Context unter einem globalen
+// Symbol. Fehlt der Context (lokal, Tests, andere Hosts), genügt
+// fire-and-forget; der Task läuft dann nach Best-Effort weiter.
+function vercelWaitUntil(task: Promise<unknown>): void {
+  try {
+    const ctx = (globalThis as any)[Symbol.for('@vercel/request-context')]?.get?.();
+    if (ctx && typeof ctx.waitUntil === 'function') {
+      ctx.waitUntil(task);
+    }
+  } catch {
+    // Best-Effort: Task läuft als fire-and-forget weiter.
+  }
+}
 import { buildAiTrafficDimensionFilter, normalizeSource } from './ai-sources';
 // ── Globales Retry-/Timeout-Verhalten für ALLE googleapis-Calls ──────────
 // GA4 runReport & GSC query sind POST und werden von gaxios per Default NICHT
@@ -93,12 +106,9 @@ function scheduleGa4BackgroundRefresh<T>(cacheKey: string, fetcher: () => Promis
       ga4RefreshesInFlight.delete(cacheKey);
     }
   })();
-  try {
-    // Hält die Function nach der Response am Leben, bis der Refresh fertig ist.
-    waitUntil(task);
-  } catch {
-    // Außerhalb von Vercel (lokal/Tests): fire-and-forget genügt.
-  }
+  // Hält die Function nach der Response am Leben, bis der Refresh fertig ist
+  // (auf Vercel); sonst Best-Effort fire-and-forget.
+  vercelWaitUntil(task);
 }
 
 async function withGa4ResultCache<T>(cacheKey: string, fetcher: () => Promise<T>): Promise<T> {
