@@ -214,6 +214,15 @@ const GA4_TIMEOUT_MS = 55_000;      // max. Timeout pro Request
 const GA4_CALL_BUDGET_MS = 60_000;  // Queue-Wartezeit + Request zusammen
 const GA4_MIN_TIMEOUT_MS = 5_000;   // darunter lohnt kein Request-Start mehr
 
+// Versions-Marker: erscheint einmal pro Cold-Start im Log. Damit ist in den
+// Vercel-Logs EINDEUTIG erkennbar, welcher Stand dieser Datei live ist —
+// kein Rätselraten mehr anhand von Timeout-Werten in Fehler-Configs.
+console.log(
+  `[google-api] GA4-Layer v4 aktiv (Timeout ${GA4_TIMEOUT_MS / 1000}s, ` +
+  `Call-Budget ${GA4_CALL_BUDGET_MS / 1000}s, ${GA4_MAX_CONCURRENT} Slots, ` +
+  `Cache+SWR+Selbstheilung inkl. Dimension-Reports)`
+);
+
 let ga4ActiveSlots = 0;
 const ga4SlotQueue: Array<() => void> = [];
 
@@ -944,7 +953,22 @@ async function getAiTrafficDataUncached(
   }
 }
 
+// Gecachter Einstiegspunkt — Logik unverändert in getGa4DimensionReportUncached.
+// WICHTIG: dimensionName gehört in den Cache-Key, sonst kollidieren
+// country/city/channel/device miteinander.
 export async function getGa4DimensionReport(
+  propertyId: string,
+  startDate: string,
+  endDate: string,
+  dimensionName: string
+): Promise<ChartEntry[]> {
+  return withGa4ResultCache(
+    `dim:${propertyId}:${startDate}:${endDate}:${dimensionName}`,
+    () => getGa4DimensionReportUncached(propertyId, startDate, endDate, dimensionName)
+  );
+}
+
+async function getGa4DimensionReportUncached(
   propertyId: string,
   startDate: string,
   endDate: string,
@@ -1027,7 +1051,19 @@ export interface ConvertingPageData {
   conversionRate: string;
 }
 
+// Gecachter Einstiegspunkt — Logik unverändert in getTopConvertingPagesUncached.
 export async function getTopConvertingPages(
+  propertyId: string,
+  startDate: string,
+  endDate: string
+): Promise<ConvertingPageData[]> {
+  return withGa4ResultCache(
+    `tcp:${propertyId}:${startDate}:${endDate}`,
+    () => getTopConvertingPagesUncached(propertyId, startDate, endDate)
+  );
+}
+
+async function getTopConvertingPagesUncached(
   propertyId: string,
   startDate: string,
   endDate: string
