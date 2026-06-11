@@ -354,47 +354,18 @@ export async function GET(request: NextRequest) {
     try {
       data = await requestPromise;
     } catch (error) {
+      // Hinweis: Ab hier gibt es definitiv KEINEN Cache-Eintrag — sonst wäre
+      // oben der SWR-Pfad gegriffen und hätte bereits geantwortet.
       if (isGa4QuotaError(error)) {
         const message = getQuotaMessage(error);
         const until = await setCooldown(ga4PropertyId);
         console.warn('[AI Traffic V2 API] GA4 quota cooldown aktiviert:', message);
-        // Stale-Cache bevorzugen, falls vorhanden.
-        if (cached) {
-          return NextResponse.json({
-            success: true,
-            data: cached.payload,
-            cached: true,
-            stale: true,
-            meta: {
-              dateRange,
-              cacheAgeMs: cached.ageMs,
-              retryAfterMs: Math.max(0, until - Date.now()),
-              currentPeriod: { start: currentStartStr, end: currentEndStr },
-              previousPeriod: { start: prevStartStr, end: prevEndStr }
-            }
-          });
-        }
         return quotaLimitedResponse(until, message);
       }
       // Transienter Fehler (z.B. GA4-Timeout "The operation was aborted."):
-      // kein Cooldown, aber Stale-Cache bevorzugen statt 500er.
+      // kein Cooldown — beim nächsten Aufruf darf sofort neu versucht werden.
       if (isTransientGa4Error(error)) {
         console.warn('[AI Traffic V2 API] Transienter GA4-Fehler (Timeout/Abort):', getQuotaMessage(error));
-        if (cached) {
-          return NextResponse.json({
-            success: true,
-            data: cached.payload,
-            cached: true,
-            stale: true,
-            meta: {
-              dateRange,
-              cacheAgeMs: cached.ageMs,
-              transientError: true,
-              currentPeriod: { start: currentStartStr, end: currentEndStr },
-              previousPeriod: { start: prevStartStr, end: prevEndStr }
-            }
-          });
-        }
         return NextResponse.json({
           success: false,
           data: null,
