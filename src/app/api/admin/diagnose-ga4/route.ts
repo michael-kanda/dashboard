@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 type DiagnoseSuite = 'core' | 'all';
+type DiagnoseMode = 'reports' | 'dashboard';
 
 interface DiagnoseArgs {
   property: string;
@@ -17,6 +18,9 @@ interface DiagnoseArgs {
   timeout: number;
   limit: string;
   suite: DiagnoseSuite;
+  mode: DiagnoseMode;
+  concurrency: number;
+  repeat: number;
   projectId?: string;
   projectLabel?: string;
   reports?: string[];
@@ -219,6 +223,121 @@ function reportDefinitions(args: Pick<DiagnoseArgs, 'start' | 'end' | 'limit'>) 
   ];
 }
 
+function dashboardReportDefinitions(args: Pick<DiagnoseArgs, 'start' | 'end' | 'limit'>) {
+  const dateRanges = [{ startDate: args.start, endDate: args.end }];
+  const aiSourceFilter = buildAiTrafficDimensionFilter();
+  const channelFilter = (value: string) => ({
+    filter: {
+      fieldName: 'sessionDefaultChannelGroup',
+      stringFilter: {
+        matchType: 'EXACT',
+        value,
+      },
+    },
+  });
+
+  return [
+    ...reportDefinitions(args),
+    {
+      id: 'paid-search-date',
+      purpose: 'Dashboard: Paid Search Date-Trend',
+      body: {
+        dateRanges,
+        dimensions: [{ name: 'date' }],
+        metrics: [{ name: 'sessions' }],
+        dimensionFilter: channelFilter('Paid Search'),
+        orderBys: [{ dimension: { dimensionName: 'date' } }],
+      },
+    },
+    {
+      id: 'top-pages',
+      purpose: 'Dashboard: Top Landingpages GA4',
+      body: {
+        dateRanges,
+        dimensions: [{ name: 'landingPagePlusQueryString' }],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'totalUsers' },
+          { name: 'newUsers' },
+          { name: 'conversions' },
+          { name: 'engagementRate' },
+        ],
+        orderBys: [{ metric: { metricName: 'conversions' }, desc: true }],
+        limit: '100',
+      },
+    },
+    {
+      id: 'dimension-country',
+      purpose: 'Dashboard: Zugriffe nach Land',
+      body: {
+        dateRanges,
+        dimensions: [{ name: 'country' }],
+        metrics: [{ name: 'sessions' }],
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+        limit: '25',
+      },
+    },
+    {
+      id: 'dimension-city',
+      purpose: 'Dashboard: Zugriffe nach Stadt',
+      body: {
+        dateRanges,
+        dimensions: [{ name: 'city' }],
+        metrics: [{ name: 'sessions' }],
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+        limit: '25',
+      },
+    },
+    {
+      id: 'dimension-channel',
+      purpose: 'Dashboard: Zugriffe nach Channel',
+      body: {
+        dateRanges,
+        dimensions: [{ name: 'sessionDefaultChannelGroup' }],
+        metrics: [{ name: 'sessions' }],
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+        limit: '25',
+      },
+    },
+    {
+      id: 'dimension-device',
+      purpose: 'Dashboard: Zugriffe nach Endgerät',
+      body: {
+        dateRanges,
+        dimensions: [{ name: 'deviceCategory' }],
+        metrics: [{ name: 'sessions' }],
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+        limit: '25',
+      },
+    },
+    {
+      id: 'ai-events',
+      purpose: 'KI-Traffic Detail: Events',
+      body: {
+        dateRanges,
+        dimensions: [{ name: 'eventName' }],
+        metrics: [{ name: 'eventCount' }],
+        dimensionFilter: {
+          andGroup: {
+            expressions: [
+              aiSourceFilter,
+              {
+                filter: {
+                  fieldName: 'eventName',
+                  inListFilter: {
+                    values: ['click', 'file_download', 'form_submit', 'form_start', 'scroll', 'outbound_click', 'generate_lead'],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }],
+      },
+    },
+  ];
+}
+
 function buildDiagnosis(results: any[]) {
   const byId = new Map(results.map((result) => [result.id, result]));
   const fail = (id: string) => byId.get(id)?.ok === false;
@@ -284,11 +403,20 @@ async function resolveArgs(request: NextRequest): Promise<DiagnoseArgs> {
     timeout: clampNumber(searchParams.get('timeout'), 55_000, 5_000, 90_000),
     limit: String(clampNumber(searchParams.get('limit'), 1000, 10, 10000)),
     suite: searchParams.get('suite') === 'all' ? 'all' : 'core',
+    mode: searchParams.get('mode') === 'dashboard' ? 'dashboard' : 'reports',
+    concurrency: clampNumber(searchParams.get('concurrency'), 1, 1, 10),
+    repeat: clampNumber(searchParams.get('repeat'), 1, 1, 10),
     reports: searchParams.get('reports')?.split(',').map((item) => item.trim()).filter(Boolean),
   };
 }
 
-async function runReport(analytics: any, property: string, report: any, timeout: number) {
+async function runReport(
+  analytics: any,
+  property: string,
+  report: any,
+  timeout: number,
+  meta: { repeatIndex?: number; sequenceIndex?: number; queuedAt?: number } = {}
+) {
   const startedAt = Date.now();
   const summary = summarizeBody(report.body);
 
@@ -308,6 +436,9 @@ async function runReport(analytics: any, property: string, report: any, timeout:
     return {
       id: report.id,
       purpose: report.purpose,
+      repeatIndex: meta.repeatIndex,
+      sequenceIndex: meta.sequenceIndex,
+      queuedMs: meta.queuedAt ? startedAt - meta.queuedAt : 0,
       ok: true,
       durationMs: Date.now() - startedAt,
       rowCount: response.data.rows?.length || 0,
@@ -318,6 +449,9 @@ async function runReport(analytics: any, property: string, report: any, timeout:
     return {
       id: report.id,
       purpose: report.purpose,
+      repeatIndex: meta.repeatIndex,
+      sequenceIndex: meta.sequenceIndex,
+      queuedMs: meta.queuedAt ? startedAt - meta.queuedAt : 0,
       ok: false,
       durationMs: Date.now() - startedAt,
       errorType: classified.type,
@@ -326,6 +460,51 @@ async function runReport(analytics: any, property: string, report: any, timeout:
       summary,
     };
   }
+}
+
+async function runWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<R>
+) {
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+  const runners = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await worker(items[currentIndex], currentIndex);
+    }
+  });
+  await Promise.all(runners);
+  return results;
+}
+
+function buildDashboardDiagnosis(results: any[], args: DiagnoseArgs) {
+  const lines = buildDiagnosis(results);
+  const failures = results.filter((result) => !result.ok);
+  const quotaFailures = failures.filter((result) => result.errorType === 'quota');
+  const timeoutFailures = failures.filter((result) => result.errorType === 'timeout-abort');
+  const maxQueuedMs = Math.max(0, ...results.map((result) => result.queuedMs || 0));
+  const maxDurationMs = Math.max(0, ...results.map((result) => result.durationMs || 0));
+
+  if (failures.length === 0) {
+    lines.push(`Dashboard-Simulation stabil: ${results.length} Reports, concurrency=${args.concurrency}, repeat=${args.repeat}.`);
+  } else {
+    lines.push(`Dashboard-Simulation instabil: ${failures.length}/${results.length} Reports fehlgeschlagen.`);
+  }
+  if (quotaFailures.length) {
+    lines.push(`Quota-Hinweis: ${quotaFailures.length} Quota-Fehler. Parallelität reduzieren und Cooldown/Cache erzwingen.`);
+  }
+  if (timeoutFailures.length) {
+    lines.push(`Timeout-Hinweis: ${timeoutFailures.length} Timeout-Abbrüche. Betroffene Reports splitten oder optionalisieren.`);
+  }
+  if (args.concurrency > 1 && (quotaFailures.length || timeoutFailures.length)) {
+    lines.push('Wenn derselbe Lauf mit concurrency=1 stabil ist, ist parallele GA4-Last die Ursache.');
+  }
+  lines.push(`Max. Queue-Wartezeit: ${maxQueuedMs}ms, längster Report: ${maxDurationMs}ms.`);
+
+  return lines;
 }
 
 export async function GET(request: NextRequest) {
@@ -338,8 +517,8 @@ export async function GET(request: NextRequest) {
     const args = await resolveArgs(request);
     const authClient = createAuth();
     const analytics = google.analyticsdata({ version: 'v1beta', auth: authClient });
-    const allReports = reportDefinitions(args);
-    let reports = args.suite === 'all'
+    const allReports = args.mode === 'dashboard' ? dashboardReportDefinitions(args) : reportDefinitions(args);
+    let reports = args.suite === 'all' || args.mode === 'dashboard'
       ? allReports
       : allReports.filter((report) => report.id !== 'ai-source-date');
     if (args.reports?.length) {
@@ -357,10 +536,31 @@ export async function GET(request: NextRequest) {
     }
 
     const startedAt = Date.now();
-    const results = [];
-    for (const report of reports) {
-      results.push(await runReport(analytics, args.property, report, args.timeout));
-    }
+    const tasks = Array.from({ length: args.repeat }).flatMap((_, repeatIndex) =>
+      reports.map((report) => ({
+        report,
+        repeatIndex: repeatIndex + 1,
+        queuedAt: Date.now(),
+      }))
+    );
+    const results = args.mode === 'dashboard'
+      ? await runWithConcurrency(tasks, args.concurrency, (task, index) =>
+          runReport(analytics, args.property, task.report, args.timeout, {
+            repeatIndex: task.repeatIndex,
+            sequenceIndex: index + 1,
+            queuedAt: task.queuedAt,
+          })
+        )
+      : await runWithConcurrency(tasks, 1, (task, index) =>
+          runReport(analytics, args.property, task.report, args.timeout, {
+            repeatIndex: task.repeatIndex,
+            sequenceIndex: index + 1,
+            queuedAt: task.queuedAt,
+          })
+        );
+    const diagnosis = args.mode === 'dashboard'
+      ? buildDashboardDiagnosis(results, args)
+      : buildDiagnosis(results);
 
     return NextResponse.json({
       generatedAt: new Date().toISOString(),
@@ -370,7 +570,8 @@ export async function GET(request: NextRequest) {
         property: args.property.replace(/^properties\//, ''),
       },
       reportCount: reports.length,
-      diagnosis: buildDiagnosis(results),
+      totalRuns: results.length,
+      diagnosis,
       results,
     });
   } catch (error) {
