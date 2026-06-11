@@ -7,6 +7,11 @@ import { sql } from '@vercel/postgres';
 import { User } from '@/lib/schemas'; 
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
 
+// Gleiche Begründung wie auf der Projekt-Seite: Diese Route führt denselben
+// Daten-Loader aus; beim Cold-Load darf ein einzelner GA4-Report bis zu 55 s
+// brauchen, plus waitUntil-Hintergrund-Refreshes.
+export const maxDuration = 120;
+
 interface UserRow {
   id: string;
   email: string;
@@ -18,6 +23,8 @@ interface UserRow {
   semrush_tracking_id: string | null;
   semrush_tracking_id_02: string | null;
   google_ads_sheet_id: string | null;
+  brand_keywords: string[] | null;
+  project_locations: any[] | null;
 }
 
 export async function GET(
@@ -61,12 +68,20 @@ export async function GET(
     }
 
     // ========== PROJEKT-DATEN LADEN ==========
+    // WICHTIG: brand_keywords und project_locations MÜSSEN mitgeladen werden.
+    // Diese Route und die Server-Seite (projekt/[id]/page.tsx) schreiben in
+    // DENSELBEN google_data_cache-Key. Fehlen die Felder hier, produziert
+    // dieser Lauf Daten OHNE localSeo und mit Auto-Detected-Brand-Keywords,
+    // überschreibt damit den Cache der Seite — und "Lokale Sichtbarkeit"
+    // verschwindet für die gesamte Cache-TTL aus dem Dashboard.
     const { rows } = await sql<UserRow>`
       SELECT
         id::text as id, email, role, domain,
         gsc_site_url, ga4_property_id,
         semrush_project_id, semrush_tracking_id, semrush_tracking_id_02,
-        google_ads_sheet_id
+        google_ads_sheet_id,
+        brand_keywords,
+        COALESCE(project_locations, '[]'::jsonb) as project_locations
       FROM users
       WHERE id::text = ${projectId}
     `;
@@ -81,7 +96,7 @@ export async function GET(
     try {
       // Wir bauen ein Objekt, das dem 'User'-Schema entspricht
       // Wichtig: null-Werte aus der DB zu undefined konvertieren, da Zod/TS das oft lieber mag
-      const projectData: Partial<User> = {
+      const projectData: Partial<User> & { project_locations?: any[]; brand_keywords?: string[] | null } = {
         id: project.id, // ID ist Pflicht und hier vorhanden
         email: project.email,
         role: project.role,
@@ -92,6 +107,13 @@ export async function GET(
         semrush_tracking_id: project.semrush_tracking_id || undefined,
         semrush_tracking_id_02: project.semrush_tracking_id_02 || undefined,
         google_ads_sheet_id: project.google_ads_sheet_id || undefined,
+        // Konfigurierte Brand-Keywords durchreichen — sonst startet der Loader
+        // die Auto-Detection und überschreibt die konfigurierten Keywords in
+        // der DB (getBrandKeywordsForUser schreibt erkannte Keywords zurück).
+        brand_keywords: project.brand_keywords ?? undefined,
+        // Standorte für "Lokale Sichtbarkeit" durchreichen — sonst fehlt
+        // localSeo im erzeugten (und gecachten!) Dashboard-Datensatz.
+        project_locations: project.project_locations ?? [],
       };
       
       // TypeScript beschwert sich, weil getOrFetchGoogleData(Partial<User>) aufgerufen wird,
