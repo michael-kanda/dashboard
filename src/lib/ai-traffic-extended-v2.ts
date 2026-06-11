@@ -388,9 +388,12 @@ function parseGa4Date(dateString: string): string {
 // Requests werden nie wiederholt). Wir setzen das Timeout deshalb explizit pro
 // Request — Request-Optionen überschreiben die globale Konfiguration.
 const GA4_TIMEOUT_MS = 45_000;
-// Gesamtbudget für ALLE GA4-Calls eines Dashboard-Loads. Muss unter der
-// maxDuration der API-Route (60s) liegen, inkl. Overhead für DB/Verarbeitung.
-const TOTAL_GA4_BUDGET_MS = 50_000;
+// Gesamtbudget für ALLE GA4-Calls eines Dashboard-Loads. Muss DEUTLICH unter
+// der maxDuration der API-Route (60s) liegen: Auth, 2 Postgres-Queries,
+// Cache-Write und JSON-Serialisierung brauchen ebenfalls Zeit. 42s GA4-Budget
+// lässt ~18s Headroom — sonst droht der Vercel Runtime Timeout (60s), der die
+// ganze Function killt statt nur einzelne Reports zu degradieren.
+const TOTAL_GA4_BUDGET_MS = 42_000;
 // Unter diesem Restbudget werden optionale Reports übersprungen statt gestartet.
 const OPTIONAL_REPORT_MIN_BUDGET_MS = 5_000;
 
