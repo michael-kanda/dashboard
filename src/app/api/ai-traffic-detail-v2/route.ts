@@ -29,7 +29,6 @@ import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
 import { getAiTrafficExtendedWithComparison } from '@/lib/ai-traffic-extended-v2';
 import {
-  getGa4PropertyLockKey,
   releaseGa4RequestLock,
   tryAcquireGa4RequestLock,
 } from '@/lib/ga4-request-lock';
@@ -274,7 +273,7 @@ export async function GET(request: NextRequest) {
     const prevEndStr = prevEnd.toISOString().split('T')[0];
 
     const cacheKey = `${ga4PropertyId}:${currentStartStr}:${currentEndStr}:${prevStartStr}:${prevEndStr}`;
-    const lockKey = getGa4PropertyLockKey(ga4PropertyId) ?? `ga4-property:${ga4PropertyId}`;
+    const lockKey = `ga4-ai-detail:${ga4PropertyId}`;
 
     // 1) Frischer Cache? -> sofort ausliefern, kein GA4-Call.
     const cached = await readCache(cacheKey);

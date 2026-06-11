@@ -50,6 +50,10 @@ export default function AiTrafficDetailWidgetV2({
         throw new Error(result.error || `HTTP ${response.status}`);
       }
 
+      if (!result.data && (result.transient || result.quotaLimited)) {
+        throw new Error(result.error || 'KI-Traffic-Daten werden gerade aktualisiert.');
+      }
+
       console.log('[AiTrafficDetailWidgetV2] Data received:', result.data ? 'OK' : 'null');
       setData(result.data || undefined);
       
