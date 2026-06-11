@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "diagnose:ga4": "node scripts/diagnose-ga4.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.43",

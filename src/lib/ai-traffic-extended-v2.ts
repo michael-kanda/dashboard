@@ -437,12 +437,13 @@ async function safeRunReport(
   analytics: any,
   property: string,
   requestBody: any,
-  { optional = false, deadline }: { optional?: boolean; deadline?: number } = {}
+  { optional = false, deadline, label = 'ga4-report' }: { optional?: boolean; deadline?: number; label?: string } = {}
 ): Promise<{ data: { rows?: any[] } }> {
+  const startedAt = Date.now();
   const remainingMs = deadline ? deadline - Date.now() : GA4_TIMEOUT_MS;
 
   if (optional && remainingMs < OPTIONAL_REPORT_MIN_BUDGET_MS) {
-    console.warn('[AI Traffic V2] Zeitbudget erschöpft — optionaler Report übersprungen.');
+    console.warn(`[AI Traffic V2] Zeitbudget erschöpft — optionaler Report übersprungen: ${label}`);
     return { data: { rows: [] } };
   }
 
@@ -452,15 +453,26 @@ async function safeRunReport(
   );
 
   try {
-    return await analytics.properties.runReport(
+    const response = await analytics.properties.runReport(
       { property, requestBody },
       { ...GA4_REQUEST_OPTIONS, timeout } as any
     );
+    console.log(
+      `[AI Traffic V2] Report OK ${label}: ${Date.now() - startedAt}ms, rows=${response.data.rows?.length || 0}`
+    );
+    return response;
   } catch (error) {
+    const dimensions = (requestBody.dimensions || []).map((item: any) => item.name).join(',') || '-';
+    const metrics = (requestBody.metrics || []).map((item: any) => item.name).join(',') || '-';
     if (isGa4QuotaError(error)) throw error;
+    console.warn(
+      `[AI Traffic V2] Report Fehler ${label}: ${Date.now() - startedAt}ms, ` +
+      `timeout=${timeout}ms, dimensions=${dimensions}, metrics=${metrics}, ` +
+      `${error instanceof Error ? error.message : error}`
+    );
     if (optional) {
       console.warn(
-        '[AI Traffic V2] Optionaler Report fehlgeschlagen, fahre mit leeren Daten fort:',
+        `[AI Traffic V2] Optionaler Report fehlgeschlagen, fahre mit leeren Daten fort (${label}):`,
         error instanceof Error ? error.message : error
       );
       return { data: { rows: [] } };
@@ -520,7 +532,7 @@ export async function getAiTrafficExtended(
       dimensionFilter: aiSourceFilter,
       orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
       limit: '1000'
-    }, { deadline: reportDeadline });
+    }, { deadline: reportDeadline, label: 'ai-main-source-landingpage-quality' });
 
     // Ab hier alles optional: ein transienter Fehler degradiert nur dieses eine
     // Modul (leere Rows), reißt aber nicht das ganze Dashboard ab. Quota-Fehler
@@ -541,7 +553,7 @@ export async function getAiTrafficExtended(
         ],
         dimensionFilter: aiSourceFilter,
         orderBys: [{ dimension: { dimensionName: 'date' } }]
-      }, { optional: true, deadline: reportDeadline }),
+      }, { optional: true, deadline: reportDeadline, label: 'ai-trend-date' }),
       safeRunReport(analytics, formattedPropertyId, {
         dateRanges: [{ startDate, endDate }],
         dimensions: [
@@ -555,7 +567,7 @@ export async function getAiTrafficExtended(
         dimensionFilter: aiSourceFilter,
         orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
         limit: '500'
-      }, { optional: true, deadline: reportDeadline })
+      }, { optional: true, deadline: reportDeadline, label: 'ai-journey-landingpage-nextpage' })
     ]);
 
     const [eventsResponse, scrollResponse] = await Promise.all([
@@ -584,7 +596,7 @@ export async function getAiTrafficExtended(
           }
         },
         orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }]
-      }, { optional: true, deadline: reportDeadline }),
+      }, { optional: true, deadline: reportDeadline, label: 'ai-events' }),
       safeRunReport(analytics, formattedPropertyId, {
         dateRanges: [{ startDate, endDate }],
         dimensions: [{ name: 'percentScrolled' }],
@@ -605,7 +617,7 @@ export async function getAiTrafficExtended(
             ]
           }
         }
-      }, { optional: true, deadline: reportDeadline })
+      }, { optional: true, deadline: reportDeadline, label: 'ai-scroll-depth' })
     ]);
 
     // Pro-Quelle-Totals OHNE Landingpage-Dimension (zweiter Report im Paar).
@@ -623,7 +635,7 @@ export async function getAiTrafficExtended(
         dimensionFilter: aiSourceFilter,
         orderBys: [{ dimension: { dimensionName: 'date' } }],
         limit: '10000'
-      }, { optional: true, deadline: reportDeadline }),
+      }, { optional: true, deadline: reportDeadline, label: 'ai-trend-by-source-date' }),
       safeRunReport(analytics, formattedPropertyId, {
         dateRanges: [{ startDate, endDate }],
         dimensions: [{ name: 'sessionSource' }],
@@ -635,7 +647,7 @@ export async function getAiTrafficExtended(
         dimensionFilter: aiSourceFilter,
         orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
         limit: '1000'
-      }, { optional: true, deadline: reportDeadline })
+      }, { optional: true, deadline: reportDeadline, label: 'ai-source-totals' })
     ]);
 
     // =========================================================================
@@ -1054,7 +1066,7 @@ export async function getAiTrafficExtended(
     };
 
   } catch (error) {
-    console.error('[AI Traffic Extended V2] Fehler:', error);
+    console.error('[AI Traffic Extended V2] Fehler:', error instanceof Error ? error.message : error);
     throw error;
   }
 }
@@ -1159,7 +1171,7 @@ export async function getAiTrafficTotalsOnly(
       { name: 'totalUsers' }
     ],
     dimensionFilter: aiSourceFilter
-  }, { deadline });
+  }, { deadline, label: 'ai-previous-totals' });
 
   const row = response.data.rows?.[0];
   return {
