@@ -4,10 +4,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
-import { 
-  getAiTrafficExtended, 
-  getAiTrafficExtendedWithComparison 
-} from '@/lib/ai-traffic-extended-v2';
+import { getAiTrafficExtendedWithComparison } from '@/lib/ai-traffic-extended-v2';
+
+const QUOTA_COOLDOWN_MS = 55 * 60 * 1000;
+const quotaCooldownUntil = new Map<string, number>();
+const inFlightRequests = new Map<string, Promise<any>>();
+
+function getQuotaMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  const cause = (error as any)?.cause?.message;
+  return cause || message;
+}
+
+function isGa4QuotaError(error: unknown) {
+  const status = (error as any)?.status || (error as any)?.code || (error as any)?.response?.status;
+  const message = getQuotaMessage(error).toLowerCase();
+  return status === 429 || message.includes('quota') || message.includes('resource_exhausted');
+}
+
+function quotaLimitedResponse(ga4PropertyId: string, message: string) {
+  const retryAfterMs = Math.max(0, (quotaCooldownUntil.get(ga4PropertyId) || Date.now()) - Date.now());
+
+  return NextResponse.json({
+    success: false,
+    data: null,
+    quotaLimited: true,
+    retryAfterMs,
+    error: message,
+  });
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,6 +77,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const cooldownUntil = quotaCooldownUntil.get(ga4PropertyId) || 0;
+    if (cooldownUntil > Date.now()) {
+      return quotaLimitedResponse(
+        ga4PropertyId,
+        'GA4-Quota ist vorübergehend erschöpft. Die KI-Traffic-Detaildaten werden später automatisch wieder geladen.'
+      );
+    }
+
     // Datumsberechnung
     // end = gestern (GA4-Daten für heute sind noch unvollständig)
     const end = new Date();
@@ -88,14 +121,30 @@ export async function GET(request: NextRequest) {
     // console.log(`[AI Traffic V2] Current: ${currentStartStr} - ${currentEndStr}`);
     // console.log(`[AI Traffic V2] Previous: ${prevStartStr} - ${prevEndStr}`);
 
-    // Daten laden (mit Vergleich)
-    const data = await getAiTrafficExtendedWithComparison(
+    const requestKey = `${ga4PropertyId}:${currentStartStr}:${currentEndStr}:${prevStartStr}:${prevEndStr}`;
+    const requestPromise = inFlightRequests.get(requestKey) || getAiTrafficExtendedWithComparison(
       ga4PropertyId,
       currentStartStr,
       currentEndStr,
       prevStartStr,
       prevEndStr
     );
+    inFlightRequests.set(requestKey, requestPromise);
+
+    let data;
+    try {
+      data = await requestPromise;
+    } catch (error) {
+      if (isGa4QuotaError(error)) {
+        const message = getQuotaMessage(error);
+        quotaCooldownUntil.set(ga4PropertyId, Date.now() + QUOTA_COOLDOWN_MS);
+        console.warn('[AI Traffic V2 API] GA4 quota cooldown aktiviert:', message);
+        return quotaLimitedResponse(ga4PropertyId, message);
+      }
+      throw error;
+    } finally {
+      inFlightRequests.delete(requestKey);
+    }
 
     return NextResponse.json({ 
       success: true,

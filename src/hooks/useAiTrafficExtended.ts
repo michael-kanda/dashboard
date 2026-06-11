@@ -12,14 +12,16 @@ import type { AiTrafficExtendedData } from '@/lib/ai-traffic-extended-v2';
  */
 
 interface CacheEntry {
-  data?: AiTrafficExtendedData;
-  promise?: Promise<AiTrafficExtendedData | undefined>;
+  data?: AiTrafficExtendedData | null;
+  promise?: Promise<AiTrafficExtendedData | null | undefined>;
   error?: string;
   timestamp: number;
+  retryAfterMs?: number;
 }
 
 const cache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 60_000; // 1 min — selber Visit, gleicher Filter → kein Refetch
+const QUOTA_CACHE_TTL_MS = 55 * 60 * 1000;
 
 function isAbortError(error: unknown) {
   if (error instanceof DOMException && error.name === 'AbortError') return true;
@@ -33,7 +35,7 @@ function cacheKey(projectId: string | undefined, dateRange: string): string {
   return `${projectId ?? 'default'}::${dateRange}`;
 }
 
-async function fetchExtended(projectId: string | undefined, dateRange: string): Promise<AiTrafficExtendedData | undefined> {
+async function fetchExtended(projectId: string | undefined, dateRange: string): Promise<AiTrafficExtendedData | null | undefined> {
   const params = new URLSearchParams({ dateRange });
   if (projectId) params.set('projectId', projectId);
   const response = await fetch(`/api/ai-traffic-detail-v2?${params.toString()}`);
@@ -43,6 +45,9 @@ async function fetchExtended(projectId: string | undefined, dateRange: string): 
     throw new Error(`Server lieferte kein JSON (Status: ${response.status})`);
   }
   const result = await response.json();
+  if (result?.quotaLimited) {
+    return null;
+  }
   if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
   return result.data || undefined;
 }
@@ -65,8 +70,15 @@ export function useAiTrafficExtended(projectId: string | undefined, dateRange: s
     const now = Date.now();
 
     // Frischer Cache → sofort liefern, kein Fetch
-    if (!force && cached?.data && now - cached.timestamp < CACHE_TTL_MS) {
-      setData(cached.data);
+    if (!force && cached?.data !== undefined && now - cached.timestamp < CACHE_TTL_MS) {
+      setData(cached.data || undefined);
+      setError(undefined);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!force && cached?.retryAfterMs && now - cached.timestamp < Math.max(cached.retryAfterMs, QUOTA_CACHE_TTL_MS)) {
+      setData(undefined);
       setError(undefined);
       setIsLoading(false);
       return;
@@ -77,7 +89,7 @@ export function useAiTrafficExtended(projectId: string | undefined, dateRange: s
       setIsLoading(true);
       try {
         const result = await cached.promise;
-        setData(result);
+        setData(result || undefined);
         setError(undefined);
       } catch (err) {
         if (isAbortError(err)) return;
@@ -96,8 +108,12 @@ export function useAiTrafficExtended(projectId: string | undefined, dateRange: s
 
     try {
       const result = await promise;
-      cache.set(key, { data: result, timestamp: Date.now() });
-      setData(result);
+      const cacheEntry: CacheEntry = { timestamp: Date.now() };
+      if (result !== undefined) cacheEntry.data = result;
+      if (result === null) cacheEntry.retryAfterMs = QUOTA_CACHE_TTL_MS;
+      cache.set(key, cacheEntry);
+      setData(result || undefined);
+      setError(undefined);
     } catch (err) {
       if (isAbortError(err)) {
         cache.delete(key);
