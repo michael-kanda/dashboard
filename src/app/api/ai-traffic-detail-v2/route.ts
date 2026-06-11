@@ -28,6 +28,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
 import { getAiTrafficExtendedWithComparison } from '@/lib/ai-traffic-extended-v2';
+import {
+  getGa4PropertyLockKey,
+  releaseGa4RequestLock,
+  tryAcquireGa4RequestLock,
+} from '@/lib/ga4-request-lock';
 
 // Hintergrund-Tasks nach der Response am Leben halten (SWR-Refresh), OHNE
 // Paket-Abhängigkeit: derselbe Mechanismus, den @vercel/functions intern
@@ -269,6 +274,7 @@ export async function GET(request: NextRequest) {
     const prevEndStr = prevEnd.toISOString().split('T')[0];
 
     const cacheKey = `${ga4PropertyId}:${currentStartStr}:${currentEndStr}:${prevStartStr}:${prevEndStr}`;
+    const lockKey = getGa4PropertyLockKey(ga4PropertyId) ?? `ga4-property:${ga4PropertyId}`;
 
     // 1) Frischer Cache? -> sofort ausliefern, kein GA4-Call.
     const cached = await readCache(cacheKey);
@@ -296,8 +302,15 @@ export async function GET(request: NextRequest) {
     //     aktiv ist. Der Nutzer wartet damit nie auf GA4, sobald einmal
     //     Daten existieren — bei großen Properties dauert ein Report 30–50 s.
     if (cached) {
-      if (!cooldownActive && !inFlightRequests.has(cacheKey)) {
+      if (!cooldownActive && !inFlightRequests.has(lockKey)) {
         const refreshTask = (async () => {
+          const lock = await tryAcquireGa4RequestLock(lockKey);
+          if (!lock) {
+            console.log(`[AI Traffic V2] Hintergrund-Refresh übersprungen, bereits aktiv: ${lockKey}`);
+            inFlightRequests.delete(lockKey);
+            return;
+          }
+
           try {
             console.log(`[AI Traffic V2] Hintergrund-Refresh startet für ${ga4PropertyId}`);
             const fresh = await getAiTrafficExtendedWithComparison(
@@ -317,10 +330,11 @@ export async function GET(request: NextRequest) {
               console.warn('[AI Traffic V2] Hintergrund-Refresh fehlgeschlagen:', getQuotaMessage(error));
             }
           } finally {
-            inFlightRequests.delete(cacheKey);
+            await releaseGa4RequestLock(lock);
+            inFlightRequests.delete(lockKey);
           }
         })();
-        inFlightRequests.set(cacheKey, refreshTask);
+        inFlightRequests.set(lockKey, refreshTask);
         vercelWaitUntil(refreshTask);
       }
       return NextResponse.json({
@@ -352,14 +366,21 @@ export async function GET(request: NextRequest) {
     // 3) ERSTAUFRUF ohne Cache: synchron laden (mit In-Flight-Dedup innerhalb
     //    der Instanz). Kann bei großen Properties lange dauern — passiert pro
     //    Property/Zeitraum aber nur ein einziges Mal, danach greift SWR.
-    const requestPromise = inFlightRequests.get(cacheKey) || getAiTrafficExtendedWithComparison(
+    const existingRequest = inFlightRequests.get(lockKey);
+    const lock = existingRequest ? null : await tryAcquireGa4RequestLock(lockKey);
+
+    if (!existingRequest && !lock) {
+      return transientGa4Response('GA4-Daten werden bereits aktualisiert. Bitte gleich erneut öffnen.');
+    }
+
+    const requestPromise = existingRequest || getAiTrafficExtendedWithComparison(
       ga4PropertyId,
       currentStartStr,
       currentEndStr,
       prevStartStr,
       prevEndStr
     );
-    inFlightRequests.set(cacheKey, requestPromise);
+    inFlightRequests.set(lockKey, requestPromise);
 
     let data;
     try {
@@ -381,7 +402,10 @@ export async function GET(request: NextRequest) {
       }
       throw error;
     } finally {
-      inFlightRequests.delete(cacheKey);
+      if (!existingRequest) {
+        inFlightRequests.delete(lockKey);
+        await releaseGa4RequestLock(lock);
+      }
     }
 
     // 4) Erfolgreich -> Cache aktualisieren.

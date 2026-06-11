@@ -65,6 +65,11 @@ google.options({
 import { JWT } from 'google-auth-library';
 import { ChartEntry, type GoogleGenAiPerformanceData, type GoogleGenAiBreakdownItem } from '@/lib/dashboard-shared';
 import type { TopQueryData } from '@/types/dashboard';
+import {
+  getGa4PropertyLockKeyFromCacheKey,
+  releaseGa4RequestLock,
+  tryAcquireGa4RequestLock,
+} from '@/lib/ga4-request-lock';
 
 // ── Postgres-Result-Cache für schwere GA4-Dashboard-Reports ──────────────
 // Property 337078709 (und vermutlich weitere große Properties) braucht für
@@ -90,9 +95,17 @@ const GA4_RESULT_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const ga4RefreshesInFlight = new Set<string>();
 
 function scheduleGa4BackgroundRefresh<T>(cacheKey: string, fetcher: () => Promise<T>): void {
-  if (ga4RefreshesInFlight.has(cacheKey)) return;
-  ga4RefreshesInFlight.add(cacheKey);
+  const lockKey = getGa4PropertyLockKeyFromCacheKey(cacheKey);
+  if (ga4RefreshesInFlight.has(lockKey)) return;
+  ga4RefreshesInFlight.add(lockKey);
   const task = (async () => {
+    const lock = await tryAcquireGa4RequestLock(lockKey);
+    if (!lock) {
+      console.log(`[GA4 Lock] Hintergrund-Refresh übersprungen, bereits aktiv: ${lockKey}`);
+      ga4RefreshesInFlight.delete(lockKey);
+      return;
+    }
+
     try {
       const fresh = await fetcher();
       await writeGa4ResultCache(cacheKey, fresh);
@@ -103,12 +116,25 @@ function scheduleGa4BackgroundRefresh<T>(cacheKey: string, fetcher: () => Promis
         err instanceof Error ? err.message : err
       );
     } finally {
-      ga4RefreshesInFlight.delete(cacheKey);
+      await releaseGa4RequestLock(lock);
+      ga4RefreshesInFlight.delete(lockKey);
     }
   })();
   // Hält die Function nach der Response am Leben, bis der Refresh fertig ist
   // (auf Vercel); sonst Best-Effort fire-and-forget.
   vercelWaitUntil(task);
+}
+
+async function waitForGa4ResultCache<T>(cacheKey: string, maxWaitMs = 8000): Promise<T | null> {
+  const deadline = Date.now() + maxWaitMs;
+
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const cached = await readGa4ResultCache(cacheKey);
+    if (cached) return cached.payload as T;
+  }
+
+  return null;
 }
 
 async function withGa4ResultCache<T>(cacheKey: string, fetcher: () => Promise<T>): Promise<T> {
@@ -126,6 +152,14 @@ async function withGa4ResultCache<T>(cacheKey: string, fetcher: () => Promise<T>
   }
 
   // 3) Kein brauchbarer Cache -> synchron laden (Erstaufruf, kann dauern).
+  const lockKey = `ga4-cache:${cacheKey}`;
+  const lock = await tryAcquireGa4RequestLock(lockKey);
+  if (!lock) {
+    const filledCache = await waitForGa4ResultCache<T>(cacheKey);
+    if (filledCache) return filledCache;
+    throw new Error(`[GA4 Lock] Refresh läuft bereits für ${lockKey}; noch kein Cache für ${cacheKey}`);
+  }
+
   try {
     const fresh = await fetcher();
     await writeGa4ResultCache(cacheKey, fresh);
@@ -153,6 +187,8 @@ async function withGa4ResultCache<T>(cacheKey: string, fetcher: () => Promise<T>
       scheduleGa4BackgroundRefresh(cacheKey, fetcher);
     }
     throw error;
+  } finally {
+    await releaseGa4RequestLock(lock);
   }
 }
 
