@@ -521,109 +521,118 @@ export async function getAiTrafficExtended(
     // Ab hier alles optional: ein transienter Fehler degradiert nur dieses eine
     // Modul (leere Rows), reißt aber nicht das ganze Dashboard ab. Quota-Fehler
     // werden in safeRunReport trotzdem hochgereicht.
-    const trendResponse = await safeRunReport(analytics, formattedPropertyId, {
-      dateRanges: [{ startDate, endDate }],
-      dimensions: [{ name: 'date' }],
-      metrics: [
-        { name: 'sessions' },
-        { name: 'totalUsers' }
-      ],
-      dimensionFilter: aiSourceFilter,
-      orderBys: [{ dimension: { dimensionName: 'date' } }]
-    }, { optional: true, deadline: reportDeadline });
+    //
+    // PAARWEISE parallel (2 gleichzeitig): GA4 erlaubt 10 Concurrent-Requests
+    // pro Property — volles Promise.all über alle 6 plus parallele Widgets war
+    // zu viel ("Exhausted concurrent requests quota"), strikt sequenziell war
+    // zu langsam (Wall-Time, "Laden dauert ewig"). 2er-Paare halbieren die
+    // Dauer der optionalen Phase bei minimalem Concurrency-Fußabdruck.
+    const [trendResponse, journeyResponse] = await Promise.all([
+      safeRunReport(analytics, formattedPropertyId, {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [{ name: 'date' }],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'totalUsers' }
+        ],
+        dimensionFilter: aiSourceFilter,
+        orderBys: [{ dimension: { dimensionName: 'date' } }]
+      }, { optional: true, deadline: reportDeadline }),
+      safeRunReport(analytics, formattedPropertyId, {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [
+          { name: 'landingPagePlusQueryString' },
+          { name: 'pagePath' }
+        ],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'screenPageViews' }
+        ],
+        dimensionFilter: aiSourceFilter,
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+        limit: '500'
+      }, { optional: true, deadline: reportDeadline })
+    ]);
 
-    const journeyResponse = await safeRunReport(analytics, formattedPropertyId, {
-      dateRanges: [{ startDate, endDate }],
-      dimensions: [
-        { name: 'landingPagePlusQueryString' },
-        { name: 'pagePath' }
-      ],
-      metrics: [
-        { name: 'sessions' },
-        { name: 'screenPageViews' }
-      ],
-      dimensionFilter: aiSourceFilter,
-      orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
-      limit: '500'
-    }, { optional: true, deadline: reportDeadline });
-
-    const eventsResponse = await safeRunReport(analytics, formattedPropertyId, {
-      dateRanges: [{ startDate, endDate }],
-      dimensions: [{ name: 'eventName' }],
-      metrics: [{ name: 'eventCount' }],
-      dimensionFilter: {
-        andGroup: {
-          expressions: [
-            aiSourceFilter,
-            {
-              filter: {
-                fieldName: 'eventName',
-                inListFilter: {
-                  values: [
-                    'click', 'file_download', 'form_submit', 'form_start',
-                    'video_start', 'video_progress', 'video_complete',
-                    'scroll', 'outbound_click', 'purchase', 'add_to_cart',
-                    'begin_checkout', 'generate_lead', 'sign_up', 'login'
-                  ]
+    const [eventsResponse, scrollResponse] = await Promise.all([
+      safeRunReport(analytics, formattedPropertyId, {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [{ name: 'eventName' }],
+        metrics: [{ name: 'eventCount' }],
+        dimensionFilter: {
+          andGroup: {
+            expressions: [
+              aiSourceFilter,
+              {
+                filter: {
+                  fieldName: 'eventName',
+                  inListFilter: {
+                    values: [
+                      'click', 'file_download', 'form_submit', 'form_start',
+                      'video_start', 'video_progress', 'video_complete',
+                      'scroll', 'outbound_click', 'purchase', 'add_to_cart',
+                      'begin_checkout', 'generate_lead', 'sign_up', 'login'
+                    ]
+                  }
                 }
               }
-            }
-          ]
-        }
-      },
-      orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }]
-    }, { optional: true, deadline: reportDeadline });
-
-    const scrollResponse = await safeRunReport(analytics, formattedPropertyId, {
-      dateRanges: [{ startDate, endDate }],
-      dimensions: [{ name: 'percentScrolled' }],
-      metrics: [{ name: 'eventCount' }],
-      dimensionFilter: {
-        andGroup: {
-          expressions: [
-            aiSourceFilter,
-            {
-              filter: {
-                fieldName: 'eventName',
-                stringFilter: {
-                  matchType: 'EXACT' as const,
-                  value: 'scroll'
+            ]
+          }
+        },
+        orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }]
+      }, { optional: true, deadline: reportDeadline }),
+      safeRunReport(analytics, formattedPropertyId, {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [{ name: 'percentScrolled' }],
+        metrics: [{ name: 'eventCount' }],
+        dimensionFilter: {
+          andGroup: {
+            expressions: [
+              aiSourceFilter,
+              {
+                filter: {
+                  fieldName: 'eventName',
+                  stringFilter: {
+                    matchType: 'EXACT' as const,
+                    value: 'scroll'
+                  }
                 }
               }
-            }
-          ]
+            ]
+          }
         }
-      }
-    }, { optional: true, deadline: reportDeadline });
+      }, { optional: true, deadline: reportDeadline })
+    ]);
 
-    const trendBySourceResponse = await safeRunReport(analytics, formattedPropertyId, {
-      dateRanges: [{ startDate, endDate }],
-      dimensions: [
-        { name: 'date' },
-        { name: 'sessionSource' }
-      ],
-      metrics: [
-        { name: 'sessions' },
-        { name: 'totalUsers' }
-      ],
-      dimensionFilter: aiSourceFilter,
-      orderBys: [{ dimension: { dimensionName: 'date' } }],
-      limit: '10000'
-    }, { optional: true, deadline: reportDeadline });
-
-    // Pro-Quelle-Totals OHNE Landingpage-Dimension.
-    const sourceTotalsResponse = await safeRunReport(analytics, formattedPropertyId, {
-      dateRanges: [{ startDate, endDate }],
-      dimensions: [{ name: 'sessionSource' }],
-      metrics: [
-        { name: 'sessions' },
-        { name: 'totalUsers' },
-        { name: 'conversions' }
-      ],
-      dimensionFilter: aiSourceFilter,
-      orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
-      limit: '1000'
-    }, { optional: true, deadline: reportDeadline });
+    // Pro-Quelle-Totals OHNE Landingpage-Dimension (zweiter Report im Paar).
+    const [trendBySourceResponse, sourceTotalsResponse] = await Promise.all([
+      safeRunReport(analytics, formattedPropertyId, {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [
+          { name: 'date' },
+          { name: 'sessionSource' }
+        ],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'totalUsers' }
+        ],
+        dimensionFilter: aiSourceFilter,
+        orderBys: [{ dimension: { dimensionName: 'date' } }],
+        limit: '10000'
+      }, { optional: true, deadline: reportDeadline }),
+      safeRunReport(analytics, formattedPropertyId, {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [{ name: 'sessionSource' }],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'totalUsers' },
+          { name: 'conversions' }
+        ],
+        dimensionFilter: aiSourceFilter,
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+        limit: '1000'
+      }, { optional: true, deadline: reportDeadline })
+    ]);
 
     // =========================================================================
     // DATEN VERARBEITEN
@@ -1066,34 +1075,32 @@ export async function getAiTrafficExtendedWithComparison(
   // abgestimmt auf maxDuration=60 der API-Route.
   const deadline = Date.now() + TOTAL_GA4_BUDGET_MS;
 
-  // Aktueller Zeitraum: vollständige Analyse (7 Reports).
-  const currentData = await getAiTrafficExtended(propertyId, currentStart, currentEnd, deadline);
-
-  // Vergleichszeitraum: vom previousData werden NUR totalSessions und totalUsers
-  // verwendet (siehe calcChange unten). Früher lief hier die komplette
-  // getAiTrafficExtended-Analyse mit 7 Reports — 6 davon wurden berechnet und
-  // sofort weggeworfen. Das halbierte das GA4-Call-Budget grundlos und erhöhte
-  // das Server-Error-Quota-Risiko massiv. Jetzt: EIN schlanker Totals-Report.
+  // Vergleichs-Totals ZUERST: Das ist der billigste Call der gesamten Kette
+  // (2 Metriken, KEINE Dimensionen, typisch 1–3 s) und liefert das Headline-
+  // Veränderungs-Prozent — wichtiger als die optionalen Widgets. Lief er als
+  // LETZTER, bekam er nur den Budget-Rest und starb bei langsamen Properties
+  // regelmäßig im Timeout ("Vergleichs-Totals fehlgeschlagen").
   //
-  // DEGRADATION: Schlägt der Totals-Report transient fehl (Timeout etc.) oder
-  // ist das Zeitbudget aufgebraucht, liefern wir die aktuellen Daten OHNE
-  // Veränderungs-Prozente aus, statt den kompletten (teuren, bereits
-  // erfolgreichen) Dashboard-Load wegzuwerfen. Quota-Fehler werden weiterhin
-  // hochgereicht, damit die Route den Cooldown setzen kann.
+  // Vom Vergleichszeitraum werden NUR totalSessions/totalUsers verwendet.
+  // Früher lief hier die komplette getAiTrafficExtended-Analyse mit 7 Reports —
+  // 6 davon wurden berechnet und sofort weggeworfen. Jetzt: EIN Totals-Report.
+  //
+  // DEGRADATION: Schlägt der Totals-Report transient fehl (Timeout etc.),
+  // liefern wir die aktuellen Daten OHNE Veränderungs-Prozente aus. Quota-
+  // Fehler werden hochgereicht, damit die Route den Cooldown setzen kann.
   let previousTotals: { totalSessions: number; totalUsers: number } | null = null;
-  if (deadline - Date.now() >= OPTIONAL_REPORT_MIN_BUDGET_MS) {
-    try {
-      previousTotals = await getAiTrafficTotalsOnly(propertyId, previousStart, previousEnd, deadline);
-    } catch (error) {
-      if (isGa4QuotaError(error)) throw error;
-      console.warn(
-        '[AI Traffic V2] Vergleichs-Totals fehlgeschlagen — liefere Daten ohne Veränderungs-Prozente:',
-        error instanceof Error ? error.message : error
-      );
-    }
-  } else {
-    console.warn('[AI Traffic V2] Zeitbudget erschöpft — Vergleichs-Totals übersprungen.');
+  try {
+    previousTotals = await getAiTrafficTotalsOnly(propertyId, previousStart, previousEnd, deadline);
+  } catch (error) {
+    if (isGa4QuotaError(error)) throw error;
+    console.warn(
+      '[AI Traffic V2] Vergleichs-Totals fehlgeschlagen — liefere Daten ohne Veränderungs-Prozente:',
+      error instanceof Error ? error.message : error
+    );
   }
+
+  // Aktueller Zeitraum: vollständige Analyse (7 Reports) mit dem Restbudget.
+  const currentData = await getAiTrafficExtended(propertyId, currentStart, currentEnd, deadline);
 
   const calcChange = (current: number, previous: number): number => {
     if (previous === 0) return current > 0 ? 100 : 0;
