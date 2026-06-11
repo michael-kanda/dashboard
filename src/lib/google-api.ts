@@ -5,18 +5,31 @@ import { buildAiTrafficDimensionFilter, normalizeSource } from './ai-sources';
 // ── Globales Retry-/Timeout-Verhalten für ALLE googleapis-Calls ──────────
 // GA4 runReport & GSC query sind POST und werden von gaxios per Default NICHT
 // wiederholt. Da diese Reports rein lesend/idempotent sind, ist Retry sicher.
+//
+// TIMEOUT-HÄRTUNG (Juni 2026):
+// 20 s waren für schwere GA4-Reports (viele Metriken, 3–24 Monate) zu knapp —
+// Folge: AbortSignal-Abbruch ("The operation was aborted."). WICHTIG: gaxios
+// (7.1.3) retried per Timeout abgebrochene Requests in der Praxis NICHT
+// (Produktions-Logs zeigen currentRetryAttempt: 0 beim Wurf), die frühere
+// Worst-Case-Rechnung "2 × 20 s" galt für Timeouts also nie. Effektiv gab es
+// EINEN 20-s-Versuch, dann Fehler. Deshalb: 45 s pro Versuch.
+//
+// QUOTA-HÄRTUNG:
+// 429 wird NICHT mehr retried — ein Quota-Fehler erholt sich nicht in 500 ms,
+// der Retry verbrennt nur ein weiteres Token. 5xx-Retry bleibt für GSC/Sheets
+// erhalten; GA4-Calls laufen unten über ga4RunReport mit eigener, strengerer
+// Konfiguration (kein 5xx-Retry wegen der winzigen Server-Error-Quota von
+// 10/Stunde pro Property — siehe ai-traffic-extended-v2.ts).
 google.options({
   retry: true,
   retryConfig: {
-    // Insgesamt max 2 Versuche (1 Original + 1 Retry) pro Call. Mehr passt
-    // bei parallel laufenden GA4/GSC-Reports nicht zuverlässig in das
-    // Vercel-Function-Budget (60 s auf Pro).
     retry: 1,
     retryDelay: 500,
     httpMethodsToRetry: ['GET', 'HEAD', 'PUT', 'OPTIONS', 'DELETE', 'POST'],
-    statusCodesToRetry: [[100, 199], [429, 429], [500, 599]],
-    // Auch abgebrochene / nicht beantwortete Requests einmal wiederholen
-    // (AbortError durch per-Request-Timeout).
+    statusCodesToRetry: [[100, 199], [500, 599]],
+    // Echte Netzwerkfehler (ECONNRESET etc.) einmal wiederholen — die schlagen
+    // schnell fehl und kosten kein Zeitbudget. Timeout-Aborts retried gaxios
+    // ohnehin nicht (siehe oben).
     noResponseRetries: 1,
     onRetryAttempt: (err: any) => {
       const code = err?.response?.status ?? err?.code ?? err?.error?.type ?? 'no-response';
@@ -24,16 +37,70 @@ google.options({
       console.warn(`[Google API] Retry nach ${code} (Versuch ${attempt})`);
     },
   },
-  // Per-Versuch-Timeout. Mit retry=1 ergibt sich ein Worst-Case von
-  // 2 × 20 s ≈ 41 s pro Call — bleibt klar unter 60 s Function-Limit
-  // und lässt Headroom für weitere parallele Reports.
-  timeout: 20_000,
+  // Per-Versuch-Timeout (Timeouts werden nicht retried, s.o.) — bleibt unter
+  // dem 60-s-Function-Limit, GA4-Parallelität wird zusätzlich per Semaphore
+  // (ga4RunReport) begrenzt, damit mehrere Reports nicht gleichzeitig die
+  // GA4-Concurrent-Slots blockieren und sich gegenseitig ins Timeout drängen.
+  timeout: 45_000,
 });
 import { JWT } from 'google-auth-library';
 import { ChartEntry, type GoogleGenAiPerformanceData, type GoogleGenAiBreakdownItem } from '@/lib/dashboard-shared';
 import type { TopQueryData } from '@/types/dashboard';
 
 // --- Typdefinitionen ---
+
+// ── GA4-Wrapper: Concurrency-Limit + GA4-sichere Request-Optionen ─────────
+// GA4 drosselt gleichzeitige Requests pro Property hart ("Exhausted concurrent
+// requests quota"). Die Projekt-Seite feuert mehrere Reports parallel
+// (Promise.all/allSettled) — die warten sich dann gegenseitig in die 45-s-
+// Timeouts. Lösung: Semaphore, max. 2 GA4-runReports gleichzeitig pro warmer
+// Lambda-Instanz. Wartende Calls kosten kein GA4-Budget, nur etwas Latenz.
+const GA4_MAX_CONCURRENT = 2;
+let ga4ActiveSlots = 0;
+const ga4SlotQueue: Array<() => void> = [];
+
+function acquireGa4Slot(): Promise<void> {
+  if (ga4ActiveSlots < GA4_MAX_CONCURRENT) {
+    ga4ActiveSlots++;
+    return Promise.resolve();
+  }
+  return new Promise<void>((resolve) => ga4SlotQueue.push(resolve));
+}
+
+function releaseGa4Slot(): void {
+  const next = ga4SlotQueue.shift();
+  if (next) {
+    // Slot direkt an den nächsten Wartenden weitergeben (Zähler bleibt gleich).
+    next();
+  } else {
+    ga4ActiveSlots--;
+  }
+}
+
+// Strengere Optionen NUR für GA4 (überschreiben google.options pro Request):
+// kein 5xx-Retry (verbrennt Tokens der winzigen Server-Error-Quota, 10/h pro
+// Property), kein 429-Retry. Nur 408 und echte Netzwerkfehler.
+const GA4_REQUEST_OPTIONS = {
+  timeout: 45_000,
+  retryConfig: {
+    retry: 1,
+    retryDelay: 500,
+    httpMethodsToRetry: ['POST'],
+    statusCodesToRetry: [[408, 408]],
+    noResponseRetries: 1,
+  },
+};
+
+/** Einheitlicher Einstiegspunkt für ALLE GA4-runReport-Calls dieser Datei. */
+async function ga4RunReport(analytics: any, request: any): Promise<any> {
+  await acquireGa4Slot();
+  try {
+    return await analytics.properties.runReport(request, GA4_REQUEST_OPTIONS as any);
+  } finally {
+    releaseGa4Slot();
+  }
+}
+
 
 interface DailyDataPoint {
   date: number; // Timestamp
@@ -477,7 +544,7 @@ export async function getAnalyticsData(
   };
 
   try {
-    const response = await analytics.properties.runReport({
+    const response = await ga4RunReport(analytics, {
       property: formattedPropertyId,
       requestBody: {
         dateRanges: [{ startDate, endDate }],
@@ -546,7 +613,7 @@ export async function getAnalyticsData(
 
     // Paid Search Daten separat laden
     try {
-      const paidResponse = await analytics.properties.runReport({
+      const paidResponse = await ga4RunReport(analytics, {
         property: formattedPropertyId,
         requestBody: {
           dateRanges: [{ startDate, endDate }],
@@ -601,7 +668,7 @@ export async function getAiTrafficData(
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
   try {
-    const response = await analytics.properties.runReport({
+    const response = await ga4RunReport(analytics, {
       property: formattedPropertyId,
       requestBody: {
         dateRanges: [{ startDate, endDate }],
@@ -685,7 +752,7 @@ export async function getGa4DimensionReport(
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
   try {
-    const response = await analytics.properties.runReport({
+    const response = await ga4RunReport(analytics, {
       property: formattedPropertyId,
       requestBody: {
         dateRanges: [{ startDate, endDate }],
@@ -767,7 +834,7 @@ export async function getTopConvertingPages(
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
   try {
-    const response = await analytics.properties.runReport({
+    const response = await ga4RunReport(analytics, {
       property: formattedPropertyId,
       requestBody: {
         dateRanges: [{ startDate, endDate }],
@@ -1167,7 +1234,7 @@ export async function getLandingPageFollowUpPaths(
   console.log(`[GA4 Followup] Date Range: ${startDate} - ${endDate}`);
 
   try {
-    const response = await analytics.properties.runReport({
+    const response = await ga4RunReport(analytics, {
       property: formattedPropertyId,
       requestBody: {
         dateRanges: [{ startDate, endDate }],
@@ -1346,7 +1413,7 @@ export async function getGoogleAdsReport(
   // (Data Thresholding). Ohne Dimensionen liefert die API
   // die echten, ungekürzten Totals.
   // ═════════════════════════════════════════
-  const totalsResponse = await analytics.properties.runReport({
+  const totalsResponse = await ga4RunReport(analytics, {
     property: formattedPropertyId,
     requestBody: {
       dateRanges: [{ startDate, endDate }],
@@ -1380,7 +1447,7 @@ export async function getGoogleAdsReport(
   // ═════════════════════════════════════════
   // CALL 1: Ads-Performance nach Kampagne / AdGroup / Query
   // ═════════════════════════════════════════
-  const adsResponse = await analytics.properties.runReport({
+  const adsResponse = await ga4RunReport(analytics, {
     property: formattedPropertyId,
     requestBody: {
       dateRanges: [{ startDate, endDate }],
@@ -1445,7 +1512,7 @@ export async function getGoogleAdsReport(
 
   try {
     const [convByCamp, convByAg, convByQuery, metsByCamp, metsByAg] = await Promise.all([
-      analytics.properties.runReport({
+      ga4RunReport(analytics, {
         property: formattedPropertyId,
         requestBody: {
           dateRanges: [{ startDate, endDate }],
@@ -1454,7 +1521,7 @@ export async function getGoogleAdsReport(
           dimensionFilter: adsFilter,
         },
       }),
-      analytics.properties.runReport({
+      ga4RunReport(analytics, {
         property: formattedPropertyId,
         requestBody: {
           dateRanges: [{ startDate, endDate }],
@@ -1463,7 +1530,7 @@ export async function getGoogleAdsReport(
           dimensionFilter: adsFilter,
         },
       }),
-      analytics.properties.runReport({
+      ga4RunReport(analytics, {
         property: formattedPropertyId,
         requestBody: {
           dateRanges: [{ startDate, endDate }],
@@ -1473,7 +1540,7 @@ export async function getGoogleAdsReport(
         },
       }),
       // CALL 1e: Alle Metriken pro Kampagne (1 Dimension)
-      analytics.properties.runReport({
+      ga4RunReport(analytics, {
         property: formattedPropertyId,
         requestBody: {
           dateRanges: [{ startDate, endDate }],
@@ -1488,7 +1555,7 @@ export async function getGoogleAdsReport(
         },
       }),
       // CALL 1f: Alle Metriken pro Anzeigengruppe (1 Dimension)
-      analytics.properties.runReport({
+      ga4RunReport(analytics, {
         property: formattedPropertyId,
         requestBody: {
           dateRanges: [{ startDate, endDate }],
@@ -1559,7 +1626,7 @@ export async function getGoogleAdsReport(
 
   // Versuch A: Mit Kosten (2 Dimensionen + Ad-Metriken)
   try {
-    const lpFullResponse = await analytics.properties.runReport({
+    const lpFullResponse = await ga4RunReport(analytics, {
       property: formattedPropertyId,
       requestBody: {
         dateRanges: [{ startDate, endDate }],
@@ -1614,7 +1681,7 @@ export async function getGoogleAdsReport(
   // Versuch B: Fallback ohne Ad-Metriken (falls A leer)
   if (landingPageRows.length === 0) {
     try {
-      const lpResponse = await analytics.properties.runReport({
+      const lpResponse = await ga4RunReport(analytics, {
         property: formattedPropertyId,
         requestBody: {
           dateRanges: [{ startDate, endDate }],
