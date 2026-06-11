@@ -367,6 +367,71 @@ function parseGa4Date(dateString: string): string {
 // aus '@/lib/ai-sources' (siehe Import oben).
 
 // ============================================================================
+// GA4-REQUEST-OPTIONS & FEHLERBEHANDLUNG
+// ============================================================================
+
+// Sichere Retry-Konfiguration für GA4-Calls.
+//
+// WICHTIG: Der gaxios-Default retriet u.a. 500–599. Jeder Retry, der erneut
+// einen 500/503 bekommt, verbrennt aber ein Token der sehr kleinen Quota
+// "Server Errors Per Project Per Property Per Hour" (Standard: nur 10/Stunde).
+// Ein einzelner hartnäckiger 5xx-Call konnte so bis zu 4 Tokens fressen und das
+// Budget binnen ein, zwei Dashboard-Loads sperren (429 RESOURCE_EXHAUSTED).
+//
+// Deshalb: KEINE 5xx und KEIN 429 mehr automatisch wiederholen. Nur echte
+// Timeouts/Netzwerkfehler (noResponseRetries) werden retried.
+const GA4_REQUEST_OPTIONS = {
+  retryConfig: {
+    retry: 2,
+    httpMethodsToRetry: ['POST'],
+    statusCodesToRetry: [[408, 408]],
+    noResponseRetries: 2,
+  },
+};
+
+/** Erkennt GA4-Quota-/Server-Error-Fehler (429 / RESOURCE_EXHAUSTED). */
+function isGa4QuotaError(error: unknown): boolean {
+  const e = error as any;
+  const status = e?.status || e?.code || e?.response?.status;
+  const message = (e?.cause?.message || e?.message || String(error)).toLowerCase();
+  return status === 429 || message.includes('quota') || message.includes('resource_exhausted');
+}
+
+/**
+ * Führt einen runReport aus und kapselt die Fehlerstrategie:
+ * - Quota-/Server-Error-Fehler werden IMMER hochgereicht. Weiterzumachen würde
+ *   nur weitere Server-Error-Tokens verbrennen; die API-Route setzt darauf den
+ *   Cooldown und liefert ggf. gecachte Daten aus.
+ * - Bei `optional: true` werden alle ANDEREN Fehler abgefangen und mit leeren
+ *   Rows weitergereicht, damit ein einzelner transienter Report-Fehler nicht
+ *   das gesamte Dashboard abreißt (Graceful Degradation).
+ * - Pflicht-Reports (optional: false) reichen jeden Fehler hoch.
+ */
+async function safeRunReport(
+  analytics: any,
+  property: string,
+  requestBody: any,
+  { optional = false }: { optional?: boolean } = {}
+): Promise<{ data: { rows?: any[] } }> {
+  try {
+    return await analytics.properties.runReport(
+      { property, requestBody },
+      GA4_REQUEST_OPTIONS as any
+    );
+  } catch (error) {
+    if (isGa4QuotaError(error)) throw error;
+    if (optional) {
+      console.warn(
+        '[AI Traffic V2] Optionaler Report fehlgeschlagen, fahre mit leeren Daten fort:',
+        error instanceof Error ? error.message : error
+      );
+      return { data: { rows: [] } };
+    }
+    throw error;
+  }
+}
+
+// ============================================================================
 // HAUPTFUNKTION
 // ============================================================================
 
@@ -394,150 +459,133 @@ export async function getAiTrafficExtended(
     // sequenziell ausführen statt Promise.all, sonst kommt "Exhausted concurrent
     // requests quota" bei großen Dashboards oder parallelen Widgets.
 
-    const mainResponse = await analytics.properties.runReport({
-      property: formattedPropertyId,
-      requestBody: {
-        dateRanges: [{ startDate, endDate }],
-        dimensions: [
-          { name: 'sessionSource' },
-          { name: 'landingPagePlusQueryString' }
-        ],
-        metrics: [
-          { name: 'sessions' },
-          { name: 'totalUsers' },
-          { name: 'averageSessionDuration' },
-          { name: 'bounceRate' },
-          { name: 'conversions' },
-          { name: 'screenPageViewsPerSession' },
-          { name: 'engagementRate' }
-        ],
-        dimensionFilter: aiSourceFilter,
-        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
-        limit: '1000'
-      },
+    // Pflicht-Report: ohne diese Daten ist das Dashboard leer -> Fehler hoch.
+    const mainResponse = await safeRunReport(analytics, formattedPropertyId, {
+      dateRanges: [{ startDate, endDate }],
+      dimensions: [
+        { name: 'sessionSource' },
+        { name: 'landingPagePlusQueryString' }
+      ],
+      metrics: [
+        { name: 'sessions' },
+        { name: 'totalUsers' },
+        { name: 'averageSessionDuration' },
+        { name: 'bounceRate' },
+        { name: 'conversions' },
+        { name: 'screenPageViewsPerSession' },
+        { name: 'engagementRate' }
+      ],
+      dimensionFilter: aiSourceFilter,
+      orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+      limit: '1000'
     });
 
-    const trendResponse = await analytics.properties.runReport({
-      property: formattedPropertyId,
-      requestBody: {
-        dateRanges: [{ startDate, endDate }],
-        dimensions: [{ name: 'date' }],
-        metrics: [
-          { name: 'sessions' },
-          { name: 'totalUsers' }
-        ],
-        dimensionFilter: aiSourceFilter,
-        orderBys: [{ dimension: { dimensionName: 'date' } }]
-      },
-    });
+    // Ab hier alles optional: ein transienter Fehler degradiert nur dieses eine
+    // Modul (leere Rows), reißt aber nicht das ganze Dashboard ab. Quota-Fehler
+    // werden in safeRunReport trotzdem hochgereicht.
+    const trendResponse = await safeRunReport(analytics, formattedPropertyId, {
+      dateRanges: [{ startDate, endDate }],
+      dimensions: [{ name: 'date' }],
+      metrics: [
+        { name: 'sessions' },
+        { name: 'totalUsers' }
+      ],
+      dimensionFilter: aiSourceFilter,
+      orderBys: [{ dimension: { dimensionName: 'date' } }]
+    }, { optional: true });
 
-    const journeyResponse = await analytics.properties.runReport({
-      property: formattedPropertyId,
-      requestBody: {
-        dateRanges: [{ startDate, endDate }],
-        dimensions: [
-          { name: 'landingPagePlusQueryString' },
-          { name: 'pagePath' }
-        ],
-        metrics: [
-          { name: 'sessions' },
-          { name: 'screenPageViews' }
-        ],
-        dimensionFilter: aiSourceFilter,
-        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
-        limit: '500'
-      },
-    });
+    const journeyResponse = await safeRunReport(analytics, formattedPropertyId, {
+      dateRanges: [{ startDate, endDate }],
+      dimensions: [
+        { name: 'landingPagePlusQueryString' },
+        { name: 'pagePath' }
+      ],
+      metrics: [
+        { name: 'sessions' },
+        { name: 'screenPageViews' }
+      ],
+      dimensionFilter: aiSourceFilter,
+      orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+      limit: '500'
+    }, { optional: true });
 
-    const eventsResponse = await analytics.properties.runReport({
-      property: formattedPropertyId,
-      requestBody: {
-        dateRanges: [{ startDate, endDate }],
-        dimensions: [{ name: 'eventName' }],
-        metrics: [{ name: 'eventCount' }],
-        dimensionFilter: {
-          andGroup: {
-            expressions: [
-              aiSourceFilter,
-              {
-                filter: {
-                  fieldName: 'eventName',
-                  inListFilter: {
-                    values: [
-                      'click', 'file_download', 'form_submit', 'form_start',
-                      'video_start', 'video_progress', 'video_complete',
-                      'scroll', 'outbound_click', 'purchase', 'add_to_cart',
-                      'begin_checkout', 'generate_lead', 'sign_up', 'login'
-                    ]
-                  }
+    const eventsResponse = await safeRunReport(analytics, formattedPropertyId, {
+      dateRanges: [{ startDate, endDate }],
+      dimensions: [{ name: 'eventName' }],
+      metrics: [{ name: 'eventCount' }],
+      dimensionFilter: {
+        andGroup: {
+          expressions: [
+            aiSourceFilter,
+            {
+              filter: {
+                fieldName: 'eventName',
+                inListFilter: {
+                  values: [
+                    'click', 'file_download', 'form_submit', 'form_start',
+                    'video_start', 'video_progress', 'video_complete',
+                    'scroll', 'outbound_click', 'purchase', 'add_to_cart',
+                    'begin_checkout', 'generate_lead', 'sign_up', 'login'
+                  ]
                 }
               }
-            ]
-          }
-        },
-        orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }]
-      },
-    });
-
-    const scrollResponse = await analytics.properties.runReport({
-      property: formattedPropertyId,
-      requestBody: {
-        dateRanges: [{ startDate, endDate }],
-        dimensions: [{ name: 'percentScrolled' }],
-        metrics: [{ name: 'eventCount' }],
-        dimensionFilter: {
-          andGroup: {
-            expressions: [
-              aiSourceFilter,
-              {
-                filter: {
-                  fieldName: 'eventName',
-                  stringFilter: {
-                    matchType: 'EXACT' as const,
-                    value: 'scroll'
-                  }
-                }
-              }
-            ]
-          }
+            }
+          ]
         }
       },
-    }).catch(() => ({ data: { rows: [] } }));
+      orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }]
+    }, { optional: true });
 
-    const trendBySourceResponse = await analytics.properties.runReport({
-      property: formattedPropertyId,
-      requestBody: {
-        dateRanges: [{ startDate, endDate }],
-        dimensions: [
-          { name: 'date' },
-          { name: 'sessionSource' }
-        ],
-        metrics: [
-          { name: 'sessions' },
-          { name: 'totalUsers' }
-        ],
-        dimensionFilter: aiSourceFilter,
-        orderBys: [{ dimension: { dimensionName: 'date' } }],
-        limit: '10000'
-      },
-    }).catch(() => ({ data: { rows: [] } }));
+    const scrollResponse = await safeRunReport(analytics, formattedPropertyId, {
+      dateRanges: [{ startDate, endDate }],
+      dimensions: [{ name: 'percentScrolled' }],
+      metrics: [{ name: 'eventCount' }],
+      dimensionFilter: {
+        andGroup: {
+          expressions: [
+            aiSourceFilter,
+            {
+              filter: {
+                fieldName: 'eventName',
+                stringFilter: {
+                  matchType: 'EXACT' as const,
+                  value: 'scroll'
+                }
+              }
+            }
+          ]
+        }
+      }
+    }, { optional: true });
+
+    const trendBySourceResponse = await safeRunReport(analytics, formattedPropertyId, {
+      dateRanges: [{ startDate, endDate }],
+      dimensions: [
+        { name: 'date' },
+        { name: 'sessionSource' }
+      ],
+      metrics: [
+        { name: 'sessions' },
+        { name: 'totalUsers' }
+      ],
+      dimensionFilter: aiSourceFilter,
+      orderBys: [{ dimension: { dimensionName: 'date' } }],
+      limit: '10000'
+    }, { optional: true });
 
     // Pro-Quelle-Totals OHNE Landingpage-Dimension.
-    const sourceTotalsResponse = await analytics.properties.runReport({
-      property: formattedPropertyId,
-      requestBody: {
-        dateRanges: [{ startDate, endDate }],
-        dimensions: [{ name: 'sessionSource' }],
-        metrics: [
-          { name: 'sessions' },
-          { name: 'totalUsers' },
-          { name: 'conversions' }
-        ],
-        dimensionFilter: aiSourceFilter,
-        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
-        limit: '1000'
-      },
-    }).catch(() => ({ data: { rows: [] } }));
+    const sourceTotalsResponse = await safeRunReport(analytics, formattedPropertyId, {
+      dateRanges: [{ startDate, endDate }],
+      dimensions: [{ name: 'sessionSource' }],
+      metrics: [
+        { name: 'sessions' },
+        { name: 'totalUsers' },
+        { name: 'conversions' }
+      ],
+      dimensionFilter: aiSourceFilter,
+      orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+      limit: '1000'
+    }, { optional: true });
 
     // =========================================================================
     // DATEN VERARBEITEN
@@ -976,8 +1024,15 @@ export async function getAiTrafficExtendedWithComparison(
   ({ startDate: currentStart, endDate: currentEnd } = normalizeDateRange(currentStart, currentEnd));
   ({ startDate: previousStart, endDate: previousEnd } = normalizeDateRange(previousStart, previousEnd));
 
+  // Aktueller Zeitraum: vollständige Analyse (7 Reports).
   const currentData = await getAiTrafficExtended(propertyId, currentStart, currentEnd);
-  const previousData = await getAiTrafficExtended(propertyId, previousStart, previousEnd);
+
+  // Vergleichszeitraum: vom previousData werden NUR totalSessions und totalUsers
+  // verwendet (siehe calcChange unten). Früher lief hier die komplette
+  // getAiTrafficExtended-Analyse mit 7 Reports — 6 davon wurden berechnet und
+  // sofort weggeworfen. Das halbierte das GA4-Call-Budget grundlos und erhöhte
+  // das Server-Error-Quota-Risiko massiv. Jetzt: EIN schlanker Totals-Report.
+  const previousTotals = await getAiTrafficTotalsOnly(propertyId, previousStart, previousEnd);
 
   const calcChange = (current: number, previous: number): number => {
     if (previous === 0) return current > 0 ? 100 : 0;
@@ -986,7 +1041,51 @@ export async function getAiTrafficExtendedWithComparison(
 
   return {
     ...currentData,
-    totalSessionsChange: calcChange(currentData.totalSessions, previousData.totalSessions),
-    totalUsersChange: calcChange(currentData.totalUsers, previousData.totalUsers)
+    totalSessionsChange: calcChange(currentData.totalSessions, previousTotals.totalSessions),
+    totalUsersChange: calcChange(currentData.totalUsers, previousTotals.totalUsers)
+  };
+}
+
+// ============================================================================
+// SCHLANKER TOTALS-REPORT (für Vergleichszeitraum)
+// ============================================================================
+
+/**
+ * Liefert ausschließlich die KI-Traffic-Gesamtwerte (Sessions, Users) für einen
+ * Zeitraum über EINEN einzigen runReport ohne Dimensionen.
+ *
+ * Gedacht für den Vergleichszeitraum, wo nur die Veränderungs-Prozente berechnet
+ * werden. So fällt die Gesamtzahl der GA4-Calls pro Dashboard-Load von 14 auf 8.
+ */
+export async function getAiTrafficTotalsOnly(
+  propertyId: string,
+  startDate: string,
+  endDate: string
+): Promise<{ totalSessions: number; totalUsers: number }> {
+  ({ startDate, endDate } = normalizeDateRange(startDate, endDate));
+
+  const formattedPropertyId = propertyId.startsWith('properties/')
+    ? propertyId
+    : `properties/${propertyId}`;
+
+  const auth = createAuth();
+  const analytics = google.analyticsdata({ version: 'v1beta', auth });
+  const aiSourceFilter = buildAiTrafficDimensionFilter();
+
+  // Pflicht-Report (nicht optional): bei Quota-Fehler hochreichen, damit die
+  // Route den Cooldown setzen kann.
+  const response = await safeRunReport(analytics, formattedPropertyId, {
+    dateRanges: [{ startDate, endDate }],
+    metrics: [
+      { name: 'sessions' },
+      { name: 'totalUsers' }
+    ],
+    dimensionFilter: aiSourceFilter
+  });
+
+  const row = response.data.rows?.[0];
+  return {
+    totalSessions: parseInt(row?.metricValues?.[0]?.value || '0', 10),
+    totalUsers: parseInt(row?.metricValues?.[1]?.value || '0', 10)
   };
 }
