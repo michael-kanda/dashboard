@@ -11,10 +11,14 @@ import { DateRangeOption } from '@/components/DateRangeSelector';
 import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
 
 // Vercel-Function-Timeout für diese Seite hochsetzen.
-// Der Default (10 s Hobby / 15 s Pro) reicht nicht aus, wenn GA4 + GSC +
-// Google Ads + Semrush sequenziell geladen werden müssen. 60 s ist das
-// Maximum auf dem Pro-Plan.
-export const maxDuration = 60;
+// 120 s, abgestimmt auf die GA4-Cache-Schicht in lib/google-api.ts:
+// Beim Cold-Load (Cache leer) darf ein einzelner GA4-Report bis zu 55 s
+// brauchen (sehr langsame Properties), und Hintergrund-Refreshes via
+// waitUntil zählen ebenfalls zur Function-Laufzeit. Mit 60 s wurde die
+// Function gekillt, bevor langsame Reports fertig waren ("Task timed out
+// after 60 seconds"). Hinweis: Mit Fluid Compute (Standard) erlaubt der
+// Pro-Plan bis zu 300 s — 60 s ist NICHT mehr das Maximum.
+export const maxDuration = 120;
 
 // Erweiterter Typ für unsere Query-Ergebnisse
 interface ExtendedUser extends User {
