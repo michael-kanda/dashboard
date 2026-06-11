@@ -16,7 +16,6 @@ import {
 import TableauKpiGrid from '@/components/TableauKpiGrid';
 import TableauPieChart from '@/components/charts/TableauPieChart';
 import KpiTrendChart from '@/components/charts/KpiTrendChart';
-import AiTrafficCard from '@/components/AiTrafficCard';
 import AiTrafficDetailWidgetV2 from '@/components/AiTrafficDetailWidgetV2';
 import { type DateRangeOption } from '@/components/DateRangeSelector';
 import TopQueriesList from '@/components/TopQueriesList';
@@ -41,6 +40,18 @@ const PromptTrackingCard = dynamic(
     loading: () => (
       <div className="dashboard-widget-surface rounded-lg p-6">
         <div className="animate-pulse text-muted text-sm">Prompt-Tracking lädt…</div>
+      </div>
+    ),
+  }
+);
+
+const AiTrafficCard = dynamic(
+  () => import('@/components/AiTrafficCard'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="dashboard-widget-surface rounded-lg p-6">
+        <div className="animate-pulse text-muted text-sm">KI-Traffic lädt…</div>
       </div>
     ),
   }
