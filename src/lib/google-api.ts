@@ -138,6 +138,19 @@ async function withGa4ResultCache<T>(cacheKey: string, fetcher: () => Promise<T>
       );
       return cached.payload as T;
     }
+    // SELBSTHEILUNG: Auch ohne Cache einen Hintergrund-Refresh anstoßen.
+    // Sonst entsteht ein Henne-Ei-Problem: Scheitert der Erstaufruf immer
+    // wieder (sehr langsame Property), füllt sich der Cache nie und JEDER
+    // Aufruf bleibt ein scheiternder "Erstaufruf". Der Hintergrundversuch
+    // läuft nach der Response weiter und befüllt den Cache für das nächste
+    // Mal. Ausnahme: Quota-Fehler — da würde ein sofortiger Retry nur
+    // weitere Tokens verbrennen.
+    const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
+    const isQuotaError = msg.includes('quota') || msg.includes('resource_exhausted');
+    if (!isQuotaError) {
+      console.warn(`[GA4 Cache] Erstaufruf fehlgeschlagen — starte Selbstheilungs-Refresh für ${cacheKey}`);
+      scheduleGa4BackgroundRefresh(cacheKey, fetcher);
+    }
     throw error;
   }
 }
@@ -192,8 +205,13 @@ async function writeGa4ResultCache(cacheKey: string, payload: any): Promise<void
 //     Request zu starten — die Caller degradieren das per try/catch bzw.
 //     allSettled zu leeren Widgets.
 const GA4_MAX_CONCURRENT = 3;
-const GA4_TIMEOUT_MS = 30_000;      // max. Timeout pro Request
-const GA4_CALL_BUDGET_MS = 40_000;  // Queue-Wartezeit + Request zusammen
+// 55 s: Bei großen Properties (beobachtet: 337078709) braucht selbst ein
+// simpler Date-Trend-Report über 6 Monate real >30 s — mit 30 s Timeout kam
+// er NIE durch und der Cache konnte sich nie füllen (Henne-Ei). Der lange
+// Timeout trifft Nutzer nur beim allerersten Load pro Key; danach greift SWR.
+// Voraussetzung: maxDuration >= 120 auf der Projekt-Seite / den Routen.
+const GA4_TIMEOUT_MS = 55_000;      // max. Timeout pro Request
+const GA4_CALL_BUDGET_MS = 60_000;  // Queue-Wartezeit + Request zusammen
 const GA4_MIN_TIMEOUT_MS = 5_000;   // darunter lohnt kein Request-Start mehr
 
 let ga4ActiveSlots = 0;
