@@ -14,6 +14,8 @@ type ProjectLocationPayload = {
   country?: string;
   lat?: number | null;
   lng?: number | null;
+  mapX?: number | null;
+  mapY?: number | null;
   landingPages?: string[];
   keywords?: string[];
 };
@@ -51,6 +53,8 @@ function normalizeProjectLocations(value: unknown): ProjectLocationPayload[] {
       country: typeof item.country === 'string' && item.country.trim() ? item.country.trim() : 'AT',
       lat: toNumberOrNull(item.lat),
       lng: toNumberOrNull(item.lng),
+      mapX: toNumberOrNull(item.mapX),
+      mapY: toNumberOrNull(item.mapY),
       landingPages: splitList(item.landingPages),
       keywords: splitList(item.keywords),
     });

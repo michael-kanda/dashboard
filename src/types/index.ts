@@ -55,6 +55,8 @@ export interface ProjectLocation {
   country?: string;
   lat?: number | null;
   lng?: number | null;
+  mapX?: number | null;
+  mapY?: number | null;
   landingPages?: string[];
   keywords?: string[];
 }

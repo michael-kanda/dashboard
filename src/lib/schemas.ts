@@ -51,6 +51,8 @@ export const UserSchema = z.object({
     country: z.string().optional(),
     lat: z.number().nullable().optional(),
     lng: z.number().nullable().optional(),
+    mapX: z.number().nullable().optional(),
+    mapY: z.number().nullable().optional(),
     landingPages: z.array(z.string()).optional(),
     keywords: z.array(z.string()).optional(),
   })).nullable().optional(),

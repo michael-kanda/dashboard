@@ -1,11 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { PointerEvent } from 'react';
 import type { LocalSeoData, LocalSeoLocationData } from '@/lib/dashboard-shared';
 import austriaGeoJson from '@/data/austria-bundeslaender.json';
 
 interface LocalSeoMapWidgetProps {
   data?: LocalSeoData;
+  projectId?: string;
+  userRole?: string;
 }
 
 function formatNumber(value: number) {
@@ -236,6 +239,13 @@ function GoogleCleanUnderline({ id }: { id: string }) {
 }
 
 function projectToAustriaSvg(location: LocalSeoLocationData) {
+  if (typeof location.mapX === 'number' && typeof location.mapY === 'number') {
+    return {
+      x: Math.max(0, Math.min(MAP_VIEWBOX.width, (location.mapX / 100) * MAP_VIEWBOX.width)),
+      y: Math.max(0, Math.min(MAP_VIEWBOX.height, (location.mapY / 100) * MAP_VIEWBOX.height)),
+    };
+  }
+
   const knownCityCoordinates: Record<string, { lat: number; lng: number }> = {
     wien: { lat: 48.2082, lng: 16.3738 },
     vienna: { lat: 48.2082, lng: 16.3738 },
@@ -282,17 +292,125 @@ function LocationMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
+function svgPointToPercent(point: { x: number; y: number }) {
+  return {
+    mapX: Math.max(0, Math.min(100, (point.x / MAP_VIEWBOX.width) * 100)),
+    mapY: Math.max(0, Math.min(100, (point.y / MAP_VIEWBOX.height) * 100)),
+  };
+}
+
+export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSeoMapWidgetProps) {
   const locations = data?.locations || [];
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const [displayLocations, setDisplayLocations] = useState<LocalSeoLocationData[]>(locations);
   const [selectedId, setSelectedId] = useState<string | undefined>(locations[0]?.id);
-  const selected = locations.find((location) => location.id === selectedId) || locations[0];
+  const [isEditingPins, setIsEditingPins] = useState(false);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [isSavingPins, setIsSavingPins] = useState(false);
+  const [pinSaveError, setPinSaveError] = useState<string | null>(null);
+  const canEditPins = userRole === 'SUPERADMIN' && Boolean(projectId);
+  const selected = displayLocations.find((location) => location.id === selectedId) || displayLocations[0];
 
   const rankedLocations = useMemo(
-    () => [...locations].sort((a, b) => b.score - a.score),
-    [locations]
+    () => [...displayLocations].sort((a, b) => b.score - a.score),
+    [displayLocations]
   );
 
-  if (locations.length === 0) return null;
+  useEffect(() => {
+    setDisplayLocations(locations);
+    setSelectedId((current) => current && locations.some((location) => location.id === current)
+      ? current
+      : locations[0]?.id
+    );
+  }, [locations]);
+
+  const getSvgPointFromClient = (clientX: number, clientY: number) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+
+    return {
+      x: Math.max(0, Math.min(MAP_VIEWBOX.width, ((clientX - rect.left) / rect.width) * MAP_VIEWBOX.width)),
+      y: Math.max(0, Math.min(MAP_VIEWBOX.height, ((clientY - rect.top) / rect.height) * MAP_VIEWBOX.height)),
+    };
+  };
+
+  const moveLocationPin = (locationId: string, point: { x: number; y: number }) => {
+    const percent = svgPointToPercent(point);
+    setDisplayLocations((current) => current.map((location) => (
+      location.id === locationId
+        ? { ...location, mapX: Math.round(percent.mapX * 10) / 10, mapY: Math.round(percent.mapY * 10) / 10 }
+        : location
+    )));
+  };
+
+  const handlePinPointerDown = (event: PointerEvent<SVGGElement>, locationId: string) => {
+    if (!isEditingPins) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setDraggingId(locationId);
+    setSelectedId(locationId);
+    const point = getSvgPointFromClient(event.clientX, event.clientY);
+    if (point) moveLocationPin(locationId, point);
+  };
+
+  const handleMapPointerMove = (event: PointerEvent<SVGSVGElement>) => {
+    if (!draggingId) return;
+    const point = getSvgPointFromClient(event.clientX, event.clientY);
+    if (point) moveLocationPin(draggingId, point);
+  };
+
+  const stopDragging = () => setDraggingId(null);
+
+  const resetPinEditing = () => {
+    setDisplayLocations(locations);
+    setIsEditingPins(false);
+    setDraggingId(null);
+    setPinSaveError(null);
+  };
+
+  const startPinEditing = () => {
+    setDisplayLocations((current) => current.map((location) => {
+      if (typeof location.mapX === 'number' && typeof location.mapY === 'number') return location;
+      const point = projectToAustriaSvg(location);
+      const percent = svgPointToPercent(point);
+      return {
+        ...location,
+        mapX: Math.round(percent.mapX * 10) / 10,
+        mapY: Math.round(percent.mapY * 10) / 10,
+      };
+    }));
+    setIsEditingPins(true);
+    setPinSaveError(null);
+  };
+
+  const savePinPositions = async () => {
+    if (!projectId) return;
+    setIsSavingPins(true);
+    setPinSaveError(null);
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/locations/positions`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          positions: displayLocations.map((location) => ({
+            id: location.id,
+            mapX: location.mapX,
+            mapY: location.mapY,
+          })),
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.message || 'Pin-Positionen konnten nicht gespeichert werden.');
+      setIsEditingPins(false);
+    } catch (error) {
+      setPinSaveError(error instanceof Error ? error.message : 'Pin-Positionen konnten nicht gespeichert werden.');
+    } finally {
+      setIsSavingPins(false);
+    }
+  };
+
+  if (displayLocations.length === 0) return null;
 
   return (
     <section className="dashboard-widget-surface rounded-lg p-5 sm:p-6">
@@ -303,6 +421,40 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
           <p className="mt-1 text-sm text-muted">
             Standort-Auswertung aus GSC-Queries, Standort-Landingpages und GA4-Stadt-Daten.
           </p>
+          {canEditPins ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {!isEditingPins ? (
+                <button
+                  type="button"
+                  onClick={startPinEditing}
+                  className="rounded-md border border-border-subtle bg-surface px-3 py-1.5 text-xs font-semibold text-body shadow-sm hover:bg-surface-tertiary"
+                >
+                  Pins bearbeiten
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={savePinPositions}
+                    disabled={isSavingPins}
+                    className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+                  >
+                    {isSavingPins ? 'Speichern…' : 'Position speichern'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetPinEditing}
+                    disabled={isSavingPins}
+                    className="rounded-md border border-border-subtle bg-surface px-3 py-1.5 text-xs font-semibold text-body shadow-sm hover:bg-surface-tertiary disabled:opacity-60"
+                  >
+                    Abbrechen
+                  </button>
+                  <span className="text-xs text-muted">Pins direkt auf der Karte ziehen.</span>
+                </>
+              )}
+              {pinSaveError ? <span className="text-xs font-medium text-red-600 dark:text-red-400">{pinSaveError}</span> : null}
+            </div>
+          ) : null}
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <LocationMetric label="Klicks" value={formatNumber(data?.totals.clicks || 0)} />
@@ -314,7 +466,16 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.25fr_0.9fr]">
         <div className="min-h-[360px] rounded-lg bg-surface-secondary p-4">
-          <svg viewBox="0 0 820 420" role="img" aria-label="Local SEO Karte Österreich" className="h-full min-h-[340px] w-full">
+          <svg
+            ref={svgRef}
+            viewBox="0 0 820 420"
+            role="img"
+            aria-label="Local SEO Karte Österreich"
+            className={`h-full min-h-[340px] w-full ${isEditingPins ? 'cursor-crosshair select-none touch-none' : ''}`}
+            onPointerMove={handleMapPointerMove}
+            onPointerUp={stopDragging}
+            onPointerLeave={stopDragging}
+          >
             <g className="fill-white stroke-slate-700 dark:fill-slate-800 dark:stroke-slate-300">
               {AUSTRIA_REGION_PATHS.map((region) => (
                 <path
@@ -328,18 +489,19 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
                 </path>
               ))}
             </g>
-            {locations.map((location) => {
+            {displayLocations.map((location) => {
               const point = projectToAustriaSvg(location);
               const isSelected = selected?.id === location.id;
               return (
                 <g
                   key={location.id}
-                  className="cursor-pointer"
+                  className={isEditingPins ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
                   transform={`translate(${point.x} ${point.y})`}
                   onClick={() => setSelectedId(location.id)}
+                  onPointerDown={(event) => handlePinPointerDown(event, location.id || '')}
                 >
                   <title>{location.name}</title>
-                  <g transform="scale(0.28) translate(-50 -30)">
+                  <g transform="scale(0.22) translate(-50 -30)">
                     <ellipse cx="50" cy="78" rx="32" ry="13" fill="#6B7280" opacity={isSelected ? '0.35' : '0.25'} />
                     <g fill={isSelected ? '#111827' : '#4B5563'}>
                       <rect x="46.5" y="44" width="7" height="30" rx="3.5" />
@@ -351,7 +513,7 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
             })}
           </svg>
           <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted">
-            {locations.map((location) => (
+            {displayLocations.map((location) => (
               <button
                 key={`legend-${location.id}`}
                 type="button"

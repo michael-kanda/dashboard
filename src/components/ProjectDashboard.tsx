@@ -461,7 +461,7 @@ export default function ProjectDashboard({
 
         {data.localSeo?.locations?.length ? (
           <div id="section-local-seo" className="mt-8 scroll-mt-20 print:hidden">
-            <LocalSeoMapWidget data={data.localSeo} />
+            <LocalSeoMapWidget data={data.localSeo} projectId={projectId} userRole={userRole} />
           </div>
         ) : null}
 

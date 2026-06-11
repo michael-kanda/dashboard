@@ -64,6 +64,8 @@ const createEmptyLocation = (): ProjectLocation => ({
   country: 'AT',
   lat: null,
   lng: null,
+  mapX: null,
+  mapY: null,
   landingPages: [],
   keywords: [],
 });
@@ -78,6 +80,8 @@ function normalizeLocations(locations?: ProjectLocation[] | null): ProjectLocati
     country: location.country || 'AT',
     lat: typeof location.lat === 'number' ? location.lat : null,
     lng: typeof location.lng === 'number' ? location.lng : null,
+    mapX: typeof location.mapX === 'number' ? location.mapX : null,
+    mapY: typeof location.mapY === 'number' ? location.mapY : null,
     landingPages: Array.isArray(location.landingPages) ? location.landingPages : [],
     keywords: Array.isArray(location.keywords) ? location.keywords : [],
   }));
