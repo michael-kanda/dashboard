@@ -390,176 +390,154 @@ export async function getAiTrafficExtended(
   const aiSourceFilter = buildAiTrafficDimensionFilter();
 
   try {
-    // =========================================================================
-    // PARALLEL API CALLS
-    // =========================================================================
-    
-    const [
-      mainResponse,
-      trendResponse,
-      journeyResponse,
-      eventsResponse,
-      scrollResponse,
-      trendBySourceResponse,
-      sourceTotalsResponse
-    ] = await Promise.all([
-      
-      // 1. Hauptdaten: Source + Landingpage + Metriken (inkl. engagementRate)
-      analytics.properties.runReport({
-        property: formattedPropertyId,
-        requestBody: {
-          dateRanges: [{ startDate, endDate }],
-          dimensions: [
-            { name: 'sessionSource' },
-            { name: 'landingPagePlusQueryString' }
-          ],
-          metrics: [
-            { name: 'sessions' },
-            { name: 'totalUsers' },
-            { name: 'averageSessionDuration' },
-            { name: 'bounceRate' },
-            { name: 'conversions' },
-            { name: 'screenPageViewsPerSession' },
-            { name: 'engagementRate' }
-          ],
-          dimensionFilter: aiSourceFilter,
-          orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
-          limit: '1000'
-        },
-      }),
+    // GA4 limitiert gleichzeitige Requests pro Property hart. Deshalb bewusst
+    // sequenziell ausführen statt Promise.all, sonst kommt "Exhausted concurrent
+    // requests quota" bei großen Dashboards oder parallelen Widgets.
 
-      // 2. Trend-Daten (täglich)
-      analytics.properties.runReport({
-        property: formattedPropertyId,
-        requestBody: {
-          dateRanges: [{ startDate, endDate }],
-          dimensions: [{ name: 'date' }],
-          metrics: [
-            { name: 'sessions' },
-            { name: 'totalUsers' }
-          ],
-          dimensionFilter: aiSourceFilter,
-          orderBys: [{ dimension: { dimensionName: 'date' } }]
-        },
-      }),
+    const mainResponse = await analytics.properties.runReport({
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [
+          { name: 'sessionSource' },
+          { name: 'landingPagePlusQueryString' }
+        ],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'totalUsers' },
+          { name: 'averageSessionDuration' },
+          { name: 'bounceRate' },
+          { name: 'conversions' },
+          { name: 'screenPageViewsPerSession' },
+          { name: 'engagementRate' }
+        ],
+        dimensionFilter: aiSourceFilter,
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+        limit: '1000'
+      },
+    });
 
-      // 3. User Journey: Landingpage → nächste Seite
-      analytics.properties.runReport({
-        property: formattedPropertyId,
-        requestBody: {
-          dateRanges: [{ startDate, endDate }],
-          dimensions: [
-            { name: 'landingPagePlusQueryString' },
-            { name: 'pagePath' }
-          ],
-          metrics: [
-            { name: 'sessions' },
-            { name: 'screenPageViews' }
-          ],
-          dimensionFilter: aiSourceFilter,
-          orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
-          limit: '500'
-        },
-      }),
+    const trendResponse = await analytics.properties.runReport({
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [{ name: 'date' }],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'totalUsers' }
+        ],
+        dimensionFilter: aiSourceFilter,
+        orderBys: [{ dimension: { dimensionName: 'date' } }]
+      },
+    });
 
-      // 4. Interaktions-Events
-      analytics.properties.runReport({
-        property: formattedPropertyId,
-        requestBody: {
-          dateRanges: [{ startDate, endDate }],
-          dimensions: [{ name: 'eventName' }],
-          metrics: [{ name: 'eventCount' }],
-          dimensionFilter: {
-            andGroup: {
-              expressions: [
-                aiSourceFilter,
-                {
-                  filter: {
-                    fieldName: 'eventName',
-                    inListFilter: {
-                      values: [
-                        'click', 'file_download', 'form_submit', 'form_start',
-                        'video_start', 'video_progress', 'video_complete',
-                        'scroll', 'outbound_click', 'purchase', 'add_to_cart',
-                        'begin_checkout', 'generate_lead', 'sign_up', 'login'
-                      ]
-                    }
+    const journeyResponse = await analytics.properties.runReport({
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [
+          { name: 'landingPagePlusQueryString' },
+          { name: 'pagePath' }
+        ],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'screenPageViews' }
+        ],
+        dimensionFilter: aiSourceFilter,
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+        limit: '500'
+      },
+    });
+
+    const eventsResponse = await analytics.properties.runReport({
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [{ name: 'eventName' }],
+        metrics: [{ name: 'eventCount' }],
+        dimensionFilter: {
+          andGroup: {
+            expressions: [
+              aiSourceFilter,
+              {
+                filter: {
+                  fieldName: 'eventName',
+                  inListFilter: {
+                    values: [
+                      'click', 'file_download', 'form_submit', 'form_start',
+                      'video_start', 'video_progress', 'video_complete',
+                      'scroll', 'outbound_click', 'purchase', 'add_to_cart',
+                      'begin_checkout', 'generate_lead', 'sign_up', 'login'
+                    ]
                   }
                 }
-              ]
-            }
-          },
-          orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }]
-        },
-      }),
-
-      // 5. Scroll-Tiefe
-      analytics.properties.runReport({
-        property: formattedPropertyId,
-        requestBody: {
-          dateRanges: [{ startDate, endDate }],
-          dimensions: [{ name: 'percentScrolled' }],
-          metrics: [{ name: 'eventCount' }],
-          dimensionFilter: {
-            andGroup: {
-              expressions: [
-                aiSourceFilter,
-                {
-                  filter: {
-                    fieldName: 'eventName',
-                    stringFilter: {
-                      matchType: 'EXACT' as const,
-                      value: 'scroll'
-                    }
-                  }
-                }
-              ]
-            }
+              }
+            ]
           }
         },
-      }).catch(() => ({ data: { rows: [] } })),
+        orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }]
+      },
+    });
 
-      // 6. Trend-Daten pro KI-Quelle (täglich × source)
-      analytics.properties.runReport({
-        property: formattedPropertyId,
-        requestBody: {
-          dateRanges: [{ startDate, endDate }],
-          dimensions: [
-            { name: 'date' },
-            { name: 'sessionSource' }
-          ],
-          metrics: [
-            { name: 'sessions' },
-            { name: 'totalUsers' }
-          ],
-          dimensionFilter: aiSourceFilter,
-          orderBys: [{ dimension: { dimensionName: 'date' } }],
-          limit: '10000'
-        },
-      }).catch(() => ({ data: { rows: [] } })),
+    const scrollResponse = await analytics.properties.runReport({
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [{ name: 'percentScrolled' }],
+        metrics: [{ name: 'eventCount' }],
+        dimensionFilter: {
+          andGroup: {
+            expressions: [
+              aiSourceFilter,
+              {
+                filter: {
+                  fieldName: 'eventName',
+                  stringFilter: {
+                    matchType: 'EXACT' as const,
+                    value: 'scroll'
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+    }).catch(() => ({ data: { rows: [] } }));
 
-      // 7. Pro-Quelle-Totals OHNE Landingpage-Dimension.
-      //    Grund: Der Hauptreport (1) nutzt sessionSource × landingPagePlusQueryString.
-      //    Diese hohe Kardinalität triggert in GA4 das (other)-Row-/Cardinality-Limit,
-      //    wodurch pro Quelle aufsummierte Sitzungen UNTER dem wahren Wert liegen und die
-      //    daraus berechnete conversionRate (conversions/sessions) zu hoch ausfällt.
-      //    Dieser flache Report liefert die korrekten Pro-Quelle-Zahlen.
-      analytics.properties.runReport({
-        property: formattedPropertyId,
-        requestBody: {
-          dateRanges: [{ startDate, endDate }],
-          dimensions: [{ name: 'sessionSource' }],
-          metrics: [
-            { name: 'sessions' },
-            { name: 'totalUsers' },
-            { name: 'conversions' }
-          ],
-          dimensionFilter: aiSourceFilter,
-          orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
-          limit: '1000'
-        },
-      }).catch(() => ({ data: { rows: [] } }))
-    ]);
+    const trendBySourceResponse = await analytics.properties.runReport({
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [
+          { name: 'date' },
+          { name: 'sessionSource' }
+        ],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'totalUsers' }
+        ],
+        dimensionFilter: aiSourceFilter,
+        orderBys: [{ dimension: { dimensionName: 'date' } }],
+        limit: '10000'
+      },
+    }).catch(() => ({ data: { rows: [] } }));
+
+    // Pro-Quelle-Totals OHNE Landingpage-Dimension.
+    const sourceTotalsResponse = await analytics.properties.runReport({
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [{ name: 'sessionSource' }],
+        metrics: [
+          { name: 'sessions' },
+          { name: 'totalUsers' },
+          { name: 'conversions' }
+        ],
+        dimensionFilter: aiSourceFilter,
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+        limit: '1000'
+      },
+    }).catch(() => ({ data: { rows: [] } }));
 
     // =========================================================================
     // DATEN VERARBEITEN
@@ -998,10 +976,8 @@ export async function getAiTrafficExtendedWithComparison(
   ({ startDate: currentStart, endDate: currentEnd } = normalizeDateRange(currentStart, currentEnd));
   ({ startDate: previousStart, endDate: previousEnd } = normalizeDateRange(previousStart, previousEnd));
 
-  const [currentData, previousData] = await Promise.all([
-    getAiTrafficExtended(propertyId, currentStart, currentEnd),
-    getAiTrafficExtended(propertyId, previousStart, previousEnd)
-  ]);
+  const currentData = await getAiTrafficExtended(propertyId, currentStart, currentEnd);
+  const previousData = await getAiTrafficExtended(propertyId, previousStart, previousEnd);
 
   const calcChange = (current: number, previous: number): number => {
     if (previous === 0) return current > 0 ? 100 : 0;
