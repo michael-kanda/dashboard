@@ -14,8 +14,6 @@ import {
 } from '@/lib/dashboard-shared';
 
 import TableauKpiGrid from '@/components/TableauKpiGrid';
-import TableauPieChart from '@/components/charts/TableauPieChart';
-import KpiTrendChart from '@/components/charts/KpiTrendChart';
 import AiTrafficDetailWidgetV2 from '@/components/AiTrafficDetailWidgetV2';
 import { type DateRangeOption } from '@/components/DateRangeSelector';
 import TopQueriesList from '@/components/TopQueriesList';
@@ -24,7 +22,6 @@ import SemrushTopKeywords02 from '@/components/SemrushTopKeywords02';
 import GlobalHeader from '@/components/GlobalHeader';
 import ProjectTimelineWidget from '@/components/ProjectTimelineWidget';
 import AiAnalysisWidget from '@/components/AiAnalysisWidget';
-import LandingPageChart from '@/components/charts/LandingPageChart';
 import { aggregateLandingPages } from '@/lib/utils';
 import { DataMaxChat } from '@/components/datamax';
 import GoogleAdsWidget from '@/components/GoogleAdsWidget';
@@ -63,6 +60,42 @@ const GoogleGenAiVisibilityCard = dynamic(
     loading: () => (
       <div className="dashboard-widget-surface rounded-lg p-6">
         <div className="animate-pulse text-muted text-sm">Google GenAI Sichtbarkeit lädt…</div>
+      </div>
+    ),
+  }
+);
+
+const KpiTrendChart = dynamic(
+  () => import('@/components/charts/KpiTrendChart'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="dashboard-widget-surface rounded-lg p-6 h-[400px]">
+        <div className="animate-pulse text-muted text-sm">Verlauf lädt…</div>
+      </div>
+    ),
+  }
+);
+
+const LandingPageChart = dynamic(
+  () => import('@/components/charts/LandingPageChart'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="dashboard-widget-surface rounded-lg p-6 h-[500px]">
+        <div className="animate-pulse text-muted text-sm">Landingpages laden…</div>
+      </div>
+    ),
+  }
+);
+
+const TableauPieChart = dynamic(
+  () => import('@/components/charts/TableauPieChart'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="dashboard-widget-surface rounded-lg p-6 h-80">
+        <div className="animate-pulse text-muted text-sm">Diagramm lädt…</div>
       </div>
     ),
   }
