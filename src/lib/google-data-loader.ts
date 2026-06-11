@@ -39,6 +39,15 @@ import type { TopQueryData, ChartPoint } from '@/types/dashboard';
 import { getDemoAnalyticsData } from '@/lib/demo-data';
 import { fetchWeatherData, weatherMapToObject } from '@/lib/weather';
 
+function getShortErrorMessage(error: unknown): string {
+  const err = error as any;
+  return (
+    err?.cause?.message ||
+    err?.response?.data?.error?.message ||
+    (error instanceof Error ? error.message : String(error))
+  );
+}
+
 function getCacheDuration(dateRange: string): number {
   if (dateRange === '18m' || dateRange === '24m') return 72;
   if (dateRange === '12m') return 48;
@@ -487,22 +496,10 @@ export async function getOrFetchGoogleData(
     try {
       const propertyId = user.ga4_property_id.trim();
 
-      // Aktuelle und Vorperiode parallel anstoßen — halbiert die Wall-Clock-
-      // Zeit und reduziert das Risiko, in den Function-Timeout zu laufen.
-      // Die Vorperiode wird über allSettled isoliert: schlägt sie fehl,
-      // bleibt der aktuelle Zeitraum unangetastet.
-      const [currentResult, previousResult] = await Promise.allSettled([
-        getAnalyticsData(propertyId, startDateStr, endDateStr),
-        getAnalyticsData(propertyId, prevStartStr, prevEndStr),
-      ]);
-
-      if (currentResult.status === 'rejected') {
-        // Aktuelle Periode ist kritisch -> nach außen werfen, damit der
-        // GA4-Block insgesamt als fehlgeschlagen markiert wird.
-        throw currentResult.reason;
-      }
-
-      const gaCurrent = currentResult.value;
+      // GA4 drosselt parallele Reports pro Property hart und große Date-Trends
+      // laufen leicht in Timeouts. Deshalb sequenziell laden: aktuelle Periode
+      // zuerst, Vorperiode danach isoliert.
+      const gaCurrent = await getAnalyticsData(propertyId, startDateStr, endDateStr);
       currentData = {
         ...currentData,
         sessions: gaCurrent.sessions, totalUsers: gaCurrent.totalUsers,
@@ -511,8 +508,8 @@ export async function getOrFetchGoogleData(
         avgEngagementTime: gaCurrent.avgEngagementTime, paidSearch: gaCurrent.paidSearch
       };
 
-      if (previousResult.status === 'fulfilled') {
-        const gaPrevious = previousResult.value;
+      try {
+        const gaPrevious = await getAnalyticsData(propertyId, prevStartStr, prevEndStr);
         prevData = {
           ...prevData,
           sessions: gaPrevious.sessions, totalUsers: gaPrevious.totalUsers,
@@ -520,12 +517,15 @@ export async function getOrFetchGoogleData(
           bounceRate: gaPrevious.bounceRate, newUsers: gaPrevious.newUsers,
           avgEngagementTime: gaPrevious.avgEngagementTime, paidSearch: gaPrevious.paidSearch
         };
-      } else {
-        console.warn('[GA4] Vorperiode fehlgeschlagen (ignoriert, Veränderungen evtl. ungenau):', previousResult.reason);
+      } catch (previousError) {
+        console.warn(
+          '[GA4] Vorperiode fehlgeschlagen (ignoriert, Veränderungen evtl. ungenau):',
+          getShortErrorMessage(previousError)
+        );
       }
 
       try { aiTraffic = await getAiTrafficData(propertyId, startDateStr, endDateStr); }
-      catch (e) { console.warn('[AI Traffic] Fehler (ignoriert):', e); }
+      catch (e) { console.warn('[AI Traffic] Fehler (ignoriert):', getShortErrorMessage(e)); }
 
       try {
         const rawPages = await getTopConvertingPages(propertyId, startDateStr, endDateStr);
@@ -539,28 +539,27 @@ export async function getOrFetchGoogleData(
           engagementRate: p.engagementRate, sessions: p.sessions,
           newUsers: p.newUsers, ctr: gscCtrData.get(p.path)
         }));
-      } catch (e) { console.warn('[GA4] Konnte Top-Pages nicht laden:', e); }
+      } catch (e) { console.warn('[GA4] Konnte Top-Pages nicht laden:', getShortErrorMessage(e)); }
 
       try {
-        const [rawCountry, rawCity, rawChannel, rawDevice] = await Promise.all([
-          getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'country'),
-          getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'city'),
-          getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'sessionDefaultChannelGroup'),
-          getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'deviceCategory'),
-        ]);
+        const rawCountry = await getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'country');
+        const rawCity = await getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'city');
+        const rawChannel = await getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'sessionDefaultChannelGroup');
+        const rawDevice = await getGa4DimensionReport(propertyId, startDateStr, endDateStr, 'deviceCategory');
         countryData = rawCountry.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
         cityData = rawCity.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
         channelData = rawChannel.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
         deviceData = rawDevice.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
-      } catch (e) { console.error('[GA4 Dimensions Error]', e); }
+      } catch (e) { console.warn('[GA4 Dimensions] Fehler (ignoriert):', getShortErrorMessage(e)); }
 
       if (!user.google_ads_sheet_id) {
         try { googleAdsData = await getGoogleAdsReport(propertyId, startDateStr, endDateStr); }
         catch (e) { console.warn('[Google Ads] Keine GA4-Ads-Daten verfügbar (ignoriert):', e); }
       }
     } catch (e: any) {
-      console.error('[GA4 Error]', e);
-      apiErrors.ga4 = e.message || 'GA4 Fehler';
+      const message = getShortErrorMessage(e);
+      console.warn('[GA4] Basisdaten nicht verfügbar:', message);
+      apiErrors.ga4 = message || 'GA4 Fehler';
     }
   }
 

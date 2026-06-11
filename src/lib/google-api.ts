@@ -147,7 +147,8 @@ async function withGa4ResultCache<T>(cacheKey: string, fetcher: () => Promise<T>
     // weitere Tokens verbrennen.
     const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
     const isQuotaError = msg.includes('quota') || msg.includes('resource_exhausted');
-    if (!isQuotaError) {
+    const isAbortError = msg.includes('aborted') || (error as any)?.error?.type === 'aborted' || (error as any)?.cause?.type === 'aborted';
+    if (!isQuotaError && !isAbortError) {
       console.warn(`[GA4 Cache] Erstaufruf fehlgeschlagen — starte Selbstheilungs-Refresh für ${cacheKey}`);
       scheduleGa4BackgroundRefresh(cacheKey, fetcher);
     }
@@ -242,6 +243,26 @@ function releaseGa4Slot(): void {
   } else {
     ga4ActiveSlots--;
   }
+}
+
+function isGa4AbortError(error: unknown): boolean {
+  const err = error as any;
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.toLowerCase().includes('aborted') ||
+    err?.error?.type === 'aborted' ||
+    err?.cause?.type === 'aborted' ||
+    err?.config?.signal?.aborted === true
+  );
+}
+
+function getShortGoogleError(error: unknown): string {
+  const err = error as any;
+  return (
+    err?.cause?.message ||
+    err?.response?.data?.error?.message ||
+    (error instanceof Error ? error.message : String(error))
+  );
 }
 
 // Strengere Optionen NUR für GA4 (überschreiben google.options pro Request):
@@ -852,7 +873,12 @@ async function getAnalyticsDataUncached(
 
     return result;
   } catch (error) {
-    console.error('GA4 Error:', error);
+    const summary = getShortGoogleError(error);
+    if (isGa4AbortError(error)) {
+      console.warn(`[GA4] Basisdaten-Report abgebrochen/Timeout (${startDate}–${endDate}): ${summary}`);
+    } else {
+      console.error('[GA4] Basisdaten-Report fehlgeschlagen:', summary);
+    }
     throw error;
   }
 }
