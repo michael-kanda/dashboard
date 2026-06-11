@@ -21,6 +21,14 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 60_000; // 1 min — selber Visit, gleicher Filter → kein Refetch
 
+function isAbortError(error: unknown) {
+  if (error instanceof DOMException && error.name === 'AbortError') return true;
+  if (error instanceof Error) {
+    return error.name === 'AbortError' || error.message.toLowerCase().includes('aborted');
+  }
+  return false;
+}
+
 function cacheKey(projectId: string | undefined, dateRange: string): string {
   return `${projectId ?? 'default'}::${dateRange}`;
 }
@@ -72,6 +80,7 @@ export function useAiTrafficExtended(projectId: string | undefined, dateRange: s
         setData(result);
         setError(undefined);
       } catch (err) {
+        if (isAbortError(err)) return;
         setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
       } finally {
         setIsLoading(false);
@@ -90,6 +99,10 @@ export function useAiTrafficExtended(projectId: string | undefined, dateRange: s
       cache.set(key, { data: result, timestamp: Date.now() });
       setData(result);
     } catch (err) {
+      if (isAbortError(err)) {
+        cache.delete(key);
+        return;
+      }
       const msg = err instanceof Error ? err.message : 'Unbekannter Fehler';
       cache.set(key, { error: msg, timestamp: Date.now() });
       setError(msg);

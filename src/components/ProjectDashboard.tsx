@@ -28,7 +28,6 @@ import LandingPageChart from '@/components/charts/LandingPageChart';
 import { aggregateLandingPages } from '@/lib/utils';
 import { DataMaxChat } from '@/components/datamax';
 import GoogleAdsWidget from '@/components/GoogleAdsWidget';
-import GoogleGenAiVisibilityCard from '@/components/GoogleGenAiVisibilityCard';
 import LocalSeoMapWidget from '@/components/LocalSeoMapWidget';
 
 // PromptTrackingCard dynamisch nur Client-Side laden – verhindert
@@ -52,6 +51,18 @@ const AiTrafficCard = dynamic(
     loading: () => (
       <div className="dashboard-widget-surface rounded-lg p-6">
         <div className="animate-pulse text-muted text-sm">KI-Traffic lädt…</div>
+      </div>
+    ),
+  }
+);
+
+const GoogleGenAiVisibilityCard = dynamic(
+  () => import('@/components/GoogleGenAiVisibilityCard'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="dashboard-widget-surface rounded-lg p-6">
+        <div className="animate-pulse text-muted text-sm">Google GenAI Sichtbarkeit lädt…</div>
       </div>
     ),
   }
