@@ -2,14 +2,24 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { AlertTriangle, Minus, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AiTrafficCardProps } from '@/types/ai-traffic';
-import AiTrafficModelTrendChart from '@/components/AiTrafficModelTrendChart';
 import SourceMiniSparkline from '@/components/SourceMiniSparkline';
 import AiTrafficAnomalyBanner from '@/components/AiTrafficAnomalyBanner';
 import AiTrafficTopQuestions, { type TopQuestionItem } from '@/components/AiTrafficTopQuestions';
 import { useAiTrafficExtended } from '@/hooks/useAiTrafficExtended';
+
+const AiTrafficModelTrendChart = dynamic(
+  () => import('@/components/AiTrafficModelTrendChart'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[320px] w-full rounded-md bg-surface-secondary animate-pulse" aria-hidden="true" />
+    ),
+  }
+);
 
 // Brand-Farben für KI-Quellen-Dots (konsistent mit AiTrafficModelTrendChart)
 const SOURCE_DOT_COLORS: Record<string, string> = {
