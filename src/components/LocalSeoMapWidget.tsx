@@ -198,6 +198,15 @@ const AUSTRIA_REGION_PATHS = austriaFeatures.map((feature) => ({
 }));
 
 const projectLatLngToAustriaSvg = buildLatLngProjection();
+const cityPointOverrides = austriaFeatures.reduce<Record<string, { x: number; y: number }>>((points, feature) => {
+  const name = feature.properties?.name?.toLowerCase();
+  if (name === 'wien') {
+    const center = getFeatureCenter(feature);
+    points.wien = center;
+    points.vienna = center;
+  }
+  return points;
+}, {});
 
 function GoogleCleanUnderline({ id }: { id: string }) {
   return (
@@ -233,6 +242,15 @@ function projectToAustriaSvg(location: LocalSeoLocationData) {
     klagenfurt: { lat: 46.6247, lng: 14.3053 },
   };
   const cityKey = (location.city || location.name || '').toLowerCase().trim();
+  const cityOverrideKey = Object.keys(cityPointOverrides).find((key) => cityKey === key || cityKey.includes(key));
+  if (cityOverrideKey) {
+    const point = cityPointOverrides[cityOverrideKey];
+    return {
+      x: Math.max(45, Math.min(760, point.x)),
+      y: Math.max(70, Math.min(315, point.y)),
+    };
+  }
+
   const fallbackKey = Object.keys(knownCityCoordinates).find((key) => cityKey === key || cityKey.includes(key));
   const fallback = fallbackKey ? knownCityCoordinates[fallbackKey] : undefined;
   const lat = typeof location.lat === 'number' ? location.lat : (fallback?.lat ?? 47.6);
@@ -311,7 +329,7 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
                   onClick={() => setSelectedId(location.id)}
                 >
                   <title>{location.name}</title>
-                  <g transform="translate(-35 -70)">
+                  <g transform="scale(0.46) translate(-50 -74)">
                     <ellipse cx="50" cy="78" rx="32" ry="13" fill="#6B7280" opacity={isSelected ? '0.35' : '0.25'} />
                     <g fill={isSelected ? '#111827' : '#4B5563'}>
                       <rect x="46.5" y="44" width="7" height="30" rx="3.5" />
