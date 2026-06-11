@@ -28,7 +28,11 @@ type GeoPolygon = GeoRing[];
 type GeoMultiPolygon = GeoPolygon[];
 type AustriaFeature = {
   id?: string;
-  properties?: { name?: string };
+  properties?: {
+    name?: string;
+    longitude?: string;
+    latitude?: string;
+  };
   geometry: {
     type: 'Polygon' | 'MultiPolygon';
     coordinates: GeoPolygon | GeoMultiPolygon;
@@ -77,6 +81,96 @@ function mapGeoPoint([x, y]: GeoPoint) {
   };
 }
 
+function collectGeoPoints(coordinates: unknown, points: GeoPoint[] = []) {
+  if (!Array.isArray(coordinates)) return points;
+  if (typeof coordinates[0] === 'number' && typeof coordinates[1] === 'number') {
+    points.push([coordinates[0], coordinates[1]]);
+    return points;
+  }
+  coordinates.forEach((entry) => collectGeoPoints(entry, points));
+  return points;
+}
+
+function getFeatureCenter(feature: AustriaFeature) {
+  const points = collectGeoPoints(feature.geometry.coordinates);
+  const center = points.reduce(
+    (acc, point) => ({ x: acc.x + point[0], y: acc.y + point[1] }),
+    { x: 0, y: 0 }
+  );
+
+  return mapGeoPoint([center.x / points.length, center.y / points.length]);
+}
+
+function solveThreeByThree(matrix: number[][], vector: number[]) {
+  const a = matrix.map((row) => [...row]);
+  const b = [...vector];
+
+  for (let pivot = 0; pivot < 3; pivot += 1) {
+    let bestRow = pivot;
+    for (let row = pivot + 1; row < 3; row += 1) {
+      if (Math.abs(a[row][pivot]) > Math.abs(a[bestRow][pivot])) bestRow = row;
+    }
+
+    [a[pivot], a[bestRow]] = [a[bestRow], a[pivot]];
+    [b[pivot], b[bestRow]] = [b[bestRow], b[pivot]];
+
+    const divisor = a[pivot][pivot] || 1;
+    for (let column = pivot; column < 3; column += 1) a[pivot][column] /= divisor;
+    b[pivot] /= divisor;
+
+    for (let row = 0; row < 3; row += 1) {
+      if (row === pivot) continue;
+      const factor = a[row][pivot];
+      for (let column = pivot; column < 3; column += 1) {
+        a[row][column] -= factor * a[pivot][column];
+      }
+      b[row] -= factor * b[pivot];
+    }
+  }
+
+  return b;
+}
+
+function buildLatLngProjection() {
+  const calibrationPoints = austriaFeatures
+    .map((feature) => {
+      const longitude = Number(feature.properties?.longitude);
+      const latitude = Number(feature.properties?.latitude);
+      if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) return null;
+      return { longitude, latitude, ...getFeatureCenter(feature) };
+    })
+    .filter((point): point is { longitude: number; latitude: number; x: number; y: number } => Boolean(point));
+
+  const solveAxis = (axis: 'x' | 'y') => {
+    const matrix = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+    ];
+    const vector = [0, 0, 0];
+
+    calibrationPoints.forEach((point) => {
+      const values = [point.longitude, point.latitude, 1];
+      values.forEach((value, row) => {
+        vector[row] += value * point[axis];
+        values.forEach((innerValue, column) => {
+          matrix[row][column] += value * innerValue;
+        });
+      });
+    });
+
+    return solveThreeByThree(matrix, vector);
+  };
+
+  const xCoefficients = solveAxis('x');
+  const yCoefficients = solveAxis('y');
+
+  return (latitude: number, longitude: number) => ({
+    x: xCoefficients[0] * longitude + xCoefficients[1] * latitude + xCoefficients[2],
+    y: yCoefficients[0] * longitude + yCoefficients[1] * latitude + yCoefficients[2],
+  });
+}
+
 function ringToPath(ring: GeoRing) {
   return ring
     .map((point, index) => {
@@ -103,6 +197,30 @@ const AUSTRIA_REGION_PATHS = austriaFeatures.map((feature) => ({
   path: featureToPath(feature),
 }));
 
+const projectLatLngToAustriaSvg = buildLatLngProjection();
+
+function GoogleCleanUnderline({ id }: { id: string }) {
+  return (
+    <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#4285F4" />
+            <stop offset="25%" stopColor="#4285F4" />
+            <stop offset="25%" stopColor="#EA4335" />
+            <stop offset="50%" stopColor="#EA4335" />
+            <stop offset="50%" stopColor="#FBBC05" />
+            <stop offset="75%" stopColor="#FBBC05" />
+            <stop offset="75%" stopColor="#34A853" />
+            <stop offset="100%" stopColor="#34A853" />
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="12" rx="6" fill={`url(#${id})`} />
+      </svg>
+    </div>
+  );
+}
+
 function projectToAustriaSvg(location: LocalSeoLocationData) {
   const knownCityCoordinates: Record<string, { lat: number; lng: number }> = {
     wien: { lat: 48.2082, lng: 16.3738 },
@@ -115,16 +233,12 @@ function projectToAustriaSvg(location: LocalSeoLocationData) {
     klagenfurt: { lat: 46.6247, lng: 14.3053 },
   };
   const cityKey = (location.city || location.name || '').toLowerCase().trim();
-  const fallback = knownCityCoordinates[cityKey];
-  // Approximation für Österreich: west/east/south/north Bounds.
+  const fallbackKey = Object.keys(knownCityCoordinates).find((key) => cityKey === key || cityKey.includes(key));
+  const fallback = fallbackKey ? knownCityCoordinates[fallbackKey] : undefined;
   const lat = typeof location.lat === 'number' ? location.lat : (fallback?.lat ?? 47.6);
   const lng = typeof location.lng === 'number' ? location.lng : (fallback?.lng ?? 14.2);
-  const minLng = 9.4;
-  const maxLng = 17.2;
-  const minLat = 46.3;
-  const maxLat = 49.1;
-  const x = ((lng - minLng) / (maxLng - minLng)) * 720 + 40;
-  const y = 330 - ((lat - minLat) / (maxLat - minLat)) * 250;
+  const { x, y } = projectLatLngToAustriaSvg(lat, lng);
+
   return {
     x: Math.max(45, Math.min(760, x)),
     y: Math.max(70, Math.min(315, y)),
@@ -157,6 +271,7 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
       <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-heading">Lokale Sichtbarkeit</h3>
+          <GoogleCleanUnderline id="google-clean-gradient-local-seo" />
           <p className="mt-1 text-sm text-muted">
             Standort-Auswertung aus GSC-Queries, Standort-Landingpages und GA4-Stadt-Daten.
           </p>
@@ -189,22 +304,22 @@ export default function LocalSeoMapWidget({ data }: LocalSeoMapWidgetProps) {
               const point = projectToAustriaSvg(location);
               const color = getScoreColor(location.score);
               const isSelected = selected?.id === location.id;
-              const radius = Math.max(12, Math.min(26, 12 + location.impressions / 600));
               return (
-                <g key={location.id} className="cursor-pointer" onClick={() => setSelectedId(location.id)}>
+                <g
+                  key={location.id}
+                  className="cursor-pointer"
+                  transform={`translate(${point.x} ${point.y})`}
+                  onClick={() => setSelectedId(location.id)}
+                >
                   <title>{location.name}</title>
-                  <circle cx={point.x} cy={point.y} r={radius + 7} fill={color} opacity={isSelected ? 0.18 : 0.08} />
-                  <circle cx={point.x} cy={point.y} r={radius} fill={color} stroke="#fff" strokeWidth="3" />
-                  <text
-                    x={point.x}
-                    y={point.y + 4}
-                    textAnchor="middle"
-                    fontSize="11"
-                    fontWeight="700"
-                    fill="#fff"
-                  >
-                    {location.score}
-                  </text>
+                  <circle cx="0" cy="-9" r={isSelected ? 18 : 15} fill={color} opacity={isSelected ? 0.18 : 0.1} />
+                  <path
+                    d="M0 10 C-11 -4 -15 -10 -15 -18 C-15 -27 -8 -34 0 -34 C8 -34 15 -27 15 -18 C15 -10 11 -4 0 10 Z"
+                    fill={color}
+                    stroke="#fff"
+                    strokeWidth="3"
+                  />
+                  <circle cx="0" cy="-18" r="5" fill="#fff" />
                 </g>
               );
             })}
