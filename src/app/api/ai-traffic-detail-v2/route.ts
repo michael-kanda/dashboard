@@ -10,11 +10,21 @@
 //     ältere) Cache-Daten ausgeliefert statt eines Fehlers.
 //
 //  Voraussetzung: Migration db/migrations/ga4_cache_cooldown.sql ausführen.
+//
+//  UMBAU (Timeout-Härtung):
+//  4. Transiente Fehler (GA4-Timeout/Abort, Netzwerkabbrüche) werden erkannt
+//     und wie ein "weicher" Ausfall behandelt: Stale-Cache ausliefern statt
+//     500er. Ohne Cache -> 503 mit klarer Meldung (KEIN Cooldown, da kein
+//     Quota-Problem vorliegt).
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
 import { getAiTrafficExtendedWithComparison } from '@/lib/ai-traffic-extended-v2';
+
+// Vercel: dem mehrstufigen GA4-Report genug Zeit geben. Muss größer sein als
+// die Summe der GA4-Client-Timeouts (siehe Hinweis unten bei den Fehler-Helpern).
+export const maxDuration = 60;
 
 const QUOTA_COOLDOWN_MS = 55 * 60 * 1000;
 // GA4-Daten aktualisieren sich nur periodisch — ein paar Minuten Cache sind
@@ -36,6 +46,35 @@ function isGa4QuotaError(error: unknown) {
   const status = (error as any)?.status || (error as any)?.code || (error as any)?.response?.status;
   const message = getQuotaMessage(error).toLowerCase();
   return status === 429 || message.includes('quota') || message.includes('resource_exhausted');
+}
+
+/**
+ * Transiente Fehler: GA4-Client-Timeout (gaxios bricht per AbortSignal ab,
+ * Meldung "The operation was aborted."), Netzwerkabbrüche etc.
+ * Diese Fälle sind KEIN Quota-Problem -> kein Cooldown setzen, aber wie bei
+ * Quota Stale-Cache bevorzugen, statt einen 500er an den Client zu geben.
+ *
+ * Hinweis: Das eigentliche 20s-Timeout kommt aus dem GA4-Client in
+ * lib/ai-traffic-extended-v2 (gaxios `timeout: 20000`). Dort ggf. auf
+ * 40-45s erhöhen und/oder die Teil-Reports sequenziell statt parallel
+ * feuern — maxDuration oben ist darauf abgestimmt.
+ */
+function isTransientGa4Error(error: unknown) {
+  const message = getQuotaMessage(error).toLowerCase();
+  const type =
+    (error as any)?.type ||
+    (error as any)?.error?.type ||
+    (error as any)?.cause?.type;
+  return (
+    type === 'aborted' ||
+    (error as any)?.name === 'AbortError' ||
+    message.includes('aborted') ||
+    message.includes('timeout') ||
+    message.includes('etimedout') ||
+    message.includes('econnreset') ||
+    message.includes('socket hang up') ||
+    message.includes('fetch failed')
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -276,6 +315,32 @@ export async function GET(request: NextRequest) {
           });
         }
         return quotaLimitedResponse(until, message);
+      }
+      // Transienter Fehler (z.B. GA4-Timeout "The operation was aborted."):
+      // kein Cooldown, aber Stale-Cache bevorzugen statt 500er.
+      if (isTransientGa4Error(error)) {
+        console.warn('[AI Traffic V2 API] Transienter GA4-Fehler (Timeout/Abort):', getQuotaMessage(error));
+        if (cached) {
+          return NextResponse.json({
+            success: true,
+            data: cached.payload,
+            cached: true,
+            stale: true,
+            meta: {
+              dateRange,
+              cacheAgeMs: cached.ageMs,
+              transientError: true,
+              currentPeriod: { start: currentStartStr, end: currentEndStr },
+              previousPeriod: { start: prevStartStr, end: prevEndStr }
+            }
+          });
+        }
+        return NextResponse.json({
+          success: false,
+          data: null,
+          transient: true,
+          error: 'GA4 hat nicht rechtzeitig geantwortet (Timeout). Bitte in ein paar Minuten erneut versuchen.'
+        }, { status: 503 });
       }
       throw error;
     } finally {
