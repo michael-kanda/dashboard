@@ -380,7 +380,22 @@ function parseGa4Date(dateString: string): string {
 //
 // Deshalb: KEINE 5xx und KEIN 429 mehr automatisch wiederholen. Nur echte
 // Timeouts/Netzwerkfehler (noResponseRetries) werden retried.
+//
+// TIMEOUT-HÄRTUNG:
+// Irgendwo global (googleapis/gaxios) waren 20s Timeout gesetzt — zu knapp für
+// die schweren Reports (13 OR-Filter, bis 24 Monate). Folge: AbortSignal-Abbruch
+// ("The operation was aborted."), den gaxios NICHT retried (abgebrochene
+// Requests werden nie wiederholt). Wir setzen das Timeout deshalb explizit pro
+// Request — Request-Optionen überschreiben die globale Konfiguration.
+const GA4_TIMEOUT_MS = 45_000;
+// Gesamtbudget für ALLE GA4-Calls eines Dashboard-Loads. Muss unter der
+// maxDuration der API-Route (60s) liegen, inkl. Overhead für DB/Verarbeitung.
+const TOTAL_GA4_BUDGET_MS = 50_000;
+// Unter diesem Restbudget werden optionale Reports übersprungen statt gestartet.
+const OPTIONAL_REPORT_MIN_BUDGET_MS = 5_000;
+
 const GA4_REQUEST_OPTIONS = {
+  timeout: GA4_TIMEOUT_MS,
   retryConfig: {
     retry: 2,
     httpMethodsToRetry: ['POST'],
@@ -406,17 +421,33 @@ function isGa4QuotaError(error: unknown): boolean {
  *   Rows weitergereicht, damit ein einzelner transienter Report-Fehler nicht
  *   das gesamte Dashboard abreißt (Graceful Degradation).
  * - Pflicht-Reports (optional: false) reichen jeden Fehler hoch.
+ * - `deadline` (ms epoch): Gesamt-Zeitbudget. Optionale Reports werden bei
+ *   erschöpftem Budget gar nicht erst gestartet (leere Rows), und das
+ *   Request-Timeout wird auf das Restbudget geklemmt. So läuft die Lambda
+ *   nicht in die maxDuration der Route.
  */
 async function safeRunReport(
   analytics: any,
   property: string,
   requestBody: any,
-  { optional = false }: { optional?: boolean } = {}
+  { optional = false, deadline }: { optional?: boolean; deadline?: number } = {}
 ): Promise<{ data: { rows?: any[] } }> {
+  const remainingMs = deadline ? deadline - Date.now() : GA4_TIMEOUT_MS;
+
+  if (optional && remainingMs < OPTIONAL_REPORT_MIN_BUDGET_MS) {
+    console.warn('[AI Traffic V2] Zeitbudget erschöpft — optionaler Report übersprungen.');
+    return { data: { rows: [] } };
+  }
+
+  const timeout = Math.max(
+    OPTIONAL_REPORT_MIN_BUDGET_MS,
+    Math.min(GA4_TIMEOUT_MS, remainingMs)
+  );
+
   try {
     return await analytics.properties.runReport(
       { property, requestBody },
-      GA4_REQUEST_OPTIONS as any
+      { ...GA4_REQUEST_OPTIONS, timeout } as any
     );
   } catch (error) {
     if (isGa4QuotaError(error)) throw error;
@@ -438,10 +469,14 @@ async function safeRunReport(
 export async function getAiTrafficExtended(
   propertyId: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  deadline?: number
 ): Promise<AiTrafficExtendedData> {
   // Defensiv: niemals einen invertierten Range an GA4 schicken (sonst 400).
   ({ startDate, endDate } = normalizeDateRange(startDate, endDate));
+
+  // Eigenes Budget, falls der Caller keins mitgibt (z.B. Direktaufruf).
+  const reportDeadline = deadline ?? Date.now() + TOTAL_GA4_BUDGET_MS;
 
   const formattedPropertyId = propertyId.startsWith('properties/') 
     ? propertyId 
@@ -478,7 +513,7 @@ export async function getAiTrafficExtended(
       dimensionFilter: aiSourceFilter,
       orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
       limit: '1000'
-    });
+    }, { deadline: reportDeadline });
 
     // Ab hier alles optional: ein transienter Fehler degradiert nur dieses eine
     // Modul (leere Rows), reißt aber nicht das ganze Dashboard ab. Quota-Fehler
@@ -492,7 +527,7 @@ export async function getAiTrafficExtended(
       ],
       dimensionFilter: aiSourceFilter,
       orderBys: [{ dimension: { dimensionName: 'date' } }]
-    }, { optional: true });
+    }, { optional: true, deadline: reportDeadline });
 
     const journeyResponse = await safeRunReport(analytics, formattedPropertyId, {
       dateRanges: [{ startDate, endDate }],
@@ -507,7 +542,7 @@ export async function getAiTrafficExtended(
       dimensionFilter: aiSourceFilter,
       orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
       limit: '500'
-    }, { optional: true });
+    }, { optional: true, deadline: reportDeadline });
 
     const eventsResponse = await safeRunReport(analytics, formattedPropertyId, {
       dateRanges: [{ startDate, endDate }],
@@ -534,7 +569,7 @@ export async function getAiTrafficExtended(
         }
       },
       orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }]
-    }, { optional: true });
+    }, { optional: true, deadline: reportDeadline });
 
     const scrollResponse = await safeRunReport(analytics, formattedPropertyId, {
       dateRanges: [{ startDate, endDate }],
@@ -556,7 +591,7 @@ export async function getAiTrafficExtended(
           ]
         }
       }
-    }, { optional: true });
+    }, { optional: true, deadline: reportDeadline });
 
     const trendBySourceResponse = await safeRunReport(analytics, formattedPropertyId, {
       dateRanges: [{ startDate, endDate }],
@@ -571,7 +606,7 @@ export async function getAiTrafficExtended(
       dimensionFilter: aiSourceFilter,
       orderBys: [{ dimension: { dimensionName: 'date' } }],
       limit: '10000'
-    }, { optional: true });
+    }, { optional: true, deadline: reportDeadline });
 
     // Pro-Quelle-Totals OHNE Landingpage-Dimension.
     const sourceTotalsResponse = await safeRunReport(analytics, formattedPropertyId, {
@@ -585,7 +620,7 @@ export async function getAiTrafficExtended(
       dimensionFilter: aiSourceFilter,
       orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
       limit: '1000'
-    }, { optional: true });
+    }, { optional: true, deadline: reportDeadline });
 
     // =========================================================================
     // DATEN VERARBEITEN
@@ -1024,20 +1059,47 @@ export async function getAiTrafficExtendedWithComparison(
   ({ startDate: currentStart, endDate: currentEnd } = normalizeDateRange(currentStart, currentEnd));
   ({ startDate: previousStart, endDate: previousEnd } = normalizeDateRange(previousStart, previousEnd));
 
+  // EIN gemeinsames Zeitbudget für Hauptanalyse UND Vergleichs-Totals,
+  // abgestimmt auf maxDuration=60 der API-Route.
+  const deadline = Date.now() + TOTAL_GA4_BUDGET_MS;
+
   // Aktueller Zeitraum: vollständige Analyse (7 Reports).
-  const currentData = await getAiTrafficExtended(propertyId, currentStart, currentEnd);
+  const currentData = await getAiTrafficExtended(propertyId, currentStart, currentEnd, deadline);
 
   // Vergleichszeitraum: vom previousData werden NUR totalSessions und totalUsers
   // verwendet (siehe calcChange unten). Früher lief hier die komplette
   // getAiTrafficExtended-Analyse mit 7 Reports — 6 davon wurden berechnet und
   // sofort weggeworfen. Das halbierte das GA4-Call-Budget grundlos und erhöhte
   // das Server-Error-Quota-Risiko massiv. Jetzt: EIN schlanker Totals-Report.
-  const previousTotals = await getAiTrafficTotalsOnly(propertyId, previousStart, previousEnd);
+  //
+  // DEGRADATION: Schlägt der Totals-Report transient fehl (Timeout etc.) oder
+  // ist das Zeitbudget aufgebraucht, liefern wir die aktuellen Daten OHNE
+  // Veränderungs-Prozente aus, statt den kompletten (teuren, bereits
+  // erfolgreichen) Dashboard-Load wegzuwerfen. Quota-Fehler werden weiterhin
+  // hochgereicht, damit die Route den Cooldown setzen kann.
+  let previousTotals: { totalSessions: number; totalUsers: number } | null = null;
+  if (deadline - Date.now() >= OPTIONAL_REPORT_MIN_BUDGET_MS) {
+    try {
+      previousTotals = await getAiTrafficTotalsOnly(propertyId, previousStart, previousEnd, deadline);
+    } catch (error) {
+      if (isGa4QuotaError(error)) throw error;
+      console.warn(
+        '[AI Traffic V2] Vergleichs-Totals fehlgeschlagen — liefere Daten ohne Veränderungs-Prozente:',
+        error instanceof Error ? error.message : error
+      );
+    }
+  } else {
+    console.warn('[AI Traffic V2] Zeitbudget erschöpft — Vergleichs-Totals übersprungen.');
+  }
 
   const calcChange = (current: number, previous: number): number => {
     if (previous === 0) return current > 0 ? 100 : 0;
     return ((current - previous) / previous) * 100;
   };
+
+  if (!previousTotals) {
+    return currentData;
+  }
 
   return {
     ...currentData,
@@ -1060,7 +1122,8 @@ export async function getAiTrafficExtendedWithComparison(
 export async function getAiTrafficTotalsOnly(
   propertyId: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  deadline?: number
 ): Promise<{ totalSessions: number; totalUsers: number }> {
   ({ startDate, endDate } = normalizeDateRange(startDate, endDate));
 
@@ -1073,7 +1136,8 @@ export async function getAiTrafficTotalsOnly(
   const aiSourceFilter = buildAiTrafficDimensionFilter();
 
   // Pflicht-Report (nicht optional): bei Quota-Fehler hochreichen, damit die
-  // Route den Cooldown setzen kann.
+  // Route den Cooldown setzen kann. Transiente Fehler fängt der Caller ab
+  // (Degradation: Daten ohne Veränderungs-Prozente).
   const response = await safeRunReport(analytics, formattedPropertyId, {
     dateRanges: [{ startDate, endDate }],
     metrics: [
@@ -1081,7 +1145,7 @@ export async function getAiTrafficTotalsOnly(
       { name: 'totalUsers' }
     ],
     dimensionFilter: aiSourceFilter
-  });
+  }, { deadline });
 
   const row = response.data.rows?.[0];
   return {
