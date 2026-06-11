@@ -2,6 +2,7 @@
 
 import { google } from 'googleapis';
 import type { analyticsdata_v1beta } from 'googleapis';
+import { sql } from '@vercel/postgres';
 import { buildAiTrafficDimensionFilter, normalizeSource } from './ai-sources';
 // ── Globales Retry-/Timeout-Verhalten für ALLE googleapis-Calls ──────────
 // GA4 runReport & GSC query sind POST und werden von gaxios per Default NICHT
@@ -48,6 +49,72 @@ google.options({
 import { JWT } from 'google-auth-library';
 import { ChartEntry, type GoogleGenAiPerformanceData, type GoogleGenAiBreakdownItem } from '@/lib/dashboard-shared';
 import type { TopQueryData } from '@/types/dashboard';
+
+// ── Postgres-Result-Cache für schwere GA4-Dashboard-Reports ──────────────
+// Property 337078709 (und vermutlich weitere große Properties) braucht für
+// einzelne Reports >30 s — mehr Timeout hilft nicht (60-s-Function-Grenze).
+// Der strukturelle Fix: Ergebnisse cachen statt bei JEDEM Seitenaufruf frisch
+// zu laden. Nutzt dieselbe Tabelle wie die AI-Traffic-V2-Route
+// (ga4_ai_traffic_cache: cache_key PK, payload JSONB, created_at) mit eigenen
+// Key-Präfixen — keine zusätzliche Migration nötig.
+//
+// Verhalten:
+//  - Frischer Cache (< TTL): sofort ausliefern, kein GA4-Call.
+//  - Cache-Miss/abgelaufen: frisch laden, Cache aktualisieren.
+//  - Frischer Load scheitert (Timeout etc.): STALE-Cache ausliefern, falls
+//    vorhanden — Daten von vor einer Stunde sind besser als ein leeres Widget.
+//  - Postgres-Probleme blockieren NIE den Hauptpfad (fail-open).
+const GA4_RESULT_CACHE_TTL_MS = 30 * 60 * 1000;
+
+async function readGa4ResultCache(cacheKey: string): Promise<{ payload: any; ageMs: number } | null> {
+  try {
+    const { rows } = await sql`
+      SELECT payload, created_at FROM ga4_ai_traffic_cache WHERE cache_key = ${cacheKey}
+    `;
+    if (rows.length === 0) return null;
+    return {
+      payload: rows[0].payload,
+      ageMs: Date.now() - new Date(rows[0].created_at).getTime(),
+    };
+  } catch (err) {
+    console.warn('[GA4 Cache] Lookup fehlgeschlagen:', err);
+    return null;
+  }
+}
+
+async function writeGa4ResultCache(cacheKey: string, payload: any): Promise<void> {
+  try {
+    await sql`
+      INSERT INTO ga4_ai_traffic_cache (cache_key, payload, created_at)
+      VALUES (${cacheKey}, ${JSON.stringify(payload)}::jsonb, now())
+      ON CONFLICT (cache_key)
+      DO UPDATE SET payload = EXCLUDED.payload, created_at = EXCLUDED.created_at
+    `;
+  } catch (err) {
+    console.warn('[GA4 Cache] Schreiben fehlgeschlagen:', err);
+  }
+}
+
+async function withGa4ResultCache<T>(cacheKey: string, fetcher: () => Promise<T>): Promise<T> {
+  const cached = await readGa4ResultCache(cacheKey);
+  if (cached && cached.ageMs < GA4_RESULT_CACHE_TTL_MS) {
+    return cached.payload as T;
+  }
+  try {
+    const fresh = await fetcher();
+    await writeGa4ResultCache(cacheKey, fresh);
+    return fresh;
+  } catch (error) {
+    if (cached) {
+      console.warn(
+        `[GA4 Cache] Frischer Load fehlgeschlagen — liefere Stale-Cache (${Math.round(cached.ageMs / 60000)} Min alt) für ${cacheKey}:`,
+        error instanceof Error ? error.message : error
+      );
+      return cached.payload as T;
+    }
+    throw error;
+  }
+}
 
 // --- Typdefinitionen ---
 
@@ -556,7 +623,20 @@ export async function getTopQueries(
 
 // --- Google Analytics (GA4) ---
 
+// Gecachter Einstiegspunkt — die eigentliche GA4-Logik liegt unverändert in
+// getAnalyticsDataUncached. Cache-Key-Präfix 'gad:'.
 export async function getAnalyticsData(
+  propertyId: string,
+  startDate: string,
+  endDate: string
+): Promise<Ga4ExtendedData> {
+  return withGa4ResultCache(
+    `gad:${propertyId}:${startDate}:${endDate}`,
+    () => getAnalyticsDataUncached(propertyId, startDate, endDate)
+  );
+}
+
+async function getAnalyticsDataUncached(
   propertyId: string,
   startDate: string,
   endDate: string
@@ -693,7 +773,20 @@ export async function getAnalyticsData(
   }
 }
 
+// Gecachter Einstiegspunkt — die eigentliche GA4-Logik liegt unverändert in
+// getAiTrafficDataUncached. Cache-Key-Präfix 'ait:'.
 export async function getAiTrafficData(
+  propertyId: string,
+  startDate: string,
+  endDate: string
+): Promise<AiTrafficData> {
+  return withGa4ResultCache(
+    `ait:${propertyId}:${startDate}:${endDate}`,
+    () => getAiTrafficDataUncached(propertyId, startDate, endDate)
+  );
+}
+
+async function getAiTrafficDataUncached(
   propertyId: string,
   startDate: string,
   endDate: string
@@ -1421,7 +1514,20 @@ export interface GoogleAdsData {
  *
  * Alle Calls filtern auf sessionGoogleAdsCampaignName != (not set).
  */
+// Gecachter Einstiegspunkt — die eigentliche GA4-Logik liegt unverändert in
+// getGoogleAdsReportUncached. Cache-Key-Präfix 'ads:'.
 export async function getGoogleAdsReport(
+  propertyId: string,
+  startDate: string,
+  endDate: string
+): Promise<GoogleAdsData> {
+  return withGa4ResultCache(
+    `ads:${propertyId}:${startDate}:${endDate}`,
+    () => getGoogleAdsReportUncached(propertyId, startDate, endDate)
+  );
+}
+
+async function getGoogleAdsReportUncached(
   propertyId: string,
   startDate: string,
   endDate: string
