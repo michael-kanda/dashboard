@@ -37,6 +37,7 @@ type AustriaFeature = {
 };
 
 const MAP_VIEWBOX = { width: 820, height: 420, padding: 34 };
+const GOOGLE_BLUE = '#4285F4';
 const austriaFeatures = (austriaGeoJson as unknown as { features: AustriaFeature[] }).features;
 
 const austriaBounds = (() => {
@@ -306,6 +307,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
   const [selectedId, setSelectedId] = useState<string | undefined>(locations[0]?.id);
   const [isEditingPins, setIsEditingPins] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isSavingPins, setIsSavingPins] = useState(false);
   const [pinSaveError, setPinSaveError] = useState<string | null>(null);
   const canEditPins = userRole === 'SUPERADMIN' && Boolean(projectId);
@@ -492,9 +494,14 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
             {displayLocations.map((location) => {
               const point = projectToAustriaSvg(location);
               const isSelected = selected?.id === location.id;
+              const isActive = isSelected || hoveredId === location.id;
               const label = location.name.length > 28 ? `${location.name.slice(0, 25)}...` : location.name;
-              const labelWidth = Math.min(190, Math.max(88, label.length * 6.4 + 26));
-              const labelX = point.x > MAP_VIEWBOX.width - 190 ? -labelWidth - 17 : 18;
+              const labelWidth = isActive
+                ? Math.min(220, Math.max(168, label.length * 6.4 + 38))
+                : Math.min(190, Math.max(88, label.length * 6.4 + 26));
+              const labelHeight = isActive ? 52 : 30;
+              const labelX = point.x > MAP_VIEWBOX.width - 220 ? -labelWidth - 17 : 18;
+              const labelY = isActive ? -62 : -38;
               return (
                 <g
                   key={location.id}
@@ -502,37 +509,58 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                   transform={`translate(${point.x} ${point.y})`}
                   onClick={() => setSelectedId(location.id)}
                   onPointerDown={(event) => handlePinPointerDown(event, location.id || '')}
+                  onMouseEnter={() => setHoveredId(location.id || null)}
+                  onMouseLeave={() => setHoveredId(null)}
                 >
                   <title>{location.name}</title>
                   <g transform="scale(0.44) translate(-50 -30)">
-                    <ellipse cx="50" cy="78" rx="32" ry="13" fill="#6B7280" opacity={isSelected ? '0.35' : '0.25'} />
-                    <g fill={isSelected ? '#111827' : '#4B5563'}>
+                    <ellipse cx="50" cy="78" rx="32" ry="13" fill={isActive ? GOOGLE_BLUE : '#6B7280'} opacity={isActive ? '0.22' : '0.25'} />
+                    <g fill={isActive ? GOOGLE_BLUE : '#4B5563'}>
                       <rect x="46.5" y="44" width="7" height="30" rx="3.5" />
                       <circle cx="50" cy="30" r="18" />
                     </g>
                   </g>
-                  <g className="pointer-events-none" transform={`translate(${labelX} -38)`}>
+                  <g className="pointer-events-none" transform={`translate(${labelX} ${labelY})`}>
                     <path
-                      d={labelX < 0 ? `M${labelWidth} 24 L${labelWidth + 9} 32 L${labelWidth - 2} 31 Z` : 'M0 24 L-9 32 L2 31 Z'}
+                      d={labelX < 0
+                        ? `M${labelWidth} ${labelHeight - 8} L${labelWidth + 9} ${labelHeight + 2} L${labelWidth - 2} ${labelHeight - 1} Z`
+                        : `M0 ${labelHeight - 8} L-9 ${labelHeight + 2} L2 ${labelHeight - 1} Z`
+                      }
                       fill="white"
+                      stroke={isActive ? GOOGLE_BLUE : '#E2E8F0'}
                       className="stroke-slate-200 dark:fill-slate-900 dark:stroke-slate-700"
+                      style={{ stroke: isActive ? GOOGLE_BLUE : undefined }}
                       strokeWidth="1"
                     />
                     <rect
                       width={labelWidth}
-                      height="30"
+                      height={labelHeight}
                       rx="7"
                       fill="white"
+                      stroke={isActive ? GOOGLE_BLUE : '#E2E8F0'}
                       className="stroke-slate-200 drop-shadow-sm dark:fill-slate-900 dark:stroke-slate-700"
+                      style={{ stroke: isActive ? GOOGLE_BLUE : undefined }}
                       strokeWidth="1"
                     />
                     <text
                       x="13"
                       y="19"
+                      fill={isActive ? GOOGLE_BLUE : undefined}
                       className="fill-slate-800 text-[11px] font-semibold dark:fill-slate-100"
+                      style={{ fill: isActive ? GOOGLE_BLUE : undefined }}
                     >
                       {label}
                     </text>
+                    {isActive ? (
+                      <text
+                        x="13"
+                        y="39"
+                        fill={GOOGLE_BLUE}
+                        className="text-[10px] font-semibold"
+                      >
+                        Neue Besucher {formatNumber(location.sessions)} · Conv. {formatNumber(location.conversions)}
+                      </text>
+                    ) : null}
                   </g>
                 </g>
               );
@@ -544,15 +572,17 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                 key={`legend-${location.id}`}
                 type="button"
                 onClick={() => setSelectedId(location.id)}
+                onMouseEnter={() => setHoveredId(location.id || null)}
+                onMouseLeave={() => setHoveredId(null)}
                 className={`rounded-md border px-2 py-1 text-left transition-colors ${
-                  selected?.id === location.id
-                    ? 'border-indigo-300 bg-indigo-50 text-slate-900 dark:border-indigo-700 dark:bg-indigo-950/30 dark:text-slate-100'
+                  selected?.id === location.id || hoveredId === location.id
+                    ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
                     : 'border-border-subtle bg-surface hover:bg-surface-tertiary'
                 }`}
               >
                 <span
                   className="mr-1 inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: selected?.id === location.id ? '#111827' : '#4B5563' }}
+                  style={{ backgroundColor: selected?.id === location.id || hoveredId === location.id ? GOOGLE_BLUE : '#4B5563' }}
                 />
                 {location.name}
               </button>
