@@ -279,6 +279,44 @@ Keine Daten verfügbar. Bitte stelle sicher, dass GA4 und GSC korrekt konfigurie
     .map(c => `${c.name}: ${fmt(c.value)} Sessions`)
     .join('\n') || 'Keine Daten';
 
+  let localSeoSection = '';
+  if (data.localSeo?.locations?.length) {
+    const localTotals = data.localSeo.totals;
+    const localLocations = data.localSeo.locations
+      .slice()
+      .sort((a, b) => (b.conversions - a.conversions) || (b.sessions - a.sessions) || (b.impressions - a.impressions))
+      .slice(0, 8)
+      .map((location, index) => {
+        const topQueries = location.topQueries?.slice(0, 3)
+          .map(q => `"${q.query}" (${fmt(q.impressions)} Impr., ${fmt(q.clicks)} Klicks, Pos. ${q.position?.toFixed(1) ?? 'k.A.'})`)
+          .join('; ') || 'keine passenden GSC-Queries';
+        const landingPages = location.topLandingPages?.slice(0, 3)
+          .map(p => `${p.path} (${fmt(p.newUsers || 0)} neue Besucher, ${fmt(p.sessions || 0)} Sessions, ${fmt(p.conversions || 0)} Conv.)`)
+          .join('; ') || 'keine Standort-Landingpage-Daten';
+
+        return `${index + 1}. ${location.name} (${[location.postalCode, location.city, location.country].filter(Boolean).join(', ') || 'ohne Standortangabe'})
+   GSC: ${fmt(location.clicks)} Klicks, ${fmt(location.impressions)} Impr., CTR ${location.ctr.toFixed(1)}%, Ø Pos. ${location.position?.toFixed(1) ?? 'k.A.'}
+   GA4: ${fmt(location.newUsers)} neue Besucher, ${fmt(location.sessions)} Sessions, ${fmt(location.conversions)} Conversions
+   Top-Queries: ${topQueries}
+   Landingpages: ${landingPages}`;
+      })
+      .join('\n');
+
+    localSeoSection = `
+=== LOKALE SICHTBARKEIT ===
+Summen: ${fmt(localTotals.clicks)} GSC-Klicks, ${fmt(localTotals.impressions)} GSC-Impressionen, ${fmt(localTotals.newUsers || 0)} neue Besucher, ${fmt(localTotals.sessions)} Sessions, ${fmt(localTotals.conversions)} Conversions
+
+STANDORTE:
+${localLocations}
+
+DATENLOGIK:
+- GSC-Werte werden aus lokalen Queries, PLZ/Stadt/Keywords und konfigurierten Standort-Landingpages gematcht.
+- GA4-Werte pro Standort kommen primaer aus den konfigurierten Standort-Landingpages.
+- Nur wenn ein Standort keine Landingpages hat, wird GA4-Stadt-Traffic als Fallback genutzt.
+- Deshalb niemals Stadt-Traffic pauschal als Standortleistung interpretieren, wenn Landingpages gepflegt sind.
+`;
+  }
+
   // =========================================================================
   // ✅ NEU: Erweiterte KI-Traffic Analyse
   // =========================================================================
@@ -463,7 +501,7 @@ ${topPages}
 
 === TRAFFIC-KANAELE ===
 ${channels}
-${googleAdsSection}${weatherSection}${holidaySection}`.trim();
+${localSeoSection}${googleAdsSection}${weatherSection}${holidaySection}`.trim();
 }
 
 // ============================================================================
@@ -512,6 +550,11 @@ function generateSuggestedQuestions(data: ProjectDashboardData, aiTrafficDetail?
     if (adTotals.conversions > 0 && adTotals.clicks > 0) {
       questions.push('Welche Anzeigengruppen haben die besten Conversions?');
     }
+  }
+
+  if (data.localSeo?.locations?.length) {
+    questions.push('Wie performen meine Standorte lokal?');
+    questions.push('Welche lokale Landingpage sollte optimiert werden?');
   }
 
   // ✅ NEU: Wetter- & Feiertags-Fragen
@@ -674,6 +717,7 @@ REGELN:
 9. Bei Feiertags-Fragen: Erklaere wie Feiertage den Traffic beeinflussen (B2B sinkt, B2C variiert)
 10. Wenn Traffic-Einbrueche sichtbar sind, pruefe ob Wetter oder Feiertage eine Erklaerung bieten
 11. Bei Google Ads / SEA Fragen: Analysiere Kampagnen, Anzeigengruppen, CPC und Conversions. Conversions sind nur auf Kampagnen- und Anzeigengruppen-Ebene zuverlaessig — bei Suchanfragen kuerzt Google die Daten (Thresholding). Weise auf hohe CPCs oder ineffiziente Anzeigengruppen hin.
+12. Bei Fragen zu lokaler Sichtbarkeit, Standorten, PLZ, Stadt, Region oder lokalen Landingpages: Nutze die Sektion "LOKALE SICHTBARKEIT". Unterscheide klar GSC-Query-Signale von GA4-Landingpage-Signalen. Erklaere, dass GA4-Stadtwerte nur Fallback sind, wenn keine Standort-Landingpages hinterlegt sind.
 
 ${isAdmin ? `
 ADMIN-MODUS AKTIV:
@@ -682,6 +726,7 @@ ADMIN-MODUS AKTIV:
 - Schlage auch komplexere SEO-Massnahmen vor
 - Analysiere KI-Traffic im Detail (Quellen, Landingpages, Conversions)
 - Bei Google Ads: Analysiere CPC-Effizienz, Conversion-Kosten und Optimierungspotenzial pro Anzeigengruppe
+- Bei lokaler Sichtbarkeit: Benenne Standortdaten, Matching-Logik, Datenluecken und notwendige Landingpage-/PLZ-Konfiguration offen
 ` : `
 KUNDEN-MODUS AKTIV:
 - Erklaere Fachbegriffe kurz
@@ -689,6 +734,7 @@ KUNDEN-MODUS AKTIV:
 - Halte Empfehlungen einfach umsetzbar
 - Bei KI-Traffic: Erklaere es als "Ihre Inhalte werden von KI-Assistenten empfohlen"
 - Bei Google Ads: Zeige verstaendlich auf, welche Kampagnen gut laufen und wo Budget gespart werden kann
+- Bei lokaler Sichtbarkeit: Erklaere Standort-Vergleiche einfach und konzentriere dich auf konkrete naechste Schritte
 `}`;
 
     // 7. Stream-Response
