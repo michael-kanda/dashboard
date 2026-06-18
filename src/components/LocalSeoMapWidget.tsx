@@ -499,9 +499,9 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
               const labelWidth = isActive
                 ? Math.min(250, Math.max(196, label.length * 7.2 + 44))
                 : Math.min(190, Math.max(88, label.length * 6.4 + 26));
-              const labelHeight = isActive ? 58 : 34;
+              const labelHeight = isActive ? 76 : 34;
               const labelX = point.x > MAP_VIEWBOX.width - 250 ? -labelWidth - 17 : 18;
-              const labelY = isActive ? -68 : -42;
+              const labelY = isActive ? -86 : -42;
               return (
                 <g
                   key={location.id}
@@ -558,7 +558,17 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                         fill={GOOGLE_BLUE}
                         className="text-[13px] font-semibold"
                       >
-                        Neue Besucher {formatNumber(location.newUsers)} · Conv. {formatNumber(location.conversions)}
+                        Neue Besucher {formatNumber(location.newUsers)}
+                      </text>
+                    ) : null}
+                    {isActive ? (
+                      <text
+                        x="13"
+                        y="62"
+                        fill={GOOGLE_BLUE}
+                        className="text-[13px] font-semibold"
+                      >
+                        Conversions {formatNumber(location.conversions)}
                       </text>
                     ) : null}
                   </g>
