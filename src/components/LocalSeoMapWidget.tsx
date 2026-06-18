@@ -497,11 +497,11 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
               const isActive = isSelected || hoveredId === location.id;
               const label = location.name.length > 28 ? `${location.name.slice(0, 25)}...` : location.name;
               const labelWidth = isActive
-                ? Math.min(220, Math.max(168, label.length * 6.4 + 38))
+                ? Math.min(250, Math.max(196, label.length * 7.2 + 44))
                 : Math.min(190, Math.max(88, label.length * 6.4 + 26));
-              const labelHeight = isActive ? 52 : 30;
-              const labelX = point.x > MAP_VIEWBOX.width - 220 ? -labelWidth - 17 : 18;
-              const labelY = isActive ? -62 : -38;
+              const labelHeight = isActive ? 58 : 34;
+              const labelX = point.x > MAP_VIEWBOX.width - 250 ? -labelWidth - 17 : 18;
+              const labelY = isActive ? -68 : -42;
               return (
                 <g
                   key={location.id}
@@ -544,9 +544,9 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                     />
                     <text
                       x="13"
-                      y="19"
+                      y="22"
                       fill={isActive ? GOOGLE_BLUE : undefined}
-                      className="fill-slate-800 text-[11px] font-semibold dark:fill-slate-100"
+                      className="fill-slate-800 text-[14px] font-semibold dark:fill-slate-100"
                       style={{ fill: isActive ? GOOGLE_BLUE : undefined }}
                     >
                       {label}
@@ -554,11 +554,11 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                     {isActive ? (
                       <text
                         x="13"
-                        y="39"
+                        y="44"
                         fill={GOOGLE_BLUE}
-                        className="text-[10px] font-semibold"
+                        className="text-[13px] font-semibold"
                       >
-                        Neue Besucher {formatNumber(location.sessions)} · Conv. {formatNumber(location.conversions)}
+                        Neue Besucher {formatNumber(location.newUsers)} · Conv. {formatNumber(location.conversions)}
                       </text>
                     ) : null}
                   </g>

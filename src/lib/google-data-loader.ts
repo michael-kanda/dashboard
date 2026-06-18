@@ -106,6 +106,14 @@ function normalizePath(value: string) {
   }
 }
 
+function getCityNeedles(value: string) {
+  const normalized = normalizeForMatch(value || '');
+  const aliases = new Set([normalized]);
+  if (normalized === 'wien') aliases.add('vienna');
+  if (normalized === 'vienna') aliases.add('wien');
+  return aliases;
+}
+
 function buildLocalSeoData(
   locations: LocalSeoLocationConfig[] | null | undefined,
   topQueries: TopQueryData[],
@@ -140,8 +148,8 @@ function buildLocalSeoData(
       return landingPaths.some((path) => pagePath === path || pagePath.includes(path));
     });
 
-    const cityNeedle = normalizeForMatch(location.city || location.name || '');
-    const cityEntry = cityData.find((entry) => normalizeForMatch(entry.name || '') === cityNeedle);
+    const cityNeedles = getCityNeedles(location.city || location.name || '');
+    const cityEntry = cityData.find((entry) => cityNeedles.has(normalizeForMatch(entry.name || '')));
 
     const clicks = matchedQueries.reduce((sum, query) => sum + (query.clicks || 0), 0);
     const impressions = matchedQueries.reduce((sum, query) => sum + (query.impressions || 0), 0);
@@ -152,8 +160,10 @@ function buildLocalSeoData(
     const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
     const position = impressions > 0 ? weightedPositionSum / impressions : null;
     const pageSessions = matchedPages.reduce((sum, page) => sum + (page.sessions || 0), 0);
+    const pageNewUsers = matchedPages.reduce((sum, page) => sum + (page.newUsers || 0), 0);
     const pageConversions = matchedPages.reduce((sum, page) => sum + (page.conversions || 0), 0);
     const sessions = Math.max(cityEntry?.value || 0, pageSessions);
+    const newUsers = Math.max(cityEntry?.newUsers || 0, pageNewUsers);
     const conversions = Math.max(cityEntry?.subValue2 || 0, pageConversions);
     const score = Math.max(0, Math.min(100, Math.round(
       (ctr * 8) +
@@ -171,6 +181,7 @@ function buildLocalSeoData(
       ctr,
       position,
       sessions,
+      newUsers,
       conversions,
       topQueries: matchedQueries
         .sort((a, b) => b.impressions - a.impressions)
@@ -329,12 +340,22 @@ export async function getOrFetchGoogleData(
           !cacheEntry.data?.promptTracking ||
           cachedPromptMinWords === DEFAULT_PROMPT_TRACKING_MIN_WORDS;
         const genAiCacheIsCurrent = !user.gsc_site_url || cacheEntry.data?.googleGenAi !== undefined;
+        const cachedLocalSeoLocations = cacheEntry.data?.localSeo?.locations;
+        const localSeoCacheIsCurrent =
+          !Array.isArray(cachedLocalSeoLocations) ||
+          cachedLocalSeoLocations.length === 0 ||
+          typeof cachedLocalSeoLocations[0]?.newUsers === 'number';
         // Defekte Alt-Einträge (mit gespeicherten API-Fehlern) nur kurz vertrauen,
         // damit ein früher persistiertes Blip-Ergebnis sich von selbst heilt.
         const cachedHadErrors = !!cacheEntry.data?.apiErrors;
         const effectiveMaxAgeHours = cachedHadErrors ? 1 : getCacheDuration(dateRange);
 
-        if ((now - lastFetched) / (1000 * 60 * 60) < effectiveMaxAgeHours && promptCacheIsCurrent && genAiCacheIsCurrent) {
+        if (
+          (now - lastFetched) / (1000 * 60 * 60) < effectiveMaxAgeHours &&
+          promptCacheIsCurrent &&
+          genAiCacheIsCurrent &&
+          localSeoCacheIsCurrent
+        ) {
           console.log(`[Google Cache] ✅ HIT für ${user.email}${cachedHadErrors ? ' (degraded, kurze TTL)' : ''}`);
           return { ...cacheEntry.data, fromCache: true };
         }
@@ -343,6 +364,9 @@ export async function getOrFetchGoogleData(
         }
         if (!genAiCacheIsCurrent) {
           console.log('[Google Cache] 🔄 MISS wegen fehlendem Google-GenAI-Datenblock');
+        }
+        if (!localSeoCacheIsCurrent) {
+          console.log('[Google Cache] 🔄 MISS wegen Local-SEO-NewUsers-Migration');
         }
       }
     } catch (error) {

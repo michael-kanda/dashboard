@@ -1025,7 +1025,7 @@ export async function getGa4DimensionReport(
   dimensionName: string
 ): Promise<ChartEntry[]> {
   return withGa4ResultCache(
-    `dim:${propertyId}:${startDate}:${endDate}:${dimensionName}`,
+    `dimv2:${propertyId}:${startDate}:${endDate}:${dimensionName}`,
     () => getGa4DimensionReportUncached(propertyId, startDate, endDate, dimensionName)
   );
 }
@@ -1052,6 +1052,7 @@ async function getGa4DimensionReportUncached(
           { name: 'sessions' },
           { name: 'engagementRate' },
           { name: 'conversions' },
+          { name: 'newUsers' },
         ],
         orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
         limit: '10',
@@ -1066,10 +1067,12 @@ async function getGa4DimensionReportUncached(
       const sessions = parseInt(row.metricValues?.[0]?.value || '0', 10);
       const rate = parseFloat(row.metricValues?.[1]?.value || '0');
       const conversions = parseInt(row.metricValues?.[2]?.value || '0', 10);
+      const newUsers = parseInt(row.metricValues?.[3]?.value || '0', 10);
 
       results.push({
         name,
         value: sessions,
+        newUsers,
         subValue: `${(rate * 100).toFixed(1)}%`,
         subLabel: 'Interaktionsrate',
         subValue2: conversions,

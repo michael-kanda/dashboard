@@ -43,6 +43,7 @@ export interface ChartEntry {
   name: string; value: number; fill?: string;
   subValue?: string; subLabel?: string;
   subValue2?: number; subLabel2?: string;
+  newUsers?: number;
 }
 
 export interface BingDataPoint { date: string; clicks: number; impressions: number; }
@@ -249,6 +250,7 @@ export interface LocalSeoLocationData extends LocalSeoLocationConfig {
   ctr: number;
   position: number | null;
   sessions: number;
+  newUsers: number;
   conversions: number;
   topQueries: TopQueryData[];
   topLandingPages: ConvertingPageData[];
