@@ -9,6 +9,7 @@ import {
   getTopQueries,
   getAiTrafficData,
   getGa4DimensionReport,
+  getLandingPageMetricsForPaths,
   getTopConvertingPages,
   getGscPageCtr,
   getQueriesByLandingPageObject,
@@ -159,12 +160,13 @@ function buildLocalSeoData(
     );
     const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
     const position = impressions > 0 ? weightedPositionSum / impressions : null;
+    const hasLandingPageConfig = landingPaths.length > 0;
     const pageSessions = matchedPages.reduce((sum, page) => sum + (page.sessions || 0), 0);
     const pageNewUsers = matchedPages.reduce((sum, page) => sum + (page.newUsers || 0), 0);
     const pageConversions = matchedPages.reduce((sum, page) => sum + (page.conversions || 0), 0);
-    const sessions = Math.max(cityEntry?.value || 0, pageSessions);
-    const newUsers = Math.max(cityEntry?.newUsers || 0, pageNewUsers);
-    const conversions = Math.max(cityEntry?.subValue2 || 0, pageConversions);
+    const sessions = hasLandingPageConfig ? pageSessions : (cityEntry?.value || 0);
+    const newUsers = hasLandingPageConfig ? pageNewUsers : (cityEntry?.newUsers || 0);
+    const conversions = hasLandingPageConfig ? pageConversions : (cityEntry?.subValue2 || 0);
     const score = Math.max(0, Math.min(100, Math.round(
       (ctr * 8) +
       (position ? Math.max(0, 35 - position * 2) : 0) +
@@ -193,11 +195,13 @@ function buildLocalSeoData(
   });
 
   return {
+    calculationVersion: 2,
     locations: dataLocations,
     totals: {
       clicks: dataLocations.reduce((sum, location) => sum + location.clicks, 0),
       impressions: dataLocations.reduce((sum, location) => sum + location.impressions, 0),
       sessions: dataLocations.reduce((sum, location) => sum + location.sessions, 0),
+      newUsers: dataLocations.reduce((sum, location) => sum + location.newUsers, 0),
       conversions: dataLocations.reduce((sum, location) => sum + location.conversions, 0),
     },
   };
@@ -344,7 +348,7 @@ export async function getOrFetchGoogleData(
         const localSeoCacheIsCurrent =
           !Array.isArray(cachedLocalSeoLocations) ||
           cachedLocalSeoLocations.length === 0 ||
-          typeof cachedLocalSeoLocations[0]?.newUsers === 'number';
+          cacheEntry.data?.localSeo?.calculationVersion === 2;
         // Defekte Alt-Einträge (mit gespeicherten API-Fehlern) nur kurz vertrauen,
         // damit ein früher persistiertes Blip-Ergebnis sich von selbst heilt.
         const cachedHadErrors = !!cacheEntry.data?.apiErrors;
@@ -553,16 +557,34 @@ export async function getOrFetchGoogleData(
 
       try {
         const rawPages = await getTopConvertingPages(propertyId, startDateStr, endDateStr);
+        const configuredLocationPaths = Array.isArray((user as any).project_locations)
+          ? (user as any).project_locations
+              .flatMap((location: any) => Array.isArray(location?.landingPages) ? location.landingPages : [])
+              .map((path: unknown) => normalizePath(String(path || '')))
+              .filter(Boolean)
+          : [];
+        const localSeoPages = configuredLocationPaths.length > 0
+          ? await getLandingPageMetricsForPaths(propertyId, startDateStr, endDateStr, configuredLocationPaths)
+          : [];
         let gscCtrData = new Map<string, number>();
         if (user.gsc_site_url) {
           gscCtrData = await getGscPageCtr(user.gsc_site_url, startDateStr, endDateStr);
         }
-        topConvertingPages = rawPages.map((p: any) => ({
-          path: p.path, conversions: p.conversions,
-          conversionRate: typeof p.conversionRate === 'string' ? parseFloat(p.conversionRate) : Number(p.conversionRate),
-          engagementRate: p.engagementRate, sessions: p.sessions,
-          newUsers: p.newUsers, ctr: gscCtrData.get(p.path)
-        }));
+        const pageMap = new Map<string, ConvertingPageData>();
+        [...rawPages, ...localSeoPages].forEach((p: any) => {
+          const normalizedPath = normalizePath(p.path || '');
+          if (!normalizedPath || pageMap.has(normalizedPath)) return;
+          pageMap.set(normalizedPath, {
+            path: p.path,
+            conversions: p.conversions,
+            conversionRate: typeof p.conversionRate === 'string' ? parseFloat(p.conversionRate) : Number(p.conversionRate),
+            engagementRate: p.engagementRate,
+            sessions: p.sessions,
+            newUsers: p.newUsers,
+            ctr: gscCtrData.get(p.path)
+          });
+        });
+        topConvertingPages = Array.from(pageMap.values());
       } catch (e) { console.warn('[GA4] Konnte Top-Pages nicht laden:', getShortErrorMessage(e)); }
 
       try {

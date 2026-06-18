@@ -257,11 +257,13 @@ export interface LocalSeoLocationData extends LocalSeoLocationConfig {
 }
 
 export interface LocalSeoData {
+  calculationVersion?: number;
   locations: LocalSeoLocationData[];
   totals: {
     clicks: number;
     impressions: number;
     sessions: number;
+    newUsers?: number;
     conversions: number;
   };
 }

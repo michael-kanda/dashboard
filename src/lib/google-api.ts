@@ -1113,6 +1113,8 @@ export interface ConvertingPageData {
   path: string;
   conversions: number;
   sessions: number;
+  newUsers?: number;
+  engagementRate?: number;
   conversionRate: string;
 }
 
@@ -1126,6 +1128,101 @@ export async function getTopConvertingPages(
     `tcp:${propertyId}:${startDate}:${endDate}`,
     () => getTopConvertingPagesUncached(propertyId, startDate, endDate)
   );
+}
+
+export async function getLandingPageMetricsForPaths(
+  propertyId: string,
+  startDate: string,
+  endDate: string,
+  paths: string[]
+): Promise<ConvertingPageData[]> {
+  const normalizedPaths = Array.from(new Set(
+    paths
+      .map((path) => {
+        if (!path) return '';
+        try {
+          const parsed = path.startsWith('http') ? new URL(path).pathname : path;
+          const withSlash = parsed.startsWith('/') ? parsed : `/${parsed}`;
+          return withSlash.endsWith('/') && withSlash.length > 1 ? withSlash.slice(0, -1) : withSlash;
+        } catch {
+          const withSlash = path.startsWith('/') ? path : `/${path}`;
+          return withSlash.endsWith('/') && withSlash.length > 1 ? withSlash.slice(0, -1) : withSlash;
+        }
+      })
+      .filter(Boolean)
+  ));
+
+  if (normalizedPaths.length === 0) return [];
+
+  return withGa4ResultCache(
+    `lpm:${propertyId}:${startDate}:${endDate}:${normalizedPaths.sort().join('|')}`,
+    () => getLandingPageMetricsForPathsUncached(propertyId, startDate, endDate, normalizedPaths)
+  );
+}
+
+async function getLandingPageMetricsForPathsUncached(
+  propertyId: string,
+  startDate: string,
+  endDate: string,
+  paths: string[]
+): Promise<ConvertingPageData[]> {
+  const formattedPropertyId = propertyId.startsWith('properties/')
+    ? propertyId
+    : `properties/${propertyId}`;
+  const auth = createAuth();
+  const analytics = google.analyticsdata({ version: 'v1beta', auth });
+
+  try {
+    const response = await ga4RunReport(analytics, {
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        dimensions: [{ name: 'landingPagePlusQueryString' }],
+        metrics: [
+          { name: 'conversions' },
+          { name: 'sessions' },
+          { name: 'engagementRate' },
+          { name: 'newUsers' },
+        ],
+        dimensionFilter: {
+          orGroup: {
+            expressions: paths.map((path) => ({
+              filter: {
+                fieldName: 'landingPagePlusQueryString',
+                stringFilter: {
+                  matchType: 'CONTAINS',
+                  value: path,
+                  caseSensitive: false,
+                },
+              },
+            })),
+          },
+        },
+        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+        limit: '100',
+      },
+    } as any);
+
+    return (response.data.rows || []).map((row) => {
+      const conversions = parseInt(row.metricValues?.[0]?.value || '0', 10);
+      const sessions = parseInt(row.metricValues?.[1]?.value || '0', 10);
+      const engagementRate = parseFloat(row.metricValues?.[2]?.value || '0');
+      const newUsers = parseInt(row.metricValues?.[3]?.value || '0', 10);
+      const convRate = sessions > 0 ? ((conversions / sessions) * 100).toFixed(2) : '0';
+
+      return {
+        path: row.dimensionValues?.[0]?.value || '(not set)',
+        conversions,
+        sessions,
+        newUsers,
+        conversionRate: convRate,
+        engagementRate: parseFloat((engagementRate * 100).toFixed(2)),
+      };
+    });
+  } catch (error) {
+    console.warn('[GA4] Konnte Standort-Landingpages nicht laden:', error instanceof Error ? error.message : error);
+    return [];
+  }
 }
 
 async function getTopConvertingPagesUncached(
