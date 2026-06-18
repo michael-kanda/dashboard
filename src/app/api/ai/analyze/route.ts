@@ -261,6 +261,44 @@ export async function POST(req: NextRequest) {
         ? 'Report/Rollout noch nicht per API sichtbar'
         : 'nicht verfügbar oder zu wenig Daten';
 
+    let localSeoSection = '';
+    if (data.localSeo?.locations?.length) {
+      const localTotals = data.localSeo.totals;
+      const localLocations = data.localSeo.locations
+        .slice()
+        .sort((a: any, b: any) => (b.conversions - a.conversions) || (b.sessions - a.sessions) || (b.impressions - a.impressions))
+        .slice(0, 8)
+        .map((location: any, index: number) => {
+          const topQueries = location.topQueries?.slice(0, 3)
+            .map((q: any) => `"${q.query}" (${fmt(q.impressions)} Impr., ${fmt(q.clicks)} Klicks, Pos. ${q.position?.toFixed(1) ?? 'k.A.'})`)
+            .join('; ') || 'keine passenden lokalen GSC-Queries';
+          const landingPages = location.topLandingPages?.slice(0, 3)
+            .map((p: any) => `${p.path} (${fmt(p.newUsers || 0)} neue Besucher, ${fmt(p.sessions || 0)} Sessions, ${fmt(p.conversions || 0)} Conv.)`)
+            .join('; ') || 'keine Standort-Landingpage-Daten';
+
+          return `${index + 1}. ${location.name} (${[location.postalCode, location.city, location.country].filter(Boolean).join(', ') || 'ohne Standortangabe'})
+         GSC: ${fmt(location.clicks)} Klicks, ${fmt(location.impressions)} Impr., CTR ${location.ctr.toFixed(1)}%, Ø Pos. ${location.position?.toFixed(1) ?? 'k.A.'}
+         GA4: ${fmt(location.newUsers)} neue Besucher, ${fmt(location.sessions)} Sessions, ${fmt(location.conversions)} Conversions
+         Top-Queries: ${topQueries}
+         Landingpages: ${landingPages}`;
+        })
+        .join('\n');
+
+      localSeoSection = `
+      ===== LOKALE SICHTBARKEIT =====
+      Summen: ${fmt(localTotals.clicks)} GSC-Klicks | ${fmt(localTotals.impressions)} GSC-Impressionen | ${fmt(localTotals.newUsers || 0)} neue Besucher | ${fmt(localTotals.sessions)} Sessions | ${fmt(localTotals.conversions)} Conversions
+
+      STANDORTE:
+      ${localLocations}
+
+      DATENLOGIK LOKALE SICHTBARKEIT:
+      - GSC: Matching über Standortname, PLZ, Stadt, Keywords/Aliase und Standort-Landingpages.
+      - GA4: Neue Besucher, Sessions und Conversions kommen primär aus konfigurierten Standort-Landingpages.
+      - GA4-Stadtwerte sind nur Fallback, wenn keine Standort-Landingpages gepflegt sind.
+      - Nicht pauschal Stadt-Traffic als Standortleistung interpretieren.
+      `;
+    }
+
     const summaryData = `
       DOMAIN: ${project.domain}
       ZEITPLAN STATUS: ${timelineInfo}
@@ -312,6 +350,7 @@ export async function POST(req: NextRequest) {
       Google GenAI Sichtbarkeit = offizielle Search-Console-Impressions in generativen Google-Sucherlebnissen.
       KI-Traffic = echte Website-Besuche in GA4 von KI-Quellen.
       Prompt Tracking = Research/Proxy auf Basis von GSC-Queries und simulierten Decision-Prompts.
+      ${localSeoSection}
       
       INTERPRETATION:
       - ChatGPT/OpenAI = Nutzer haben in ChatGPT nach Infos gesucht und wurden auf diese Seite verwiesen
@@ -322,7 +361,7 @@ export async function POST(req: NextRequest) {
     `;
 
     // --- CACHE LOGIK ---
-    const cacheInputString = `${summaryData}|ROLE:${userRole}|ADS_ENABLED:${googleAdsEnabled}|V9_GOOGLE_GENAI_VISIBILITY`;
+    const cacheInputString = `${summaryData}|ROLE:${userRole}|ADS_ENABLED:${googleAdsEnabled}|V10_LOCAL_SEO_CONTEXT`;
     const inputHash = createHash(cacheInputString);
 
     const { rows: cacheRows } = await sql`
@@ -415,6 +454,11 @@ export async function POST(req: NextRequest) {
            <ul...>
              <li...>Kosten, Klicks, CPC, Conversions als KPI-Liste.
            </ul...>` : ''}
+        ${localSeoSection ? `3d. <h4...>Lokale Sichtbarkeit:</h4>
+           <ul...>
+             <li...>Standorte mit GSC-Klicks/Impressionen, neuen Besuchern, Sessions und Conversions zusammenfassen.
+             <li...>Den stärksten und schwächsten Standort klar benennen.
+           </ul...>` : ''}
         4. VISUAL ENDING: ${visualSuccessTemplate}
         
         SPALTE 2 (Analyse):
@@ -436,6 +480,12 @@ export async function POST(req: NextRequest) {
            - CPC-Effizienz pro Kampagne
            - Welche Kampagnen performen gut/schlecht?
            - Empfehlungen zur Budget-Optimierung` : ''}
+        ${localSeoSection ? `7. <h4...>Lokale Sichtbarkeit:</h4>
+           Analysiere die LOKALE SICHTBARKEIT Daten:
+           - Standortvergleich nach GSC-Signalen und GA4-Landingpage-Signalen
+           - Welche Standort-Landingpage optimiert werden sollte
+           - Datenluecken, falls Standorte keine eigenen Landingpages oder unklare PLZ/Keywords haben
+           - GSC und GA4 klar getrennt erklaeren` : ''}
       `;
     } else {
       // === KUNDEN MODUS ===
@@ -454,6 +504,11 @@ export async function POST(req: NextRequest) {
         ${googleAdsSection ? `2b. <h4...>Ihre Google Werbung (Überblick):</h4>
            <ul...>
              <li...>Investition und erzielte Klicks/Conversions - kundenfreundlich formuliert.
+           </ul...>` : ''}
+        ${localSeoSection ? `2c. <h4...>Ihre lokale Sichtbarkeit:</h4>
+           <ul...>
+             <li...>Standorte kundenfreundlich vergleichen.
+             <li...>Neue Besucher und Anfragen/Conversions pro Standort einfach erklaeren.
            </ul...>` : ''}
         3. VISUAL ENDING: ${visualSuccessTemplate}
         
@@ -474,6 +529,11 @@ export async function POST(req: NextRequest) {
            - Wie viel wurde investiert und was kam dabei heraus (Conversions)
            - Welche Kampagnen besonders gut funktioniert haben
            - "Ihre Werbung arbeitet für Sie" - positiver Rahmen` : ''}
+        ${localSeoSection ? `7. <h4...>Ihre Standorte:</h4>
+           Erklaere lokale Sichtbarkeit positiv und verstaendlich:
+           - Welche Standorte bereits Nachfrage erzeugen
+           - Wo eigene Standort-Landingpages oder lokale Inhalte helfen
+           - Keine technischen Details ueber Thresholding, aber klare naechste Schritte` : ''}
       `;
     }
 
