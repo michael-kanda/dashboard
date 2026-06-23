@@ -5,6 +5,7 @@ import { type User } from '@/lib/schemas';
 import {
   getSearchConsoleData,
   getGoogleGenAiPerformanceData,
+  GOOGLE_GENAI_DATA_VERSION,
   getAnalyticsData,
   getTopQueries,
   getAiTrafficData,
@@ -343,7 +344,8 @@ export async function getOrFetchGoogleData(
         const promptCacheIsCurrent =
           !cacheEntry.data?.promptTracking ||
           cachedPromptMinWords === DEFAULT_PROMPT_TRACKING_MIN_WORDS;
-        const genAiCacheIsCurrent = !user.gsc_site_url || cacheEntry.data?.googleGenAi !== undefined;
+        const cachedGenAiVersion = cacheEntry.data?.googleGenAi?.dataVersion;
+        const genAiCacheIsCurrent = !user.gsc_site_url || cachedGenAiVersion === GOOGLE_GENAI_DATA_VERSION;
         const cachedLocalSeoLocations = cacheEntry.data?.localSeo?.locations;
         const localSeoCacheIsCurrent =
           !Array.isArray(cachedLocalSeoLocations) ||
@@ -367,7 +369,7 @@ export async function getOrFetchGoogleData(
           console.log(`[Google Cache] 🔄 MISS wegen Prompt-Tracking-Schwelle (${cachedPromptMinWords} → ${DEFAULT_PROMPT_TRACKING_MIN_WORDS})`);
         }
         if (!genAiCacheIsCurrent) {
-          console.log('[Google Cache] 🔄 MISS wegen fehlendem Google-GenAI-Datenblock');
+          console.log(`[Google Cache] 🔄 MISS wegen Google-GenAI-Migration (${cachedGenAiVersion ?? 'kein Block'} → ${GOOGLE_GENAI_DATA_VERSION})`);
         }
         if (!localSeoCacheIsCurrent) {
           console.log('[Google Cache] 🔄 MISS wegen Local-SEO-NewUsers-Migration');

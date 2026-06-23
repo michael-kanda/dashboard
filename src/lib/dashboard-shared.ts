@@ -113,6 +113,7 @@ export interface GoogleGenAiPerformanceData {
   devices: GoogleGenAiBreakdownItem[];
   detectedAppearances: string[];
   source: 'gsc-search-appearance' | 'gsc-report-rollout';
+  dataVersion?: number;
 }
 
 // ── Prompt Tracking Types ─────────────────────────────────────────

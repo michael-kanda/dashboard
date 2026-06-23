@@ -536,17 +536,27 @@ export async function getSearchConsoleData(
   }
 }
 
+export const GOOGLE_GENAI_DATA_VERSION = 2;
+
 const GEN_AI_SEARCH_APPEARANCE_MATCHERS = [
   'ai overview',
   'ai overviews',
   'ai mode',
   'generative ai',
+  'generative ki',
   'gen ai',
   'search generative',
+  'auf generativer ki basierende funktionen',
 ];
 
 function isGenAiSearchAppearance(value: string): boolean {
-  const normalized = value.toLowerCase();
+  const normalized = value
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/[^a-z0-9äöüß]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
   return GEN_AI_SEARCH_APPEARANCE_MATCHERS.some((needle) => normalized.includes(needle));
 }
 
@@ -561,6 +571,7 @@ function emptyGoogleGenAiPerformance(message: string): GoogleGenAiPerformanceDat
     devices: [],
     detectedAppearances: [],
     source: 'gsc-report-rollout',
+    dataVersion: GOOGLE_GENAI_DATA_VERSION,
   };
 }
 
@@ -630,13 +641,16 @@ export async function getGoogleGenAiPerformanceData(
       .map((row) => row.keys?.[0])
       .filter((value): value is string => typeof value === 'string' && value.length > 0);
 
-    const genAiAppearances = allAppearances.filter(isGenAiSearchAppearance);
+    const genAiAppearances = Array.from(new Set(allAppearances.filter(isGenAiSearchAppearance)));
 
     if (genAiAppearances.length === 0) {
+      console.info('[Google GenAI] Keine GenAI-Search-Appearance erkannt. GSC lieferte:', allAppearances);
       return emptyGoogleGenAiPerformance(
         'Der Google-GenAI-Report ist fuer diese Property noch nicht per API/Search-Appearance sichtbar oder es gibt zu wenige Impressionen.'
       );
     }
+
+    console.info('[Google GenAI] Erkannte Search-Appearances:', genAiAppearances);
 
     const [dates, pages, countries, devices] = await Promise.all([
       queryGenAiDimension(searchconsole, siteUrl, startDate, endDate, genAiAppearances, 'date'),
@@ -666,6 +680,7 @@ export async function getGoogleGenAiPerformanceData(
       devices: devices.slice(0, 10),
       detectedAppearances: genAiAppearances,
       source: 'gsc-search-appearance',
+      dataVersion: GOOGLE_GENAI_DATA_VERSION,
     };
   } catch (error: any) {
     console.warn('[Google GenAI] Report/API nicht verfuegbar:', error?.message || error);
