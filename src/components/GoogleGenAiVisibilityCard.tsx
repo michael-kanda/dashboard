@@ -281,9 +281,15 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
           ) : null}
 
           <div className="min-w-0">
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">Top-Seiten in Google GenAI</p>
-            <div className={cn('grid gap-2', hasTrendData ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
-              {topPages.slice(0, hasTrendData ? 5 : 10).map((page) => (
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Top-Seiten in Google GenAI</p>
+              <span className="text-[11px] font-semibold text-muted tabular-nums">{topPages.length}</span>
+            </div>
+            <div className={cn(
+              'grid gap-2 overflow-y-auto pr-1',
+              hasTrendData ? 'max-h-[260px] grid-cols-1' : 'max-h-[360px] grid-cols-1 md:grid-cols-2'
+            )}>
+              {topPages.map((page) => (
                 <div key={page.key} className="flex items-center justify-between gap-3 rounded-md bg-surface-secondary px-3 py-2">
                   <span className="truncate font-mono text-xs text-body" title={page.key}>
                     {page.key}
