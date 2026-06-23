@@ -75,6 +75,7 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
     date: point.date,
     impressions: point.impressions,
   }));
+  const hasTrendData = chartData.length > 0;
   const hasData = data?.status === 'available' && data.totalImpressions > 0;
   const topPages = data?.topPages || [];
   const isManualExport = data?.source === 'gsc-manual-export';
@@ -230,57 +231,59 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
           </div>
         </div>
       ) : (
-        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.35fr_1fr]">
-          <div className="h-[260px] min-w-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 8, right: 10, left: -18, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="googleGenAiArea" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4285F4" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#4285F4" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--dp-chart-grid)" />
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={(value) => format(new Date(value), 'd.MMM', { locale: de })}
-                  tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
-                  axisLine={false}
-                  tickLine={false}
-                  minTickGap={36}
-                />
-                <YAxis
-                  tickFormatter={(value) => formatCompact(Number(value))}
-                  tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: 8,
-                    border: '1px solid var(--dp-border)',
-                    background: 'var(--dp-surface)',
-                    color: 'var(--dp-text)',
-                  }}
-                  labelFormatter={(value) => format(new Date(value), 'dd. MMMM yyyy', { locale: de })}
-                  formatter={(value: any) => [new Intl.NumberFormat('de-DE').format(Number(value)), 'GenAI-Impressions']}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="impressions"
-                  stroke="#4285F4"
-                  strokeWidth={3}
-                  fill="url(#googleGenAiArea)"
-                  activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff', fill: '#4285F4' }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+        <div className={cn('mt-6 grid grid-cols-1 gap-6', hasTrendData ? 'lg:grid-cols-[1.35fr_1fr]' : '')}>
+          {hasTrendData ? (
+            <div className="h-[260px] min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 8, right: 10, left: -18, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="googleGenAiArea" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4285F4" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#4285F4" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--dp-chart-grid)" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(value) => format(new Date(value), 'd.MMM', { locale: de })}
+                    tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
+                    axisLine={false}
+                    tickLine={false}
+                    minTickGap={36}
+                  />
+                  <YAxis
+                    tickFormatter={(value) => formatCompact(Number(value))}
+                    tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: 8,
+                      border: '1px solid var(--dp-border)',
+                      background: 'var(--dp-surface)',
+                      color: 'var(--dp-text)',
+                    }}
+                    labelFormatter={(value) => format(new Date(value), 'dd. MMMM yyyy', { locale: de })}
+                    formatter={(value: any) => [new Intl.NumberFormat('de-DE').format(Number(value)), 'GenAI-Impressions']}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="impressions"
+                    stroke="#4285F4"
+                    strokeWidth={3}
+                    fill="url(#googleGenAiArea)"
+                    activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff', fill: '#4285F4' }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : null}
 
           <div className="min-w-0">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">Top-Seiten in Google GenAI</p>
-            <div className="space-y-2">
-              {topPages.slice(0, 5).map((page) => (
+            <div className={cn('grid gap-2', hasTrendData ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
+              {topPages.slice(0, hasTrendData ? 5 : 10).map((page) => (
                 <div key={page.key} className="flex items-center justify-between gap-3 rounded-md bg-surface-secondary px-3 py-2">
                   <span className="truncate font-mono text-xs text-body" title={page.key}>
                     {page.key}
