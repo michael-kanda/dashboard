@@ -63,7 +63,10 @@ function parseCsvRows(csv: string): { topPages: GoogleGenAiBreakdownItem[]; tota
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => line.split(line.includes(';') ? ';' : ',').map((cell) => cell.trim().replace(/^"|"$/g, '')));
+    .map((line) => {
+      const delimiter = line.includes('\t') ? '\t' : line.includes(';') ? ';' : ',';
+      return line.split(delimiter).map((cell) => cell.trim().replace(/^"|"$/g, ''));
+    });
 
   const header = rows[0]?.map((cell) => cell.toLowerCase()) || [];
   const pageIndex = header.findIndex((cell) => ['seite', 'seiten', 'page', 'url'].some((needle) => cell.includes(needle)));

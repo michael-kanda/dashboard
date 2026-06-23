@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -17,6 +18,8 @@ import { cn } from '@/lib/utils';
 interface GoogleGenAiVisibilityCardProps {
   data?: GoogleGenAiPerformanceData;
   className?: string;
+  projectId?: string;
+  userRole?: string;
 }
 
 function GoogleCleanUnderline({ id }: { id: string }) {
@@ -63,7 +66,11 @@ function ChangeBadge({ change }: { change?: number }) {
   );
 }
 
-export default function GoogleGenAiVisibilityCard({ data, className }: GoogleGenAiVisibilityCardProps) {
+export default function GoogleGenAiVisibilityCard({ data, className, projectId, userRole }: GoogleGenAiVisibilityCardProps) {
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
   const chartData = (data?.trend || []).map((point) => ({
     date: point.date,
     impressions: point.impressions,
@@ -71,6 +78,53 @@ export default function GoogleGenAiVisibilityCard({ data, className }: GoogleGen
   const hasData = data?.status === 'available' && data.totalImpressions > 0;
   const topPages = data?.topPages || [];
   const isManualExport = data?.source === 'gsc-manual-export';
+  const canManageExport = Boolean(projectId && (userRole === 'ADMIN' || userRole === 'SUPERADMIN'));
+
+  async function saveManualExport() {
+    if (!projectId || !importText.trim()) return;
+    setIsImporting(true);
+    setImportStatus(null);
+    try {
+      let payload: any = { csv: importText };
+      const trimmed = importText.trim();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        payload = JSON.parse(trimmed);
+      }
+
+      const response = await fetch(`/api/projects/${projectId}/google-genai-manual`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: payload }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.message || 'Import fehlgeschlagen');
+      setImportStatus('GSC-Export gespeichert. Dashboard wird neu geladen...');
+      window.location.reload();
+    } catch (error: any) {
+      setImportStatus(error?.message || 'Import fehlgeschlagen');
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
+  async function deleteManualExport() {
+    if (!projectId) return;
+    setIsImporting(true);
+    setImportStatus(null);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/google-genai-manual`, {
+        method: 'DELETE',
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.message || 'Löschen fehlgeschlagen');
+      setImportStatus('Manueller Export gelöscht. Dashboard wird neu geladen...');
+      window.location.reload();
+    } catch (error: any) {
+      setImportStatus(error?.message || 'Löschen fehlgeschlagen');
+    } finally {
+      setIsImporting(false);
+    }
+  }
 
   return (
     <div className={cn('dashboard-widget-surface rounded-lg p-6', className)}>
@@ -99,18 +153,72 @@ export default function GoogleGenAiVisibilityCard({ data, className }: GoogleGen
           </div>
         </div>
 
-        <div className="rounded-lg bg-surface-secondary px-4 py-3">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">GenAI-Impressions</p>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-semibold text-heading tabular-nums">
-                {formatCompact(data?.totalImpressions || 0)}
-              </span>
-              <ChangeBadge change={data?.impressionsChange} />
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <div className="rounded-lg bg-surface-secondary px-4 py-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">GenAI-Impressions</p>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-semibold text-heading tabular-nums">
+                  {formatCompact(data?.totalImpressions || 0)}
+                </span>
+                <ChangeBadge change={data?.impressionsChange} />
+              </div>
+            </div>
+          </div>
+          {canManageExport ? (
+            <div className="flex flex-wrap justify-start gap-2 sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setShowImport((value) => !value)}
+                className="rounded-md border border-border-subtle bg-surface px-3 py-1.5 text-xs font-semibold text-body transition hover:bg-surface-secondary"
+              >
+                {showImport ? 'Import schließen' : 'GSC-Export importieren'}
+              </button>
+              {isManualExport ? (
+                <button
+                  type="button"
+                  onClick={deleteManualExport}
+                  disabled={isImporting}
+                  className="rounded-md border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200"
+                >
+                  Export löschen
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {canManageExport && showImport ? (
+        <div className="mt-5 rounded-lg border border-border-subtle bg-surface-secondary p-4">
+          <div className="flex flex-col gap-3">
+            <div>
+              <p className="text-sm font-semibold text-heading">GSC GenAI-Export einfügen</p>
+              <p className="mt-1 text-xs text-muted">
+                CSV/TSV aus dem GSC-Report oder JSON mit <code>totalImpressions</code>, <code>topPages</code> und optional <code>trend</code>.
+              </p>
+            </div>
+            <textarea
+              value={importText}
+              onChange={(event) => setImportText(event.target.value)}
+              rows={7}
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 font-mono text-xs text-body outline-none focus:border-blue-500"
+              placeholder={'Seite\tImpressionen\nhttps://anwalt-hofer.at/fehlende-vignette-strafe-und-einspruch/\t15237'}
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={saveManualExport}
+                disabled={isImporting || !importText.trim()}
+                className="rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+              >
+                {isImporting ? 'Speichert...' : 'Export speichern'}
+              </button>
+              {importStatus ? <span className="text-xs text-muted">{importStatus}</span> : null}
             </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {!hasData ? (
         <div className="mt-5 rounded-lg border border-dashed border-border-subtle bg-surface-secondary p-4">

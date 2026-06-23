@@ -467,7 +467,7 @@ export default function ProjectDashboard({
 
         <Trace at="GoogleGenAiVisibilityCard?" />
         <div id="section-google-genai" className="mt-8 scroll-mt-20 print:hidden">
-          <GoogleGenAiVisibilityCard data={data.googleGenAi} />
+          <GoogleGenAiVisibilityCard data={data.googleGenAi} projectId={projectId} userRole={userRole} />
         </div>
 
         {/* KI-Traffic Sektion mit Toggle für Detail-Ansicht */}
