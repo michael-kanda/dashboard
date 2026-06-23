@@ -16,6 +16,36 @@ interface DiagnoseResult {
   details?: any;
 }
 
+const GEN_AI_SEARCH_APPEARANCE_MATCHERS = [
+  'ai overview',
+  'ai overviews',
+  'ai mode',
+  'generative ai',
+  'generative ki',
+  'gen ai',
+  'search generative',
+  'auf generativer ki basierende funktionen',
+];
+
+function normalizeSearchAppearance(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/[^a-z0-9äöüß]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isGenAiSearchAppearance(value: string): boolean {
+  const normalized = normalizeSearchAppearance(value);
+  return GEN_AI_SEARCH_APPEARANCE_MATCHERS.some((needle) => normalized.includes(needle));
+}
+
+function getDateParam(searchParams: URLSearchParams, key: string): string | null {
+  const value = searchParams.get(key);
+  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+}
+
 function createAuth(): JWT | null {
   try {
     if (process.env.GOOGLE_CREDENTIALS) {
@@ -58,6 +88,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const shouldRunGenAiDiagnosis = searchParams.get('genAi') !== '0';
 
     // ==========================================
     // SCHRITT 1: Credentials prüfen
@@ -296,6 +327,120 @@ export async function GET(request: NextRequest) {
                   ]
                 }
               });
+            }
+
+            if (shouldRunGenAiDiagnosis) {
+              const endDateParam = getDateParam(searchParams, 'endDate');
+              const startDateParam = getDateParam(searchParams, 'startDate');
+              const genAiEndDate = endDateParam
+                ? new Date(`${endDateParam}T00:00:00Z`)
+                : new Date();
+              if (!endDateParam) genAiEndDate.setDate(genAiEndDate.getDate() - 2);
+              const genAiStartDate = startDateParam
+                ? new Date(`${startDateParam}T00:00:00Z`)
+                : new Date(genAiEndDate);
+              if (!startDateParam) genAiStartDate.setDate(genAiStartDate.getDate() - 27);
+
+              const genAiStartStr = genAiStartDate.toISOString().split('T')[0];
+              const genAiEndStr = genAiEndDate.toISOString().split('T')[0];
+
+              try {
+                const [appearanceResponse, dateAppearanceResponse, pageAppearanceResponse, topPagesResponse] = await Promise.all([
+                  searchconsole.searchanalytics.query({
+                    siteUrl: gscUrl,
+                    requestBody: {
+                      startDate: genAiStartStr,
+                      endDate: genAiEndStr,
+                      dimensions: ['searchAppearance'],
+                      rowLimit: 25000,
+                      type: 'web',
+                    },
+                  }),
+                  searchconsole.searchanalytics.query({
+                    siteUrl: gscUrl,
+                    requestBody: {
+                      startDate: genAiStartStr,
+                      endDate: genAiEndStr,
+                      dimensions: ['date', 'searchAppearance'],
+                      rowLimit: 25000,
+                      type: 'web',
+                    },
+                  }),
+                  searchconsole.searchanalytics.query({
+                    siteUrl: gscUrl,
+                    requestBody: {
+                      startDate: genAiStartStr,
+                      endDate: genAiEndStr,
+                      dimensions: ['page', 'searchAppearance'],
+                      rowLimit: 25000,
+                      type: 'web',
+                    },
+                  }),
+                  searchconsole.searchanalytics.query({
+                    siteUrl: gscUrl,
+                    requestBody: {
+                      startDate: genAiStartStr,
+                      endDate: genAiEndStr,
+                      dimensions: ['page'],
+                      rowLimit: 20,
+                      type: 'web',
+                    },
+                  }),
+                ]);
+
+                const appearanceRows = appearanceResponse.data.rows || [];
+                const allAppearances = appearanceRows
+                  .map((row) => row.keys?.[0])
+                  .filter((value): value is string => typeof value === 'string' && value.length > 0);
+                const detectedGenAiAppearances = Array.from(new Set(allAppearances.filter(isGenAiSearchAppearance)));
+                const dateAppearanceRows = dateAppearanceResponse.data.rows || [];
+                const pageAppearanceRows = pageAppearanceResponse.data.rows || [];
+                const genAiDateRows = dateAppearanceRows.filter((row) => isGenAiSearchAppearance(String(row.keys?.[1] || '')));
+                const genAiPageRows = pageAppearanceRows.filter((row) => isGenAiSearchAppearance(String(row.keys?.[1] || '')));
+                const genAiImpressionsFromDates = genAiDateRows.reduce((sum, row) => sum + (row.impressions || 0), 0);
+
+                results.push({
+                  step: '8. GenAI Performance Report / Search-Appearance',
+                  status: detectedGenAiAppearances.length > 0 || genAiImpressionsFromDates > 0 ? 'ok' : 'warning',
+                  message: detectedGenAiAppearances.length > 0 || genAiImpressionsFromDates > 0
+                    ? `✅ GenAI-Daten per Search Analytics API erkannt (${genAiImpressionsFromDates.toLocaleString('de-DE')} Impr.)`
+                    : '⚠️ Normale GSC-Daten sind abrufbar, aber die API liefert keine GenAI-Search-Appearance-Werte. Der neue GSC-Report kann in der UI sichtbar sein, ohne bereits per Search Analytics API verfügbar zu sein.',
+                  details: {
+                    dateRange: `${genAiStartStr} bis ${genAiEndStr}`,
+                    testedProperty: gscUrl,
+                    allSearchAppearances: allAppearances.map((value) => ({
+                      raw: value,
+                      normalized: normalizeSearchAppearance(value),
+                      impressions: appearanceRows.find((row) => row.keys?.[0] === value)?.impressions || 0,
+                    })),
+                    detectedGenAiAppearances,
+                    genAiDateRows: genAiDateRows.slice(0, 20),
+                    genAiPageRows: genAiPageRows.slice(0, 20),
+                    ordinaryTopPages: (topPagesResponse.data.rows || []).slice(0, 10),
+                    rowCounts: {
+                      searchAppearanceRows: appearanceRows.length,
+                      dateSearchAppearanceRows: dateAppearanceRows.length,
+                      pageSearchAppearanceRows: pageAppearanceRows.length,
+                      ordinaryTopPageRows: topPagesResponse.data.rows?.length || 0,
+                    },
+                    interpretation: detectedGenAiAppearances.length > 0 || genAiImpressionsFromDates > 0
+                      ? 'Dashboard sollte diese Werte anzeigen. Falls nicht, Cache/Datumsbereich prüfen.'
+                      : 'Wahrscheinlich stellt Google den neuen GenAI-Report für diese Property aktuell nur in der Search-Console-Oberfläche beziehungsweise im Export bereit, nicht in der Search Analytics API.',
+                  }
+                });
+              } catch (e: any) {
+                results.push({
+                  step: '8. GenAI Performance Report / Search-Appearance',
+                  status: 'error',
+                  message: '❌ GenAI-Diagnoseabfrage fehlgeschlagen',
+                  details: {
+                    dateRange: `${genAiStartStr} bis ${genAiEndStr}`,
+                    error: e.message,
+                    code: e.response?.status,
+                    reason: e.response?.data?.error?.message,
+                  }
+                });
+              }
             }
           }
         }
