@@ -16,6 +16,14 @@ interface DiagnoseResult {
   details?: any;
 }
 
+interface GscDiagnosticRow {
+  keys?: string[];
+  clicks?: number;
+  impressions?: number;
+  ctr?: number;
+  position?: number;
+}
+
 const GEN_AI_SEARCH_APPEARANCE_MATCHERS = [
   'ai overview',
   'ai overviews',
@@ -54,7 +62,7 @@ async function queryGscDimensionWithAppearanceFilter(
   dimension: 'date' | 'page',
   appearance: string,
   rowLimit = 25000,
-) {
+): Promise<GscDiagnosticRow[]> {
   const response = await searchconsole.searchanalytics.query({
     siteUrl,
     requestBody: {
@@ -74,7 +82,7 @@ async function queryGscDimensionWithAppearanceFilter(
     },
   });
 
-  return response.data.rows || [];
+  return (response.data.rows || []) as GscDiagnosticRow[];
 }
 
 function createAuth(): JWT | null {
