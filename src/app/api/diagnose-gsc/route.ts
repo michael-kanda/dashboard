@@ -46,6 +46,37 @@ function getDateParam(searchParams: URLSearchParams, key: string): string | null
   return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
 }
 
+async function queryGscDimensionWithAppearanceFilter(
+  searchconsole: any,
+  siteUrl: string,
+  startDate: string,
+  endDate: string,
+  dimension: 'date' | 'page',
+  appearance: string,
+  rowLimit = 25000,
+) {
+  const response = await searchconsole.searchanalytics.query({
+    siteUrl,
+    requestBody: {
+      startDate,
+      endDate,
+      dimensions: [dimension],
+      rowLimit,
+      type: 'web',
+      dimensionFilterGroups: [{
+        groupType: 'and',
+        filters: [{
+          dimension: 'searchAppearance',
+          operator: 'equals',
+          expression: appearance,
+        }],
+      }],
+    },
+  });
+
+  return response.data.rows || [];
+}
+
 function createAuth(): JWT | null {
   try {
     if (process.env.GOOGLE_CREDENTIALS) {
@@ -345,33 +376,13 @@ export async function GET(request: NextRequest) {
               const genAiEndStr = genAiEndDate.toISOString().split('T')[0];
 
               try {
-                const [appearanceResponse, dateAppearanceResponse, pageAppearanceResponse, topPagesResponse] = await Promise.all([
+                const [appearanceResponse, topPagesResponse] = await Promise.all([
                   searchconsole.searchanalytics.query({
                     siteUrl: gscUrl,
                     requestBody: {
                       startDate: genAiStartStr,
                       endDate: genAiEndStr,
                       dimensions: ['searchAppearance'],
-                      rowLimit: 25000,
-                      type: 'web',
-                    },
-                  }),
-                  searchconsole.searchanalytics.query({
-                    siteUrl: gscUrl,
-                    requestBody: {
-                      startDate: genAiStartStr,
-                      endDate: genAiEndStr,
-                      dimensions: ['date', 'searchAppearance'],
-                      rowLimit: 25000,
-                      type: 'web',
-                    },
-                  }),
-                  searchconsole.searchanalytics.query({
-                    siteUrl: gscUrl,
-                    requestBody: {
-                      startDate: genAiStartStr,
-                      endDate: genAiEndStr,
-                      dimensions: ['page', 'searchAppearance'],
                       rowLimit: 25000,
                       type: 'web',
                     },
@@ -393,10 +404,39 @@ export async function GET(request: NextRequest) {
                   .map((row) => row.keys?.[0])
                   .filter((value): value is string => typeof value === 'string' && value.length > 0);
                 const detectedGenAiAppearances = Array.from(new Set(allAppearances.filter(isGenAiSearchAppearance)));
-                const dateAppearanceRows = dateAppearanceResponse.data.rows || [];
-                const pageAppearanceRows = pageAppearanceResponse.data.rows || [];
-                const genAiDateRows = dateAppearanceRows.filter((row) => isGenAiSearchAppearance(String(row.keys?.[1] || '')));
-                const genAiPageRows = pageAppearanceRows.filter((row) => isGenAiSearchAppearance(String(row.keys?.[1] || '')));
+                const dateRowsByAppearance = await Promise.all(
+                  detectedGenAiAppearances.map(async (appearance) => ({
+                    appearance,
+                    rows: await queryGscDimensionWithAppearanceFilter(
+                      searchconsole,
+                      gscUrl,
+                      genAiStartStr,
+                      genAiEndStr,
+                      'date',
+                      appearance,
+                    ),
+                  }))
+                );
+                const pageRowsByAppearance = await Promise.all(
+                  detectedGenAiAppearances.map(async (appearance) => ({
+                    appearance,
+                    rows: await queryGscDimensionWithAppearanceFilter(
+                      searchconsole,
+                      gscUrl,
+                      genAiStartStr,
+                      genAiEndStr,
+                      'page',
+                      appearance,
+                      100,
+                    ),
+                  }))
+                );
+                const genAiDateRows = dateRowsByAppearance.flatMap(({ appearance, rows }) =>
+                  rows.map((row) => ({ ...row, appearance }))
+                );
+                const genAiPageRows = pageRowsByAppearance.flatMap(({ appearance, rows }) =>
+                  rows.map((row) => ({ ...row, appearance }))
+                );
                 const genAiImpressionsFromDates = genAiDateRows.reduce((sum, row) => sum + (row.impressions || 0), 0);
 
                 results.push({
@@ -419,8 +459,8 @@ export async function GET(request: NextRequest) {
                     ordinaryTopPages: (topPagesResponse.data.rows || []).slice(0, 10),
                     rowCounts: {
                       searchAppearanceRows: appearanceRows.length,
-                      dateSearchAppearanceRows: dateAppearanceRows.length,
-                      pageSearchAppearanceRows: pageAppearanceRows.length,
+                      genAiDateRows: genAiDateRows.length,
+                      genAiPageRows: genAiPageRows.length,
                       ordinaryTopPageRows: topPagesResponse.data.rows?.length || 0,
                     },
                     interpretation: detectedGenAiAppearances.length > 0 || genAiImpressionsFromDates > 0
@@ -461,6 +501,9 @@ export async function GET(request: NextRequest) {
     // ==========================================
     const hasErrors = results.some(r => r.status === 'error');
     const hasWarnings = results.some(r => r.status === 'warning');
+    const hasAccessOrAuthErrors = results.some(r =>
+      r.status === 'error' && !r.step.includes('GenAI')
+    );
 
     return NextResponse.json({
       summary: {
@@ -470,7 +513,7 @@ export async function GET(request: NextRequest) {
         serviceAccountEmail: serviceEmail,
       },
       results,
-      quickFix: hasErrors ? `
+      quickFix: hasAccessOrAuthErrors ? `
         === SCHNELLE LÖSUNG ===
         
         1. Service Account berechtigen:
