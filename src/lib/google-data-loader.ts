@@ -22,6 +22,7 @@ import {
   type GoogleAdsData,
 } from '@/lib/google-api';
 import { detectBrandKeywords } from '@/lib/prompt-tracking/brand-detector';
+import { normalizeManualGoogleGenAiData } from '@/lib/google-genai-manual';
 import { getBingData } from '@/lib/bing-api';
 import {
   ProjectDashboardData,
@@ -455,6 +456,12 @@ export async function getOrFetchGoogleData(
       } catch (e: any) {
         console.warn('[Google GenAI] Fehler (ignoriert):', e);
         apiErrors.genAi = e?.message || 'Google GenAI Report nicht verfügbar';
+      }
+
+      const manualGenAi = normalizeManualGoogleGenAiData((user as any).google_genai_manual_data);
+      if (manualGenAi && (!googleGenAi || googleGenAi.status !== 'available' || googleGenAi.totalImpressions <= 0)) {
+        googleGenAi = manualGenAi;
+        console.info('[Google GenAI] Nutze manuellen GSC-Export-Fallback.');
       }
 
       try {

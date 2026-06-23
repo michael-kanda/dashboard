@@ -70,6 +70,7 @@ export default function GoogleGenAiVisibilityCard({ data, className }: GoogleGen
   }));
   const hasData = data?.status === 'available' && data.totalImpressions > 0;
   const topPages = data?.topPages || [];
+  const isManualExport = data?.source === 'gsc-manual-export';
 
   return (
     <div className={cn('dashboard-widget-surface rounded-lg p-6', className)}>
@@ -79,10 +80,16 @@ export default function GoogleGenAiVisibilityCard({ data, className }: GoogleGen
           <GoogleCleanUnderline id="google-clean-gradient-genai-visibility" />
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
             <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded font-semibold">
-              Quelle: Search Console
+              Quelle: {isManualExport ? 'GSC Export' : 'Search Console'}
             </span>
             <span className="text-faint">•</span>
             <span className="text-muted">AI Overviews / AI Mode</span>
+            {isManualExport && data?.manualSource?.dateRange ? (
+              <>
+                <span className="text-faint">•</span>
+                <span className="text-muted">{data.manualSource.dateRange}</span>
+              </>
+            ) : null}
             {data?.detectedAppearances?.length ? (
               <>
                 <span className="text-faint">•</span>
@@ -181,7 +188,9 @@ export default function GoogleGenAiVisibilityCard({ data, className }: GoogleGen
       )}
 
       <p className="mt-5 text-xs leading-relaxed text-muted">
-        Dieser Block misst offizielle Google-Sichtbarkeit in generativen Search-Features. Er ist nicht identisch mit GA4-KI-Traffic und ersetzt nicht das Prompt Research, sondern ordnet es mit belastbareren Search-Console-Daten ein.
+        {isManualExport
+          ? 'Dieser Block nutzt einen manuell gespeicherten Search-Console-Export, weil Google die GenAI-Reportdaten fuer diese Property noch nicht ueber die Search Analytics API ausliefert.'
+          : 'Dieser Block misst offizielle Google-Sichtbarkeit in generativen Search-Features. Er ist nicht identisch mit GA4-KI-Traffic und ersetzt nicht das Prompt Research, sondern ordnet es mit belastbareren Search-Console-Daten ein.'}
       </p>
     </div>
   );

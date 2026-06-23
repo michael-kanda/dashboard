@@ -42,6 +42,7 @@ export const UserSchema = z.object({
   // null = Heuristik (Domain-Wurzel) wird verwendet
   brand_keywords: z.array(z.string()).nullable().optional(),
   dashboard_info_text: z.string().nullable().optional(),
+  google_genai_manual_data: z.any().nullable().optional(),
   settings_show_prompt_tracking: z.boolean().nullable().optional().default(false),
   project_locations: z.array(z.object({
     id: z.string().optional(),

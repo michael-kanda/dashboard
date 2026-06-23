@@ -26,6 +26,7 @@ interface ExtendedUser extends User {
   settings_show_google_ads?: boolean;
   settings_show_prompt_tracking: boolean | null;
   dashboard_info_text?: string | null;
+  google_genai_manual_data?: any | null;
   project_locations?: any[] | null;
   google_ads_sheet_id?: string;  // ← NEU
 }
@@ -34,6 +35,7 @@ async function loadData(projectId: string, dateRange: string) {
   try {
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dashboard_info_text TEXT NULL`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_genai_manual_data JSONB NULL`;
 
     const { rows } = await sql`
       SELECT
@@ -55,6 +57,7 @@ async function loadData(projectId: string, dateRange: string) {
         u.settings_show_google_ads,
         u.settings_show_prompt_tracking,
         u.dashboard_info_text,
+        u.google_genai_manual_data,
         u.data_max_enabled, 
         u.brand_keywords,
         COALESCE(u.project_locations, '[]'::jsonb) as project_locations,

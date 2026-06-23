@@ -112,8 +112,12 @@ export interface GoogleGenAiPerformanceData {
   countries: GoogleGenAiBreakdownItem[];
   devices: GoogleGenAiBreakdownItem[];
   detectedAppearances: string[];
-  source: 'gsc-search-appearance' | 'gsc-report-rollout';
+  source: 'gsc-search-appearance' | 'gsc-report-rollout' | 'gsc-manual-export';
   dataVersion?: number;
+  manualSource?: {
+    importedAt?: string;
+    dateRange?: string;
+  };
 }
 
 // ── Prompt Tracking Types ─────────────────────────────────────────

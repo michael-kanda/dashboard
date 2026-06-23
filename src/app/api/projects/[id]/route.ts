@@ -24,6 +24,7 @@ interface UserRow {
   semrush_tracking_id_02: string | null;
   google_ads_sheet_id: string | null;
   brand_keywords: string[] | null;
+  google_genai_manual_data: any | null;
   project_locations: any[] | null;
 }
 
@@ -67,6 +68,8 @@ export async function GET(
       return NextResponse.json({ message: 'Keine Berechtigung.' }, { status: 403 });
     }
 
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_genai_manual_data JSONB NULL`;
+
     // ========== PROJEKT-DATEN LADEN ==========
     // WICHTIG: brand_keywords und project_locations MÜSSEN mitgeladen werden.
     // Diese Route und die Server-Seite (projekt/[id]/page.tsx) schreiben in
@@ -81,6 +84,7 @@ export async function GET(
         semrush_project_id, semrush_tracking_id, semrush_tracking_id_02,
         google_ads_sheet_id,
         brand_keywords,
+        google_genai_manual_data,
         COALESCE(project_locations, '[]'::jsonb) as project_locations
       FROM users
       WHERE id::text = ${projectId}
@@ -111,6 +115,7 @@ export async function GET(
         // die Auto-Detection und überschreibt die konfigurierten Keywords in
         // der DB (getBrandKeywordsForUser schreibt erkannte Keywords zurück).
         brand_keywords: project.brand_keywords ?? undefined,
+        google_genai_manual_data: project.google_genai_manual_data ?? undefined,
         // Standorte für "Lokale Sichtbarkeit" durchreichen — sonst fehlt
         // localSeo im erzeugten (und gecachten!) Dashboard-Datensatz.
         project_locations: project.project_locations ?? [],
