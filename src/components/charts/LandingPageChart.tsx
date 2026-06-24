@@ -396,7 +396,7 @@ export default function LandingPageChart({
                           e.stopPropagation();
                           loadFollowUpPaths(page.path);
                         }}
-                        className="px-2.5 py-1 text-xs font-medium text-body border border-theme-border-default rounded-md hover:bg-surface-secondary hover:border-theme-border-strong transition-colors flex items-center gap-1.5"
+                        className="flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition-colors hover:border-blue-300 hover:bg-blue-100 dark:border-blue-900/70 dark:bg-blue-950/30 dark:text-blue-300 dark:hover:bg-blue-950/50"
                         title="Folgepfade anzeigen"
                       >
                         Folgepfade
@@ -468,20 +468,37 @@ export default function LandingPageChart({
             if (e.target === e.currentTarget) closeFollowUpDetail();
           }}
         >
-          <div className="bg-white dark:bg-surface rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden max-h-[85vh] animate-in zoom-in-95 duration-200">
+          <div className="dashboard-widget-surface w-full max-w-3xl flex flex-col overflow-hidden max-h-[85vh] rounded-lg animate-in zoom-in-95 duration-200">
 
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-theme-border-subtle bg-surface-secondary flex-shrink-0">
+            <div className="flex items-start justify-between px-6 py-5 border-b border-theme-border-subtle bg-surface flex-shrink-0">
               <div className="flex items-center gap-3 overflow-hidden">
-                <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
-                  <Diagram3Fill className="text-violet-600" size={20} />
+                <div className="w-9 h-9 rounded-md bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center flex-shrink-0">
+                  <Diagram3Fill className="text-blue-600 dark:text-blue-300" size={18} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-[16px] font-semibold text-heading">
+                  <h4 className="text-[18px] font-semibold text-heading">
                     Folgepfade Analyse
                   </h4>
+                  <div className="mt-1 h-[8px] max-w-[180px]" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="8">
+                      <defs>
+                        <linearGradient id="google-clean-gradient-followup-paths" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="#4285F4" />
+                          <stop offset="25%" stopColor="#4285F4" />
+                          <stop offset="25%" stopColor="#EA4335" />
+                          <stop offset="50%" stopColor="#EA4335" />
+                          <stop offset="50%" stopColor="#FBBC05" />
+                          <stop offset="75%" stopColor="#FBBC05" />
+                          <stop offset="75%" stopColor="#34A853" />
+                          <stop offset="100%" stopColor="#34A853" />
+                        </linearGradient>
+                      </defs>
+                      <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-followup-paths)" />
+                    </svg>
+                  </div>
                   {selectedLandingPage && (
-                    <div className="text-sm text-violet-600 font-medium truncate" title={selectedLandingPage}>
+                    <div className="mt-2 text-xs text-muted truncate" title={selectedLandingPage}>
                       {selectedLandingPage}
                     </div>
                   )}
@@ -513,7 +530,7 @@ export default function LandingPageChart({
               {/* Loading State */}
               {isLoadingFollowUp && (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <div className="w-8 h-8 border-3 border-violet-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
                   <span className="text-muted font-medium">Analysiere Nutzerverhalten...</span>
                 </div>
               )}
@@ -535,17 +552,17 @@ export default function LandingPageChart({
               {/* Data State */}
               {followUpData && !isLoadingFollowUp && !followUpError && (
                 <div className="space-y-4">
-                  {/* Summary Cards */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-surface-secondary rounded-xl p-4 border border-theme-border-subtle">
+                  {/* Summary */}
+                  <div className="grid grid-cols-2 gap-6 border-b border-theme-border-subtle pb-5 mb-5">
+                    <div>
                       <div className="text-xs text-muted uppercase font-semibold tracking-wider mb-1">Einstiege</div>
-                      <div className="text-2xl font-bold text-heading">
+                      <div className="text-2xl font-semibold text-heading">
                         {followUpData.landingPageSessions.toLocaleString()}
                       </div>
                     </div>
-                    <div className="bg-violet-50 rounded-xl p-4 border border-violet-100">
-                      <div className="text-xs text-violet-600 uppercase font-semibold tracking-wider mb-1">Verschiedene Folgepfade</div>
-                      <div className="text-2xl font-bold text-violet-900">
+                    <div>
+                      <div className="text-xs text-muted uppercase font-semibold tracking-wider mb-1">Verschiedene Folgepfade</div>
+                      <div className="text-2xl font-semibold text-heading">
                         {followUpData.followUpPaths.length}
                       </div>
                     </div>
@@ -571,9 +588,9 @@ export default function LandingPageChart({
                         return (
                           <div
                             key={idx}
-                            className="flex items-center gap-4 p-3 bg-surface border border-theme-border-subtle rounded-xl hover:shadow-md transition-all group"
+                            className="flex items-center gap-4 p-3 bg-surface-secondary border border-theme-border-subtle rounded-md transition-colors hover:border-theme-border-strong group"
                           >
-                            <div className="w-8 h-8 bg-violet-50 text-violet-600 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 group-hover:bg-violet-500 group-hover:text-white transition-colors">
+                            <div className="w-8 h-8 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 rounded-md flex items-center justify-center text-sm font-bold flex-shrink-0">
                               {idx + 1}
                             </div>
 
@@ -585,17 +602,17 @@ export default function LandingPageChart({
                               </div>
                               <div className="h-2 bg-surface-tertiary rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-gradient-to-r from-violet-400 to-violet-600 rounded-full"
+                                  className="h-full bg-blue-500 rounded-full"
                                   style={{ width: `${barWidth}%` }}
                                 />
                               </div>
                             </div>
 
                             <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                              <div className="bg-violet-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold min-w-[80px] text-center shadow-sm">
+                              <div className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs font-semibold min-w-[80px] text-center">
                                 {fp.sessions.toLocaleString()} Sess.
                               </div>
-                              <div className="bg-surface-tertiary text-body px-3 py-1.5 rounded-lg text-xs font-medium min-w-[65px] text-center" title="Anteil der Landingpage-Besucher">
+                              <div className="bg-surface-tertiary text-body px-3 py-1.5 rounded-md text-xs font-medium min-w-[65px] text-center" title="Anteil der Landingpage-Besucher">
                                 {percentOfLandingPage.toFixed(1)}%
                               </div>
                             </div>
@@ -610,8 +627,7 @@ export default function LandingPageChart({
 
             {/* Modal Footer */}
             {followUpData && !isLoadingFollowUp && !followUpError && (
-              <div className="px-6 py-4 border-t border-theme-border-subtle bg-surface-secondary text-[11px] text-muted flex items-center gap-2">
-                <span className="text-xl">💡</span>
+              <div className="px-6 py-4 border-t border-theme-border-subtle bg-surface-secondary text-[11px] text-muted">
                 Die Prozentangabe rechts zeigt, wie viel Prozent der gesamten Einstiege auf diesen speziellen Folgepfad weitergeklickt haben.
               </div>
             )}

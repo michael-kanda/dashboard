@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Download, Search, X } from 'react-bootstrap-icons';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -78,8 +79,33 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
   const hasTrendData = chartData.length > 0;
   const hasData = data?.status === 'available' && data.totalImpressions > 0;
   const topPages = data?.topPages || [];
+  const [searchTerm, setSearchTerm] = useState('');
   const isManualExport = data?.source === 'gsc-manual-export';
   const canManageExport = Boolean(projectId && (userRole === 'ADMIN' || userRole === 'SUPERADMIN'));
+  const displayedPages = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLocaleLowerCase('de-DE');
+    if (!normalizedSearch) return topPages;
+    return topPages.filter((page) => page.key.toLocaleLowerCase('de-DE').includes(normalizedSearch));
+  }, [searchTerm, topPages]);
+
+  function exportCsv() {
+    if (!displayedPages.length) return;
+    const escape = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const rows = displayedPages.map((page) => [
+      escape(page.key),
+      page.impressions,
+    ]);
+    const csv = [
+      ['Seite', 'GenAI-Impressionen'].join(';'),
+      ...rows.map((row) => row.join(';')),
+    ].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `google-genai-sichtbarkeit-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
 
   async function saveManualExport() {
     if (!projectId || !importText.trim()) return;
@@ -221,6 +247,41 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
         </div>
       ) : null}
 
+      {hasData ? (
+        <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Seite suchen..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              className="w-56 rounded-md border border-theme-border-default bg-surface py-1.5 pl-8 pr-8 text-sm text-body placeholder-faint outline-none transition focus:ring-1 focus:ring-blue-500"
+            />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
+            {searchTerm ? (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-faint transition hover:text-body"
+                title="Filter zurücksetzen"
+              >
+                <X size={14} />
+              </button>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={exportCsv}
+            disabled={!displayedPages.length}
+            className="inline-flex items-center gap-1.5 rounded-md border border-theme-border-default px-2.5 py-1.5 text-sm text-body transition-colors hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-50 print:hidden"
+            title="Als CSV herunterladen"
+          >
+            <Download size={12} />
+            CSV
+          </button>
+        </div>
+      ) : null}
+
       {!hasData ? (
         <div className="mt-5 rounded-lg border border-dashed border-border-subtle bg-surface-secondary p-4">
           <div>
@@ -283,22 +344,28 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
           <div className="min-w-0">
             <div className="mb-3 flex items-center justify-between gap-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Top-Seiten in Google GenAI</p>
-              <span className="text-[11px] font-semibold text-muted tabular-nums">{topPages.length}</span>
+              <span className="text-[11px] font-semibold text-muted tabular-nums">
+                {displayedPages.length}{searchTerm ? ` von ${topPages.length}` : ''}
+              </span>
             </div>
             <div className={cn(
-              'grid gap-2 overflow-y-auto pr-1',
-              hasTrendData ? 'max-h-[260px] grid-cols-1' : 'max-h-[360px] grid-cols-1 md:grid-cols-2'
+              'grid grid-cols-1 gap-2 overflow-y-auto pr-1 custom-scrollbar',
+              hasTrendData ? 'max-h-[260px]' : 'max-h-[360px]'
             )}>
-              {topPages.map((page) => (
-                <div key={page.key} className="flex items-center justify-between gap-3 rounded-md bg-surface-secondary px-3 py-2">
-                  <span className="truncate font-mono text-xs text-body" title={page.key}>
-                    {page.key}
-                  </span>
-                  <span className="shrink-0 text-sm font-semibold text-heading tabular-nums">
-                    {formatCompact(page.impressions)}
-                  </span>
-                </div>
-              ))}
+              {displayedPages.length ? displayedPages.map((page) => (
+                  <div key={page.key} className="flex items-center justify-between gap-3 rounded-md bg-surface-secondary px-3 py-2">
+                    <span className="truncate font-mono text-xs text-body" title={page.key}>
+                      {page.key}
+                    </span>
+                    <span className="shrink-0 text-sm font-semibold text-heading tabular-nums">
+                      {formatCompact(page.impressions)}
+                    </span>
+                  </div>
+                )) : (
+                  <div className="py-10 text-center text-sm text-muted">
+                    Keine Seite für diese Suche gefunden.
+                  </div>
+                )}
             </div>
           </div>
         </div>

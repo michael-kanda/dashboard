@@ -24,6 +24,28 @@ type ViewMode = 'campaign' | 'adgroup' | 'ads' | 'searchquery';
 
 // ── Hilfsfunktionen ──
 
+function GoogleCleanUnderline({ id }: { id: string }) {
+  return (
+    <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#4285F4" />
+            <stop offset="25%" stopColor="#4285F4" />
+            <stop offset="25%" stopColor="#EA4335" />
+            <stop offset="50%" stopColor="#EA4335" />
+            <stop offset="50%" stopColor="#FBBC05" />
+            <stop offset="75%" stopColor="#FBBC05" />
+            <stop offset="75%" stopColor="#34A853" />
+            <stop offset="100%" stopColor="#34A853" />
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="12" rx="6" fill={`url(#${id})`} />
+      </svg>
+    </div>
+  );
+}
+
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('de-DE', {
     style: 'currency',
@@ -294,8 +316,9 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
   if (!hasAnyData) {
     return (
       <div className="dashboard-widget-surface rounded-xl p-5">
-        <h3 className="text-[18px] font-semibold text-heading mb-1">Google Ads Performance</h3>
-        <p className="text-sm text-muted">
+        <h3 className="text-[18px] font-semibold text-heading">Google Ads Performance</h3>
+        <GoogleCleanUnderline id="google-clean-gradient-google-ads-empty" />
+        <p className="mt-3 text-sm text-muted">
           Keine Google Ads-Daten für diesen Zeitraum vorhanden. Stelle sicher, dass Google Ads
           mit GA4 verknüpft ist.
         </p>
@@ -312,8 +335,9 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="mb-4">
-        <h3 className="text-[18px] font-semibold text-heading mb-1">Google Ads Performance</h3>
-        <p className="text-xs text-muted">
+        <h3 className="text-[18px] font-semibold text-heading">Google Ads Performance</h3>
+        <GoogleCleanUnderline id="google-clean-gradient-google-ads" />
+        <p className="mt-2 text-xs text-muted">
           Quelle {isSheet ? 'Google Ads' : 'GA4'}
           {dateRangeStr && ` · ${dateRangeStr}`}
         </p>

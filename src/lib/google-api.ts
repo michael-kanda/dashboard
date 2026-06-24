@@ -536,7 +536,7 @@ export async function getSearchConsoleData(
   }
 }
 
-export const GOOGLE_GENAI_DATA_VERSION = 2;
+export const GOOGLE_GENAI_DATA_VERSION = 3;
 
 const GEN_AI_SEARCH_APPEARANCE_MATCHERS = [
   'ai overview',
@@ -675,7 +675,7 @@ export async function getGoogleGenAiPerformanceData(
         : 'Google-GenAI-Daten wurden erkannt, aber im Zeitraum liegen keine Impressionen vor.',
       totalImpressions,
       trend,
-      topPages: pages.slice(0, 10),
+      topPages: pages,
       countries: countries.slice(0, 10),
       devices: devices.slice(0, 10),
       detectedAppearances: genAiAppearances,

@@ -118,7 +118,7 @@ export function normalizeManualGoogleGenAiData(raw: unknown): GoogleGenAiPerform
     message: 'Google-GenAI-Daten aus manuellem Search-Console-Export, weil die Search Analytics API fuer diese Property noch keine GenAI-Search-Appearance liefert.',
     totalImpressions,
     trend,
-    topPages: topPages.slice(0, 10),
+    topPages,
     countries: countries.slice(0, 10),
     devices: devices.slice(0, 10),
     detectedAppearances: ['GSC Export'],
