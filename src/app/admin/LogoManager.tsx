@@ -78,9 +78,9 @@ export default function LogoManager() {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md h-fit border border-gray-200 mt-8">
-      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <ImageIcon size={22} /> Mandanten-Logos verwalten
+    <div className="admin-panel h-fit p-5">
+      <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-heading">
+        <ImageIcon size={18} className="text-blue-600" /> Mandanten-Logos
       </h2>
       
       {/* Formular zum Hinzufügen/Aktualisieren */}
@@ -110,7 +110,7 @@ export default function LogoManager() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full px-4 py-2 font-normal text-white bg-[#188bdb] border-[3px] border-[#188bdb] rounded-[3px] hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#188bdb] disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-50"
         >
           {isSubmitting ? <ArrowRepeat className="animate-spin" size={18} /> : <CheckCircle size={18} />}
           <span>{isSubmitting ? 'Wird gespeichert...' : 'Logo speichern'}</span>
@@ -127,13 +127,13 @@ export default function LogoManager() {
 
       {/* Liste der vorhandenen Logos */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">Vorhandene Logos</h3>
+        <h3 className="mb-3 text-sm font-semibold text-heading">Vorhandene Logos</h3>
         {isLoading && <p>Lade Logos...</p>}
         {error && <p className="text-red-600">Fehler beim Laden der Logos.</p>}
         {logos && logos.length === 0 && <p className="text-sm text-gray-500 italic">Keine Logos konfiguriert.</p>}
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+        <div className="max-h-96 space-y-2 overflow-y-auto pr-1 custom-scrollbar">
           {logos?.map(logo => (
-            <div key={logo.mandant_id} className="flex items-center justify-between p-3 border rounded-md">
+            <div key={logo.mandant_id} className="flex items-center justify-between rounded-md bg-surface-secondary p-3">
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-indigo-700">{logo.mandant_id}</p>
                 <a 

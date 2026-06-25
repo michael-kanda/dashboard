@@ -100,6 +100,82 @@
       0 12px 30px rgba(0, 0, 0, 0.34);
   }
 
+  /* ── Clean administration surfaces ─────────────────────── */
+  .admin-clean {
+    color: var(--dp-text-body);
+  }
+
+  .admin-clean .admin-panel {
+    background: #ffffff;
+    border: 0 !important;
+    border-radius: 8px;
+    box-shadow:
+      0 10px 28px -18px rgba(15, 23, 42, 0.35),
+      0 1px 3px rgba(15, 23, 42, 0.08);
+  }
+
+  .dark .admin-clean .admin-panel {
+    background: var(--dp-surface-card);
+    box-shadow:
+      0 0 0 1px rgba(226, 232, 240, 0.14),
+      0 12px 30px rgba(0, 0, 0, 0.34);
+  }
+
+  .admin-clean input:not([type="checkbox"]):not([type="radio"]),
+  .admin-clean select,
+  .admin-clean textarea {
+    background: var(--dp-surface);
+    border: 1px solid var(--dp-border-default);
+    border-radius: 6px;
+    color: var(--dp-text-body);
+    box-shadow: none;
+  }
+
+  .admin-clean input::placeholder,
+  .admin-clean textarea::placeholder {
+    color: var(--dp-text-faint);
+  }
+
+  .admin-clean input:focus,
+  .admin-clean select:focus,
+  .admin-clean textarea:focus {
+    border-color: #4285f4;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.12);
+  }
+
+  .admin-clean .text-gray-900,
+  .admin-clean .text-gray-800,
+  .admin-clean .text-gray-700 {
+    color: var(--dp-text-heading);
+  }
+
+  .admin-clean .text-gray-600,
+  .admin-clean .text-gray-500,
+  .admin-clean .text-gray-400 {
+    color: var(--dp-text-muted);
+  }
+
+  .admin-clean .bg-white {
+    background: var(--dp-surface);
+  }
+
+  .admin-clean .bg-gray-50,
+  .admin-clean .bg-gray-100 {
+    background: var(--dp-bg-secondary);
+  }
+
+  .admin-clean .border-gray-100,
+  .admin-clean .border-gray-200,
+  .admin-clean .border-gray-300 {
+    border-color: var(--dp-border-subtle);
+  }
+
+  .admin-clean .shadow-md,
+  .admin-clean .shadow-sm {
+    box-shadow: none;
+  }
+
   .card-glass-hover {
     transition: all 0.3s;
   }

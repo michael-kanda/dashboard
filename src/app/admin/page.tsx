@@ -16,11 +16,13 @@ export default async function AdminPage() {
   const users = await getUsersForManagement(session.user);
 
   return (
-    <div className="p-8 mt-8 max-w-full mx-auto bg-surface-secondary min-h-screen">
-      <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="admin-clean min-h-screen bg-surface-secondary px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1540px]">
+      <div className="mb-7 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-3xl font-bold text-heading">Admin-Bereich</h1>
-          <p className="text-body mt-2">Verwalten Sie Benutzer und Projekte</p>
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">Verwaltung</p>
+          <h1 className="text-2xl font-semibold text-heading">Admin-Bereich</h1>
+          <p className="mt-1 text-sm text-muted">Benutzer, Projekte und Mandanten verwalten</p>
         </div>
       </div>
 
@@ -28,6 +30,7 @@ export default async function AdminPage() {
         initialUsers={users} // ❌ Kein 'as any' mehr nötig!
         sessionUser={session.user} 
       />
+      </div>
     </div>
   );
 }

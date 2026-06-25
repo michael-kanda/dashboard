@@ -248,51 +248,52 @@ export default function SystemHealthPage() {
     (u.domain && u.domain.toLowerCase().includes(dataMaxSearchTerm.toLowerCase()))
   );
 
-  if (isLoading) return <div className="p-10 text-center animate-pulse">Lade System-Status...</div>;
-  if (!status) return <div className="p-10 text-center text-red-500 dark:text-red-400">Fehler beim Laden.</div>;
+  if (isLoading) return <div className="admin-clean p-10 text-center text-sm text-muted animate-pulse">Lade System-Status...</div>;
+  if (!status) return <div className="admin-clean p-10 text-center text-red-500 dark:text-red-400">Fehler beim Laden.</div>;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="admin-clean mx-auto max-w-[1540px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       
       {/* HEADER */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-end">
         <div>
-          <h1 className="text-2xl font-bold mb-2">System Kontrollzentrum</h1>
-          <p className="text-muted">Live-Überwachung und Verwaltung.</p>
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">Administration</p>
+          <h1 className="text-2xl font-semibold text-heading">System-Kontrollzentrum</h1>
+          <p className="mt-1 text-sm text-muted">Dienste, Zugriffe und Systemfunktionen überwachen.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {maintenanceCount > 0 && (
-            <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 px-4 py-2 rounded-lg flex items-center gap-2 font-bold border border-red-200 dark:border-red-800">
+            <div className="flex items-center gap-1.5 rounded-md bg-red-500/10 px-2.5 py-1.5 text-xs font-semibold text-red-700 dark:text-red-300">
               <ConeStriped /> {maintenanceCount} Gesperrt
             </div>
           )}
           {kiToolDisabledCount > 0 && (
-            <div className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 px-4 py-2 rounded-lg flex items-center gap-2 font-bold border border-purple-200 dark:border-purple-800">
+            <div className="flex items-center gap-1.5 rounded-md bg-violet-500/10 px-2.5 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
               <Magic /> {kiToolDisabledCount} KI aus
             </div>
           )}
           {dataMaxDisabledCount > 0 && (
-            <div className="bg-sky-100 dark:bg-sky-900/30 text-sky-800 dark:text-sky-300 px-4 py-2 rounded-lg flex items-center gap-2 font-bold border border-sky-200 dark:border-sky-800">
+            <div className="flex items-center gap-1.5 rounded-md bg-sky-500/10 px-2.5 py-1.5 text-xs font-semibold text-sky-700 dark:text-sky-300">
               <Robot /> {dataMaxDisabledCount} Chat aus
             </div>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         
         {/* LINKER BEREICH: VERWALTUNG */}
         <div className="xl:col-span-2 space-y-6">
 
           {/* 1. WARTUNGSMODUS VERWALTUNG */}
-          <div className={`p-6 rounded-xl border shadow-sm transition-colors ${maintenanceCount > 0 ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : 'bg-surface border-border-subtle'}`}>
-            <div className="flex items-center justify-between mb-4">
+          <div className="admin-panel p-5">
+            <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
               <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-lg ${maintenanceCount > 0 ? 'bg-red-100 dark:bg-red-900/30' : 'bg-surface-tertiary'}`}>
+                <div className={`rounded-md p-2.5 ${maintenanceCount > 0 ? 'bg-red-100 dark:bg-red-900/30' : 'bg-surface-tertiary'}`}>
                   <PersonFillLock className={`text-xl ${maintenanceCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-body'}`} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-heading">Wartungsmodus & Zugangssperre</h3>
+                  <h3 className="text-sm font-semibold text-heading">Wartungsmodus & Zugangssperre</h3>
                   <p className="text-sm text-muted">
                     {maintenanceCount > 0 
                       ? `${maintenanceCount} Benutzer gesperrt.`
@@ -300,7 +301,7 @@ export default function SystemHealthPage() {
                   </p>
                 </div>
               </div>
-              <button onClick={fetchMaintenanceStatus} disabled={isLoadingMaintenance} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-tertiary hover:bg-surface-quaternary text-body text-sm transition-all">
+              <button onClick={fetchMaintenanceStatus} disabled={isLoadingMaintenance} className="flex items-center gap-2 rounded-md bg-surface-tertiary px-2.5 py-1.5 text-xs font-medium text-body transition hover:bg-surface-quaternary">
                 <ArrowRepeat className={isLoadingMaintenance ? 'animate-spin' : ''} /> Aktualisieren
               </button>
             </div>
@@ -321,7 +322,7 @@ export default function SystemHealthPage() {
                 <div className="text-center py-4 text-faint text-sm">Keine Benutzer gefunden</div>
               ) : (
                 filteredMaintUsers.map((user) => (
-                  <div key={user.id} className={`flex items-center justify-between p-3 rounded-lg border transition-all ${user.maintenance_mode ? 'bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800' : 'bg-surface border-border-subtle hover:border-border'}`}>
+                  <div key={user.id} className={`flex flex-col items-start justify-between gap-3 rounded-md border p-3 transition-all sm:flex-row sm:items-center ${user.maintenance_mode ? 'bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800' : 'bg-surface border-border-subtle hover:border-border'}`}>
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className={`w-2.5 h-2.5 rounded-full ${user.maintenance_mode ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
                       <div className="min-w-0 flex-1">
@@ -351,20 +352,20 @@ export default function SystemHealthPage() {
           </div>
 
           {/* 2. KI-TOOL VERWALTUNG */}
-          <div className={`p-6 rounded-xl border shadow-sm transition-colors ${kiToolDisabledCount > 0 ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800' : 'bg-surface border-border-subtle'}`}>
-            <div className="flex items-center justify-between mb-4">
+          <div className="admin-panel p-5">
+            <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
               <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-lg ${kiToolDisabledCount > 0 ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-surface-tertiary'}`}>
+                <div className={`rounded-md p-2.5 ${kiToolDisabledCount > 0 ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-surface-tertiary'}`}>
                   <Magic className={`text-xl ${kiToolDisabledCount > 0 ? 'text-purple-600 dark:text-purple-400' : 'text-body'}`} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-heading">KI-Tool Berechtigung</h3>
+                  <h3 className="text-sm font-semibold text-heading">KI-Tool Berechtigung</h3>
                   <p className="text-sm text-muted">
                     {kiToolDisabledCount > 0 ? `${kiToolDisabledCount} User ohne KI-Tool.` : 'Alle User haben KI-Tool Zugriff.'}
                   </p>
                 </div>
               </div>
-              <button onClick={fetchKiToolStatus} disabled={isLoadingKiTool} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-tertiary hover:bg-surface-quaternary text-body text-sm transition-all">
+              <button onClick={fetchKiToolStatus} disabled={isLoadingKiTool} className="flex items-center gap-2 rounded-md bg-surface-tertiary px-2.5 py-1.5 text-xs font-medium text-body transition hover:bg-surface-quaternary">
                 <ArrowRepeat className={isLoadingKiTool ? 'animate-spin' : ''} /> Aktualisieren
               </button>
             </div>
@@ -401,7 +402,7 @@ export default function SystemHealthPage() {
 
             <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
               {filteredKiUsers.length === 0 ? <div className="text-center py-4 text-faint text-sm">Nichts gefunden</div> : filteredKiUsers.map((user) => (
-                <div key={user.id} className={`flex items-center justify-between p-3 rounded-lg border transition-all ${user.ki_tool_enabled === false ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800' : 'bg-surface border-border-subtle hover:border-border'}`}>
+                <div key={user.id} className={`flex flex-col items-start justify-between gap-3 rounded-md border p-3 transition-all sm:flex-row sm:items-center ${user.ki_tool_enabled === false ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800' : 'bg-surface border-border-subtle hover:border-border'}`}>
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className={`w-2 h-2 rounded-full ${user.ki_tool_enabled === false ? 'bg-gray-300 dark:bg-gray-600' : 'bg-purple-500'}`} />
                     <div className="min-w-0 flex-1">
@@ -431,20 +432,20 @@ export default function SystemHealthPage() {
           </div>
 
           {/* 3. NEU: DATAMAX CHAT VERWALTUNG */}
-          <div className={`p-6 rounded-xl border shadow-sm transition-colors ${dataMaxDisabledCount > 0 ? 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800' : 'bg-surface border-border-subtle'}`}>
-            <div className="flex items-center justify-between mb-4">
+          <div className="admin-panel p-5">
+            <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
               <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-lg ${dataMaxDisabledCount > 0 ? 'bg-sky-100 dark:bg-sky-900/30' : 'bg-surface-tertiary'}`}>
+                <div className={`rounded-md p-2.5 ${dataMaxDisabledCount > 0 ? 'bg-sky-100 dark:bg-sky-900/30' : 'bg-surface-tertiary'}`}>
                   <Robot className={`text-xl ${dataMaxDisabledCount > 0 ? 'text-sky-600 dark:text-sky-400' : 'text-body'}`} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-heading">DataMax Chat Berechtigung</h3>
+                  <h3 className="text-sm font-semibold text-heading">DataMax Chat Berechtigung</h3>
                   <p className="text-sm text-muted">
                     {dataMaxDisabledCount > 0 ? `${dataMaxDisabledCount} User ohne Chat Zugriff.` : 'Alle User dürfen DataMax nutzen.'}
                   </p>
                 </div>
               </div>
-              <button onClick={fetchDataMaxStatus} disabled={isLoadingDataMax} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-tertiary hover:bg-surface-quaternary text-body text-sm transition-all">
+              <button onClick={fetchDataMaxStatus} disabled={isLoadingDataMax} className="flex items-center gap-2 rounded-md bg-surface-tertiary px-2.5 py-1.5 text-xs font-medium text-body transition hover:bg-surface-quaternary">
                 <ArrowRepeat className={isLoadingDataMax ? 'animate-spin' : ''} /> Aktualisieren
               </button>
             </div>
@@ -481,7 +482,7 @@ export default function SystemHealthPage() {
 
             <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
               {filteredDataMaxUsers.length === 0 ? <div className="text-center py-4 text-faint text-sm">Nichts gefunden</div> : filteredDataMaxUsers.map((user) => (
-                <div key={user.id} className={`flex items-center justify-between p-3 rounded-lg border transition-all ${user.data_max_enabled === false ? 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800' : 'bg-surface border-border-subtle hover:border-border'}`}>
+                <div key={user.id} className={`flex flex-col items-start justify-between gap-3 rounded-md border p-3 transition-all sm:flex-row sm:items-center ${user.data_max_enabled === false ? 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800' : 'bg-surface border-border-subtle hover:border-border'}`}>
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className={`w-2 h-2 rounded-full ${user.data_max_enabled === false ? 'bg-gray-300 dark:bg-gray-600' : 'bg-sky-500'}`} />
                     <div className="min-w-0 flex-1">
@@ -515,7 +516,7 @@ export default function SystemHealthPage() {
 
           {/* STATUS GRID */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-surface p-5 rounded-xl border border-border-subtle shadow-sm">
+            <div className="admin-panel p-5">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg"><DatabaseCheck className="text-blue-600 dark:text-blue-400 text-xl" /></div>
                 {getStatusIcon(status.database.status)}
@@ -524,7 +525,7 @@ export default function SystemHealthPage() {
               <p className="text-xs text-muted mt-1">{status.database.message}</p>
             </div>
 
-            <div className="bg-surface p-5 rounded-xl border border-border-subtle shadow-sm">
+            <div className="admin-panel p-5">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg"><ShieldLock className="text-orange-600 dark:text-orange-400 text-xl" /></div>
                 {getStatusIcon(status.google.status)}
@@ -533,7 +534,7 @@ export default function SystemHealthPage() {
               <p className="text-xs text-muted mt-1">{status.google.message}</p>
             </div>
 
-            <div className="bg-surface p-5 rounded-xl border border-border-subtle shadow-sm">
+            <div className="admin-panel p-5">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-sky-50 dark:bg-sky-900/20 rounded-lg"><Robot className="text-sky-600 dark:text-sky-400 text-xl" /></div>
                 {getStatusIcon(status.aiModel?.status || 'pending')}
@@ -555,7 +556,7 @@ export default function SystemHealthPage() {
               </div>
             </div>
             
-             <div className="bg-surface p-5 rounded-xl border border-border-subtle shadow-sm">
+             <div className="admin-panel p-5">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg"><HddNetwork className="text-purple-600 dark:text-purple-400 text-xl" /></div>
                 {getStatusIcon(status.semrush.status)}
@@ -564,7 +565,7 @@ export default function SystemHealthPage() {
               <p className="text-xs text-muted mt-1">{status.semrush.message}</p>
             </div>
             
-            <div className="bg-surface p-5 rounded-xl border border-border-subtle shadow-sm">
+            <div className="admin-panel p-5">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg"><Search className="text-indigo-600 dark:text-indigo-400 text-xl" /></div>
                 {getStatusIcon(status.gscApi?.status || 'pending')}
@@ -575,12 +576,12 @@ export default function SystemHealthPage() {
           </div>
           
            {/* CACHE MANAGEMENT */}
-          <div className="bg-surface p-6 rounded-xl border border-border-subtle shadow-sm">
+          <div className="admin-panel p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-surface-tertiary rounded-lg"><ArrowRepeat className="text-body" /></div>
               <h3 className="font-semibold">Cache Management</h3>
             </div>
-            <div className="flex items-center justify-between p-4 bg-surface-secondary rounded-lg border border-border-subtle">
+            <div className="flex flex-col items-start justify-between gap-3 rounded-md bg-surface-secondary p-4 sm:flex-row sm:items-center">
               <div><span className="text-sm text-body font-medium">Einträge:</span><span className="ml-2 text-lg font-bold text-heading">{status.cache.count}</span></div>
               <button onClick={handleClearCache} disabled={isClearingCache} className="flex items-center gap-2 bg-surface border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm disabled:opacity-50">
                 {isClearingCache ? <ArrowRepeat className="animate-spin" /> : <Trash />} Cache leeren
@@ -592,7 +593,7 @@ export default function SystemHealthPage() {
 
         {/* LOGBOOK */}
         <div className="xl:col-span-1">
-           <div className="-mt-8 xl:mt-0"> 
+           <div>
              <LoginLogbook />
            </div>
         </div>

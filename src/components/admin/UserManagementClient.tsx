@@ -130,12 +130,12 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(300px,0.82fr)_minmax(0,2fr)]">
         
       {/* CREATE FORMULAR */}
-      <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md h-fit border border-gray-200">
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <PersonPlus size={22} /> Neuen Nutzer anlegen
+      <div className="admin-panel h-fit p-5">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-heading">
+          <PersonPlus size={18} className="text-blue-600" /> Neuen Nutzer anlegen
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           
@@ -254,7 +254,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
                           <input name="gsc_site_url" type="text" placeholder="sc-domain:example.com" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                           <div>
                               <label className="block text-xs font-medium text-gray-700">GA4 ID</label>
                               <input name="ga4_property_id" type="text" placeholder="12345678" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
@@ -265,7 +265,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
                           </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                           <div>
                               <label className="block text-xs font-medium text-gray-700">Semrush Tracking-ID (Kampagne 1)</label>
                               <input name="semrush_tracking_id" type="text" placeholder="Tracking ID 1" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
@@ -283,7 +283,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full px-4 py-2 font-normal text-white bg-[#188bdb] border-[3px] border-[#188bdb] rounded-[3px] hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 mt-4"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
           >
             {isSubmitting ? <ArrowRepeat className="animate-spin" size={18} /> : <PersonPlus size={18} />}
             {isSubmitting ? 'Speichere...' : (selectedRole === 'BENUTZER' ? 'Kunden erstellen' : 'Admin erstellen')}
@@ -292,12 +292,13 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
       </div>
 
       {/* LISTE (Rechts) */}
-      <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border border-gray-200">
+      <div className="admin-panel min-w-0 p-5">
         
         {/* ✅ NEU: Header mit Suchfeld */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-gray-100 pb-4">
-            <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900">
-                <People size={22} className="text-indigo-600" /> Vorhandene Nutzer
+        <div className="mb-5 flex flex-col items-start justify-between gap-4 border-b border-theme-border-subtle pb-4 sm:flex-row sm:items-center">
+            <h2 className="flex items-center gap-2 text-base font-semibold text-heading">
+                <People size={18} className="text-blue-600" /> Vorhandene Nutzer
+                <span className="rounded-md bg-surface-tertiary px-2 py-0.5 text-[11px] text-muted">{filteredUsers.length}</span>
             </h2>
             
             <div className="relative w-full sm:w-64">
@@ -318,9 +319,9 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
             <p>{users.length === 0 ? 'Keine Benutzer vorhanden.' : 'Keine Ergebnisse für deine Suche.'}</p>
           </div>
         ) : (
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ul className="grid grid-cols-1 gap-3 xl:grid-cols-2">
             {filteredUsers.map((user) => ( // ✅ Nutzt jetzt filteredUsers
-                <li key={user.id} className="p-4 border rounded-lg flex flex-col justify-between gap-3 transition-colors hover:bg-gray-50 shadow-sm h-full animate-in fade-in duration-300">
+                <li key={user.id} className="flex h-full flex-col justify-between gap-3 rounded-md bg-surface-secondary p-4 transition-colors hover:bg-surface-tertiary animate-in fade-in duration-300">
                   <div className="flex-1 overflow-hidden">
                     <div className="flex justify-between items-start">
                       <p className="font-semibold text-gray-900 truncate" title={user.email}>{user.email}</p>
@@ -347,12 +348,12 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
                     )}
                   </div>
 
-                  <div className="flex gap-2 pt-2 border-t border-gray-100 mt-2">
-                    <Link href={`/admin/edit/${user.id}`} className="flex-1 justify-center bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded hover:bg-gray-50 text-sm flex items-center gap-1.5 transition-colors">
+                  <div className="mt-2 flex gap-2 border-t border-theme-border-subtle pt-3">
+                    <Link href={`/admin/edit/${user.id}`} className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-theme-border-default bg-surface px-3 py-1.5 text-xs font-medium text-body transition hover:bg-surface-secondary">
                       <Pencil size={14} /> Bearbeiten
                     </Link>
                     {isSuperAdmin && (
-                      <button onClick={() => void handleDelete(user.id)} className="flex-1 justify-center bg-white border border-red-200 text-red-600 px-3 py-1.5 rounded hover:bg-red-50 text-sm flex items-center gap-1.5 transition-colors">
+                      <button onClick={() => void handleDelete(user.id)} className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-red-200 bg-surface px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/30">
                         <Trash size={14} /> Löschen
                       </button>
                     )}
@@ -364,7 +365,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
       </div>
 
       {isSuperAdmin && (
-        <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-8 mt-2">
+        <div className="col-span-full mt-1 grid grid-cols-1 gap-6 xl:grid-cols-2">
           <LogoManager />
           <LoginLogbook />
         </div>

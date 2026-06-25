@@ -64,9 +64,9 @@ export default function LoginLogbook() {
 
   return (
     // Container für das Logbuch
-    <div className="bg-white p-6 rounded-lg shadow-md h-fit border border-gray-200 mt-8">
-      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <ShieldLock size={20} /> Login-Protokoll (Superadmin)
+    <div className="admin-panel h-fit p-5">
+      <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-heading">
+        <ShieldLock size={18} className="text-blue-600" /> Login-Protokoll
       </h2>
       
       {/* Suchfeld */}
@@ -82,7 +82,7 @@ export default function LoginLogbook() {
       </div>
 
       {/* Container mit Scrollbalken */}
-      <div className="border rounded-lg max-h-96 overflow-y-auto">
+      <div className="max-h-96 overflow-y-auto rounded-md bg-surface-secondary custom-scrollbar">
         {isLoading && <p className="p-4 text-sm text-gray-500">Lade Login-Logs...</p>}
         {error && <p className="p-4 text-sm text-red-600">Fehler beim Laden der Logs.</p>}
         {filteredLogs.length === 0 && !isLoading && !error && (
@@ -93,7 +93,7 @@ export default function LoginLogbook() {
         
         {/* Log-Liste */}
         {filteredLogs.length > 0 && (
-          <ul className="divide-y divide-gray-200">
+          <ul className="divide-y divide-theme-border-subtle">
             {filteredLogs.map((log) => (
               <li key={log.id} className="p-3 space-y-2">
                 {/* Benutzer und Rolle */}
