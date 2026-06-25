@@ -19,6 +19,7 @@ function formatPercent(value: number) {
   return `${(value || 0).toFixed(1)} %`;
 }
 
+type LocationDetailTab = 'overview' | 'queries' | 'landingpages';
 type GeoPoint = [number, number];
 type GeoRing = GeoPoint[];
 type GeoPolygon = GeoRing[];
@@ -308,6 +309,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
   const [isEditingPins, setIsEditingPins] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [detailTab, setDetailTab] = useState<LocationDetailTab>('overview');
   const [isSavingPins, setIsSavingPins] = useState(false);
   const [pinSaveError, setPinSaveError] = useState<string | null>(null);
   const canEditPins = userRole === 'SUPERADMIN' && Boolean(projectId);
@@ -345,12 +347,17 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
     )));
   };
 
+  const selectLocation = (locationId?: string) => {
+    setSelectedId(locationId);
+    setDetailTab('overview');
+  };
+
   const handlePinPointerDown = (event: PointerEvent<SVGGElement>, locationId: string) => {
     if (!isEditingPins) return;
     event.preventDefault();
     event.stopPropagation();
     setDraggingId(locationId);
-    setSelectedId(locationId);
+    selectLocation(locationId);
     const point = getSvgPointFromClient(event.clientX, event.clientY);
     if (point) moveLocationPin(locationId, point);
   };
@@ -496,18 +503,16 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
               const isSelected = selected?.id === location.id;
               const isActive = isSelected || hoveredId === location.id;
               const label = location.name.length > 28 ? `${location.name.slice(0, 25)}...` : location.name;
-              const labelWidth = isActive
-                ? Math.min(250, Math.max(196, label.length * 7.2 + 44))
-                : Math.min(190, Math.max(88, label.length * 6.4 + 26));
-              const labelHeight = isActive ? 76 : 34;
+              const labelWidth = Math.min(250, Math.max(196, label.length * 7.2 + 44));
+              const labelHeight = 76;
               const labelX = point.x > MAP_VIEWBOX.width - 250 ? -labelWidth - 17 : 18;
-              const labelY = isActive ? -86 : -42;
+              const labelY = -86;
               return (
                 <g
                   key={location.id}
                   className={isEditingPins ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
                   transform={`translate(${point.x} ${point.y})`}
-                  onClick={() => setSelectedId(location.id)}
+                  onClick={() => selectLocation(location.id)}
                   onPointerDown={(event) => handlePinPointerDown(event, location.id || '')}
                   onMouseEnter={() => setHoveredId(location.id || null)}
                   onMouseLeave={() => setHoveredId(null)}
@@ -520,38 +525,35 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                       <circle cx="50" cy="30" r="18" />
                     </g>
                   </g>
-                  <g className="pointer-events-none" transform={`translate(${labelX} ${labelY})`}>
-                    <path
-                      d={labelX < 0
-                        ? `M${labelWidth} ${labelHeight - 8} L${labelWidth + 9} ${labelHeight + 2} L${labelWidth - 2} ${labelHeight - 1} Z`
-                        : `M0 ${labelHeight - 8} L-9 ${labelHeight + 2} L2 ${labelHeight - 1} Z`
-                      }
-                      fill="white"
-                      stroke={isActive ? GOOGLE_BLUE : '#E2E8F0'}
-                      className="stroke-slate-200 dark:fill-slate-900 dark:stroke-slate-700"
-                      style={{ stroke: isActive ? GOOGLE_BLUE : undefined }}
-                      strokeWidth="1"
-                    />
-                    <rect
-                      width={labelWidth}
-                      height={labelHeight}
-                      rx="7"
-                      fill="white"
-                      stroke={isActive ? GOOGLE_BLUE : '#E2E8F0'}
-                      className="stroke-slate-200 drop-shadow-sm dark:fill-slate-900 dark:stroke-slate-700"
-                      style={{ stroke: isActive ? GOOGLE_BLUE : undefined }}
-                      strokeWidth="1"
-                    />
-                    <text
-                      x="13"
-                      y="22"
-                      fill={isActive ? GOOGLE_BLUE : undefined}
-                      className="fill-slate-800 text-[14px] font-semibold dark:fill-slate-100"
-                      style={{ fill: isActive ? GOOGLE_BLUE : undefined }}
-                    >
-                      {label}
-                    </text>
-                    {isActive ? (
+                  {isActive ? (
+                    <g className="pointer-events-none" transform={`translate(${labelX} ${labelY})`}>
+                      <path
+                        d={labelX < 0
+                          ? `M${labelWidth} ${labelHeight - 8} L${labelWidth + 9} ${labelHeight + 2} L${labelWidth - 2} ${labelHeight - 1} Z`
+                          : `M0 ${labelHeight - 8} L-9 ${labelHeight + 2} L2 ${labelHeight - 1} Z`
+                        }
+                        fill="white"
+                        stroke={GOOGLE_BLUE}
+                        className="dark:fill-slate-900"
+                        strokeWidth="1"
+                      />
+                      <rect
+                        width={labelWidth}
+                        height={labelHeight}
+                        rx="7"
+                        fill="white"
+                        stroke={GOOGLE_BLUE}
+                        className="drop-shadow-sm dark:fill-slate-900"
+                        strokeWidth="1"
+                      />
+                      <text
+                        x="13"
+                        y="22"
+                        fill={GOOGLE_BLUE}
+                        className="text-[14px] font-semibold"
+                      >
+                        {label}
+                      </text>
                       <text
                         x="13"
                         y="44"
@@ -560,8 +562,6 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                       >
                         Neue Besucher {formatNumber(location.newUsers)}
                       </text>
-                    ) : null}
-                    {isActive ? (
                       <text
                         x="13"
                         y="62"
@@ -570,8 +570,8 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                       >
                         Conversions {formatNumber(location.conversions)}
                       </text>
-                    ) : null}
-                  </g>
+                    </g>
+                  ) : null}
                 </g>
               );
             })}
@@ -581,7 +581,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
               <button
                 key={`legend-${location.id}`}
                 type="button"
-                onClick={() => setSelectedId(location.id)}
+                onClick={() => selectLocation(location.id)}
                 onMouseEnter={() => setHoveredId(location.id || null)}
                 onMouseLeave={() => setHoveredId(null)}
                 className={`rounded-md border px-2 py-1 text-left transition-colors ${
@@ -608,7 +608,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                 <button
                   key={location.id}
                   type="button"
-                  onClick={() => setSelectedId(location.id)}
+                  onClick={() => selectLocation(location.id)}
                   className={`flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-colors ${
                     selected?.id === location.id
                       ? 'border-indigo-300 bg-indigo-50 text-slate-900 dark:border-indigo-700 dark:bg-indigo-950/30 dark:text-slate-100'
@@ -625,29 +625,51 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
           </div>
 
           {selected && (
-            <div className="rounded-lg border border-border-subtle bg-surface p-4">
-              <div className="mb-3">
-                <div>
-                  <h4 className="text-base font-semibold text-heading">{selected.name}</h4>
-                  <p className="text-xs text-muted">
-                    {[selected.postalCode, selected.city, selected.country].filter(Boolean).join(' · ')}
-                  </p>
-                </div>
+            <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface">
+              <div className="px-4 pt-4">
+                <h4 className="text-base font-semibold text-heading">{selected.name}</h4>
+                <p className="text-xs text-muted">
+                  {[selected.postalCode, selected.city, selected.country].filter(Boolean).join(' · ')}
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <LocationMetric label="GSC Klicks" value={formatNumber(selected.clicks)} />
-                <LocationMetric label="GSC Impr." value={formatNumber(selected.impressions)} />
-                <LocationMetric label="CTR" value={formatPercent(selected.ctr)} />
-                <LocationMetric label="Ø Pos." value={selected.position ? selected.position.toFixed(1) : '-'} />
-                <LocationMetric label="Sessions" value={formatNumber(selected.sessions)} />
-                <LocationMetric label="Conv." value={formatNumber(selected.conversions)} />
+              <div className="mt-3 flex overflow-x-auto border-b border-theme-border-subtle px-4 custom-scrollbar" role="tablist" aria-label="Standortdetails">
+                {([
+                  ['overview', 'Übersicht'],
+                  ['queries', `Queries (${selected.topQueries.length})`],
+                  ['landingpages', `Landingpages (${selected.topLandingPages.length})`],
+                ] as const).map(([tab, label]) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    role="tab"
+                    aria-selected={detailTab === tab}
+                    onClick={() => setDetailTab(tab)}
+                    className={`-mb-px shrink-0 border-b-2 px-2.5 py-2 text-[11px] font-semibold transition-colors ${
+                      detailTab === tab
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-300'
+                        : 'border-transparent text-muted hover:text-body'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-                <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">Top Queries</p>
-                  <div className="space-y-1.5">
+              <div className="p-4">
+                {detailTab === 'overview' ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    <LocationMetric label="GSC Klicks" value={formatNumber(selected.clicks)} />
+                    <LocationMetric label="GSC Impr." value={formatNumber(selected.impressions)} />
+                    <LocationMetric label="CTR" value={formatPercent(selected.ctr)} />
+                    <LocationMetric label="Ø Pos." value={selected.position ? selected.position.toFixed(1) : '-'} />
+                    <LocationMetric label="Sessions" value={formatNumber(selected.sessions)} />
+                    <LocationMetric label="Conv." value={formatNumber(selected.conversions)} />
+                  </div>
+                ) : null}
+
+                {detailTab === 'queries' ? (
+                  <div className="max-h-[250px] space-y-1.5 overflow-y-auto pr-1 custom-scrollbar">
                     {selected.topQueries.length > 0 ? selected.topQueries.map((query) => (
                       <div key={`${selected.id}-${query.query}`} className="rounded-md bg-surface-secondary px-2 py-1.5">
                         <p className="truncate text-xs font-medium text-body" title={query.query}>{query.query}</p>
@@ -657,10 +679,10 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                       </div>
                     )) : <p className="text-xs text-muted">Keine lokalen GSC-Queries erkannt.</p>}
                   </div>
-                </div>
-                <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">Landingpages</p>
-                  <div className="space-y-1.5">
+                ) : null}
+
+                {detailTab === 'landingpages' ? (
+                  <div className="max-h-[250px] space-y-1.5 overflow-y-auto pr-1 custom-scrollbar">
                     {selected.topLandingPages.length > 0 ? selected.topLandingPages.map((page) => (
                       <div key={`${selected.id}-${page.path}`} className="rounded-md bg-surface-secondary px-2 py-1.5">
                         <p className="truncate font-mono text-xs text-body" title={page.path}>{page.path}</p>
@@ -670,7 +692,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                       </div>
                     )) : <p className="text-xs text-muted">Keine Standort-Landingpage zugeordnet.</p>}
                   </div>
-                </div>
+                ) : null}
               </div>
             </div>
           )}
