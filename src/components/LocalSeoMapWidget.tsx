@@ -511,13 +511,15 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
               const isActive = isSelected || hoveredId === location.id;
               const label = location.name.length > 28 ? `${location.name.slice(0, 25)}...` : location.name;
               const profileUrl = getExternalProfileUrl(location.googleBusinessProfileUrl);
-              const labelWidth = Math.min(286, Math.max(214, label.length * 7.2 + 44));
-              const labelHeight = profileUrl ? 128 : 76;
-              const labelX = point.x > MAP_VIEWBOX.width - 286 ? -labelWidth - 17 : 18;
-              const labelY = profileUrl ? -138 : -86;
-              const nameY = profileUrl ? 72 : 22;
-              const visitorsY = profileUrl ? 96 : 44;
-              const conversionsY = profileUrl ? 114 : 62;
+              const profileImageUrl = getExternalProfileUrl(location.googleBusinessProfileImageUrl);
+              const profileClipId = `local-seo-profile-${String(location.id || 'location').replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+              const labelWidth = profileUrl ? 300 : Math.min(286, Math.max(214, label.length * 7.2 + 44));
+              const labelHeight = profileUrl ? 192 : 76;
+              const labelX = point.x > MAP_VIEWBOX.width - labelWidth - 20 ? -labelWidth - 17 : 18;
+              const labelY = profileUrl ? -202 : -86;
+              const nameY = profileUrl ? 104 : 22;
+              const visitorsY = profileUrl ? 148 : 44;
+              const conversionsY = profileUrl ? 168 : 62;
               return (
                 <g
                   key={location.id}
@@ -565,59 +567,70 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                           onClick={(event) => event.stopPropagation()}
                           className="cursor-pointer"
                         >
-                          <rect
-                            x="10"
-                            y="10"
-                            width={labelWidth - 20}
-                            height="42"
-                            rx="6"
-                            fill="#F8FAFC"
-                            stroke="#D9E7FF"
-                            className="dark:fill-slate-800 dark:stroke-slate-700"
-                          />
-                          <rect x="20" y="20" width="19" height="4" rx="2" fill="#4285F4" />
-                          <rect x="39" y="20" width="12" height="4" rx="2" fill="#EA4335" />
-                          <rect x="20" y="28" width="15" height="4" rx="2" fill="#FBBC05" />
-                          <rect x="35" y="28" width="16" height="4" rx="2" fill="#34A853" />
-                          <text
-                            x="62"
-                            y="26"
-                            fill={GOOGLE_BLUE}
-                            className="text-[12px] font-semibold"
-                          >
-                            Google Unternehmensprofil
-                          </text>
-                          <text
-                            x="62"
-                            y="42"
-                            fill="#64748B"
-                            className="text-[11px] font-semibold dark:fill-slate-300"
-                          >
-                            Profil in Google öffnen
-                          </text>
-                          <path
-                            d={`M${labelWidth - 35} 36 L${labelWidth - 24} 25 M${labelWidth - 34} 25 H${labelWidth - 24} V35`}
-                            fill="none"
-                            stroke={GOOGLE_BLUE}
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
+                          <defs>
+                            <clipPath id={profileClipId}>
+                              <rect x="1" y="1" width={labelWidth - 2} height="78" rx="7" />
+                            </clipPath>
+                          </defs>
+                          {profileImageUrl ? (
+                            <image
+                              href={profileImageUrl}
+                              x="1"
+                              y="1"
+                              width={labelWidth - 2}
+                              height="78"
+                              preserveAspectRatio="xMidYMid slice"
+                              clipPath={`url(#${profileClipId})`}
+                            />
+                          ) : (
+                            <g clipPath={`url(#${profileClipId})`}>
+                              <rect x="1" y="1" width={labelWidth - 2} height="78" fill="#EAF3FF" />
+                              <rect x="26" y="26" width="62" height="8" rx="4" fill="#4285F4" opacity="0.9" />
+                              <rect x="26" y="42" width="42" height="8" rx="4" fill="#34A853" opacity="0.85" />
+                              <rect x="100" y="30" width="154" height="6" rx="3" fill="#CBD5E1" />
+                              <rect x="100" y="44" width="112" height="6" rx="3" fill="#E2E8F0" />
+                            </g>
+                          )}
+                          <rect x={labelWidth - 78} y="92" width="30" height="30" rx="15" fill="#DDFBFF" />
+                          <rect x={labelWidth - 40} y="92" width="30" height="30" rx="15" fill="#DDFBFF" />
+                          <path d={`M${labelWidth - 67} 107 L${labelWidth - 62} 102 L${labelWidth - 57} 107 L${labelWidth - 62} 112 Z`} fill="#0F766E" />
+                          <path d={`M${labelWidth - 30} 102 H${labelWidth - 20} V113 L${labelWidth - 25} 110 L${labelWidth - 30} 113 Z`} fill="none" stroke="#0F766E" strokeWidth="2" strokeLinejoin="round" />
+                          <rect width={labelWidth} height={labelHeight} fill="transparent" />
                         </a>
                       ) : null}
                       <text
                         x="13"
                         y={nameY}
-                        fill={GOOGLE_BLUE}
-                        className="text-[14px] font-semibold"
+                        fill={profileUrl ? '#111827' : GOOGLE_BLUE}
+                        className="text-[14px] font-semibold dark:fill-slate-100"
                       >
                         {label}
                       </text>
+                      {profileUrl ? (
+                        <>
+                          <text
+                            x="13"
+                            y="126"
+                            fill="#64748B"
+                            className="text-[12px] dark:fill-slate-300"
+                          >
+                            Google Unternehmensprofil
+                          </text>
+                          <text
+                            x="13"
+                            y="142"
+                            fill="#DC2626"
+                            className="text-[12px]"
+                          >
+                            Profil öffnen
+                          </text>
+                        </>
+                      ) : null}
                       <text
                         x="13"
                         y={visitorsY}
                         fill={GOOGLE_BLUE}
-                        className="text-[13px] font-semibold"
+                        className="text-[12px] font-semibold"
                       >
                         Neue Besucher {formatNumber(location.newUsers)}
                       </text>
@@ -625,10 +638,21 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                         x="13"
                         y={conversionsY}
                         fill={GOOGLE_BLUE}
-                        className="text-[13px] font-semibold"
+                        className="text-[12px] font-semibold"
                       >
                         Conversions {formatNumber(location.conversions)}
                       </text>
+                      {profileUrl ? (
+                        <a
+                          href={profileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(event) => event.stopPropagation()}
+                          className="cursor-pointer"
+                        >
+                          <rect width={labelWidth} height={labelHeight} fill="transparent" />
+                        </a>
+                      ) : null}
                     </g>
                   ) : null}
                 </g>
