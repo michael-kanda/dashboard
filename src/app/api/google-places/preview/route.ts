@@ -30,6 +30,13 @@ function getPlacesApiKey() {
     || '';
 }
 
+function isUsablePlaceId(value?: string | null) {
+  const trimmed = value?.trim();
+  if (!trimmed) return false;
+  if (/^\d+$/.test(trimmed)) return false;
+  return trimmed.length >= 10;
+}
+
 function normalizePlace(place: GooglePlace | null) {
   if (!place?.id) return null;
 
@@ -141,10 +148,26 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const place = placeId ? await fetchPlaceById(placeId, apiKey) : await searchPlace(query || '', apiKey);
+    let place: GooglePlace | null = null;
+
+    if (isUsablePlaceId(placeId)) {
+      try {
+        place = await fetchPlaceById(placeId as string, apiKey);
+      } catch (detailsError) {
+        if (!query) throw detailsError;
+      }
+    }
+
+    if (!place && query) {
+      place = await searchPlace(query, apiKey);
+    }
+
     const preview = normalizePlace(place);
     if (!preview) {
-      return NextResponse.json({ message: 'Kein Google-Unternehmensprofil gefunden.' }, { status: 404 });
+      return NextResponse.json({
+        available: false,
+        message: 'Kein Google-Unternehmensprofil gefunden.',
+      });
     }
 
     return NextResponse.json(preview, {
@@ -153,9 +176,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { message: error instanceof Error ? error.message : 'Google Places Vorschau konnte nicht geladen werden.' },
-      { status: 502 }
-    );
+    return NextResponse.json({
+      available: false,
+      message: error instanceof Error ? error.message : 'Google Places Vorschau konnte nicht geladen werden.',
+    });
   }
 }

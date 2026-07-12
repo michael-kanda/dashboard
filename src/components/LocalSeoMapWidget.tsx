@@ -39,6 +39,13 @@ function getExternalProfileUrl(value?: string | null) {
   return `https://${trimmed}`;
 }
 
+function isUsablePlaceId(value?: string | null) {
+  const trimmed = value?.trim();
+  if (!trimmed) return false;
+  if (/^\d+$/.test(trimmed)) return false;
+  return trimmed.length >= 10;
+}
+
 function buildPlaceQuery(location: LocalSeoLocationData) {
   return [
     location.name,
@@ -389,11 +396,10 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
         if (!location.googlePlaceId && !location.googleBusinessProfileUrl) return [locationId, null] as const;
 
         const params = new URLSearchParams();
-        if (location.googlePlaceId) {
+        if (isUsablePlaceId(location.googlePlaceId)) {
           params.set('placeId', location.googlePlaceId);
-        } else {
-          params.set('query', buildPlaceQuery(location));
         }
+        params.set('query', buildPlaceQuery(location));
 
         try {
           const response = await fetch(`/api/google-places/preview?${params.toString()}`, {
@@ -401,6 +407,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
           });
           if (!response.ok) return [locationId, null] as const;
           const preview = await response.json() as GooglePlacePreview;
+          if (!preview?.placeId) return [locationId, null] as const;
           return [locationId, preview] as const;
         } catch {
           if (controller.signal.aborted) return null;

@@ -749,7 +749,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
                             disabled={isSubmitting}
                           />
                           <p className="mt-1 text-[11px] text-gray-400">
-                            Optional, aber empfohlen. Ohne Place ID sucht DataPeak per Standortname, Stadt und PLZ.
+                            Optional, aber empfohlen. Echte Place IDs beginnen meist mit ChIJ. Reine Zahlen sind CIDs und werden ignoriert.
                           </p>
                         </div>
                         <div className="sm:col-span-2">
