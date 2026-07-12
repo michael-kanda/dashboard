@@ -48,7 +48,7 @@ function buildPlaceQuery(location: LocalSeoLocationData) {
   ].filter(Boolean).join(' ');
 }
 
-function getOpeningLabel(preview?: GooglePlacePreview) {
+function getOpeningLabel(preview?: GooglePlacePreview | null) {
   if (!preview) return null;
   if (preview.businessStatus === 'CLOSED_PERMANENTLY') return 'Dauerhaft geschlossen';
   if (preview.openNow === true) return 'Geöffnet';
