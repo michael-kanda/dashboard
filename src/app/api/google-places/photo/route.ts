@@ -29,12 +29,24 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const name = searchParams.get('name')?.trim();
-  if (!name?.startsWith('places/')) {
+  const photoReference = searchParams.get('photoReference')?.trim();
+  if (!name?.startsWith('places/') && !photoReference) {
     return NextResponse.json({ message: 'Ungueltiger Foto-Name.' }, { status: 400 });
   }
 
   const maxWidthPx = normalizeDimension(searchParams.get('maxWidthPx'), 600);
   const maxHeightPx = normalizeDimension(searchParams.get('maxHeightPx'), 240);
+
+  if (photoReference) {
+    const legacyUrl = new URL('https://maps.googleapis.com/maps/api/place/photo');
+    legacyUrl.searchParams.set('photo_reference', photoReference);
+    legacyUrl.searchParams.set('maxwidth', String(maxWidthPx));
+    legacyUrl.searchParams.set('key', apiKey);
+    const redirect = NextResponse.redirect(legacyUrl.toString());
+    redirect.headers.set('Cache-Control', 'private, max-age=3600, stale-while-revalidate=86400');
+    return redirect;
+  }
+
   const url = new URL(`https://places.googleapis.com/v1/${name}/media`);
   url.searchParams.set('key', apiKey);
   url.searchParams.set('maxWidthPx', String(maxWidthPx));
