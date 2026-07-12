@@ -626,8 +626,14 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
               const profileClipId = `local-seo-profile-${String(location.id || 'location').replace(/[^a-zA-Z0-9_-]/g, '-')}`;
               const labelWidth = profileUrl ? 300 : Math.min(286, Math.max(214, label.length * 7.2 + 44));
               const labelHeight = profileUrl ? (hasProfileImage ? 208 : 142) : 76;
-              const labelX = point.x > MAP_VIEWBOX.width - labelWidth - 20 ? -labelWidth - 17 : 18;
-              const labelY = profileUrl ? (hasProfileImage ? -218 : -152) : -86;
+              const preferredLabelX = point.x > MAP_VIEWBOX.width - labelWidth - 20 ? -labelWidth - 17 : 18;
+              const preferredLabelY = profileUrl ? (hasProfileImage ? -218 : -152) : -86;
+              const absoluteLabelX = Math.max(8, Math.min(MAP_VIEWBOX.width - labelWidth - 8, point.x + preferredLabelX));
+              const absoluteLabelY = Math.max(8, Math.min(MAP_VIEWBOX.height - labelHeight - 8, point.y + preferredLabelY));
+              const labelX = absoluteLabelX - point.x;
+              const labelY = absoluteLabelY - point.y;
+              const pointerX = Math.max(12, Math.min(labelWidth - 12, point.x - absoluteLabelX));
+              const pointerAtBottom = absoluteLabelY + labelHeight <= point.y;
               const nameY = profileUrl ? (hasProfileImage ? 104 : 24) : 22;
               const profileMetaY = hasProfileImage ? 126 : 46;
               const ratingY = hasProfileImage ? 142 : 62;
@@ -656,9 +662,9 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                   {isActive ? (
                     <g transform={`translate(${labelX} ${labelY})`}>
                       <path
-                        d={labelX < 0
-                          ? `M${labelWidth} ${labelHeight - 8} L${labelWidth + 9} ${labelHeight + 2} L${labelWidth - 2} ${labelHeight - 1} Z`
-                          : `M0 ${labelHeight - 8} L-9 ${labelHeight + 2} L2 ${labelHeight - 1} Z`
+                        d={pointerAtBottom
+                          ? `M${pointerX - 9} ${labelHeight - 1} L${pointerX} ${labelHeight + 10} L${pointerX + 9} ${labelHeight - 1} Z`
+                          : `M${pointerX - 9} 1 L${pointerX} -10 L${pointerX + 9} 1 Z`
                         }
                         fill="white"
                         stroke={GOOGLE_BLUE}
