@@ -11,6 +11,19 @@ interface LocalSeoMapWidgetProps {
   userRole?: string;
 }
 
+type GooglePlacePreview = {
+  placeId: string;
+  displayName: string;
+  formattedAddress?: string;
+  googleMapsUri?: string | null;
+  rating?: number | null;
+  userRatingCount?: number | null;
+  businessStatus?: string | null;
+  openNow?: boolean | null;
+  primaryType?: string | null;
+  photoUrl?: string | null;
+};
+
 function formatNumber(value: number) {
   return new Intl.NumberFormat('de-DE').format(Math.round(value || 0));
 }
@@ -24,6 +37,23 @@ function getExternalProfileUrl(value?: string | null) {
   if (!trimmed) return null;
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   return `https://${trimmed}`;
+}
+
+function buildPlaceQuery(location: LocalSeoLocationData) {
+  return [
+    location.name,
+    location.postalCode,
+    location.city,
+    location.country || 'AT',
+  ].filter(Boolean).join(' ');
+}
+
+function getOpeningLabel(preview?: GooglePlacePreview) {
+  if (!preview) return null;
+  if (preview.businessStatus === 'CLOSED_PERMANENTLY') return 'Dauerhaft geschlossen';
+  if (preview.openNow === true) return 'Geöffnet';
+  if (preview.openNow === false) return 'Geschlossen';
+  return null;
 }
 
 type LocationDetailTab = 'overview' | 'queries' | 'landingpages';
@@ -319,11 +349,26 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
   const [detailTab, setDetailTab] = useState<LocationDetailTab>('overview');
   const [isSavingPins, setIsSavingPins] = useState(false);
   const [pinSaveError, setPinSaveError] = useState<string | null>(null);
+  const [placePreviews, setPlacePreviews] = useState<Record<string, GooglePlacePreview | null>>({});
   const canEditPins = userRole === 'SUPERADMIN' && Boolean(projectId);
   const selected = displayLocations.find((location) => location.id === selectedId) || displayLocations[0];
 
   const rankedLocations = useMemo(
     () => [...displayLocations].sort((a, b) => b.score - a.score),
+    [displayLocations]
+  );
+  const placePreviewLookupKey = useMemo(
+    () => displayLocations
+      .map((location) => [
+        location.id || location.name,
+        location.googlePlaceId || '',
+        location.googleBusinessProfileUrl || '',
+        location.name || '',
+        location.postalCode || '',
+        location.city || '',
+        location.country || 'AT',
+      ].join(':'))
+      .join('|'),
     [displayLocations]
   );
 
@@ -334,6 +379,53 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
       : locations[0]?.id
     );
   }, [locations]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const loadPreviews = async () => {
+      const previewEntries = await Promise.all(displayLocations.map(async (location) => {
+        const locationId = location.id || location.name;
+        if (!locationId) return null;
+        if (!location.googlePlaceId && !location.googleBusinessProfileUrl) return [locationId, null] as const;
+
+        const params = new URLSearchParams();
+        if (location.googlePlaceId) {
+          params.set('placeId', location.googlePlaceId);
+        } else {
+          params.set('query', buildPlaceQuery(location));
+        }
+
+        try {
+          const response = await fetch(`/api/google-places/preview?${params.toString()}`, {
+            signal: controller.signal,
+          });
+          if (!response.ok) return [locationId, null] as const;
+          const preview = await response.json() as GooglePlacePreview;
+          return [locationId, preview] as const;
+        } catch {
+          if (controller.signal.aborted) return null;
+          return [locationId, null] as const;
+        }
+      }));
+
+      if (controller.signal.aborted) return;
+      setPlacePreviews((current) => {
+        const next = { ...current };
+        previewEntries.forEach((entry) => {
+          if (!entry) return;
+          const [locationId, preview] = entry;
+          next[locationId] = preview;
+        });
+        return next;
+      });
+    };
+
+    if (displayLocations.length > 0) {
+      loadPreviews();
+    }
+
+    return () => controller.abort();
+  }, [placePreviewLookupKey]);
 
   const getSvgPointFromClient = (clientX: number, clientY: number) => {
     const rect = svgRef.current?.getBoundingClientRect();
@@ -509,21 +601,32 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
               const point = projectToAustriaSvg(location);
               const isSelected = selected?.id === location.id;
               const isActive = isSelected || hoveredId === location.id;
-              const label = location.name.length > 28 ? `${location.name.slice(0, 25)}...` : location.name;
-              const profileUrl = getExternalProfileUrl(location.googleBusinessProfileUrl);
-              const profileImageUrl = getExternalProfileUrl(location.googleBusinessProfileImageUrl);
+              const preview = placePreviews[location.id || location.name] || null;
+              const rawLabel = preview?.displayName || location.name;
+              const label = rawLabel.length > 30 ? `${rawLabel.slice(0, 27)}...` : rawLabel;
+              const profileUrl = preview?.googleMapsUri || getExternalProfileUrl(location.googleBusinessProfileUrl);
+              const profileImageUrl = preview?.photoUrl || getExternalProfileUrl(location.googleBusinessProfileImageUrl);
               const hasProfileImage = Boolean(profileImageUrl);
+              const categoryLabel = preview?.primaryType || 'Google Unternehmensprofil';
+              const openingLabel = getOpeningLabel(preview);
+              const ratingLabel = typeof preview?.rating === 'number'
+                ? preview.rating.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                : null;
+              const reviewLabel = typeof preview?.userRatingCount === 'number'
+                ? `(${formatNumber(preview.userRatingCount)})`
+                : '';
               const profileClipId = `local-seo-profile-${String(location.id || 'location').replace(/[^a-zA-Z0-9_-]/g, '-')}`;
               const labelWidth = profileUrl ? 300 : Math.min(286, Math.max(214, label.length * 7.2 + 44));
-              const labelHeight = profileUrl ? (hasProfileImage ? 192 : 126) : 76;
+              const labelHeight = profileUrl ? (hasProfileImage ? 208 : 142) : 76;
               const labelX = point.x > MAP_VIEWBOX.width - labelWidth - 20 ? -labelWidth - 17 : 18;
-              const labelY = profileUrl ? (hasProfileImage ? -202 : -136) : -86;
+              const labelY = profileUrl ? (hasProfileImage ? -218 : -152) : -86;
               const nameY = profileUrl ? (hasProfileImage ? 104 : 24) : 22;
               const profileMetaY = hasProfileImage ? 126 : 46;
-              const profileActionY = hasProfileImage ? 142 : 62;
+              const ratingY = hasProfileImage ? 142 : 62;
+              const profileActionY = hasProfileImage ? 160 : 80;
               const iconY = hasProfileImage ? 92 : 18;
-              const visitorsY = profileUrl ? (hasProfileImage ? 158 : 88) : 44;
-              const conversionsY = profileUrl ? (hasProfileImage ? 176 : 108) : 62;
+              const visitorsY = profileUrl ? (hasProfileImage ? 182 : 108) : 44;
+              const conversionsY = profileUrl ? (hasProfileImage ? 200 : 126) : 62;
               return (
                 <g
                   key={location.id}
@@ -615,15 +718,25 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                             fill="#64748B"
                             className="text-[12px] dark:fill-slate-300"
                           >
-                            Google Unternehmensprofil
+                            {categoryLabel.length > 34 ? `${categoryLabel.slice(0, 31)}...` : categoryLabel}
                           </text>
+                          {ratingLabel ? (
+                            <text
+                              x="13"
+                              y={ratingY}
+                              fill="#374151"
+                              className="text-[12px] dark:fill-slate-200"
+                            >
+                              {ratingLabel} Sterne {reviewLabel}
+                            </text>
+                          ) : null}
                           <text
                             x="13"
                             y={profileActionY}
-                            fill="#DC2626"
+                            fill={openingLabel === 'Geöffnet' ? '#15803D' : '#DC2626'}
                             className="text-[12px]"
                           >
-                            Profil öffnen
+                            {openingLabel ? `${openingLabel} · Profil öffnen` : 'Profil öffnen'}
                           </text>
                         </>
                       ) : null}

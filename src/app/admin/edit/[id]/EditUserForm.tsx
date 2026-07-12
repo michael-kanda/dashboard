@@ -66,6 +66,7 @@ const createEmptyLocation = (): ProjectLocation => ({
   lng: null,
   mapX: null,
   mapY: null,
+  googlePlaceId: null,
   googleBusinessProfileUrl: null,
   googleBusinessProfileImageUrl: null,
   landingPages: [],
@@ -84,6 +85,7 @@ function normalizeLocations(locations?: ProjectLocation[] | null): ProjectLocati
     lng: typeof location.lng === 'number' ? location.lng : null,
     mapX: typeof location.mapX === 'number' ? location.mapX : null,
     mapY: typeof location.mapY === 'number' ? location.mapY : null,
+    googlePlaceId: location.googlePlaceId || null,
     googleBusinessProfileUrl: location.googleBusinessProfileUrl || null,
     googleBusinessProfileImageUrl: location.googleBusinessProfileImageUrl || null,
     landingPages: Array.isArray(location.landingPages) ? location.landingPages : [],
@@ -231,6 +233,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
             postalCode: location.postalCode?.trim() || '',
             city: location.city?.trim() || '',
             country: location.country?.trim() || 'AT',
+            googlePlaceId: location.googlePlaceId?.trim() || null,
             googleBusinessProfileUrl: location.googleBusinessProfileUrl?.trim() || null,
             googleBusinessProfileImageUrl: location.googleBusinessProfileImageUrl?.trim() || null,
             landingPages: Array.isArray(location.landingPages) ? location.landingPages.filter(Boolean) : [],
@@ -736,12 +739,26 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
                           />
                         </div>
                         <div className="sm:col-span-2">
-                          <label className="block text-xs font-medium text-gray-600">Google Unternehmensprofil URL</label>
+                          <label className="block text-xs font-medium text-gray-600">Google Place ID</label>
+                          <input
+                            type="text"
+                            value={location.googlePlaceId || ''}
+                            onChange={(event) => updateProjectLocation(index, 'googlePlaceId', event.target.value)}
+                            placeholder="z.B. ChIJ..."
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 placeholder:text-gray-400"
+                            disabled={isSubmitting}
+                          />
+                          <p className="mt-1 text-[11px] text-gray-400">
+                            Optional, aber empfohlen. Ohne Place ID sucht DataPeak per Standortname, Stadt und PLZ.
+                          </p>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-medium text-gray-600">Google Unternehmensprofil URL / Maps-Link</label>
                           <input
                             type="url"
                             value={location.googleBusinessProfileUrl || ''}
                             onChange={(event) => updateProjectLocation(index, 'googleBusinessProfileUrl', event.target.value)}
-                            placeholder="https://www.google.com/search?..."
+                            placeholder="https://maps.app.goo.gl/..."
                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 placeholder:text-gray-400"
                             disabled={isSubmitting}
                           />

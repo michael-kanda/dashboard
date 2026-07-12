@@ -244,6 +244,7 @@ export interface LocalSeoLocationConfig {
   lng?: number | null;
   mapX?: number | null;
   mapY?: number | null;
+  googlePlaceId?: string | null;
   googleBusinessProfileUrl?: string | null;
   googleBusinessProfileImageUrl?: string | null;
   landingPages?: string[];

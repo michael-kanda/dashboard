@@ -54,6 +54,7 @@ export const UserSchema = z.object({
     lng: z.number().nullable().optional(),
     mapX: z.number().nullable().optional(),
     mapY: z.number().nullable().optional(),
+    googlePlaceId: z.string().nullable().optional(),
     googleBusinessProfileUrl: z.string().nullable().optional(),
     googleBusinessProfileImageUrl: z.string().nullable().optional(),
     landingPages: z.array(z.string()).optional(),

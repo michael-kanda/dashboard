@@ -16,6 +16,7 @@ type ProjectLocationPayload = {
   lng?: number | null;
   mapX?: number | null;
   mapY?: number | null;
+  googlePlaceId?: string | null;
   googleBusinessProfileUrl?: string | null;
   googleBusinessProfileImageUrl?: string | null;
   landingPages?: string[];
@@ -57,6 +58,9 @@ function normalizeProjectLocations(value: unknown): ProjectLocationPayload[] {
       lng: toNumberOrNull(item.lng),
       mapX: toNumberOrNull(item.mapX),
       mapY: toNumberOrNull(item.mapY),
+      googlePlaceId: typeof item.googlePlaceId === 'string' && item.googlePlaceId.trim()
+        ? item.googlePlaceId.trim()
+        : null,
       googleBusinessProfileUrl: typeof item.googleBusinessProfileUrl === 'string' && item.googleBusinessProfileUrl.trim()
         ? item.googleBusinessProfileUrl.trim()
         : null,
