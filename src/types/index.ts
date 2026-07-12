@@ -57,6 +57,7 @@ export interface ProjectLocation {
   lng?: number | null;
   mapX?: number | null;
   mapY?: number | null;
+  googleBusinessProfileUrl?: string | null;
   landingPages?: string[];
   keywords?: string[];
 }

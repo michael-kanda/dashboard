@@ -66,6 +66,7 @@ const createEmptyLocation = (): ProjectLocation => ({
   lng: null,
   mapX: null,
   mapY: null,
+  googleBusinessProfileUrl: null,
   landingPages: [],
   keywords: [],
 });
@@ -82,6 +83,7 @@ function normalizeLocations(locations?: ProjectLocation[] | null): ProjectLocati
     lng: typeof location.lng === 'number' ? location.lng : null,
     mapX: typeof location.mapX === 'number' ? location.mapX : null,
     mapY: typeof location.mapY === 'number' ? location.mapY : null,
+    googleBusinessProfileUrl: location.googleBusinessProfileUrl || null,
     landingPages: Array.isArray(location.landingPages) ? location.landingPages : [],
     keywords: Array.isArray(location.keywords) ? location.keywords : [],
   }));
@@ -227,6 +229,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
             postalCode: location.postalCode?.trim() || '',
             city: location.city?.trim() || '',
             country: location.country?.trim() || 'AT',
+            googleBusinessProfileUrl: location.googleBusinessProfileUrl?.trim() || null,
             landingPages: Array.isArray(location.landingPages) ? location.landingPages.filter(Boolean) : [],
             keywords: Array.isArray(location.keywords) ? location.keywords.filter(Boolean) : [],
           }))
@@ -725,6 +728,17 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
                             value={location.lng ?? ''}
                             onChange={(event) => updateProjectLocation(index, 'lng', event.target.value === '' ? null : Number(event.target.value))}
                             placeholder="16.3738"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 placeholder:text-gray-400"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-medium text-gray-600">Google Unternehmensprofil URL</label>
+                          <input
+                            type="url"
+                            value={location.googleBusinessProfileUrl || ''}
+                            onChange={(event) => updateProjectLocation(index, 'googleBusinessProfileUrl', event.target.value)}
+                            placeholder="https://www.google.com/search?..."
                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 placeholder:text-gray-400"
                             disabled={isSubmitting}
                           />

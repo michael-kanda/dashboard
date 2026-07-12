@@ -19,6 +19,13 @@ function formatPercent(value: number) {
   return `${(value || 0).toFixed(1)} %`;
 }
 
+function getExternalProfileUrl(value?: string | null) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
 type LocationDetailTab = 'overview' | 'queries' | 'landingpages';
 type GeoPoint = [number, number];
 type GeoRing = GeoPoint[];
@@ -503,10 +510,14 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
               const isSelected = selected?.id === location.id;
               const isActive = isSelected || hoveredId === location.id;
               const label = location.name.length > 28 ? `${location.name.slice(0, 25)}...` : location.name;
-              const labelWidth = Math.min(250, Math.max(196, label.length * 7.2 + 44));
-              const labelHeight = 76;
-              const labelX = point.x > MAP_VIEWBOX.width - 250 ? -labelWidth - 17 : 18;
-              const labelY = -86;
+              const profileUrl = getExternalProfileUrl(location.googleBusinessProfileUrl);
+              const labelWidth = Math.min(270, Math.max(206, label.length * 7.2 + 44));
+              const labelHeight = profileUrl ? 94 : 76;
+              const labelX = point.x > MAP_VIEWBOX.width - 270 ? -labelWidth - 17 : 18;
+              const labelY = profileUrl ? -104 : -86;
+              const nameY = profileUrl ? 40 : 22;
+              const visitorsY = profileUrl ? 62 : 44;
+              const conversionsY = profileUrl ? 80 : 62;
               return (
                 <g
                   key={location.id}
@@ -526,7 +537,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                     </g>
                   </g>
                   {isActive ? (
-                    <g className="pointer-events-none" transform={`translate(${labelX} ${labelY})`}>
+                    <g transform={`translate(${labelX} ${labelY})`}>
                       <path
                         d={labelX < 0
                           ? `M${labelWidth} ${labelHeight - 8} L${labelWidth + 9} ${labelHeight + 2} L${labelWidth - 2} ${labelHeight - 1} Z`
@@ -546,9 +557,26 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                         className="drop-shadow-sm dark:fill-slate-900"
                         strokeWidth="1"
                       />
+                      {profileUrl ? (
+                        <a
+                          href={profileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <text
+                            x="13"
+                            y="21"
+                            fill={GOOGLE_BLUE}
+                            className="text-[12px] font-semibold underline"
+                          >
+                            Google Unternehmensprofil
+                          </text>
+                        </a>
+                      ) : null}
                       <text
                         x="13"
-                        y="22"
+                        y={nameY}
                         fill={GOOGLE_BLUE}
                         className="text-[14px] font-semibold"
                       >
@@ -556,7 +584,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                       </text>
                       <text
                         x="13"
-                        y="44"
+                        y={visitorsY}
                         fill={GOOGLE_BLUE}
                         className="text-[13px] font-semibold"
                       >
@@ -564,7 +592,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                       </text>
                       <text
                         x="13"
-                        y="62"
+                        y={conversionsY}
                         fill={GOOGLE_BLUE}
                         className="text-[13px] font-semibold"
                       >
