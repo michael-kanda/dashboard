@@ -396,8 +396,9 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
         if (!location.googlePlaceId && !location.googleBusinessProfileUrl) return [locationId, null] as const;
 
         const params = new URLSearchParams();
-        if (isUsablePlaceId(location.googlePlaceId)) {
-          params.set('placeId', location.googlePlaceId);
+        const googlePlaceId = location.googlePlaceId?.trim();
+        if (isUsablePlaceId(googlePlaceId)) {
+          params.set('placeId', googlePlaceId);
         }
         params.set('query', buildPlaceQuery(location));
 
