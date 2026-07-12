@@ -511,13 +511,13 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
               const isActive = isSelected || hoveredId === location.id;
               const label = location.name.length > 28 ? `${location.name.slice(0, 25)}...` : location.name;
               const profileUrl = getExternalProfileUrl(location.googleBusinessProfileUrl);
-              const labelWidth = Math.min(270, Math.max(206, label.length * 7.2 + 44));
-              const labelHeight = profileUrl ? 94 : 76;
-              const labelX = point.x > MAP_VIEWBOX.width - 270 ? -labelWidth - 17 : 18;
-              const labelY = profileUrl ? -104 : -86;
-              const nameY = profileUrl ? 40 : 22;
-              const visitorsY = profileUrl ? 62 : 44;
-              const conversionsY = profileUrl ? 80 : 62;
+              const labelWidth = Math.min(286, Math.max(214, label.length * 7.2 + 44));
+              const labelHeight = profileUrl ? 128 : 76;
+              const labelX = point.x > MAP_VIEWBOX.width - 286 ? -labelWidth - 17 : 18;
+              const labelY = profileUrl ? -138 : -86;
+              const nameY = profileUrl ? 72 : 22;
+              const visitorsY = profileUrl ? 96 : 44;
+              const conversionsY = profileUrl ? 114 : 62;
               return (
                 <g
                   key={location.id}
@@ -563,15 +563,46 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(event) => event.stopPropagation()}
+                          className="cursor-pointer"
                         >
+                          <rect
+                            x="10"
+                            y="10"
+                            width={labelWidth - 20}
+                            height="42"
+                            rx="6"
+                            fill="#F8FAFC"
+                            stroke="#D9E7FF"
+                            className="dark:fill-slate-800 dark:stroke-slate-700"
+                          />
+                          <rect x="20" y="20" width="19" height="4" rx="2" fill="#4285F4" />
+                          <rect x="39" y="20" width="12" height="4" rx="2" fill="#EA4335" />
+                          <rect x="20" y="28" width="15" height="4" rx="2" fill="#FBBC05" />
+                          <rect x="35" y="28" width="16" height="4" rx="2" fill="#34A853" />
                           <text
-                            x="13"
-                            y="21"
+                            x="62"
+                            y="26"
                             fill={GOOGLE_BLUE}
-                            className="text-[12px] font-semibold underline"
+                            className="text-[12px] font-semibold"
                           >
                             Google Unternehmensprofil
                           </text>
+                          <text
+                            x="62"
+                            y="42"
+                            fill="#64748B"
+                            className="text-[11px] font-semibold dark:fill-slate-300"
+                          >
+                            Profil in Google öffnen
+                          </text>
+                          <path
+                            d={`M${labelWidth - 35} 36 L${labelWidth - 24} 25 M${labelWidth - 34} 25 H${labelWidth - 24} V35`}
+                            fill="none"
+                            stroke={GOOGLE_BLUE}
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                         </a>
                       ) : null}
                       <text
