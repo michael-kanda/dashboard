@@ -512,14 +512,18 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
               const label = location.name.length > 28 ? `${location.name.slice(0, 25)}...` : location.name;
               const profileUrl = getExternalProfileUrl(location.googleBusinessProfileUrl);
               const profileImageUrl = getExternalProfileUrl(location.googleBusinessProfileImageUrl);
+              const hasProfileImage = Boolean(profileImageUrl);
               const profileClipId = `local-seo-profile-${String(location.id || 'location').replace(/[^a-zA-Z0-9_-]/g, '-')}`;
               const labelWidth = profileUrl ? 300 : Math.min(286, Math.max(214, label.length * 7.2 + 44));
-              const labelHeight = profileUrl ? 192 : 76;
+              const labelHeight = profileUrl ? (hasProfileImage ? 192 : 126) : 76;
               const labelX = point.x > MAP_VIEWBOX.width - labelWidth - 20 ? -labelWidth - 17 : 18;
-              const labelY = profileUrl ? -202 : -86;
-              const nameY = profileUrl ? 104 : 22;
-              const visitorsY = profileUrl ? 148 : 44;
-              const conversionsY = profileUrl ? 168 : 62;
+              const labelY = profileUrl ? (hasProfileImage ? -202 : -136) : -86;
+              const nameY = profileUrl ? (hasProfileImage ? 104 : 24) : 22;
+              const profileMetaY = hasProfileImage ? 126 : 46;
+              const profileActionY = hasProfileImage ? 142 : 62;
+              const iconY = hasProfileImage ? 92 : 18;
+              const visitorsY = profileUrl ? (hasProfileImage ? 158 : 88) : 44;
+              const conversionsY = profileUrl ? (hasProfileImage ? 176 : 108) : 62;
               return (
                 <g
                   key={location.id}
@@ -567,11 +571,16 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                           onClick={(event) => event.stopPropagation()}
                           className="cursor-pointer"
                         >
-                          <defs>
-                            <clipPath id={profileClipId}>
-                              <rect x="1" y="1" width={labelWidth - 2} height="78" rx="7" />
-                            </clipPath>
-                          </defs>
+                          {profileImageUrl ? (
+                            <>
+                              <defs>
+                                <clipPath id={profileClipId}>
+                                  <rect x="1" y="1" width={labelWidth - 2} height="78" rx="7" />
+                                </clipPath>
+                              </defs>
+                              <rect x="1" y="1" width={labelWidth - 2} height="78" rx="7" fill="#E5E7EB" />
+                            </>
+                          ) : null}
                           {profileImageUrl ? (
                             <image
                               href={profileImageUrl}
@@ -582,19 +591,11 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                               preserveAspectRatio="xMidYMid slice"
                               clipPath={`url(#${profileClipId})`}
                             />
-                          ) : (
-                            <g clipPath={`url(#${profileClipId})`}>
-                              <rect x="1" y="1" width={labelWidth - 2} height="78" fill="#EAF3FF" />
-                              <rect x="26" y="26" width="62" height="8" rx="4" fill="#4285F4" opacity="0.9" />
-                              <rect x="26" y="42" width="42" height="8" rx="4" fill="#34A853" opacity="0.85" />
-                              <rect x="100" y="30" width="154" height="6" rx="3" fill="#CBD5E1" />
-                              <rect x="100" y="44" width="112" height="6" rx="3" fill="#E2E8F0" />
-                            </g>
-                          )}
-                          <rect x={labelWidth - 78} y="92" width="30" height="30" rx="15" fill="#DDFBFF" />
-                          <rect x={labelWidth - 40} y="92" width="30" height="30" rx="15" fill="#DDFBFF" />
-                          <path d={`M${labelWidth - 67} 107 L${labelWidth - 62} 102 L${labelWidth - 57} 107 L${labelWidth - 62} 112 Z`} fill="#0F766E" />
-                          <path d={`M${labelWidth - 30} 102 H${labelWidth - 20} V113 L${labelWidth - 25} 110 L${labelWidth - 30} 113 Z`} fill="none" stroke="#0F766E" strokeWidth="2" strokeLinejoin="round" />
+                          ) : null}
+                          <rect x={labelWidth - 78} y={iconY} width="30" height="30" rx="15" fill="#DDFBFF" />
+                          <rect x={labelWidth - 40} y={iconY} width="30" height="30" rx="15" fill="#DDFBFF" />
+                          <path d={`M${labelWidth - 67} ${iconY + 15} L${labelWidth - 62} ${iconY + 10} L${labelWidth - 57} ${iconY + 15} L${labelWidth - 62} ${iconY + 20} Z`} fill="#0F766E" />
+                          <path d={`M${labelWidth - 30} ${iconY + 10} H${labelWidth - 20} V${iconY + 21} L${labelWidth - 25} ${iconY + 18} L${labelWidth - 30} ${iconY + 21} Z`} fill="none" stroke="#0F766E" strokeWidth="2" strokeLinejoin="round" />
                           <rect width={labelWidth} height={labelHeight} fill="transparent" />
                         </a>
                       ) : null}
@@ -610,7 +611,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                         <>
                           <text
                             x="13"
-                            y="126"
+                            y={profileMetaY}
                             fill="#64748B"
                             className="text-[12px] dark:fill-slate-300"
                           >
@@ -618,7 +619,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                           </text>
                           <text
                             x="13"
-                            y="142"
+                            y={profileActionY}
                             fill="#DC2626"
                             className="text-[12px]"
                           >
