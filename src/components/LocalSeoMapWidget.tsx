@@ -39,7 +39,7 @@ function getExternalProfileUrl(value?: string | null) {
   return `https://${trimmed}`;
 }
 
-function isUsablePlaceId(value?: string | null) {
+function isUsablePlaceId(value?: string | null): value is string {
   const trimmed = value?.trim();
   if (!trimmed) return false;
   if (/^\d+$/.test(trimmed)) return false;
