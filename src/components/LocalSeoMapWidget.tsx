@@ -639,7 +639,6 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
               const profileMetaY = hasProfileImage ? 140 : 50;
               const ratingY = hasProfileImage ? 158 : 68;
               const profileActionY = hasProfileImage ? 176 : 88;
-              const iconY = hasProfileImage ? 102 : 20;
               const visitorsY = profileUrl ? (hasProfileImage ? 202 : 118) : 50;
               const conversionsY = profileUrl ? (hasProfileImage ? 220 : 138) : 70;
               return (
@@ -710,10 +709,6 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                               clipPath={`url(#${profileClipId})`}
                             />
                           ) : null}
-                          <rect x={labelWidth - 78} y={iconY} width="30" height="30" rx="15" fill="#DDFBFF" />
-                          <rect x={labelWidth - 40} y={iconY} width="30" height="30" rx="15" fill="#DDFBFF" />
-                          <path d={`M${labelWidth - 67} ${iconY + 15} L${labelWidth - 62} ${iconY + 10} L${labelWidth - 57} ${iconY + 15} L${labelWidth - 62} ${iconY + 20} Z`} fill="#0F766E" />
-                          <path d={`M${labelWidth - 30} ${iconY + 10} H${labelWidth - 20} V${iconY + 21} L${labelWidth - 25} ${iconY + 18} L${labelWidth - 30} ${iconY + 21} Z`} fill="none" stroke="#0F766E" strokeWidth="2" strokeLinejoin="round" />
                           <rect width={labelWidth} height={labelHeight} fill="transparent" />
                         </a>
                       ) : null}
