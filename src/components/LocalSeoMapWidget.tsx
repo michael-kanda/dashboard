@@ -624,23 +624,24 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                 ? `(${formatNumber(preview.userRatingCount)})`
                 : '';
               const profileClipId = `local-seo-profile-${String(location.id || 'location').replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+              const imageHeight = 88;
               const labelWidth = profileUrl ? 300 : Math.min(286, Math.max(214, label.length * 7.2 + 44));
-              const labelHeight = profileUrl ? (hasProfileImage ? 208 : 142) : 76;
+              const labelHeight = profileUrl ? (hasProfileImage ? 226 : 152) : 82;
               const preferredLabelX = point.x > MAP_VIEWBOX.width - labelWidth - 20 ? -labelWidth - 17 : 18;
-              const preferredLabelY = profileUrl ? (hasProfileImage ? -218 : -152) : -86;
+              const preferredLabelY = profileUrl ? (hasProfileImage ? -236 : -162) : -92;
               const absoluteLabelX = Math.max(8, Math.min(MAP_VIEWBOX.width - labelWidth - 8, point.x + preferredLabelX));
               const absoluteLabelY = Math.max(8, Math.min(MAP_VIEWBOX.height - labelHeight - 8, point.y + preferredLabelY));
               const labelX = absoluteLabelX - point.x;
               const labelY = absoluteLabelY - point.y;
               const pointerX = Math.max(12, Math.min(labelWidth - 12, point.x - absoluteLabelX));
               const pointerAtBottom = absoluteLabelY + labelHeight <= point.y;
-              const nameY = profileUrl ? (hasProfileImage ? 104 : 24) : 22;
-              const profileMetaY = hasProfileImage ? 126 : 46;
-              const ratingY = hasProfileImage ? 142 : 62;
-              const profileActionY = hasProfileImage ? 160 : 80;
-              const iconY = hasProfileImage ? 92 : 18;
-              const visitorsY = profileUrl ? (hasProfileImage ? 182 : 108) : 44;
-              const conversionsY = profileUrl ? (hasProfileImage ? 200 : 126) : 62;
+              const nameY = profileUrl ? (hasProfileImage ? 116 : 26) : 24;
+              const profileMetaY = hasProfileImage ? 140 : 50;
+              const ratingY = hasProfileImage ? 158 : 68;
+              const profileActionY = hasProfileImage ? 176 : 88;
+              const iconY = hasProfileImage ? 102 : 20;
+              const visitorsY = profileUrl ? (hasProfileImage ? 202 : 118) : 50;
+              const conversionsY = profileUrl ? (hasProfileImage ? 220 : 138) : 70;
               return (
                 <g
                   key={location.id}
@@ -692,10 +693,10 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                             <>
                               <defs>
                                 <clipPath id={profileClipId}>
-                                  <rect x="1" y="1" width={labelWidth - 2} height="78" rx="7" />
+                                  <rect x="1" y="1" width={labelWidth - 2} height={imageHeight} rx="7" />
                                 </clipPath>
                               </defs>
-                              <rect x="1" y="1" width={labelWidth - 2} height="78" rx="7" fill="#E5E7EB" />
+                              <rect x="1" y="1" width={labelWidth - 2} height={imageHeight} rx="7" fill="#E5E7EB" />
                             </>
                           ) : null}
                           {profileImageUrl ? (
@@ -704,8 +705,8 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                               x="1"
                               y="1"
                               width={labelWidth - 2}
-                              height="78"
-                              preserveAspectRatio="xMidYMid slice"
+                              height={imageHeight}
+                              preserveAspectRatio="xMidYMid meet"
                               clipPath={`url(#${profileClipId})`}
                             />
                           ) : null}
@@ -720,7 +721,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                         x="13"
                         y={nameY}
                         fill={profileUrl ? '#111827' : GOOGLE_BLUE}
-                        className="text-[14px] font-semibold dark:fill-slate-100"
+                        className="text-[15px] font-semibold dark:fill-slate-100"
                       >
                         {label}
                       </text>
@@ -730,7 +731,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                             x="13"
                             y={profileMetaY}
                             fill="#64748B"
-                            className="text-[12px] dark:fill-slate-300"
+                            className="text-[13px] dark:fill-slate-300"
                           >
                             {categoryLabel.length > 34 ? `${categoryLabel.slice(0, 31)}...` : categoryLabel}
                           </text>
@@ -739,7 +740,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                               x="13"
                               y={ratingY}
                               fill="#374151"
-                              className="text-[12px] dark:fill-slate-200"
+                              className="text-[13px] dark:fill-slate-200"
                             >
                               {ratingLabel} Sterne {reviewLabel}
                             </text>
@@ -748,7 +749,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                             x="13"
                             y={profileActionY}
                             fill={openingLabel === 'Geöffnet' ? '#15803D' : '#DC2626'}
-                            className="text-[12px]"
+                            className="text-[13px]"
                           >
                             {openingLabel ? `${openingLabel} · Profil öffnen` : 'Profil öffnen'}
                           </text>
@@ -758,7 +759,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                         x="13"
                         y={visitorsY}
                         fill={GOOGLE_BLUE}
-                        className="text-[12px] font-semibold"
+                        className="text-[13px] font-semibold"
                       >
                         Neue Besucher {formatNumber(location.newUsers)}
                       </text>
@@ -766,7 +767,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
                         x="13"
                         y={conversionsY}
                         fill={GOOGLE_BLUE}
-                        className="text-[12px] font-semibold"
+                        className="text-[13px] font-semibold"
                       >
                         Conversions {formatNumber(location.conversions)}
                       </text>
