@@ -101,6 +101,16 @@ function csvToList(value: string) {
   return value.split(',').map((item) => item.trim()).filter(Boolean);
 }
 
+function extractGoogleSpreadsheetId(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+
+  const sheetUrlMatch = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (sheetUrlMatch?.[1]) return sheetUrlMatch[1];
+
+  return trimmed;
+}
+
 
 export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: EditUserFormProps) {
   const [formData, setFormData] = useState({
@@ -172,9 +182,10 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         [name]: checked
       }));
     } else {
+      const nextValue = name === 'googleAdsSheetId' ? extractGoogleSpreadsheetId(value) : value;
       setFormData(prev => ({
         ...prev,
-        [name]: value
+        [name]: nextValue
       }));
     }
   };
@@ -221,7 +232,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         semrush_project_id: formData.semrushProjectId || null,
         semrush_tracking_id: formData.semrushTrackingId || null,
         semrush_tracking_id_02: formData.semrushTrackingId02 || null,
-        google_ads_sheet_id: formData.googleAdsSheetId || null,
+        google_ads_sheet_id: extractGoogleSpreadsheetId(formData.googleAdsSheetId) || null,
         project_start_date: formData.project_start_date || null,
         project_duration_months: parseInt(formData.project_duration_months, 10) || 6,
         project_timeline_active: formData.project_timeline_active,
@@ -911,7 +922,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
                     name="googleAdsSheetId"
                     value={formData.googleAdsSheetId}
                     onChange={handleInputChange} 
-                    placeholder="z.B. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+                    placeholder="Google-Sheets-URL oder Spreadsheet-ID"
                     className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed placeholder:text-gray-400"
                     disabled={isSubmitting}
                   />
@@ -923,7 +934,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
                   )}
                 </div>
                 <p className="mt-1 text-xs text-gray-400">
-                  Die Spreadsheet-ID aus der Sheet-URL. Wird vom Google Ads Script befüllt. Wenn leer, werden Ads-Daten über GA4 geladen.
+                  Am besten die komplette Google-Sheets-URL einfügen. DataPeak extrahiert die ID automatisch. Wenn leer, werden Ads-Daten über GA4 geladen.
                 </p>
               </div>
             </fieldset>

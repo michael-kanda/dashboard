@@ -75,6 +75,17 @@ function normalizeProjectLocations(value: unknown): ProjectLocationPayload[] {
   }, []);
 }
 
+function extractGoogleSpreadsheetId(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const sheetUrlMatch = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (sheetUrlMatch?.[1]) return sheetUrlMatch[1];
+
+  return trimmed;
+}
+
 // Handler zum Abrufen eines einzelnen Benutzers
 export async function GET(
   request: NextRequest,
@@ -281,6 +292,7 @@ export async function PUT(
       ? settings_show_prompt_tracking
       : targetUser.settings_show_prompt_tracking === true;
     const normalizedProjectLocations = normalizeProjectLocations(project_locations);
+    const normalizedGoogleAdsSheetId = extractGoogleSpreadsheetId(google_ads_sheet_id);
 
     const { rows } = password && password.trim().length > 0
       ? // Query MIT Passwort
@@ -295,7 +307,7 @@ export async function PUT(
             semrush_project_id = ${semrush_project_id || null},
             semrush_tracking_id = ${semrush_tracking_id || null},
             semrush_tracking_id_02 = ${semrush_tracking_id_02 || null},
-            google_ads_sheet_id = ${google_ads_sheet_id || null},
+            google_ads_sheet_id = ${normalizedGoogleAdsSheetId},
             mandant_id = ${mandant_id || null},
             permissions = ${permissionsPgString},
             favicon_url = ${favicon_url || null},
@@ -329,7 +341,7 @@ export async function PUT(
             semrush_project_id = ${semrush_project_id || null},
             semrush_tracking_id = ${semrush_tracking_id || null},
             semrush_tracking_id_02 = ${semrush_tracking_id_02 || null},
-            google_ads_sheet_id = ${google_ads_sheet_id || null},
+            google_ads_sheet_id = ${normalizedGoogleAdsSheetId},
             mandant_id = ${mandant_id || null},
             permissions = ${permissionsPgString},
             favicon_url = ${favicon_url || null},
