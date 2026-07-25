@@ -373,8 +373,11 @@ export default function ProjectDashboard({
   const hasAiTraffic = (data.aiTraffic?.totalSessions ?? 0) > 0;
 
   // ✅ Google Ads Prüfung (GA4-Rows ODER Sheet-Rows)
-  const hasGoogleAdsData = (data.googleAdsData?.rows?.length ?? 0) > 0
-    || (data.googleAdsData?.campaignRows?.length ?? 0) > 0;
+  const hasGoogleAdsData = !!data.googleAdsData && (
+    data.googleAdsData.source === 'sheet'
+    || (data.googleAdsData.rows?.length ?? 0) > 0
+    || (data.googleAdsData.campaignRows?.length ?? 0) > 0
+  );
   const shouldRenderGoogleAds = hasGoogleAdsData && (isAdmin || isGoogleAdsVisible);
 
   // ✅ Prompt Tracking Prüfung (nur rendern wenn GSC-Daten vorhanden)

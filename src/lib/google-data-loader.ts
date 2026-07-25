@@ -88,6 +88,30 @@ const INITIAL_DATA: RawApiData = {
   paidSearch: { total: 0, daily: [] }
 };
 
+function createEmptyGoogleAdsSheetData(sheetId: string): GoogleAdsData {
+  return {
+    rows: [],
+    landingPageRows: [],
+    totals: {
+      cost: 0,
+      clicks: 0,
+      avgCpc: 0,
+      roas: 0,
+      conversions: 0,
+      sessions: 0,
+      engagedSessions: 0,
+      impressions: 0,
+      interactionRate: 0,
+    },
+    campaignRows: [],
+    adGroupRows: [],
+    adRows: [],
+    searchQueryRows: [],
+    source: 'sheet',
+    configuredSheetId: sheetId,
+  };
+}
+
 function normalizeForMatch(value: string) {
   return value
     .toLowerCase()
@@ -352,6 +376,12 @@ export async function getOrFetchGoogleData(
           !Array.isArray(cachedLocalSeoLocations) ||
           cachedLocalSeoLocations.length === 0 ||
           cacheEntry.data?.localSeo?.calculationVersion === 2;
+        const wantedGoogleAdsSheetId = user.google_ads_sheet_id?.trim() || null;
+        const cachedGoogleAdsData = cacheEntry.data?.googleAdsData;
+        const googleAdsCacheIsCurrent = wantedGoogleAdsSheetId
+          ? cachedGoogleAdsData?.source === 'sheet' &&
+            cachedGoogleAdsData?.configuredSheetId === wantedGoogleAdsSheetId
+          : cachedGoogleAdsData?.source !== 'sheet';
         // Defekte Alt-Einträge (mit gespeicherten API-Fehlern) nur kurz vertrauen,
         // damit ein früher persistiertes Blip-Ergebnis sich von selbst heilt.
         const cachedHadErrors = !!cacheEntry.data?.apiErrors;
@@ -361,7 +391,8 @@ export async function getOrFetchGoogleData(
           (now - lastFetched) / (1000 * 60 * 60) < effectiveMaxAgeHours &&
           promptCacheIsCurrent &&
           genAiCacheIsCurrent &&
-          localSeoCacheIsCurrent
+          localSeoCacheIsCurrent &&
+          googleAdsCacheIsCurrent
         ) {
           console.log(`[Google Cache] ✅ HIT für ${user.email}${cachedHadErrors ? ' (degraded, kurze TTL)' : ''}`);
           return { ...cacheEntry.data, fromCache: true };
@@ -374,6 +405,9 @@ export async function getOrFetchGoogleData(
         }
         if (!localSeoCacheIsCurrent) {
           console.log('[Google Cache] 🔄 MISS wegen Local-SEO-NewUsers-Migration');
+        }
+        if (!googleAdsCacheIsCurrent) {
+          console.log('[Google Cache] 🔄 MISS wegen Google-Ads-Sheet-Konfiguration');
         }
       }
     } catch (error) {
@@ -619,8 +653,14 @@ export async function getOrFetchGoogleData(
   }
 
   if (user.google_ads_sheet_id) {
-    try { googleAdsData = await getGoogleAdsFromSheet(user.google_ads_sheet_id, startDateStr, endDateStr); }
-    catch (e) { console.warn('[Google Ads Sheet] Fehler:', e); }
+    const sheetId = user.google_ads_sheet_id.trim();
+    googleAdsData = createEmptyGoogleAdsSheetData(sheetId);
+    try { googleAdsData = await getGoogleAdsFromSheet(sheetId, startDateStr, endDateStr); }
+    catch (e: any) {
+      const message = getShortErrorMessage(e);
+      console.warn('[Google Ads Sheet] Fehler:', message);
+      apiErrors.googleAds = message || 'Google Ads Sheet nicht verfügbar';
+    }
   }
 
   if (user.gsc_site_url) {

@@ -49,7 +49,7 @@ export interface ChartEntry {
 export interface BingDataPoint { date: string; clicks: number; impressions: number; }
 
 export interface ApiErrorStatus {
-  gsc?: string; ga4?: string; semrush?: string; bing?: string; genAi?: string;
+  gsc?: string; ga4?: string; semrush?: string; bing?: string; genAi?: string; googleAds?: string;
 }
 
 export interface LandingPageQueryData { query: string; clicks: number; impressions: number; }
@@ -90,6 +90,7 @@ export interface GoogleAdsData {
   adRows?: GoogleAdsRow[];
   searchQueryRows?: GoogleAdsRow[];
   source?: 'ga4' | 'sheet';
+  configuredSheetId?: string;
 }
 
 export interface GoogleGenAiTrendPoint {

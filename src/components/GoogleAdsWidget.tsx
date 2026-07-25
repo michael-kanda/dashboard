@@ -319,8 +319,10 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange }: GoogleAd
         <h3 className="text-[18px] font-semibold text-heading">Google Ads Performance</h3>
         <GoogleCleanUnderline id="google-clean-gradient-google-ads-empty" />
         <p className="mt-3 text-sm text-muted">
-          Keine Google Ads-Daten für diesen Zeitraum vorhanden. Stelle sicher, dass Google Ads
-          mit GA4 verknüpft ist.
+          {isSheet
+            ? 'Google-Ads-Sheet ist konfiguriert, aber für diesen Zeitraum wurden keine lesbaren Zeilen gefunden. Prüfe Sheet-Freigabe, Tabs Kampagnen/Anzeigengruppen/Anzeigen/Suchanfragen und das Datum im Tab Kampagnen.'
+            : 'Keine Google Ads-Daten für diesen Zeitraum vorhanden. Stelle sicher, dass Google Ads mit GA4 verknüpft ist.'
+          }
         </p>
       </div>
     );

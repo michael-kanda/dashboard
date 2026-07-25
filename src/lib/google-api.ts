@@ -1773,6 +1773,8 @@ export interface GoogleAdsData {
     conversions: number;
     sessions: number;
     engagedSessions: number;
+    impressions?: number;
+    interactionRate?: number;
   };
   /** Echte Conversions pro Kampagne (1-Dimension-Call, kein Thresholding) */
   conversionsByCampaign?: Record<string, number>;
@@ -1791,6 +1793,8 @@ export interface GoogleAdsData {
   searchQueryRows?: GoogleAdsRow[];
   /** Datenquelle: 'ga4' (Standard, via GA4 Data API) oder 'sheet' (via Google Ads Script Export) */
   source?: 'ga4' | 'sheet';
+  /** Konfigurierte Sheet-ID, damit Dashboard-Caches bei ID-Wechsel sauber invalidieren. */
+  configuredSheetId?: string;
 }
 
 /**
@@ -2364,6 +2368,7 @@ export async function getGoogleAdsFromSheet(
     adRows,
     searchQueryRows,
     source: 'sheet',
+    configuredSheetId: sheetId,
   };
 }
 
