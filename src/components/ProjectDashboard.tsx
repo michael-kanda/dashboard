@@ -179,7 +179,7 @@ const DEFAULT_DASHBOARD_INFO_TEXT = `• GSC & Google Ads (SERP-Daten): Messen I
 • Google GenAI-Sichtbarkeit: Misst offizielle Search-Console-Impressions in generativen Google-Sucherlebnissen wie AI Overviews und AI Mode, sofern die Property bereits im Rollout ist und genug Daten vorhanden sind. Diese Werte zeigen Sichtbarkeit in Google-GenAI, nicht Website-Besuche.
 • Google Analytics (GA4): Misst das Nutzerverhalten direkt auf der Website. Erfassung ist cookie-abhängig und erfordert in der EU eine Einwilligung (DSGVO/TTDSG). Mit Consent Mode v2 sind teilweise modellierte Daten verfügbar.
 ${LOCAL_VISIBILITY_INFO_TEXT}
-• KI-Traffic (GA4): Misst echte Website-Besuche von bekannten KI-Quellen wie ChatGPT, Perplexity, Gemini, Copilot oder Claude, sofern der Referrer oder die Quelle in GA4 erkennbar ist.
+• KI-Traffic (GA4): Misst Website-Besuche über das offizielle GA4-Medium „ai-assistant“ und ergänzt erkannte KI-Referrer wie ChatGPT, Perplexity, Gemini, Copilot, Claude, DeepSeek oder Grok. Google AI Overviews und AI Mode zählen in GA4 weiterhin zu Organic Search.
 • Prompt Tracking / Prompt Research: Nutzt GSC-Queries und KI-generierte Decision-Prompts als Research- und Optimierungsinstrument. Es ist ein AI-Mode-Proxy bzw. Testverfahren, aber kein offizieller Sichtbarkeitswert von Google.`;
 
 function resolveDashboardInfoText(value?: string | null) {

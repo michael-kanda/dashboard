@@ -18,6 +18,8 @@ export const AI_SOURCES = [
   'claude.ai', 'anthropic.com',
   'gemini.google.com', 'bard.google.com',
   'perplexity.ai',
+  'deepseek.com',
+  'grok.com', 'x.ai',
   'bing.com/chat', 'copilot.microsoft.com',
   'you.com',
   'poe.com',
@@ -26,6 +28,9 @@ export const AI_SOURCES = [
 
 /** GA4 Default-Channel-Group-Wert für KI-Assistenten (nativ seit 13.05.2026). */
 export const AI_ASSISTANT_CHANNEL = 'AI Assistant';
+
+/** Offizieller GA4-Medium-Wert für erkannte KI-Assistenten. */
+export const AI_ASSISTANT_MEDIUM = 'ai-assistant';
 
 /** Anzeige-Label für KI-Traffic ohne identifizierbare Quelle. */
 export const AI_OTHER_SOURCE = 'Sonstige KI';
@@ -65,10 +70,9 @@ export function normalizeSource(source: string): string {
 
 /**
  * Kombinierter Dimensionsfilter für KI-Traffic: Eine Session zählt, wenn
- * ENTWEDER die sessionSource eine bekannte KI-Domain enthält ODER GA4 sie dem
- * nativen "AI Assistant"-Channel zugeordnet hat. Per OR verknüpft — daher kein
- * Doppelzählen: Jede Session erscheint pro Abfrage genau einmal, unabhängig
- * davon, ob sie eine oder beide Bedingungen erfüllt.
+ * GA4 sie über das offizielle Medium bzw. den nativen Channel erkennt ODER die
+ * sessionSource eine bekannte KI-Domain enthält. Per OR verknüpft — daher kein
+ * Doppelzählen: Jede Session erscheint pro Abfrage genau einmal.
  *
  * Hinweis: Der native Channel verliert Sessions ohne Referrer-Header an
  * "Direct" (z. B. In-App-Browser mancher Assistenten); die CONTAINS-Liste fängt
@@ -79,6 +83,16 @@ export function buildAiTrafficDimensionFilter(): analyticsdata_v1beta.Schema$Fil
   return {
     orGroup: {
       expressions: [
+        {
+          filter: {
+            fieldName: 'sessionMedium',
+            stringFilter: {
+              matchType: 'EXACT' as const,
+              value: AI_ASSISTANT_MEDIUM,
+              caseSensitive: false,
+            },
+          },
+        },
         ...AI_SOURCES.map((source) => ({
           filter: {
             fieldName: 'sessionSource',

@@ -389,7 +389,7 @@ export default function AiTrafficCard({
               />
 
               <p className="text-xs text-muted mt-4">
-                KI-Traffic umfasst echte GA4-Besuche von bekannten KI-Quellen. Google-GenAI-Sichtbarkeit und Prompt Tracking werden separat ausgewertet.
+                KI-Traffic umfasst GA4-Besuche über das offizielle Medium ai-assistant sowie ergänzend erkannte KI-Referrer. Google-GenAI-Sichtbarkeit und Prompt Tracking werden separat ausgewertet.
               </p>
 
               {/* Action-Buttons — an den unteren Rand gezogen für die Balance */}

@@ -504,11 +504,21 @@ export async function getAiTrafficExtended(
   const auth = createAuth();
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
-  // Kombinierter KI-Traffic-Filter (Referrer-Domains ODER nativer GA4
-  // "AI Assistant"-Channel) — zentral aus '@/lib/ai-sources'.
+  // Kombinierter KI-Traffic-Filter (offizielles GA4-Medium/Channel ODER
+  // ergänzende Referrer-Domains) — zentral aus '@/lib/ai-sources'.
   const aiSourceFilter = buildAiTrafficDimensionFilter();
 
   try {
+    // Kanonische Gesamtwerte ohne Dimensionen. totalUsers ist nicht additiv:
+    // Eine Summe über Tage, Quellen oder Landingpages würde wiederkehrende
+    // Nutzer mehrfach zählen.
+    const currentTotals = await getAiTrafficTotalsOnly(
+      propertyId,
+      startDate,
+      endDate,
+      reportDeadline
+    );
+
     // GA4 limitiert gleichzeitige Requests pro Property hart. Deshalb bewusst
     // sequenziell ausführen statt Promise.all, sonst kommt "Exhausted concurrent
     // requests quota" bei großen Dashboards oder parallelen Widgets.
@@ -822,12 +832,8 @@ export async function getAiTrafficExtended(
       pageData.sources.get(source)!.users += users;
     }
 
-    const trendBySourceTotalSessions = trendBySourceRows.reduce((sum, row) =>
-      sum + parseInt(row.metricValues?.[0]?.value || '0', 10), 0);
-    const trendBySourceTotalUsers = trendBySourceRows.reduce((sum, row) =>
-      sum + parseInt(row.metricValues?.[1]?.value || '0', 10), 0);
-    const displayTotalSessions = trendBySourceTotalSessions || totalSessions;
-    const displayTotalUsers = trendBySourceTotalUsers || totalUsers;
+    const displayTotalSessions = currentTotals.totalSessions;
+    const displayTotalUsers = currentTotals.totalUsers;
 
     // --- User Journey verarbeiten ---
     const journeyMap = new Map<string, Map<string, number>>();
@@ -1115,7 +1121,7 @@ export async function getAiTrafficExtendedWithComparison(
     );
   }
 
-  // Aktueller Zeitraum: vollständige Analyse (7 Reports) mit dem Restbudget.
+  // Aktueller Zeitraum: vollständige Analyse mit kanonischem Totals-Report.
   const currentData = await getAiTrafficExtended(propertyId, currentStart, currentEnd, deadline);
 
   const calcChange = (current: number, previous: number): number => {
@@ -1142,8 +1148,8 @@ export async function getAiTrafficExtendedWithComparison(
  * Liefert ausschließlich die KI-Traffic-Gesamtwerte (Sessions, Users) für einen
  * Zeitraum über EINEN einzigen runReport ohne Dimensionen.
  *
- * Gedacht für den Vergleichszeitraum, wo nur die Veränderungs-Prozente berechnet
- * werden. So fällt die Gesamtzahl der GA4-Calls pro Dashboard-Load von 14 auf 8.
+ * Diese Abfrage ist für aktuelle und Vergleichszeiträume die kanonische Quelle:
+ * Nutzerzahlen dürfen nicht über dimensionierte Zeilen summiert werden.
  */
 export async function getAiTrafficTotalsOnly(
   propertyId: string,
@@ -1171,7 +1177,7 @@ export async function getAiTrafficTotalsOnly(
       { name: 'totalUsers' }
     ],
     dimensionFilter: aiSourceFilter
-  }, { deadline, label: 'ai-previous-totals' });
+  }, { deadline, label: 'ai-totals' });
 
   const row = response.data.rows?.[0];
   return {

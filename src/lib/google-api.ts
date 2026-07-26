@@ -959,6 +959,18 @@ async function getAiTrafficDataUncached(
   const analytics = google.analyticsdata({ version: 'v1beta', auth });
 
   try {
+    // Gesamtwerte ohne Dimensionen abrufen. Insbesondere totalUsers darf nicht
+    // über Tage oder Quellen summiert werden, weil derselbe Nutzer sonst
+    // mehrfach gezählt wird.
+    const totalsResponse = await ga4RunReport(analytics, {
+      property: formattedPropertyId,
+      requestBody: {
+        dateRanges: [{ startDate, endDate }],
+        metrics: [{ name: 'sessions' }, { name: 'totalUsers' }],
+        dimensionFilter: buildAiTrafficDimensionFilter(),
+      },
+    });
+
     const response = await ga4RunReport(analytics, {
       property: formattedPropertyId,
       requestBody: {
@@ -972,9 +984,10 @@ async function getAiTrafficDataUncached(
     });
 
     const rows = response.data.rows || [];
+    const totalsRow = totalsResponse.data.rows?.[0];
 
-    let totalSessions = 0;
-    let totalUsers = 0;
+    const totalSessions = parseInt(totalsRow?.metricValues?.[0]?.value || '0', 10);
+    const totalUsers = parseInt(totalsRow?.metricValues?.[1]?.value || '0', 10);
     const sessionsBySource: { [key: string]: number } = {};
     const usersBySource: { [key: string]: number } = {};
     const trendMap = new Map<number, number>();
@@ -984,9 +997,6 @@ async function getAiTrafficDataUncached(
       const dateStr = row.dimensionValues?.[1]?.value || '';
       const sessions = parseInt(row.metricValues?.[0]?.value || '0', 10);
       const users = parseInt(row.metricValues?.[1]?.value || '0', 10);
-
-      totalSessions += sessions;
-      totalUsers += users;
 
       sessionsBySource[source] = (sessionsBySource[source] || 0) + sessions;
       usersBySource[source] = (usersBySource[source] || 0) + users;

@@ -732,7 +732,7 @@ KUNDEN-MODUS AKTIV:
 - Erklaere Fachbegriffe kurz
 - Fokussiere auf positive Entwicklungen, aber sei ehrlich
 - Halte Empfehlungen einfach umsetzbar
-- Bei KI-Traffic: Erklaere es als "Ihre Inhalte werden von KI-Assistenten empfohlen"
+- Bei KI-Traffic: Erklaere, dass messbare Website-Besuche über Links in KI-Assistenten kamen; behaupte daraus nicht automatisch eine Empfehlung
 - Bei Google Ads: Zeige verstaendlich auf, welche Kampagnen gut laufen und wo Budget gespart werden kann
 - Bei lokaler Sichtbarkeit: Erklaere Standort-Vergleiche einfach und konzentriere dich auf konkrete naechste Schritte
 `}`;
