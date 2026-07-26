@@ -9,14 +9,14 @@ import { streamText } from 'ai';
 export const AI_CONFIG = {
   // Modell-Kette: Beste zuerst, dann Fallbacks
   models: [
-    'gemini-3.1-flash-lite',  // Primary (Free Tier, beste Qualität, aber 20 Req/Tag Limit)
-    'gemini-2.5-flash',        // Fallback
+    'gemini-3.5-flash-lite',  // Primary
+    'gemini-3.1-flash-lite',  // Fallback
   ] as const,
   
   // Shortcuts für direkten Zugriff (Rückwärtskompatibilität)
-  primaryModel: 'gemini-3.1-flash-lite' as const,
-  fallbackModel: 'gemini-2.5-flash' as const,
-  lastResortModel: 'gemini-2.5-flash' as const,
+  primaryModel: 'gemini-3.5-flash-lite' as const,
+  fallbackModel: 'gemini-3.1-flash-lite' as const,
+  lastResortModel: 'gemini-3.1-flash-lite' as const,
   
   // Temperature-Presets
   settings: {
