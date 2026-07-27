@@ -41,6 +41,7 @@ interface ApiPayload {
   permissions?: string[] | null; 
   domain: string | null;
   gsc_site_url: string | null;
+  sitemap_url: string | null;
   ga4_property_id: string | null;
   favicon_url: string | null;
   semrush_project_id: string | null;
@@ -120,6 +121,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
     permissions: '', 
     domain: '',
     gscSiteUrl: '',
+    sitemapUrl: '',
     ga4PropertyId: '',
     semrushProjectId: '',
     semrushTrackingId: '',
@@ -151,6 +153,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         permissions: user.permissions?.join(', ') || '',
         domain: user.domain || '',
         gscSiteUrl: user.gsc_site_url || '',
+        sitemapUrl: user.sitemap_url || '',
         ga4PropertyId: user.ga4_property_id || '',
         semrushProjectId: user.semrush_project_id || '',
         semrushTrackingId: user.semrush_tracking_id || '',
@@ -227,6 +230,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         permissions: (isSuperAdmin && user.role === 'ADMIN') ? permissionsArray : null,
         domain: formData.domain || null,
         gsc_site_url: formData.gscSiteUrl || null,
+        sitemap_url: formData.sitemapUrl || null,
         ga4_property_id: formData.ga4PropertyId || null,
         favicon_url: formData.favicon_url || null,
         semrush_project_id: formData.semrushProjectId || null,
@@ -288,6 +292,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         permissions: updatedUser.permissions?.join(', ') || '',
         domain: updatedUser.domain || '',
         gscSiteUrl: updatedUser.gsc_site_url || '',
+        sitemapUrl: updatedUser.sitemap_url || '',
         ga4PropertyId: updatedUser.ga4_property_id || '',
         semrushProjectId: updatedUser.semrush_project_id || '',
         semrushTrackingId: updatedUser.semrush_tracking_id || '',
@@ -882,6 +887,31 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
                     />
                   )}
                 </div>
+              </div>
+
+              {/* Sitemap URL */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700">Sitemap URL</label>
+                <div className="relative mt-1">
+                  <input
+                    type="url"
+                    name="sitemapUrl"
+                    value={formData.sitemapUrl}
+                    onChange={handleInputChange}
+                    placeholder="Optional: https://kundendomain.at/sitemap.xml"
+                    className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed placeholder:text-gray-400"
+                    disabled={isSubmitting}
+                  />
+                  {formData.sitemapUrl && !isSubmitting && (
+                    <CheckCircle
+                      className="absolute top-1/2 right-3 -translate-y-1/2 text-green-500"
+                      size={16}
+                    />
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-gray-400">
+                  Leer lassen für die automatische Erkennung über /sitemap.xml.
+                </p>
               </div>
 
               {/* GA4 Property ID */}

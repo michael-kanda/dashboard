@@ -94,6 +94,7 @@ export async function GET(
   const { id: targetUserId } = await params; 
   try {
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS sitemap_url TEXT NULL`;
     const session = await auth(); 
     
     // Berechtigungsprüfung: Admins ODER der Benutzer selbst
@@ -124,6 +125,7 @@ export async function GET(
         domain,
         ansprache,
         gsc_site_url,
+        sitemap_url,
         ga4_property_id,
         semrush_project_id,
         semrush_tracking_id,
@@ -174,6 +176,7 @@ export async function PUT(
   const { id: targetUserId } = await params;
   try {
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS sitemap_url TEXT NULL`;
     const session = await auth(); 
     
     if (!session?.user) {
@@ -200,6 +203,7 @@ export async function PUT(
         ansprache,
         domain,
         gsc_site_url,
+        sitemap_url,
         ga4_property_id,
         semrush_project_id,
         semrush_tracking_id,
@@ -303,6 +307,7 @@ export async function PUT(
             ansprache = ${typeof ansprache === 'string' && ansprache.trim() ? ansprache.trim() : null},
             domain = ${domain || null},
             gsc_site_url = ${gsc_site_url || null},
+            sitemap_url = ${sitemap_url || null},
             ga4_property_id = ${ga4_property_id || null},
             semrush_project_id = ${semrush_project_id || null},
             semrush_tracking_id = ${semrush_tracking_id || null},
@@ -321,7 +326,7 @@ export async function PUT(
           WHERE id = ${targetUserId}::uuid
           RETURNING
             id::text as id, email, role, domain, ansprache,
-            gsc_site_url, ga4_property_id, 
+            gsc_site_url, sitemap_url, ga4_property_id,
             semrush_project_id, semrush_tracking_id, semrush_tracking_id_02,
             google_ads_sheet_id,
             mandant_id, permissions, favicon_url,
@@ -337,6 +342,7 @@ export async function PUT(
             ansprache = ${typeof ansprache === 'string' && ansprache.trim() ? ansprache.trim() : null},
             domain = ${domain || null},
             gsc_site_url = ${gsc_site_url || null},
+            sitemap_url = ${sitemap_url || null},
             ga4_property_id = ${ga4_property_id || null},
             semrush_project_id = ${semrush_project_id || null},
             semrush_tracking_id = ${semrush_tracking_id || null},
@@ -354,7 +360,7 @@ export async function PUT(
           WHERE id = ${targetUserId}::uuid
           RETURNING
             id::text as id, email, role, domain, ansprache,
-            gsc_site_url, ga4_property_id, 
+            gsc_site_url, sitemap_url, ga4_property_id,
             semrush_project_id, semrush_tracking_id, semrush_tracking_id_02,
             google_ads_sheet_id,
             mandant_id, permissions, favicon_url,

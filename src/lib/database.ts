@@ -25,6 +25,7 @@ export async function createTables() {
 
         domain VARCHAR(255),
         gsc_site_url VARCHAR(255),
+        sitemap_url TEXT NULL,
         ga4_property_id VARCHAR(255),
         semrush_project_id VARCHAR(255),
         semrush_tracking_id VARCHAR(255),       -- KORREKTUR: Für Kampagne 1
@@ -46,6 +47,7 @@ export async function createTables() {
     await sql`
       ALTER TABLE users
       ADD COLUMN IF NOT EXISTS ansprache VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS sitemap_url TEXT NULL,
       ADD COLUMN IF NOT EXISTS google_ads_sheet_id VARCHAR(255),
       ADD COLUMN IF NOT EXISTS brand_keywords TEXT[] DEFAULT NULL,
       ADD COLUMN IF NOT EXISTS dashboard_info_text TEXT NULL,
@@ -53,6 +55,47 @@ export async function createTables() {
       ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb;
     `;
     console.log('Prompt-Tracking-Spalten in "users" erfolgreich geprüft/erstellt.');
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS project_indexing_sync (
+        user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        sitemap_url TEXT,
+        status VARCHAR(20) NOT NULL DEFAULT 'idle',
+        started_at TIMESTAMP WITH TIME ZONE,
+        completed_at TIMESTAMP WITH TIME ZONE,
+        next_sync_at TIMESTAMP WITH TIME ZONE,
+        error_message TEXT,
+        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS project_indexing_urls (
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        url TEXT NOT NULL,
+        source_sitemap TEXT,
+        sitemap_lastmod TIMESTAMP WITH TIME ZONE,
+        is_in_sitemap BOOLEAN NOT NULL DEFAULT TRUE,
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        verdict TEXT,
+        coverage_state TEXT,
+        robots_txt_state TEXT,
+        indexing_state TEXT,
+        page_fetch_state TEXT,
+        google_canonical TEXT,
+        user_canonical TEXT,
+        last_crawl_time TIMESTAMP WITH TIME ZONE,
+        inspected_at TIMESTAMP WITH TIME ZONE,
+        inspection_error TEXT,
+        clicks DOUBLE PRECISION NOT NULL DEFAULT 0,
+        impressions DOUBLE PRECISION NOT NULL DEFAULT 0,
+        ctr DOUBLE PRECISION NOT NULL DEFAULT 0,
+        position DOUBLE PRECISION,
+        discovered_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_seen_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, url)
+      )
+    `;
+    console.log('Tabellen für den Indexierungsstatus erfolgreich geprüft/erstellt.');
 
     // 2. Landingpages-Tabelle
     // Speichert die zu überwachenden URLs und deren aktuelle GSC-Daten
@@ -189,6 +232,8 @@ export async function createTables() {
     await sql`CREATE INDEX IF NOT EXISTS idx_google_data_cache_user_id ON google_data_cache(user_id);`;
     await sql`CREATE INDEX IF NOT EXISTS idx_prompt_cluster_history_user_created ON prompt_cluster_history(user_id, created_at DESC);`;
     await sql`CREATE INDEX IF NOT EXISTS idx_prompt_cluster_history_hash ON prompt_cluster_history(user_id, queries_hash, created_at DESC);`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_indexing_urls_project_status ON project_indexing_urls(user_id, status);`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_indexing_urls_inspected ON project_indexing_urls(user_id, inspected_at);`;
 
     console.log('Alle Indizes geprüft/erstellt.');
 

@@ -7,6 +7,7 @@ import { sql } from '@vercel/postgres';
 import { User } from '@/lib/schemas';
 import ProjectDashboardClient from '@/components/ProjectDashboardClient';
 import { DateRangeOption } from '@/components/DateRangeSelector';
+import { getProjectIndexingStatus } from '@/lib/indexing-status';
 
 // Vercel-Function-Timeout für diese Seite hochsetzen.
 // 120 s, abgestimmt auf die GA4-Cache-Schicht in lib/google-api.ts:
@@ -28,6 +29,7 @@ interface ExtendedUser extends User {
   dashboard_info_text?: string | null;
   google_genai_manual_data?: any | null;
   project_locations?: any[] | null;
+  sitemap_url?: string | null;
   google_ads_sheet_id?: string;  // ← NEU
 }
 
@@ -36,6 +38,7 @@ async function loadData(projectId: string, dateRange: string) {
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dashboard_info_text TEXT NULL`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_genai_manual_data JSONB NULL`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS sitemap_url TEXT NULL`;
 
     const { rows } = await sql`
       SELECT
@@ -44,6 +47,7 @@ async function loadData(projectId: string, dateRange: string) {
         u.role, 
         u.domain,
         u.gsc_site_url, 
+        u.sitemap_url,
         u.ga4_property_id,
         u.semrush_project_id, 
         u.semrush_tracking_id, 
@@ -82,9 +86,12 @@ async function loadData(projectId: string, dateRange: string) {
 
     const projectUser = rows[0] as ExtendedUser;
     
-    const dashboardData = await getOrFetchGoogleData(projectUser, dateRange);
+    const [dashboardData, indexingStatus] = await Promise.all([
+      getOrFetchGoogleData(projectUser, dateRange),
+      getProjectIndexingStatus(projectId),
+    ]);
 
-    return { projectUser, dashboardData };
+    return { projectUser, dashboardData, indexingStatus };
   } catch (e) {
     console.error('Error loading project data:', e);
     return null;
@@ -127,7 +134,7 @@ export default async function ProjectPage({
     );
   }
 
-  const { projectUser, dashboardData } = data;
+  const { projectUser, dashboardData, indexingStatus } = data;
 
   const supportEmail = projectUser.assigned_admins || projectUser.creator_email || '';
   const timelineActive = projectUser.project_timeline_active === true;
@@ -159,6 +166,7 @@ export default async function ProjectPage({
         showPromptTracking={projectUser.settings_show_prompt_tracking === true}
         dashboardInfoText={projectUser.dashboard_info_text || null}
         dataMaxEnabled={isDataMaxEnabled}
+        indexingStatus={indexingStatus}
       />
     );
     console.log('[PAGE-TRACE] ✓ created ProjectDashboardClient element');

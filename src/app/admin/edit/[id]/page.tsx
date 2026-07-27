@@ -30,6 +30,7 @@ async function getUserData(id: string): Promise<UserWithAssignments | null> {
   try {
     console.log('[getUserData] 🔍 Suche Benutzer mit ID:', id);
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS sitemap_url TEXT NULL`;
     // 1. Benutzerdaten laden
     const { rows: users } = await sql`
       SELECT
@@ -41,6 +42,7 @@ async function getUserData(id: string): Promise<UserWithAssignments | null> {
         permissions,
         COALESCE(domain, '') as domain,
         COALESCE(gsc_site_url, '') as gsc_site_url,
+        COALESCE(sitemap_url, '') as sitemap_url,
         COALESCE(ga4_property_id, '') as ga4_property_id,
         COALESCE(semrush_project_id, '') as semrush_project_id,
         COALESCE(semrush_tracking_id, '') as semrush_tracking_id,

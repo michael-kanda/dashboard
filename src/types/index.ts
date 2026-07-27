@@ -10,6 +10,7 @@ export interface User {
   permissions?: string[];
   domain?: string;
   gsc_site_url?: string;
+  sitemap_url?: string | null;
   ga4_property_id?: string;
   semrush_project_id?: string | null;
   semrush_tracking_id?: string | null;

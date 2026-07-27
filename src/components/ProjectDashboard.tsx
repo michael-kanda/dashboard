@@ -25,6 +25,8 @@ import { aggregateLandingPages } from '@/lib/utils';
 import { DataMaxChat } from '@/components/datamax';
 import GoogleAdsWidget from '@/components/GoogleAdsWidget';
 import LocalSeoMapWidget from '@/components/LocalSeoMapWidget';
+import IndexingStatusWidget from '@/components/IndexingStatusWidget';
+import type { ProjectIndexingStatus } from '@/lib/indexing-status';
 
 // PromptTrackingCard dynamisch nur Client-Side laden – verhindert
 // Hydration-Mismatches bei den Number-Formatierungen / shareTrend-Visuals.
@@ -171,6 +173,7 @@ export interface ProjectDashboardProps {
   showPromptTracking?: boolean;
   dashboardInfoText?: string | null;
   dataMaxEnabled?: boolean;
+  indexingStatus?: ProjectIndexingStatus;
 }
 
 const LOCAL_VISIBILITY_INFO_TEXT = '• Lokale Sichtbarkeit: GA4 und GSC verwenden unterschiedliche Zuordnungen. Sind Standort-Landingpages hinterlegt, stammen neue Besucher, Sessions und Conversions aus diesen Seiten; ohne hinterlegte Standort-Landingpage nutzt das Widget die von GA4 erkannte Stadt des Besuchers. GSC-Klicks und -Impressionen werden separat über konfigurierte Standort-Landingpages sowie lokale Keywords/Aliase zugeordnet. Deshalb können für einen Standort GA4-Besucher vorhanden sein, obwohl GSC dort 0 Klicks oder Impressionen ausweist.';
@@ -224,6 +227,7 @@ export default function ProjectDashboard({
   showPromptTracking = false,
   dashboardInfoText = null,
   dataMaxEnabled = true,
+  indexingStatus,
 }: ProjectDashboardProps) {
 
   const router = useRouter();
@@ -610,6 +614,16 @@ export default function ProjectDashboard({
             </div>
           )}
         </div>
+
+        {indexingStatus && projectId && (
+          <div id="section-indexing-status" className="mt-8 scroll-mt-20 print:hidden">
+            <IndexingStatusWidget
+              initialData={indexingStatus}
+              projectId={projectId}
+              userRole={userRole}
+            />
+          </div>
+        )}
 
         {/* PIE CHARTS */}
         <Trace at="TableauPieCharts" />
