@@ -212,7 +212,7 @@ export default function IndexingStatusWidget({
               Sitemap und Google-Index im direkten Abgleich.
             </p>
             <p className="mt-1 text-xs text-muted">
-              Automatisch alle 48 Stunden · GSC-Leistung: {data.performanceRange}
+              Sitemap alle 48 Stunden · Änderungen priorisiert · stabile URLs zyklisch · GSC-Leistung: {data.performanceRange}
             </p>
           </div>
           {data.configured && (
@@ -247,46 +247,56 @@ export default function IndexingStatusWidget({
           </div>
         ) : (
           <>
-            <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border-subtle bg-border-subtle lg:grid-cols-4">
-              {[
-                {
-                  label: 'Sitemap-URLs',
-                  value: data.totalUrls,
-                  description: 'Alle in der Sitemap gefundenen Seiten.',
-                },
-                {
-                  label: 'Indexiert',
-                  value: data.indexedUrls,
-                  description: 'Von Google geprüft und im Suchindex.',
-                },
-                {
-                  label: 'Nicht indexiert',
-                  value: data.notIndexedUrls,
-                  description: 'Nicht im Google-Index; kann auch beabsichtigt sein.',
-                },
-                {
-                  label: 'Handlungsbedarf',
-                  value: data.issueUrls,
-                  description: 'Nicht indexiert, Prüffehler oder Canonical-Abweichung.',
-                },
-              ].map((item) => (
-                <div key={item.label} className="bg-surface px-4 py-4">
-                  <p className="text-[11px] font-semibold uppercase text-muted">{item.label}</p>
-                  <p className="mt-1 text-2xl font-semibold tabular-nums text-heading">{item.value}</p>
-                  <p className="mt-1.5 text-[11px] leading-4 text-muted">{item.description}</p>
-                </div>
-              ))}
-            </div>
+            {data.status === 'idle' && data.totalUrls === 0 && (
+              <div className="mt-5 rounded-md border border-dashed border-border-subtle p-4 text-sm text-body">
+                Der erste Abgleich ist vorgemerkt. Bis Sitemap, GSC-Daten und URL-Prüfungen verarbeitet wurden, werden keine Nullwerte als Ergebnis ausgewiesen.
+              </div>
+            )}
 
-            <div className="mt-5">
-              <div className="mb-2 flex items-center justify-between gap-3 text-xs">
-                <span className="font-medium text-body">{data.indexedUrls} von {data.totalUrls} URLs indexiert</span>
-                <span className="font-semibold tabular-nums text-heading">{progress}%</span>
+            {data.totalUrls > 0 && (
+              <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border-subtle bg-border-subtle lg:grid-cols-4">
+                {[
+                  {
+                    label: 'Sitemap-URLs',
+                    value: data.totalUrls,
+                    description: 'Alle in der Sitemap gefundenen Seiten.',
+                  },
+                  {
+                    label: 'Indexiert',
+                    value: data.indexedUrls,
+                    description: 'Von Google geprüft und im Suchindex.',
+                  },
+                  {
+                    label: 'Nicht indexiert',
+                    value: data.notIndexedUrls,
+                    description: 'Nicht im Google-Index; kann auch beabsichtigt sein.',
+                  },
+                  {
+                    label: 'Handlungsbedarf',
+                    value: data.issueUrls,
+                    description: 'Nicht indexiert, Prüffehler oder Canonical-Abweichung.',
+                  },
+                ].map((item) => (
+                  <div key={item.label} className="bg-surface px-4 py-4">
+                    <p className="text-[11px] font-semibold uppercase text-muted">{item.label}</p>
+                    <p className="mt-1 text-2xl font-semibold tabular-nums text-heading">{item.value}</p>
+                    <p className="mt-1.5 text-[11px] leading-4 text-muted">{item.description}</p>
+                  </div>
+                ))}
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-surface-tertiary">
-                <div className="h-full rounded-full bg-[#34A853] transition-[width]" style={{ width: `${progress}%` }} />
+            )}
+
+            {data.totalUrls > 0 && (
+              <div className="mt-5">
+                <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+                  <span className="font-medium text-body">{data.indexedUrls} von {data.totalUrls} URLs indexiert</span>
+                  <span className="font-semibold tabular-nums text-heading">{progress}%</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-surface-tertiary">
+                  <div className="h-full rounded-full bg-[#34A853] transition-[width]" style={{ width: `${progress}%` }} />
+                </div>
               </div>
-            </div>
+            )}
 
             {(syncError || data.errorMessage) && (
               <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">

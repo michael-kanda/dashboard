@@ -70,6 +70,9 @@ export async function createTables() {
         started_at TIMESTAMP WITH TIME ZONE,
         completed_at TIMESTAMP WITH TIME ZONE,
         next_sync_at TIMESTAMP WITH TIME ZONE,
+        sitemap_fingerprint TEXT,
+        sitemap_checked_at TIMESTAMP WITH TIME ZONE,
+        lock_until TIMESTAMP WITH TIME ZONE,
         error_message TEXT,
         updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -91,6 +94,9 @@ export async function createTables() {
         user_canonical TEXT,
         last_crawl_time TIMESTAMP WITH TIME ZONE,
         inspected_at TIMESTAMP WITH TIME ZONE,
+        next_inspection_at TIMESTAMP WITH TIME ZONE,
+        inspection_attempts INTEGER NOT NULL DEFAULT 0,
+        change_detected_at TIMESTAMP WITH TIME ZONE,
         inspection_error TEXT,
         clicks DOUBLE PRECISION NOT NULL DEFAULT 0,
         impressions DOUBLE PRECISION NOT NULL DEFAULT 0,
@@ -100,6 +106,18 @@ export async function createTables() {
         last_seen_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (user_id, url)
       )
+    `;
+    await sql`
+      ALTER TABLE project_indexing_sync
+        ADD COLUMN IF NOT EXISTS sitemap_fingerprint TEXT,
+        ADD COLUMN IF NOT EXISTS sitemap_checked_at TIMESTAMP WITH TIME ZONE,
+        ADD COLUMN IF NOT EXISTS lock_until TIMESTAMP WITH TIME ZONE
+    `;
+    await sql`
+      ALTER TABLE project_indexing_urls
+        ADD COLUMN IF NOT EXISTS next_inspection_at TIMESTAMP WITH TIME ZONE,
+        ADD COLUMN IF NOT EXISTS inspection_attempts INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS change_detected_at TIMESTAMP WITH TIME ZONE
     `;
     console.log('Tabellen für den Indexierungsstatus erfolgreich geprüft/erstellt.');
 
@@ -240,6 +258,7 @@ export async function createTables() {
     await sql`CREATE INDEX IF NOT EXISTS idx_prompt_cluster_history_hash ON prompt_cluster_history(user_id, queries_hash, created_at DESC);`;
     await sql`CREATE INDEX IF NOT EXISTS idx_indexing_urls_project_status ON project_indexing_urls(user_id, status);`;
     await sql`CREATE INDEX IF NOT EXISTS idx_indexing_urls_inspected ON project_indexing_urls(user_id, inspected_at);`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_indexing_urls_due ON project_indexing_urls(user_id, next_inspection_at) WHERE is_in_sitemap = TRUE;`;
 
     console.log('Alle Indizes geprüft/erstellt.');
 

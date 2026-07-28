@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
         s.user_id IS NULL
         OR s.next_sync_at IS NULL
         OR s.next_sync_at <= NOW()
-        OR s.status = 'partial'
       )
     ORDER BY
       CASE WHEN s.status = 'partial' THEN 0 ELSE 1 END,
@@ -36,7 +35,6 @@ export async function GET(request: NextRequest) {
   for (const project of projects) {
     try {
       const status = await syncProjectIndexingStatus(project.id, {
-        force: true,
         maxInspections: 120,
       });
       results.push({

@@ -1,4 +1,5 @@
 import { load } from 'cheerio';
+import { createHash } from 'crypto';
 import { JWT } from 'google-auth-library';
 import { google } from 'googleapis';
 import { sql } from '@vercel/postgres';
@@ -76,6 +77,9 @@ export async function ensureIndexingStatusSchema() {
       started_at TIMESTAMPTZ,
       completed_at TIMESTAMPTZ,
       next_sync_at TIMESTAMPTZ,
+      sitemap_fingerprint TEXT,
+      sitemap_checked_at TIMESTAMPTZ,
+      lock_until TIMESTAMPTZ,
       error_message TEXT,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
@@ -97,6 +101,9 @@ export async function ensureIndexingStatusSchema() {
       user_canonical TEXT,
       last_crawl_time TIMESTAMPTZ,
       inspected_at TIMESTAMPTZ,
+      next_inspection_at TIMESTAMPTZ,
+      inspection_attempts INTEGER NOT NULL DEFAULT 0,
+      change_detected_at TIMESTAMPTZ,
       inspection_error TEXT,
       clicks DOUBLE PRECISION NOT NULL DEFAULT 0,
       impressions DOUBLE PRECISION NOT NULL DEFAULT 0,
@@ -107,8 +114,21 @@ export async function ensureIndexingStatusSchema() {
       PRIMARY KEY (user_id, url)
     )
   `;
+  await sql`
+    ALTER TABLE project_indexing_sync
+      ADD COLUMN IF NOT EXISTS sitemap_fingerprint TEXT,
+      ADD COLUMN IF NOT EXISTS sitemap_checked_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS lock_until TIMESTAMPTZ
+  `;
+  await sql`
+    ALTER TABLE project_indexing_urls
+      ADD COLUMN IF NOT EXISTS next_inspection_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS inspection_attempts INTEGER NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS change_detected_at TIMESTAMPTZ
+  `;
   await sql`CREATE INDEX IF NOT EXISTS idx_indexing_urls_project_status ON project_indexing_urls(user_id, status)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_indexing_urls_inspected ON project_indexing_urls(user_id, inspected_at)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_indexing_urls_due ON project_indexing_urls(user_id, next_inspection_at) WHERE is_in_sitemap = TRUE`;
 }
 
 function createGscAuth() {
@@ -252,6 +272,14 @@ async function readSitemapTree(rootUrl: string, maxUrls = 5_000): Promise<Sitema
   return [...entries.values()];
 }
 
+function createSitemapFingerprint(entries: SitemapEntry[]) {
+  const normalized = entries
+    .map((entry) => `${entry.url}|${entry.lastmod ?? ''}`)
+    .sort()
+    .join('\n');
+  return createHash('sha256').update(normalized).digest('hex');
+}
+
 function dateString(date: Date) {
   return date.toISOString().slice(0, 10);
 }
@@ -323,29 +351,41 @@ export async function syncProjectIndexingStatus(
   const sitemapUrl = defaultSitemapUrl(config);
   if (!sitemapUrl) throw new Error('Für das Projekt konnte keine Sitemap-URL ermittelt werden.');
 
-  const { rows: syncRows } = await sql<{ next_sync_at: string | null }>`
-    SELECT next_sync_at FROM project_indexing_sync WHERE user_id = ${projectId}::uuid
+  const { rows: syncRows } = await sql<{ next_sync_at: string | null; lock_until: string | null }>`
+    SELECT next_sync_at, lock_until FROM project_indexing_sync WHERE user_id = ${projectId}::uuid
   `;
   if (!options.force && syncRows[0]?.next_sync_at && new Date(syncRows[0].next_sync_at) > new Date()) {
     return getProjectIndexingStatus(projectId);
   }
+  if (syncRows[0]?.lock_until && new Date(syncRows[0].lock_until) > new Date()) {
+    return getProjectIndexingStatus(projectId);
+  }
 
-  await sql`
-    INSERT INTO project_indexing_sync (user_id, sitemap_url, status, started_at, error_message, updated_at)
-    VALUES (${projectId}::uuid, ${sitemapUrl}, 'running', NOW(), NULL, NOW())
+  const { rows: lockRows } = await sql<{ user_id: string }>`
+    INSERT INTO project_indexing_sync (
+      user_id, sitemap_url, status, started_at, next_sync_at, lock_until, error_message, updated_at
+    )
+    VALUES (
+      ${projectId}::uuid, ${sitemapUrl}, 'running', NOW(), NOW(), NOW() + INTERVAL '8 minutes', NULL, NOW()
+    )
     ON CONFLICT (user_id) DO UPDATE SET
       sitemap_url = EXCLUDED.sitemap_url,
       status = 'running',
       started_at = NOW(),
+      lock_until = NOW() + INTERVAL '8 minutes',
       error_message = NULL,
       updated_at = NOW()
+    WHERE project_indexing_sync.lock_until IS NULL OR project_indexing_sync.lock_until <= NOW()
+    RETURNING user_id::text
   `;
+  if (!lockRows.length) return getProjectIndexingStatus(projectId);
 
   try {
     const entries = (await readSitemapTree(sitemapUrl))
       .filter((entry) => propertyAllowsUrl(config.gsc_site_url!, entry.url));
     if (!entries.length) throw new Error('In der Sitemap wurden keine URLs der GSC-Property gefunden.');
 
+    const sitemapFingerprint = createSitemapFingerprint(entries);
     const performance = await loadPagePerformance(config.gsc_site_url);
     const sitemapPayload = entries.map((entry) => {
       const metrics = performance.get(entry.url);
@@ -360,15 +400,14 @@ export async function syncProjectIndexingStatus(
       };
     });
 
-    await sql`UPDATE project_indexing_urls SET is_in_sitemap = FALSE WHERE user_id = ${projectId}::uuid`;
     await sql`
       INSERT INTO project_indexing_urls (
         user_id, url, source_sitemap, sitemap_lastmod, is_in_sitemap, last_seen_at,
-        clicks, impressions, ctr, position
+        clicks, impressions, ctr, position, next_inspection_at, change_detected_at
       )
       SELECT
         ${projectId}::uuid, incoming.url, incoming.source, incoming.lastmod, TRUE, NOW(),
-        incoming.clicks, incoming.impressions, incoming.ctr, incoming.position
+        incoming.clicks, incoming.impressions, incoming.ctr, incoming.position, NOW(), NOW()
       FROM jsonb_to_recordset(${JSON.stringify(sitemapPayload)}::jsonb) AS incoming(
         url TEXT,
         source TEXT,
@@ -380,7 +419,6 @@ export async function syncProjectIndexingStatus(
       )
       ON CONFLICT (user_id, url) DO UPDATE SET
         source_sitemap = EXCLUDED.source_sitemap,
-        sitemap_lastmod = EXCLUDED.sitemap_lastmod,
         is_in_sitemap = TRUE,
         last_seen_at = NOW(),
         clicks = EXCLUDED.clicks,
@@ -388,38 +426,74 @@ export async function syncProjectIndexingStatus(
         ctr = EXCLUDED.ctr,
         position = EXCLUDED.position,
         status = CASE
-          WHEN project_indexing_urls.sitemap_lastmod IS DISTINCT FROM EXCLUDED.sitemap_lastmod
+          WHEN project_indexing_urls.is_in_sitemap = FALSE
+            OR project_indexing_urls.sitemap_lastmod IS DISTINCT FROM EXCLUDED.sitemap_lastmod
             THEN 'pending'
           ELSE project_indexing_urls.status
-        END
+        END,
+        change_detected_at = CASE
+          WHEN project_indexing_urls.is_in_sitemap = FALSE
+            OR project_indexing_urls.sitemap_lastmod IS DISTINCT FROM EXCLUDED.sitemap_lastmod
+            THEN NOW()
+          ELSE project_indexing_urls.change_detected_at
+        END,
+        next_inspection_at = CASE
+          WHEN project_indexing_urls.is_in_sitemap = FALSE
+            OR project_indexing_urls.sitemap_lastmod IS DISTINCT FROM EXCLUDED.sitemap_lastmod
+            THEN NOW()
+          ELSE project_indexing_urls.next_inspection_at
+        END,
+        sitemap_lastmod = EXCLUDED.sitemap_lastmod
+      WHERE
+        project_indexing_urls.is_in_sitemap = FALSE
+        OR project_indexing_urls.source_sitemap IS DISTINCT FROM EXCLUDED.source_sitemap
+        OR project_indexing_urls.sitemap_lastmod IS DISTINCT FROM EXCLUDED.sitemap_lastmod
+        OR project_indexing_urls.clicks IS DISTINCT FROM EXCLUDED.clicks
+        OR project_indexing_urls.impressions IS DISTINCT FROM EXCLUDED.impressions
+        OR project_indexing_urls.ctr IS DISTINCT FROM EXCLUDED.ctr
+        OR project_indexing_urls.position IS DISTINCT FROM EXCLUDED.position
+    `;
+    await sql`
+      UPDATE project_indexing_urls AS stored
+      SET is_in_sitemap = FALSE, last_seen_at = NOW()
+      WHERE stored.user_id = ${projectId}::uuid
+        AND stored.is_in_sitemap = TRUE
+        AND NOT EXISTS (
+          SELECT 1
+          FROM jsonb_to_recordset(${JSON.stringify(sitemapPayload)}::jsonb) AS incoming(url TEXT)
+          WHERE incoming.url = stored.url
+        )
     `;
 
     const maxInspections = options.maxInspections ?? 120;
-    const { rows: candidates } = options.force
-      ? await sql<{ url: string }>`
-          SELECT url
-          FROM project_indexing_urls
-          WHERE user_id = ${projectId}::uuid AND is_in_sitemap = TRUE
-          ORDER BY inspected_at ASC NULLS FIRST, sitemap_lastmod DESC NULLS LAST
-          LIMIT ${maxInspections}
-        `
-      : await sql<{ url: string }>`
-          SELECT url
-          FROM project_indexing_urls
-          WHERE user_id = ${projectId}::uuid
-            AND is_in_sitemap = TRUE
-            AND (
-              inspected_at IS NULL
-              OR status = 'pending'
-              OR inspected_at < NOW() - INTERVAL '48 hours'
-              OR (sitemap_lastmod IS NOT NULL AND sitemap_lastmod > inspected_at)
-            )
-          ORDER BY inspected_at ASC NULLS FIRST, sitemap_lastmod DESC NULLS LAST
-          LIMIT ${maxInspections}
-        `;
+    const { rows: candidates } = await sql<{ url: string }>`
+      SELECT url
+      FROM project_indexing_urls
+      WHERE user_id = ${projectId}::uuid
+        AND is_in_sitemap = TRUE
+        AND (
+          inspected_at IS NULL
+          OR next_inspection_at IS NULL
+          OR next_inspection_at <= NOW()
+          OR status = 'pending'
+          OR (sitemap_lastmod IS NOT NULL AND sitemap_lastmod > inspected_at)
+        )
+      ORDER BY
+        CASE
+          WHEN inspected_at IS NULL THEN 0
+          WHEN status = 'pending' THEN 1
+          WHEN status = 'error' THEN 2
+          WHEN status = 'not_indexed' THEN 3
+          ELSE 4
+        END,
+        impressions DESC,
+        next_inspection_at ASC NULLS FIRST,
+        inspected_at ASC NULLS FIRST
+      LIMIT ${maxInspections}
+    `;
 
     const searchconsole = google.searchconsole({ version: 'v1', auth: createGscAuth() });
-    await mapWithConcurrency(candidates, 4, async ({ url }) => {
+    await mapWithConcurrency(candidates, 2, async ({ url }) => {
       try {
         const response = await searchconsole.urlInspection.index.inspect({
           requestBody: {
@@ -442,6 +516,13 @@ export async function syncProjectIndexingStatus(
               user_canonical = ${result?.userCanonical ?? null},
               last_crawl_time = ${result?.lastCrawlTime ?? null},
               inspected_at = NOW(),
+              next_inspection_at = CASE
+                WHEN ${status} = 'indexed' AND impressions >= 100 THEN NOW() + INTERVAL '7 days'
+                WHEN ${status} = 'indexed' THEN NOW() + INTERVAL '30 days'
+                WHEN ${status} = 'not_indexed' THEN NOW() + INTERVAL '7 days'
+                ELSE NOW() + INTERVAL '24 hours'
+              END,
+              inspection_attempts = 0,
               inspection_error = NULL
           WHERE user_id = ${projectId}::uuid AND url = ${url}
         `;
@@ -449,7 +530,15 @@ export async function syncProjectIndexingStatus(
         const message = error instanceof Error ? error.message : 'URL Inspection fehlgeschlagen';
         await sql`
           UPDATE project_indexing_urls
-          SET status = 'error', inspected_at = NOW(), inspection_error = ${message}
+          SET status = 'error',
+              inspected_at = NOW(),
+              inspection_attempts = inspection_attempts + 1,
+              next_inspection_at = NOW() + CASE
+                WHEN inspection_attempts = 0 THEN INTERVAL '2 hours'
+                WHEN inspection_attempts = 1 THEN INTERVAL '12 hours'
+                ELSE INTERVAL '48 hours'
+              END,
+              inspection_error = ${message}
           WHERE user_id = ${projectId}::uuid AND url = ${url}
         `;
       }
@@ -466,7 +555,13 @@ export async function syncProjectIndexingStatus(
       UPDATE project_indexing_sync
       SET status = ${partial ? 'partial' : 'completed'},
           completed_at = NOW(),
-          next_sync_at = NOW() + INTERVAL '48 hours',
+          next_sync_at = CASE
+            WHEN ${partial} THEN NOW() + INTERVAL '24 hours'
+            ELSE NOW() + INTERVAL '48 hours'
+          END,
+          sitemap_fingerprint = ${sitemapFingerprint},
+          sitemap_checked_at = NOW(),
+          lock_until = NULL,
           error_message = NULL,
           updated_at = NOW()
       WHERE user_id = ${projectId}::uuid
@@ -477,7 +572,7 @@ export async function syncProjectIndexingStatus(
     await sql`
       UPDATE project_indexing_sync
       SET status = 'error', completed_at = NOW(), next_sync_at = NOW() + INTERVAL '48 hours',
-          error_message = ${message}, updated_at = NOW()
+          lock_until = NULL, error_message = ${message}, updated_at = NOW()
       WHERE user_id = ${projectId}::uuid
     `;
     throw error;
@@ -504,6 +599,15 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
       SELECT status, completed_at, next_sync_at, error_message
       FROM project_indexing_sync WHERE user_id = ${projectId}::uuid
     `;
+    if (!syncRows.length && sitemapUrl && config.gsc_site_url) {
+      await sql`
+        INSERT INTO project_indexing_sync (
+          user_id, sitemap_url, status, next_sync_at, updated_at
+        )
+        VALUES (${projectId}::uuid, ${sitemapUrl}, 'idle', NOW(), NOW())
+        ON CONFLICT (user_id) DO NOTHING
+      `;
+    }
     const { rows } = await sql<any>`
       SELECT
         url, status, coverage_state, last_crawl_time, google_canonical, user_canonical,

@@ -44,7 +44,7 @@ export async function POST(
   }
 
   try {
-    const result = await syncProjectIndexingStatus(id, { force: true, maxInspections: 150 });
+    const result = await syncProjectIndexingStatus(id, { force: true, maxInspections: 120 });
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Indexierungsabgleich fehlgeschlagen';
