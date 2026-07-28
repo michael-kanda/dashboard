@@ -9,7 +9,7 @@ import Footer from '@/components/layout/Footer';
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  const noLayoutPaths = ['/login'];
+  const noLayoutPaths = ['/login', '/preview'];
   const showLayout = !noLayoutPaths.includes(pathname);
 
   // ─── Kein Layout (z.B. Login-Seite) ───

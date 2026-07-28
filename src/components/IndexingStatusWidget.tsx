@@ -5,6 +5,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock3,
+  Download,
   ExternalLink,
   RefreshCw,
   Search,
@@ -94,6 +95,19 @@ function getHint(row: IndexingStatusRow) {
   return row.coverageState || (row.status === 'indexed' ? 'URL ist im Google-Index.' : 'Indexierungsstatus prüfen.');
 }
 
+function getStatusLabel(row: IndexingStatusRow) {
+  if (row.hasCanonicalIssue) return 'Canonical prüfen';
+  if (row.status === 'indexed') return 'Indexiert';
+  if (row.status === 'pending') return 'Ausstehend';
+  if (row.status === 'error') return 'Prüffehler';
+  return 'Nicht indexiert';
+}
+
+function escapeCsv(value: string | number | null | undefined) {
+  const text = value === null || value === undefined ? '' : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
 export default function IndexingStatusWidget({
   initialData,
   projectId,
@@ -134,6 +148,50 @@ export default function IndexingStatusWidget({
     }
   }
 
+  function exportCsv() {
+    if (!filteredRows.length) return;
+
+    const columns = [
+      'URL',
+      'Status',
+      'Hinweis',
+      'GSC-Abdeckung',
+      'Letzter Crawl',
+      'Google Canonical',
+      'User Canonical',
+      'Sitemap Lastmod',
+      'GSC Impressionen',
+      'GSC Klicks',
+      'GSC Position',
+      'Geprüft am',
+    ];
+    const rows = filteredRows.map((row) => [
+      row.url,
+      getStatusLabel(row),
+      getHint(row),
+      row.coverageState,
+      row.lastCrawlTime ? formatDate(row.lastCrawlTime, true) : '',
+      row.googleCanonical,
+      row.userCanonical,
+      row.sitemapLastmod ? formatDate(row.sitemapLastmod, true) : '',
+      row.impressions,
+      row.clicks,
+      row.position?.toLocaleString('de-DE', { maximumFractionDigits: 2 }) ?? '',
+      row.inspectedAt ? formatDate(row.inspectedAt, true) : '',
+    ]);
+    const csv = [
+      columns.map(escapeCsv).join(';'),
+      ...rows.map((row) => row.map(escapeCsv).join(';')),
+    ].join('\n');
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `indexierungsstatus-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   const filters: Array<{ value: FilterValue; label: string; count: number }> = [
     { value: 'all', label: 'Alle', count: data.totalUrls },
     { value: 'indexed', label: 'Indexiert', count: data.indexedUrls },
@@ -157,16 +215,29 @@ export default function IndexingStatusWidget({
               Automatisch alle 48 Stunden · GSC-Leistung: {data.performanceRange}
             </p>
           </div>
-          {canSync && data.configured && (
-            <button
-              type="button"
-              onClick={runSync}
-              disabled={isSyncing}
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body shadow-sm transition-colors hover:bg-surface-secondary disabled:cursor-wait disabled:opacity-60"
-            >
-              <RefreshCw size={15} className={isSyncing ? 'animate-spin' : ''} />
-              {isSyncing ? 'Prüfung läuft…' : 'Jetzt prüfen'}
-            </button>
+          {data.configured && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={exportCsv}
+                disabled={!filteredRows.length}
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body shadow-sm transition-colors hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Download size={15} />
+                CSV
+              </button>
+              {canSync && (
+                <button
+                  type="button"
+                  onClick={runSync}
+                  disabled={isSyncing}
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body shadow-sm transition-colors hover:bg-surface-secondary disabled:cursor-wait disabled:opacity-60"
+                >
+                  <RefreshCw size={15} className={isSyncing ? 'animate-spin' : ''} />
+                  {isSyncing ? 'Prüfung läuft…' : 'Jetzt prüfen'}
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -178,14 +249,31 @@ export default function IndexingStatusWidget({
           <>
             <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border-subtle bg-border-subtle lg:grid-cols-4">
               {[
-                ['Sitemap-URLs', data.totalUrls],
-                ['Indexiert', data.indexedUrls],
-                ['Nicht indexiert', data.notIndexedUrls],
-                ['Probleme', data.issueUrls],
-              ].map(([label, value]) => (
-                <div key={String(label)} className="bg-surface px-4 py-4">
-                  <p className="text-[11px] font-semibold uppercase text-muted">{label}</p>
-                  <p className="mt-1 text-2xl font-semibold tabular-nums text-heading">{value}</p>
+                {
+                  label: 'Sitemap-URLs',
+                  value: data.totalUrls,
+                  description: 'Alle in der Sitemap gefundenen Seiten.',
+                },
+                {
+                  label: 'Indexiert',
+                  value: data.indexedUrls,
+                  description: 'Von Google geprüft und im Suchindex.',
+                },
+                {
+                  label: 'Nicht indexiert',
+                  value: data.notIndexedUrls,
+                  description: 'Nicht im Google-Index; kann auch beabsichtigt sein.',
+                },
+                {
+                  label: 'Handlungsbedarf',
+                  value: data.issueUrls,
+                  description: 'Nicht indexiert, Prüffehler oder Canonical-Abweichung.',
+                },
+              ].map((item) => (
+                <div key={item.label} className="bg-surface px-4 py-4">
+                  <p className="text-[11px] font-semibold uppercase text-muted">{item.label}</p>
+                  <p className="mt-1 text-2xl font-semibold tabular-nums text-heading">{item.value}</p>
+                  <p className="mt-1.5 text-[11px] leading-4 text-muted">{item.description}</p>
                 </div>
               ))}
             </div>
