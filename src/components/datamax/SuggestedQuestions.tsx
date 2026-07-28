@@ -29,12 +29,12 @@ export function SuggestedQuestions({
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', damping: 15 }}
         className="
-          w-16 h-16 rounded-2xl mb-4
-          bg-gradient-to-br from-indigo-100 to-purple-100
+          w-16 h-16 rounded-lg mb-4
+          bg-[#188BDB]/10
           flex items-center justify-center
         "
       >
-        <Robot size={32} className="text-indigo-600" />
+        <Robot size={32} className="text-[#188BDB]" />
       </motion.div>
 
       {/* Greeting */}
@@ -42,7 +42,7 @@ export function SuggestedQuestions({
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="font-semibold text-gray-900 mb-1"
+        className="font-semibold text-heading mb-1"
       >
         {greeting}
       </motion.h4>
@@ -51,7 +51,7 @@ export function SuggestedQuestions({
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.15 }}
-        className="text-sm text-gray-500 mb-6"
+        className="text-sm text-muted mb-6"
       >
         Frag mich alles zu deinen SEO- und Analytics-Daten
       </motion.p>
@@ -63,7 +63,7 @@ export function SuggestedQuestions({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-xs text-gray-400 uppercase tracking-wider mb-3"
+            className="text-xs text-muted uppercase mb-3"
           >
             Vorschläge basierend auf deinen Daten
           </motion.p>
@@ -77,10 +77,10 @@ export function SuggestedQuestions({
               onClick={() => onQuestionClick(question)}
               disabled={isLoading}
               className="
-                w-full p-3 rounded-xl
-                bg-white border border-gray-200
-                text-left text-sm text-gray-700
-                hover:border-indigo-300 hover:bg-indigo-50/50
+                w-full p-3 rounded-md
+                bg-surface border border-border-subtle
+                text-left text-sm text-body
+                hover:border-[#188BDB]/50 hover:bg-[#188BDB]/5
                 disabled:opacity-50 disabled:cursor-not-allowed
                 transition-all duration-200
                 flex items-center gap-2
@@ -89,9 +89,9 @@ export function SuggestedQuestions({
             >
               <Lightning 
                 size={14} 
-                className="text-indigo-500 shrink-0 group-hover:text-indigo-600 transition-colors" 
+                className="text-[#188BDB] shrink-0 transition-colors"
               />
-              <span className="group-hover:text-gray-900 transition-colors">
+              <span className="group-hover:text-heading transition-colors">
                 {question}
               </span>
             </motion.button>
@@ -104,7 +104,7 @@ export function SuggestedQuestions({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-sm text-gray-400"
+          className="text-sm text-muted"
         >
           Lade Vorschläge...
         </motion.div>

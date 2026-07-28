@@ -123,10 +123,9 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
         className={`
           fixed bottom-6 right-6 z-50
           w-14 h-14 rounded-full
-          bg-gradient-to-br from-indigo-600 to-purple-600
-          text-white shadow-lg shadow-indigo-500/30
+          bg-[#188BDB] text-white shadow-lg
           flex items-center justify-center
-          hover:scale-110 hover:shadow-xl hover:shadow-indigo-500/40
+          hover:scale-105 hover:bg-[#1479BF] hover:shadow-xl
           transition-all duration-200
           ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}
           ${className}
@@ -148,57 +147,56 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className={`
               fixed z-50
-              bg-white shadow-2xl
+              dashboard-widget-surface shadow-2xl
               flex flex-col overflow-hidden
-              border border-gray-200
+              border border-border-subtle
               transition-all duration-300 ease-in-out
               ${isFullscreen 
                 ? 'inset-0 rounded-none' 
-                : 'bottom-6 right-6 w-[420px] max-w-[calc(100vw-2rem)] h-[600px] max-h-[calc(100vh-6rem)] rounded-2xl'
+                : 'bottom-6 right-6 w-[420px] max-w-[calc(100vw-2rem)] h-[600px] max-h-[calc(100vh-6rem)] rounded-lg'
               }
             `}
           >
             {/* Header */}
             <div className="
               px-4 py-3 
-              bg-gradient-to-r from-indigo-600 to-purple-600
-              text-white
+              bg-surface text-heading border-b border-border-subtle
               flex items-center justify-between
               shrink-0
             ">
               <div className="flex items-center gap-3">
                 <div className="
-                  w-10 h-10 rounded-full 
-                  bg-white/20 backdrop-blur-sm
+                  w-10 h-10 rounded-md
+                  bg-[#188BDB]/10 text-[#188BDB]
                   flex items-center justify-center
                 ">
                   <Robot size={20} />
                 </div>
                 <div>
                   <h3 className="font-semibold text-sm">DataMax</h3>
-                  <p className="text-xs text-white/70">SEO & Analytics Assistent</p>
+                  <p className="text-xs text-muted">SEO & Analytics Assistent</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-1">
                 {/* Schriftgröße Controls */}
-                <div className="flex items-center gap-0.5 mr-1 bg-white/10 rounded-lg px-1 py-0.5">
+                <div className="flex items-center gap-0.5 mr-1 rounded-md border border-border-subtle bg-surface-secondary px-1 py-0.5">
                   <button
                     onClick={decreaseFontSize}
                     disabled={fontSizeIndex === 0}
-                    className="px-1.5 py-1 hover:bg-white/10 rounded text-xs font-bold
+                    className="px-1.5 py-1 hover:bg-surface-tertiary rounded text-xs font-bold
                       disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Schrift kleiner"
                   >
                     A−
                   </button>
-                  <span className="text-[10px] text-white/60 w-6 text-center select-none">
+                  <span className="text-[10px] text-muted w-6 text-center select-none">
                     {FONT_SIZES[fontSizeIndex].label}
                   </span>
                   <button
                     onClick={increaseFontSize}
                     disabled={fontSizeIndex === FONT_SIZES.length - 1}
-                    className="px-1.5 py-1 hover:bg-white/10 rounded text-sm font-bold
+                    className="px-1.5 py-1 hover:bg-surface-tertiary rounded text-sm font-bold
                       disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Schrift größer"
                   >
@@ -209,7 +207,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                 {/* Vollbild Toggle */}
                 <button
                   onClick={toggleFullscreen}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 text-muted hover:bg-surface-secondary hover:text-heading rounded-md transition-colors"
                   title={isFullscreen ? 'Vollbild beenden (ESC)' : 'Vollbild'}
                 >
                   {isFullscreen ? <FullscreenExit size={16} /> : <ArrowsFullscreen size={16} />}
@@ -218,7 +216,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                 {/* Chat Reset */}
                 <button
                   onClick={clearChat}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 text-muted hover:bg-surface-secondary hover:text-heading rounded-md transition-colors"
                   title="Chat zurücksetzen"
                 >
                   <ArrowClockwise size={16} />
@@ -227,7 +225,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                 {/* Schließen */}
                 <button
                   onClick={() => { setIsOpen(false); setIsFullscreen(false); }}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 text-muted hover:bg-surface-secondary hover:text-heading rounded-md transition-colors"
                 >
                   <X size={18} />
                 </button>
@@ -236,7 +234,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
 
             {/* Messages Area */}
             <div className={`
-              flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50
+              flex-1 overflow-y-auto p-4 space-y-4 bg-surface-secondary
               ${isFullscreen ? 'max-w-4xl mx-auto w-full' : ''}
             `}>
               {messages.length === 0 ? (
@@ -262,7 +260,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
             <form 
               onSubmit={handleSubmit}
               className={`
-                p-3 bg-white border-t border-gray-100 shrink-0
+                p-3 bg-surface border-t border-border-subtle shrink-0
                 ${isFullscreen ? 'max-w-4xl mx-auto w-full' : ''}
               `}
             >
@@ -276,10 +274,10 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                   disabled={isLoading}
                   className={`
                     flex-1 px-4 py-2.5
-                    bg-gray-100 rounded-xl
-                    ${fontSizeClass} text-gray-900
-                    placeholder:text-gray-500
-                    focus:outline-none focus:ring-2 focus:ring-indigo-500/30
+                    bg-surface-secondary border border-border-subtle rounded-md
+                    ${fontSizeClass} text-heading
+                    placeholder:text-muted
+                    focus:outline-none focus:border-[#188BDB] focus:ring-2 focus:ring-[#188BDB]/15
                     disabled:opacity-50
                     transition-all
                   `}
@@ -289,7 +287,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                     type="button"
                     onClick={cancelRequest}
                     className="
-                      p-2.5 rounded-xl
+                      p-2.5 rounded-md
                       bg-red-500 text-white
                       hover:bg-red-600
                       transition-colors
@@ -302,9 +300,9 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                     type="submit"
                     disabled={!inputValue.trim()}
                     className="
-                      p-2.5 rounded-xl
-                      bg-indigo-600 text-white
-                      hover:bg-indigo-700
+                      p-2.5 rounded-md
+                      bg-[#188BDB] text-white
+                      hover:bg-[#1479BF]
                       disabled:opacity-50 disabled:cursor-not-allowed
                       transition-colors
                     "

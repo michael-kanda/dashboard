@@ -51,6 +51,8 @@ interface ApiPayload {
   project_start_date: string | null; 
   project_duration_months: number | null; 
   project_timeline_active: boolean;
+  settings_show_landingpages: boolean;
+  settings_show_google_ads: boolean;
   settings_show_prompt_tracking: boolean;
   project_locations: ProjectLocation[];
   maintenance_mode: boolean; // NEU
@@ -131,6 +133,8 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
     project_start_date: '',    
     project_duration_months: '6', 
     project_timeline_active: false,
+    settings_show_landingpages: true,
+    settings_show_google_ads: false,
     settings_show_prompt_tracking: false,
     maintenance_mode: false, // NEU
   });
@@ -163,6 +167,8 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         project_start_date: formatDateForInput(user.project_start_date), 
         project_duration_months: String(user.project_duration_months || 6),
         project_timeline_active: Boolean(user.project_timeline_active),
+        settings_show_landingpages: user.settings_show_landingpages !== false,
+        settings_show_google_ads: Boolean(user.settings_show_google_ads),
         settings_show_prompt_tracking: Boolean(user.settings_show_prompt_tracking),
         maintenance_mode: Boolean(user.maintenance_mode), // NEU
       };
@@ -240,6 +246,8 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         project_start_date: formData.project_start_date || null,
         project_duration_months: parseInt(formData.project_duration_months, 10) || 6,
         project_timeline_active: formData.project_timeline_active,
+        settings_show_landingpages: formData.settings_show_landingpages,
+        settings_show_google_ads: formData.settings_show_google_ads,
         settings_show_prompt_tracking: formData.settings_show_prompt_tracking,
         project_locations: projectLocations
           .map((location) => ({
@@ -302,6 +310,8 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         project_start_date: formatDateForInput(updatedUser.project_start_date),
         project_duration_months: String(updatedUser.project_duration_months || 6),
         project_timeline_active: Boolean(updatedUser.project_timeline_active),
+        settings_show_landingpages: updatedUser.settings_show_landingpages !== false,
+        settings_show_google_ads: Boolean(updatedUser.settings_show_google_ads),
         settings_show_prompt_tracking: Boolean(updatedUser.settings_show_prompt_tracking),
         maintenance_mode: Boolean(updatedUser.maintenance_mode), // NEU
       });
@@ -615,33 +625,62 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
               )}
             </fieldset>
 
-            {/* --- Prompt Tracking --- */}
+            {/* --- Dashboard-Sichtbarkeit --- */}
             <fieldset className="border-t pt-4 mt-4">
-              <legend className="text-sm font-medium text-gray-700 mb-2">Prompt Tracking</legend>
-
-              <label
-                htmlFor="settings_show_prompt_tracking"
-                className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  id="settings_show_prompt_tracking"
-                  name="settings_show_prompt_tracking"
-                  checked={formData.settings_show_prompt_tracking}
-                  onChange={handleInputChange}
-                  disabled={isSubmitting}
-                  className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                />
-                {formData.settings_show_prompt_tracking ? (
-                  <ToggleOn size={20} className="text-green-500" />
-                ) : (
-                  <ToggleOff size={20} className="text-gray-400" />
-                )}
-                Prompt-Tracking Widget im Kunden-Dashboard anzeigen
-              </label>
-              <p className="mt-1 text-xs text-gray-400">
-                Admins sehen Prompt Tracking weiterhin, wenn GSC-Daten vorhanden sind. Diese Einstellung steuert die Kundenansicht.
+              <legend className="text-sm font-medium text-gray-700 mb-2">Dashboard-Sichtbarkeit</legend>
+              <p className="mb-3 text-xs text-gray-400">
+                Diese Einstellungen steuern ausschließlich die Kundenansicht. Admins sehen verfügbare Widgets weiterhin.
               </p>
+
+              <div className="space-y-3">
+                {([
+                  {
+                    name: 'settings_show_landingpages',
+                    label: 'Top Landingpages',
+                    description: 'Landingpage-Auswertung im Kunden-Dashboard anzeigen.',
+                  },
+                  {
+                    name: 'settings_show_google_ads',
+                    label: 'Google Ads Performance',
+                    description: 'Google-Ads-Auswertung im Kunden-Dashboard anzeigen, wenn Daten vorhanden sind.',
+                  },
+                  {
+                    name: 'settings_show_prompt_tracking',
+                    label: 'Prompt Tracking',
+                    description: 'Prompt Tracking im Kunden-Dashboard anzeigen, wenn GSC-Daten vorhanden sind.',
+                  },
+                ] as const).map((setting) => {
+                  const enabled = formData[setting.name];
+                  return (
+                    <label
+                      key={setting.name}
+                      htmlFor={setting.name}
+                      className="flex cursor-pointer items-start justify-between gap-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5"
+                    >
+                      <span>
+                        <span className="block text-sm font-medium text-gray-700">{setting.label}</span>
+                        <span className="mt-0.5 block text-xs text-gray-400">{setting.description}</span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={setting.name}
+                          name={setting.name}
+                          checked={enabled}
+                          onChange={handleInputChange}
+                          disabled={isSubmitting}
+                          className="sr-only"
+                        />
+                        {enabled ? (
+                          <ToggleOn size={26} className="text-green-500" />
+                        ) : (
+                          <ToggleOff size={26} className="text-gray-400" />
+                        )}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
             </fieldset>
 
             {/* --- Standorte / Local SEO --- */}

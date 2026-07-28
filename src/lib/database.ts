@@ -34,6 +34,8 @@ export async function createTables() {
         favicon_url TEXT NULL,
         brand_keywords TEXT[] DEFAULT NULL,
         dashboard_info_text TEXT NULL,
+        settings_show_landingpages BOOLEAN DEFAULT TRUE,
+        settings_show_google_ads BOOLEAN DEFAULT FALSE,
         settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
         project_locations JSONB DEFAULT '[]'::jsonb,
         
@@ -51,6 +53,8 @@ export async function createTables() {
       ADD COLUMN IF NOT EXISTS google_ads_sheet_id VARCHAR(255),
       ADD COLUMN IF NOT EXISTS brand_keywords TEXT[] DEFAULT NULL,
       ADD COLUMN IF NOT EXISTS dashboard_info_text TEXT NULL,
+      ADD COLUMN IF NOT EXISTS settings_show_landingpages BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS settings_show_google_ads BOOLEAN DEFAULT FALSE,
       ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
       ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb;
     `;

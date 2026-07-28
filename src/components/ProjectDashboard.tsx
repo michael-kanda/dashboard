@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Check2, Eye, EyeSlash, PencilSquare, X } from 'react-bootstrap-icons';
+import { Check2, PencilSquare, X } from 'react-bootstrap-icons';
 import {
   ProjectDashboardData,
   ActiveKpi,
@@ -235,9 +235,6 @@ export default function ProjectDashboard({
   const searchParams = useSearchParams();
 
   const [activeKpi, setActiveKpi] = useState<ActiveKpi>('clicks');
-  const [isLandingPagesVisible, setIsLandingPagesVisible] = useState(showLandingPages);
-  const [isGoogleAdsVisible, setIsGoogleAdsVisible] = useState(showGoogleAds);
-  const [isPromptTrackingVisible, setIsPromptTrackingVisible] = useState(showPromptTracking);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showAiTrafficDetail, setShowAiTrafficDetail] = useState(false);
   const [showPromptTrackingDetail, setShowPromptTrackingDetail] = useState(false);
@@ -247,7 +244,6 @@ export default function ProjectDashboard({
   const [isSavingInfo, setIsSavingInfo] = useState(false);
   const [infoSaveError, setInfoSaveError] = useState('');
   const chartRef = useRef<HTMLDivElement>(null);
-  const visibilityButtonClass = "visibility-toggle-button inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors";
 
   useEffect(() => {
     setIsUpdating(false);
@@ -319,7 +315,6 @@ export default function ProjectDashboard({
   };
 
   const handlePromptTrackingClick = () => {
-    setIsPromptTrackingVisible(true);
     setShowPromptTrackingDetail((current) => {
       const next = !current;
       if (next) {
@@ -365,7 +360,7 @@ export default function ProjectDashboard({
   };
 
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
-  const shouldRenderChart = isAdmin || isLandingPagesVisible;
+  const shouldRenderChart = isAdmin || showLandingPages;
   const hasSemrushConfig = !!semrushTrackingId || !!semrushTrackingId02;
   const hasKampagne1Config = !!semrushTrackingId;
   const hasKampagne2Config = !!semrushTrackingId02;
@@ -382,11 +377,11 @@ export default function ProjectDashboard({
     || (data.googleAdsData.rows?.length ?? 0) > 0
     || (data.googleAdsData.campaignRows?.length ?? 0) > 0
   );
-  const shouldRenderGoogleAds = hasGoogleAdsData && (isAdmin || isGoogleAdsVisible);
+  const shouldRenderGoogleAds = hasGoogleAdsData && (isAdmin || showGoogleAds);
 
   // ✅ Prompt Tracking Prüfung (nur rendern wenn GSC-Daten vorhanden)
   const hasPromptTracking = !!data.promptTracking;
-  const shouldRenderPromptTracking = hasPromptTracking && (isAdmin || isPromptTrackingVisible);
+  const shouldRenderPromptTracking = hasPromptTracking && (isAdmin || showPromptTracking);
 
   return (
     <div className="min-h-screen flex flex-col dashboard-gradient relative">
@@ -447,7 +442,7 @@ export default function ProjectDashboard({
               dateRange={dateRange}
               chartRef={chartRef}
               kpis={exportKpis}
-              googleAdsData={showGoogleAds ? data.googleAdsData : undefined}
+              googleAdsData={data.googleAdsData}
             />
           </div>
         )}
@@ -533,37 +528,15 @@ export default function ProjectDashboard({
         {showPromptTrackingDetail && shouldRenderPromptTracking && (
           <div
             id="section-prompt-tracking"
-            className={`mt-8 scroll-mt-20 transition-all duration-300 print-prompt-tracking ${
-              !isPromptTrackingVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''
-            }`}
+            className="mt-8 scroll-mt-20 transition-all duration-300 print-prompt-tracking"
           >
-            {isAdmin && (
-              <div className="flex items-center justify-end mb-2 print:hidden">
-                <button
-                  onClick={() => setIsPromptTrackingVisible(!isPromptTrackingVisible)}
-                  className={visibilityButtonClass}
-                >
-                  {isPromptTrackingVisible ? <EyeSlash size={14} /> : <Eye size={14} />}
-                  {isPromptTrackingVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}
-                </button>
-              </div>
-            )}
-            <div className="relative">
-              <PromptTrackingCard
-                data={data.promptTracking}
-                dashboardData={data}
-                domain={domain}
-                dateRange={dateRange}
-                isAdmin={isAdmin}
-              />
-              {!isPromptTrackingVisible && isAdmin && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="overlay-muted-badge backdrop-blur-[1px] px-4 py-2 rounded-lg border text-strong text-xs font-semibold shadow-sm">
-                    🚫 Für Kunden ausgeblendet
-                  </div>
-                </div>
-              )}
-            </div>
+            <PromptTrackingCard
+              data={data.promptTracking}
+              dashboardData={data}
+              domain={domain}
+              dateRange={dateRange}
+              isAdmin={isAdmin}
+            />
           </div>
         )}
 
@@ -584,8 +557,8 @@ export default function ProjectDashboard({
           </div>
 
           {shouldRenderChart && (
-            <div id="section-landingpages" className={`scroll-mt-20 transition-all duration-300 lg:h-[816px] ${!isLandingPagesVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
-              <div className="print-landing-chart relative h-full">
+            <div id="section-landingpages" className="scroll-mt-20 transition-all duration-300 lg:h-[816px]">
+              <div className="print-landing-chart h-full">
                  <LandingPageChart
                    data={cleanLandingPages}
                    isLoading={isLoading}
@@ -593,23 +566,7 @@ export default function ProjectDashboard({
                    dateRange={dateRange}
                    queryData={data.landingPageQueries}
                    projectId={projectId}
-                   headerAction={isAdmin ? (
-                     <button
-                       onClick={() => setIsLandingPagesVisible(!isLandingPagesVisible)}
-                       className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium border border-theme-border-default rounded-md text-body hover:bg-surface-secondary transition-colors print:hidden"
-                     >
-                       {isLandingPagesVisible ? <EyeSlash size={14}/> : <Eye size={14}/>}
-                       {isLandingPagesVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}
-                     </button>
-                   ) : null}
                  />
-                 {!isLandingPagesVisible && isAdmin && (
-                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                     <div className="overlay-muted-badge backdrop-blur-[1px] px-4 py-2 rounded-lg border text-strong text-xs font-semibold shadow-sm">
-                       🚫 Für Kunden ausgeblendet
-                     </div>
-                   </div>
-                 )}
               </div>
             </div>
           )}
@@ -654,32 +611,12 @@ export default function ProjectDashboard({
         {/* GOOGLE ADS SEKTION */}
         <Trace at="GoogleAdsWidget?" />
         {shouldRenderGoogleAds && (
-          <div id="section-google-ads" className={`mt-8 scroll-mt-20 transition-all duration-300 ${!isGoogleAdsVisible && isAdmin ? 'opacity-70 grayscale-[0.5]' : ''}`}>
-            {isAdmin && (
-              <div className="flex items-center justify-end mb-2 print:hidden">
-                <button
-                  onClick={() => setIsGoogleAdsVisible(!isGoogleAdsVisible)}
-                  className={visibilityButtonClass}
-                >
-                  {isGoogleAdsVisible ? <EyeSlash size={14} /> : <Eye size={14} />}
-                  {isGoogleAdsVisible ? 'Für Kunden verbergen' : 'Für Kunden sichtbar machen'}
-                </button>
-              </div>
-            )}
-            <div className="relative">
-              <GoogleAdsWidget
-                data={data.googleAdsData!}
-                isLoading={isLoading}
-                dateRange={dateRange}
-              />
-              {!isGoogleAdsVisible && isAdmin && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="overlay-muted-badge backdrop-blur-[1px] px-4 py-2 rounded-lg border text-strong text-xs font-semibold shadow-sm">
-                    🚫 Für Kunden ausgeblendet
-                  </div>
-                </div>
-              )}
-            </div>
+          <div id="section-google-ads" className="mt-8 scroll-mt-20 transition-all duration-300">
+            <GoogleAdsWidget
+              data={data.googleAdsData!}
+              isLoading={isLoading}
+              dateRange={dateRange}
+            />
           </div>
         )}
 

@@ -36,7 +36,8 @@ export const UserSchema = z.object({
   createdAt: z.date().nullable().optional(),
   
 // Einstellungen
-  settings_show_landingpages: z.boolean().nullable().optional().default(false),
+  settings_show_landingpages: z.boolean().nullable().optional().default(true),
+  settings_show_google_ads: z.boolean().nullable().optional().default(false),
 
   // Prompt-Tracking: konfigurierbare Brand-Keywords (Migration 001)
   // null = Heuristik (Domain-Wurzel) wird verwendet

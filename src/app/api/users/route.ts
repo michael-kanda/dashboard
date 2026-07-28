@@ -236,12 +236,19 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    await sql`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS settings_show_landingpages BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS settings_show_google_ads BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE
+    `;
     const body = await req.json();
     const createdByAdminId = session.user.id;
     const { 
       email, password, role, mandant_id, ansprache, permissions, domain, gsc_site_url, ga4_property_id,
       semrush_project_id, semrush_tracking_id, semrush_tracking_id_02, favicon_url,
       project_start_date, project_duration_months, project_timeline_active,
+      settings_show_landingpages, settings_show_google_ads,
       settings_show_prompt_tracking
     } = body;
 
@@ -276,6 +283,12 @@ export async function POST(req: NextRequest) {
     const duration = project_duration_months ? parseInt(String(project_duration_months), 10) : 6;
     const startDate = project_start_date ? new Date(project_start_date).toISOString() : new Date().toISOString();
     const timelineActive = typeof project_timeline_active === 'boolean' ? project_timeline_active : false;
+    const landingPagesVisible = typeof settings_show_landingpages === 'boolean'
+      ? settings_show_landingpages
+      : true;
+    const googleAdsVisible = typeof settings_show_google_ads === 'boolean'
+      ? settings_show_google_ads
+      : false;
     const promptTrackingVisible = typeof settings_show_prompt_tracking === 'boolean'
       ? settings_show_prompt_tracking
       : false;
@@ -288,6 +301,7 @@ export async function POST(req: NextRequest) {
         semrush_project_id, semrush_tracking_id, semrush_tracking_id_02,
         favicon_url,
         project_start_date, project_duration_months, project_timeline_active,
+        settings_show_landingpages, settings_show_google_ads,
         settings_show_prompt_tracking,
         "createdByAdminId"
       )
@@ -300,6 +314,7 @@ export async function POST(req: NextRequest) {
         ${semrush_project_id || null}, ${semrush_tracking_id || null}, ${semrush_tracking_id_02 || null},
         ${favicon_url || null},
         ${startDate}, ${duration}, ${timelineActive},
+        ${landingPagesVisible}, ${googleAdsVisible},
         ${promptTrackingVisible},
         ${createdByAdminId}
       )

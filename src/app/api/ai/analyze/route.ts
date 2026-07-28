@@ -8,6 +8,7 @@ import { streamText } from 'ai';
 import crypto from 'node:crypto';
 import type { User } from '@/lib/schemas'; 
 import { AI_CONFIG } from '@/lib/ai-config';
+import { getProjectIndexingStatus } from '@/lib/indexing-status';
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
@@ -98,10 +99,20 @@ export async function POST(req: NextRequest) {
     
     // Expliziter Cast zu User
     const project = rows[0] as unknown as User;
-    const googleAdsEnabled = (rows[0] as any).settings_show_google_ads === true;
-
     const data = await getOrFetchGoogleData(project, dateRange);
     if (!data || !data.kpis) return NextResponse.json({ message: 'Keine Daten' }, { status: 400 });
+    const indexingStatus = await getProjectIndexingStatus(projectId);
+    const effectiveGoogleAdsData = googleAdsData?.totals
+      ? googleAdsData
+      : data.googleAdsData;
+    const googleAdsEnabled = Boolean(
+      effectiveGoogleAdsData?.totals
+      && (
+        effectiveGoogleAdsData.source === 'sheet'
+        || (effectiveGoogleAdsData.rows?.length ?? 0) > 0
+        || (effectiveGoogleAdsData.campaignRows?.length ?? 0) > 0
+      )
+    );
 
     const kpis = data.kpis;
 
@@ -182,8 +193,8 @@ export async function POST(req: NextRequest) {
 
     // ✅ NEU: Google Ads Daten (aus Frontend/Sheet)
     let googleAdsSection = '';
-    if (googleAdsEnabled && googleAdsData?.totals) {
-      const adsTotals = googleAdsData.totals;
+    if (googleAdsEnabled && effectiveGoogleAdsData?.totals) {
+      const adsTotals = effectiveGoogleAdsData.totals;
       const fmtCur = (v: number) => v?.toFixed(2).replace('.', ',') + ' €';
       const adsCpc = adsTotals.clicks > 0 ? adsTotals.cost / adsTotals.clicks : 0;
       
@@ -196,7 +207,7 @@ export async function POST(req: NextRequest) {
       CTR/Interaktionsrate: ${(adsTotals.interactionRate || 0).toFixed(1)}%`;
       
       // Kampagnen-Breakdown
-      const campaigns = googleAdsData.campaignRows || [];
+      const campaigns = effectiveGoogleAdsData.campaignRows || [];
       if (campaigns.length > 0) {
         // Aggregiere nach Kampagnenname
         const campMap = new Map<string, { cost: number; clicks: number; conversions: number }>();
@@ -299,6 +310,41 @@ export async function POST(req: NextRequest) {
       `;
     }
 
+    let indexingSection = '';
+    if (indexingStatus.configured) {
+      const indexedShare = indexingStatus.totalUrls > 0
+        ? (indexingStatus.indexedUrls / indexingStatus.totalUrls * 100).toFixed(1)
+        : '0.0';
+      const priorityUrls = indexingStatus.rows
+        .filter((row) => row.status !== 'indexed' || row.hasCanonicalIssue)
+        .sort((a, b) => (b.impressions - a.impressions) || (b.clicks - a.clicks))
+        .slice(0, 8)
+        .map((row) => {
+          const reasons = [
+            row.coverageState,
+            row.hasCanonicalIssue ? 'abweichende Canonical-URL' : null,
+            row.inspectionError,
+          ].filter(Boolean).join('; ') || row.status;
+          return `- ${row.url}: ${reasons} | ${fmt(row.impressions)} Impr. | ${fmt(row.clicks)} Klicks`;
+        })
+        .join('\n') || 'Kein aktueller Handlungsbedarf erkannt';
+
+      indexingSection = `
+      ===== INDEXIERUNGSSTATUS =====
+      Sitemap: ${indexingStatus.sitemapUrl || 'nicht angegeben'}
+      Synchronisationsstatus: ${indexingStatus.status}
+      Sitemap-URLs: ${fmt(indexingStatus.totalUrls)}
+      Indexiert: ${fmt(indexingStatus.indexedUrls)} (${indexedShare}%)
+      Nicht indexiert: ${fmt(indexingStatus.notIndexedUrls)}
+      Noch nicht geprüft: ${fmt(indexingStatus.pendingUrls)}
+      Handlungsbedarf: ${fmt(indexingStatus.issueUrls)}
+      Letzte Synchronisierung: ${indexingStatus.lastSyncedAt || 'noch nicht synchronisiert'}
+
+      PRIORITÄTS-URLS:
+      ${priorityUrls}
+      `;
+    }
+
     const summaryData = `
       DOMAIN: ${project.domain}
       ZEITPLAN STATUS: ${timelineInfo}
@@ -346,6 +392,8 @@ export async function POST(req: NextRequest) {
       Top-Seiten in Google GenAI:
       ${genAiTopPages}
 
+      ${indexingSection}
+
       METHODIK-HINWEIS:
       Google GenAI Sichtbarkeit = offizielle Search-Console-Impressions in generativen Google-Sucherlebnissen.
       KI-Traffic = echte Website-Besuche in GA4 von KI-Quellen.
@@ -361,7 +409,7 @@ export async function POST(req: NextRequest) {
     `;
 
     // --- CACHE LOGIK ---
-    const cacheInputString = `${summaryData}|ROLE:${userRole}|ADS_ENABLED:${googleAdsEnabled}|V10_LOCAL_SEO_CONTEXT`;
+    const cacheInputString = `${summaryData}|ROLE:${userRole}|ADS_ENABLED:${googleAdsEnabled}|V11_INDEXING_CONTEXT`;
     const inputHash = createHash(cacheInputString);
 
     const { rows: cacheRows } = await sql`
@@ -450,11 +498,16 @@ export async function POST(req: NextRequest) {
         3b. <h4...>Google GenAI Sichtbarkeit:</h4>
            Zeige offizielle Google-GenAI-Impressions, Status und Top-Seiten.
            Wenn der Report nicht verfügbar ist, klar sagen: "noch nicht im Rollout/API sichtbar" statt Werte zu schätzen.
-        ${googleAdsSection ? `3c. <h4...>Google Ads:</h4>
+        ${indexingSection ? `3c. <h4...>Indexierungsstatus:</h4>
+           <ul...>
+             <li...>Indexierte, nicht indexierte und noch nicht geprüfte Sitemap-URLs nennen.
+             <li...>Handlungsbedarf und die wichtigsten betroffenen URLs priorisieren.
+           </ul...>` : ''}
+        ${googleAdsSection ? `3d. <h4...>Google Ads:</h4>
            <ul...>
              <li...>Kosten, Klicks, CPC, Conversions als KPI-Liste.
            </ul...>` : ''}
-        ${localSeoSection ? `3d. <h4...>Lokale Sichtbarkeit:</h4>
+        ${localSeoSection ? `3e. <h4...>Lokale Sichtbarkeit:</h4>
            <ul...>
              <li...>Standorte mit GSC-Klicks/Impressionen, neuen Besuchern, Sessions und Conversions zusammenfassen.
              <li...>Den stärksten und schwächsten Standort klar benennen.
@@ -474,13 +527,18 @@ export async function POST(req: NextRequest) {
            - Google GenAI Sichtbarkeit separat interpretieren: offizielle Impressions in AI Overviews / AI Mode, nicht GA4-Sessions.
            - Prompt Tracking nur als Research/Proxy einordnen, nicht als offiziellen Wert.
            - Konkrete Empfehlungen zur Verbesserung der KI-Sichtbarkeit (strukturierte Daten, FAQ-Seiten, etc.)
-        ${googleAdsSection ? `6. <h4...>Google Ads Performance:</h4>
+        ${indexingSection ? `6. <h4...>Indexierung & technische SEO:</h4>
+           Analysiere den INDEXIERUNGSSTATUS:
+           - URLs mit Handlungsbedarf nach Impressionen und Klicks priorisieren
+           - Coverage- und Canonical-Probleme konkret benennen
+           - Keine Ursache behaupten, die in den Daten nicht belegt ist` : ''}
+        ${googleAdsSection ? `7. <h4...>Google Ads Performance:</h4>
            Analysiere die GOOGLE ADS Daten:
            - ROI-Bewertung: Kosten vs. Conversions
            - CPC-Effizienz pro Kampagne
            - Welche Kampagnen performen gut/schlecht?
            - Empfehlungen zur Budget-Optimierung` : ''}
-        ${localSeoSection ? `7. <h4...>Lokale Sichtbarkeit:</h4>
+        ${localSeoSection ? `8. <h4...>Lokale Sichtbarkeit:</h4>
            Analysiere die LOKALE SICHTBARKEIT Daten:
            - Standortvergleich nach GSC-Signalen und GA4-Landingpage-Signalen
            - Welche Standort-Landingpage optimiert werden sollte
@@ -501,11 +559,16 @@ export async function POST(req: NextRequest) {
              <li...>KI-Sichtbarkeit: Füge hinzu: <br><span class="text-xs text-purple-600 block mt-0.5">🤖 Ihre Inhalte werden von KI-Assistenten (ChatGPT, Gemini, Perplexity) gefunden und empfohlen!</span>
              <li...>Google GenAI: Zeige offizielle Google-GenAI-Impressions nur, wenn verfügbar. Wenn nicht verfügbar, positiv und transparent erklären, dass Google den neuen Report schrittweise ausrollt.
            </ul...>
-        ${googleAdsSection ? `2b. <h4...>Ihre Google Werbung (Überblick):</h4>
+        ${indexingSection ? `2b. <h4...>Indexierungsstatus:</h4>
+           <ul...>
+             <li...>Verständlich erklären, wie viele Sitemap-Seiten indexiert sind und wo Handlungsbedarf besteht.
+             <li...>Keine technischen Ursachen erfinden; nur belegte Hinweise nennen.
+           </ul...>` : ''}
+        ${googleAdsSection ? `2c. <h4...>Ihre Google Werbung (Überblick):</h4>
            <ul...>
              <li...>Investition und erzielte Klicks/Conversions - kundenfreundlich formuliert.
            </ul...>` : ''}
-        ${localSeoSection ? `2c. <h4...>Ihre lokale Sichtbarkeit:</h4>
+        ${localSeoSection ? `2d. <h4...>Ihre lokale Sichtbarkeit:</h4>
            <ul...>
              <li...>Standorte kundenfreundlich vergleichen.
              <li...>Neue Besucher und Anfragen/Conversions pro Standort einfach erklaeren.
@@ -524,12 +587,14 @@ export async function POST(req: NextRequest) {
            - Google GenAI separat erklären: "Sichtbarkeit in AI Overviews / AI Mode" bedeutet Impressionen auf Google, nicht automatisch Besucher.
            - "Das bedeutet: Wenn Menschen KI-Tools nach [Branche/Thema] fragen, werden SIE empfohlen!"
            - "Dieser Trend wächst stark - wir positionieren Sie optimal dafür."
-        ${googleAdsSection ? `6. <h4...>Ihre Google Werbung:</h4>
+        ${indexingSection ? `6. <h4...>Technische Sichtbarkeit:</h4>
+           Erkläre den Indexierungsstatus kundenfreundlich und nenne die wichtigsten nächsten Schritte.` : ''}
+        ${googleAdsSection ? `7. <h4...>Ihre Google Werbung:</h4>
            Erkläre dem Kunden verständlich und positiv:
            - Wie viel wurde investiert und was kam dabei heraus (Conversions)
            - Welche Kampagnen besonders gut funktioniert haben
            - "Ihre Werbung arbeitet für Sie" - positiver Rahmen` : ''}
-        ${localSeoSection ? `7. <h4...>Ihre Standorte:</h4>
+        ${localSeoSection ? `8. <h4...>Ihre Standorte:</h4>
            Erklaere lokale Sichtbarkeit positiv und verstaendlich:
            - Welche Standorte bereits Nachfrage erzeugen
            - Wo eigene Standort-Landingpages oder lokale Inhalte helfen

@@ -95,6 +95,12 @@ export async function GET(
   try {
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS sitemap_url TEXT NULL`;
+    await sql`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS settings_show_landingpages BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS settings_show_google_ads BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE
+    `;
     const session = await auth(); 
     
     // Berechtigungsprüfung: Admins ODER der Benutzer selbst
@@ -139,6 +145,8 @@ export async function GET(
         project_timeline_active::boolean as project_timeline_active,
         maintenance_mode::boolean as maintenance_mode,
         brand_keywords,
+        settings_show_landingpages::boolean as settings_show_landingpages,
+        settings_show_google_ads::boolean as settings_show_google_ads,
         settings_show_prompt_tracking::boolean as settings_show_prompt_tracking,
         COALESCE(project_locations, '[]'::jsonb) as project_locations
       FROM users
@@ -177,6 +185,12 @@ export async function PUT(
   try {
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS sitemap_url TEXT NULL`;
+    await sql`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS settings_show_landingpages BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS settings_show_google_ads BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE
+    `;
     const session = await auth(); 
     
     if (!session?.user) {
@@ -217,6 +231,8 @@ export async function PUT(
         project_duration_months,
         project_timeline_active,
         maintenance_mode, // NEU
+        settings_show_landingpages,
+        settings_show_google_ads,
         settings_show_prompt_tracking,
         project_locations
     } = body;
@@ -226,7 +242,12 @@ export async function PUT(
     }
 
     const { rows: existingUsers } = await sql`
-      SELECT role, mandant_id, settings_show_prompt_tracking
+      SELECT
+        role,
+        mandant_id,
+        settings_show_landingpages,
+        settings_show_google_ads,
+        settings_show_prompt_tracking
       FROM users
       WHERE id = ${targetUserId}::uuid
     `;
@@ -292,6 +313,12 @@ export async function PUT(
     const timelineActive = typeof project_timeline_active === 'boolean' ? project_timeline_active : false;
     // NEU: maintenance_mode
     const maintenanceActive = typeof maintenance_mode === 'boolean' ? maintenance_mode : false;
+    const landingPagesVisible = typeof settings_show_landingpages === 'boolean'
+      ? settings_show_landingpages
+      : targetUser.settings_show_landingpages !== false;
+    const googleAdsVisible = typeof settings_show_google_ads === 'boolean'
+      ? settings_show_google_ads
+      : targetUser.settings_show_google_ads === true;
     const promptTrackingVisible = typeof settings_show_prompt_tracking === 'boolean'
       ? settings_show_prompt_tracking
       : targetUser.settings_show_prompt_tracking === true;
@@ -320,6 +347,8 @@ export async function PUT(
             project_duration_months = ${duration},
             project_timeline_active = ${timelineActive},
             maintenance_mode = ${maintenanceActive},
+            settings_show_landingpages = ${landingPagesVisible},
+            settings_show_google_ads = ${googleAdsVisible},
             settings_show_prompt_tracking = ${promptTrackingVisible},
             project_locations = ${JSON.stringify(normalizedProjectLocations)}::jsonb,
             password = ${await bcrypt.hash(password, 10)}
@@ -331,7 +360,8 @@ export async function PUT(
             google_ads_sheet_id,
             mandant_id, permissions, favicon_url,
             project_start_date, project_duration_months, project_timeline_active,
-            maintenance_mode, brand_keywords, settings_show_prompt_tracking,
+            maintenance_mode, brand_keywords,
+            settings_show_landingpages, settings_show_google_ads, settings_show_prompt_tracking,
             COALESCE(project_locations, '[]'::jsonb) as project_locations;
         `
       : // Query OHNE Passwort
@@ -355,6 +385,8 @@ export async function PUT(
             project_duration_months = ${duration},
             project_timeline_active = ${timelineActive},
             maintenance_mode = ${maintenanceActive},
+            settings_show_landingpages = ${landingPagesVisible},
+            settings_show_google_ads = ${googleAdsVisible},
             settings_show_prompt_tracking = ${promptTrackingVisible},
             project_locations = ${JSON.stringify(normalizedProjectLocations)}::jsonb
           WHERE id = ${targetUserId}::uuid
@@ -365,7 +397,8 @@ export async function PUT(
             google_ads_sheet_id,
             mandant_id, permissions, favicon_url,
             project_start_date, project_duration_months, project_timeline_active,
-            maintenance_mode, brand_keywords, settings_show_prompt_tracking,
+            maintenance_mode, brand_keywords,
+            settings_show_landingpages, settings_show_google_ads, settings_show_prompt_tracking,
             COALESCE(project_locations, '[]'::jsonb) as project_locations;
         `;
 

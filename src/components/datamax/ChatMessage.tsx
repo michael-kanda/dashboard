@@ -25,8 +25,8 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
         w-8 h-8 rounded-full shrink-0
         flex items-center justify-center
         ${isUser 
-          ? 'bg-gray-200 text-gray-600' 
-          : 'bg-gradient-to-br from-indigo-500 to-purple-500 text-white'
+          ? 'bg-surface-tertiary text-muted'
+          : 'bg-[#188BDB]/10 text-[#188BDB]'
         }
       `}>
         {isUser ? <Person size={14} /> : <Robot size={14} />}
@@ -34,10 +34,10 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
 
       {/* Bubble */}
       <div className={`
-        max-w-[85%] px-4 py-3 rounded-2xl
+        max-w-[85%] px-4 py-3 rounded-lg
         ${isUser 
-          ? 'bg-indigo-600 text-white rounded-br-md' 
-          : 'bg-white text-gray-800 rounded-bl-md shadow-sm border border-gray-100'
+          ? 'bg-[#188BDB] text-white rounded-br-sm'
+          : 'bg-surface text-body rounded-bl-sm shadow-sm border border-border-subtle'
         }
       `}>
         {/* Content mit Markdown */}
@@ -55,29 +55,29 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
                 components={{
                   // Überschriften
                   h1: ({ children }) => (
-                    <h1 className="font-bold text-gray-900 mt-3 mb-2 first:mt-0" style={{ fontSize: '1.1em' }}>{children}</h1>
+                    <h1 className="font-bold text-heading mt-3 mb-2 first:mt-0" style={{ fontSize: '1.1em' }}>{children}</h1>
                   ),
                   h2: ({ children }) => (
-                    <h2 className="font-bold text-gray-900 mt-3 mb-2 first:mt-0" style={{ fontSize: '1.05em' }}>{children}</h2>
+                    <h2 className="font-bold text-heading mt-3 mb-2 first:mt-0" style={{ fontSize: '1.05em' }}>{children}</h2>
                   ),
                   h3: ({ children }) => (
-                    <h3 className="font-bold text-gray-900 mt-3 mb-2 first:mt-0" style={{ fontSize: '1em' }}>{children}</h3>
+                    <h3 className="font-bold text-heading mt-3 mb-2 first:mt-0" style={{ fontSize: '1em' }}>{children}</h3>
                   ),
                   h4: ({ children }) => (
-                    <h4 className="font-semibold text-gray-900 mt-2 mb-1 first:mt-0" style={{ fontSize: '1em' }}>{children}</h4>
+                    <h4 className="font-semibold text-heading mt-2 mb-1 first:mt-0" style={{ fontSize: '1em' }}>{children}</h4>
                   ),
                   
                   // Absätze
                   p: ({ children }) => (
-                    <p className="mb-2 last:mb-0 text-gray-700">{children}</p>
+                    <p className="mb-2 last:mb-0 text-body">{children}</p>
                   ),
                   
                   // Fett & Kursiv
                   strong: ({ children }) => (
-                    <strong className="font-semibold text-gray-900">{children}</strong>
+                    <strong className="font-semibold text-heading">{children}</strong>
                   ),
                   em: ({ children }) => (
-                    <em className="italic text-gray-600">{children}</em>
+                    <em className="italic text-muted">{children}</em>
                   ),
                   
                   // Listen
@@ -90,8 +90,8 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
                   li: ({ children, ...props }) => {
                     const isOrdered = (props as any).ordered;
                     return (
-                      <li className="flex gap-2 text-gray-700">
-                        <span className={`shrink-0 mt-0.5 ${isOrdered ? 'text-indigo-600 font-semibold' : 'text-indigo-400'}`}>
+                      <li className="flex gap-2 text-body">
+                        <span className={`shrink-0 mt-0.5 ${isOrdered ? 'text-[#188BDB] font-semibold' : 'text-[#188BDB]'}`}>
                           {isOrdered ? '•' : '•'}
                         </span>
                         <span className="flex-1">{children}</span>
@@ -103,7 +103,7 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
                   code: ({ children, className }) => {
                     const isInline = !className;
                     return isInline ? (
-                      <code className="bg-gray-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono" style={{ fontSize: '0.85em' }}>
+                      <code className="bg-surface-tertiary text-[#1479BF] px-1.5 py-0.5 rounded font-mono" style={{ fontSize: '0.85em' }}>
                         {children}
                       </code>
                     ) : (
@@ -122,7 +122,7 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
                       href={href} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
+                    className="text-[#188BDB] hover:text-[#1479BF] underline underline-offset-2"
                     >
                       {children}
                     </a>
@@ -130,14 +130,14 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
                   
                   // Blockquote
                   blockquote: ({ children }) => (
-                    <blockquote className="border-l-3 border-indigo-300 pl-3 my-2 text-gray-600 italic">
+                    <blockquote className="border-l-3 border-[#188BDB]/40 pl-3 my-2 text-muted italic">
                       {children}
                     </blockquote>
                   ),
                   
                   // Horizontale Linie
                   hr: () => (
-                    <hr className="my-3 border-gray-200" />
+                    <hr className="my-3 border-border-subtle" />
                   ),
                 }}
               >
@@ -145,7 +145,7 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
               </ReactMarkdown>
             )
           ) : (
-            <span className="text-gray-400">Denke nach...</span>
+            <span className="text-muted">Denke nach...</span>
           )}
         </div>
 
@@ -154,7 +154,7 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
           text-[10px] mt-2 pt-1 border-t
           ${isUser 
             ? 'text-white/60 border-white/20' 
-            : 'text-gray-400 border-gray-100'
+            : 'text-muted border-border-subtle'
           }
         `}>
           {message.timestamp.toLocaleTimeString('de-DE', { 

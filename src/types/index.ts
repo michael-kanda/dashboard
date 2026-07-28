@@ -34,6 +34,8 @@ export interface User {
   maintenance_mode?: boolean; 
   brand_keywords?: string[] | null;
   dashboard_info_text?: string | null;
+  settings_show_landingpages?: boolean | null;
+  settings_show_google_ads?: boolean | null;
   settings_show_prompt_tracking?: boolean | null;
   project_locations?: ProjectLocation[] | null;
 

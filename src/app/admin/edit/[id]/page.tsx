@@ -31,6 +31,12 @@ async function getUserData(id: string): Promise<UserWithAssignments | null> {
     console.log('[getUserData] 🔍 Suche Benutzer mit ID:', id);
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS sitemap_url TEXT NULL`;
+    await sql`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS settings_show_landingpages BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS settings_show_google_ads BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE
+    `;
     // 1. Benutzerdaten laden
     const { rows: users } = await sql`
       SELECT
@@ -52,6 +58,8 @@ async function getUserData(id: string): Promise<UserWithAssignments | null> {
         project_start_date,
         project_duration_months,
         project_timeline_active::boolean as project_timeline_active,
+        settings_show_landingpages::boolean as settings_show_landingpages,
+        settings_show_google_ads::boolean as settings_show_google_ads,
         settings_show_prompt_tracking::boolean as settings_show_prompt_tracking,
         brand_keywords,
         COALESCE(project_locations, '[]'::jsonb) as project_locations

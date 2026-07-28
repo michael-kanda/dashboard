@@ -811,23 +811,44 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
           <div className="rounded-lg border border-border-subtle bg-surface p-4">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Standorte</p>
             <div className="mt-3 space-y-2">
-              {rankedLocations.map((location, index) => (
-                <button
-                  key={location.id}
-                  type="button"
-                  onClick={() => selectLocation(location.id)}
-                  className={`flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-colors ${
-                    selected?.id === location.id
-                      ? 'border-indigo-300 bg-indigo-50 text-slate-900 dark:border-indigo-700 dark:bg-indigo-950/30 dark:text-slate-100'
-                      : 'border-border-subtle bg-surface-secondary hover:bg-surface-tertiary'
-                  }`}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span className="text-xs font-semibold text-muted">#{index + 1}</span>
-                    <span className="truncate text-sm font-semibold text-heading">{location.name}</span>
-                  </span>
-                </button>
-              ))}
+              {rankedLocations.map((location, index) => {
+                const preview = placePreviews[location.id || location.name];
+                const hasRating = typeof preview?.rating === 'number' && preview.rating > 0;
+                const ratingLabel = hasRating
+                  ? preview.rating!.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                  : null;
+                const reviewLabel = typeof preview?.userRatingCount === 'number'
+                  ? formatNumber(preview.userRatingCount)
+                  : null;
+
+                return (
+                  <button
+                    key={location.id}
+                    type="button"
+                    onClick={() => selectLocation(location.id)}
+                    className={`flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-colors ${
+                      selected?.id === location.id
+                        ? 'border-indigo-300 bg-indigo-50 text-slate-900 dark:border-indigo-700 dark:bg-indigo-950/30 dark:text-slate-100'
+                        : 'border-border-subtle bg-surface-secondary hover:bg-surface-tertiary'
+                    }`}
+                  >
+                    <span className="min-w-0">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="text-xs font-semibold text-muted">#{index + 1}</span>
+                        <span className="truncate text-sm font-semibold text-heading">{location.name}</span>
+                      </span>
+                      {ratingLabel && (
+                        <span className="mt-0.5 flex items-center gap-1.5 pl-7 text-[11px]">
+                          <span className="text-amber-500" aria-hidden="true">★★★★★</span>
+                          <span className="text-muted">
+                            {ratingLabel}{reviewLabel ? ` · ${reviewLabel} Bewertungen` : ''}
+                          </span>
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
