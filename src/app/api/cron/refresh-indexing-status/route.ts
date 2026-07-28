@@ -31,11 +31,18 @@ export async function GET(request: NextRequest) {
     LIMIT 5
   `;
 
+  const deadlineAt = Date.now() + 240_000;
   const results: Array<{ projectId: string; email: string; success: boolean; message: string }> = [];
-  for (const project of projects) {
+  for (let index = 0; index < projects.length; index += 1) {
+    if (Date.now() + 25_000 >= deadlineAt) break;
+    const project = projects[index];
+    const remainingProjects = projects.length - index;
+    const fairShareMs = Math.floor((deadlineAt - Date.now()) / remainingProjects);
+    const projectDeadlineAt = Math.min(deadlineAt, Date.now() + Math.max(35_000, fairShareMs));
     try {
       const status = await syncProjectIndexingStatus(project.id, {
         maxInspections: 120,
+        deadlineAt: projectDeadlineAt,
       });
       results.push({
         projectId: project.id,

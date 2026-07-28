@@ -209,9 +209,20 @@ function assertSafeSitemapUrl(value: string, expectedHost?: string) {
   return parsed;
 }
 
-async function fetchXml(url: string) {
+function getRequestTimeout(deadlineAt: number, maximumMs: number, reserveMs: number) {
+  const remaining = deadlineAt - Date.now() - reserveMs;
+  if (remaining < 1_000) {
+    throw new Error('Das Zeitbudget für diesen Indexierungsabgleich ist aufgebraucht.');
+  }
+  return Math.min(maximumMs, remaining);
+}
+
+async function fetchXml(url: string, deadlineAt: number) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15_000);
+  const timeout = setTimeout(
+    () => controller.abort(),
+    getRequestTimeout(deadlineAt, 15_000, 10_000),
+  );
   try {
     const response = await fetch(url, {
       headers: { 'user-agent': 'DataPeak-IndexMonitor/1.0' },
@@ -231,18 +242,25 @@ async function fetchXml(url: string) {
   }
 }
 
-async function readSitemapTree(rootUrl: string, maxUrls = 5_000): Promise<SitemapEntry[]> {
+async function readSitemapTree(
+  rootUrl: string,
+  deadlineAt: number,
+  maxUrls = 5_000,
+): Promise<SitemapEntry[]> {
   const root = assertSafeSitemapUrl(rootUrl);
   const queue: Array<{ url: string; depth: number }> = [{ url: root.href, depth: 0 }];
   const visited = new Set<string>();
   const entries = new Map<string, SitemapEntry>();
 
   while (queue.length && entries.size < maxUrls) {
+    if (Date.now() + 10_000 >= deadlineAt) {
+      throw new Error('Das Zeitbudget für das Lesen der Sitemap ist aufgebraucht.');
+    }
     const current = queue.shift()!;
     if (visited.has(current.url) || current.depth > 4) continue;
     visited.add(current.url);
 
-    const xml = await fetchXml(current.url);
+    const xml = await fetchXml(current.url, deadlineAt);
     const $ = load(xml, { xmlMode: true });
     const childSitemaps = $('sitemap > loc').map((_, element) => $(element).text().trim()).get();
     if (childSitemaps.length) {
@@ -284,7 +302,7 @@ function dateString(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-async function loadPagePerformance(siteUrl: string) {
+async function loadPagePerformance(siteUrl: string, deadlineAt: number) {
   const auth = createGscAuth();
   const searchconsole = google.searchconsole({ version: 'v1', auth });
   const end = new Date();
@@ -301,7 +319,7 @@ async function loadPagePerformance(siteUrl: string) {
       dataState: 'all',
       type: 'web',
     },
-  }, { timeout: 30_000 });
+  }, { timeout: getRequestTimeout(deadlineAt, 30_000, 15_000) });
   const result = new Map<string, { clicks: number; impressions: number; ctr: number; position: number }>();
   for (const row of response.data.rows ?? []) {
     const url = row.keys?.[0];
@@ -325,11 +343,12 @@ function getIndexingStatus(verdict?: string | null): IndexingUrlStatus {
 async function mapWithConcurrency<T>(
   values: T[],
   concurrency: number,
+  canStart: () => boolean,
   worker: (value: T) => Promise<void>,
 ) {
   let cursor = 0;
   await Promise.all(Array.from({ length: Math.min(concurrency, values.length) }, async () => {
-    while (cursor < values.length) {
+    while (cursor < values.length && canStart()) {
       const value = values[cursor++];
       await worker(value);
     }
@@ -338,8 +357,9 @@ async function mapWithConcurrency<T>(
 
 export async function syncProjectIndexingStatus(
   projectId: string,
-  options: { force?: boolean; maxInspections?: number } = {},
+  options: { force?: boolean; maxInspections?: number; deadlineAt?: number } = {},
 ) {
+  const deadlineAt = options.deadlineAt ?? Date.now() + 240_000;
   await ensureIndexingStatusSchema();
   const { rows } = await sql<ProjectConfig>`
     SELECT id::text, domain, gsc_site_url, sitemap_url
@@ -381,12 +401,12 @@ export async function syncProjectIndexingStatus(
   if (!lockRows.length) return getProjectIndexingStatus(projectId);
 
   try {
-    const entries = (await readSitemapTree(sitemapUrl))
+    const entries = (await readSitemapTree(sitemapUrl, deadlineAt))
       .filter((entry) => propertyAllowsUrl(config.gsc_site_url!, entry.url));
     if (!entries.length) throw new Error('In der Sitemap wurden keine URLs der GSC-Property gefunden.');
 
     const sitemapFingerprint = createSitemapFingerprint(entries);
-    const performance = await loadPagePerformance(config.gsc_site_url);
+    const performance = await loadPagePerformance(config.gsc_site_url, deadlineAt);
     const sitemapPayload = entries.map((entry) => {
       const metrics = performance.get(entry.url);
       return {
@@ -493,56 +513,61 @@ export async function syncProjectIndexingStatus(
     `;
 
     const searchconsole = google.searchconsole({ version: 'v1', auth: createGscAuth() });
-    await mapWithConcurrency(candidates, 2, async ({ url }) => {
-      try {
-        const response = await searchconsole.urlInspection.index.inspect({
-          requestBody: {
-            inspectionUrl: url,
-            siteUrl: config.gsc_site_url!,
-            languageCode: 'de-DE',
-          },
-        }, { timeout: 20_000 });
-        const result = response.data.inspectionResult?.indexStatusResult;
-        const status = getIndexingStatus(result?.verdict);
-        await sql`
-          UPDATE project_indexing_urls
-          SET status = ${status},
-              verdict = ${result?.verdict ?? null},
-              coverage_state = ${result?.coverageState ?? null},
-              robots_txt_state = ${result?.robotsTxtState ?? null},
-              indexing_state = ${result?.indexingState ?? null},
-              page_fetch_state = ${result?.pageFetchState ?? null},
-              google_canonical = ${result?.googleCanonical ?? null},
-              user_canonical = ${result?.userCanonical ?? null},
-              last_crawl_time = ${result?.lastCrawlTime ?? null},
-              inspected_at = NOW(),
-              next_inspection_at = CASE
-                WHEN ${status} = 'indexed' AND impressions >= 100 THEN NOW() + INTERVAL '7 days'
-                WHEN ${status} = 'indexed' THEN NOW() + INTERVAL '30 days'
-                WHEN ${status} = 'not_indexed' THEN NOW() + INTERVAL '7 days'
-                ELSE NOW() + INTERVAL '24 hours'
-              END,
-              inspection_attempts = 0,
-              inspection_error = NULL
-          WHERE user_id = ${projectId}::uuid AND url = ${url}
-        `;
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'URL Inspection fehlgeschlagen';
-        await sql`
-          UPDATE project_indexing_urls
-          SET status = 'error',
-              inspected_at = NOW(),
-              inspection_attempts = inspection_attempts + 1,
-              next_inspection_at = NOW() + CASE
-                WHEN inspection_attempts = 0 THEN INTERVAL '2 hours'
-                WHEN inspection_attempts = 1 THEN INTERVAL '12 hours'
-                ELSE INTERVAL '48 hours'
-              END,
-              inspection_error = ${message}
-          WHERE user_id = ${projectId}::uuid AND url = ${url}
-        `;
-      }
-    });
+    await mapWithConcurrency(
+      candidates,
+      2,
+      () => Date.now() + 25_000 < deadlineAt,
+      async ({ url }) => {
+        try {
+          const response = await searchconsole.urlInspection.index.inspect({
+            requestBody: {
+              inspectionUrl: url,
+              siteUrl: config.gsc_site_url!,
+              languageCode: 'de-DE',
+            },
+          }, { timeout: getRequestTimeout(deadlineAt, 15_000, 8_000) });
+          const result = response.data.inspectionResult?.indexStatusResult;
+          const status = getIndexingStatus(result?.verdict);
+          await sql`
+            UPDATE project_indexing_urls
+            SET status = ${status},
+                verdict = ${result?.verdict ?? null},
+                coverage_state = ${result?.coverageState ?? null},
+                robots_txt_state = ${result?.robotsTxtState ?? null},
+                indexing_state = ${result?.indexingState ?? null},
+                page_fetch_state = ${result?.pageFetchState ?? null},
+                google_canonical = ${result?.googleCanonical ?? null},
+                user_canonical = ${result?.userCanonical ?? null},
+                last_crawl_time = ${result?.lastCrawlTime ?? null},
+                inspected_at = NOW(),
+                next_inspection_at = CASE
+                  WHEN ${status} = 'indexed' AND impressions >= 100 THEN NOW() + INTERVAL '7 days'
+                  WHEN ${status} = 'indexed' THEN NOW() + INTERVAL '30 days'
+                  WHEN ${status} = 'not_indexed' THEN NOW() + INTERVAL '7 days'
+                  ELSE NOW() + INTERVAL '24 hours'
+                END,
+                inspection_attempts = 0,
+                inspection_error = NULL
+            WHERE user_id = ${projectId}::uuid AND url = ${url}
+          `;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'URL Inspection fehlgeschlagen';
+          await sql`
+            UPDATE project_indexing_urls
+            SET status = 'error',
+                inspected_at = NOW(),
+                inspection_attempts = inspection_attempts + 1,
+                next_inspection_at = NOW() + CASE
+                  WHEN inspection_attempts = 0 THEN INTERVAL '2 hours'
+                  WHEN inspection_attempts = 1 THEN INTERVAL '12 hours'
+                  ELSE INTERVAL '48 hours'
+                END,
+                inspection_error = ${message}
+            WHERE user_id = ${projectId}::uuid AND url = ${url}
+          `;
+        }
+      },
+    );
 
     const { rows: pendingRows } = await sql<{ count: number }>`
       SELECT COUNT(*)::int AS count
