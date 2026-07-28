@@ -24,7 +24,6 @@ interface ExtendedUser extends User {
   assigned_admins?: string;
   creator_email?: string;
   data_max_enabled?: boolean; 
-  settings_show_google_ads?: boolean;
   settings_show_prompt_tracking: boolean | null;
   dashboard_info_text?: string | null;
   google_genai_manual_data?: any | null;
