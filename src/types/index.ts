@@ -1,5 +1,7 @@
 // src/types/index.ts
 
+import type { DashboardWidgetVisibility } from '@/lib/dashboard-widget-visibility';
+
 export interface User {
   id: string;
   email: string;
@@ -37,6 +39,7 @@ export interface User {
   settings_show_landingpages?: boolean | null;
   settings_show_google_ads?: boolean | null;
   settings_show_prompt_tracking?: boolean | null;
+  dashboard_widget_visibility?: Partial<DashboardWidgetVisibility> | null;
   project_locations?: ProjectLocation[] | null;
 
   // Landingpage Statistiken

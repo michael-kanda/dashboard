@@ -38,6 +38,7 @@ async function loadData(projectId: string, dateRange: string) {
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_genai_manual_data JSONB NULL`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS sitemap_url TEXT NULL`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dashboard_widget_visibility JSONB DEFAULT '{}'::jsonb`;
 
     const { rows } = await sql`
       SELECT
@@ -59,6 +60,7 @@ async function loadData(projectId: string, dateRange: string) {
         u.settings_show_landingpages,
         u.settings_show_google_ads,
         u.settings_show_prompt_tracking,
+        COALESCE(u.dashboard_widget_visibility, '{}'::jsonb) as dashboard_widget_visibility,
         u.dashboard_info_text,
         u.google_genai_manual_data,
         u.data_max_enabled, 
@@ -163,6 +165,7 @@ export default async function ProjectPage({
         showLandingPages={projectUser.settings_show_landingpages !== false}
         showGoogleAds={projectUser.settings_show_google_ads === true}
         showPromptTracking={projectUser.settings_show_prompt_tracking === true}
+        widgetVisibility={projectUser.dashboard_widget_visibility}
         dashboardInfoText={projectUser.dashboard_info_text || null}
         dataMaxEnabled={isDataMaxEnabled}
         indexingStatus={indexingStatus}

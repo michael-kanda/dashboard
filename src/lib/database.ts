@@ -37,6 +37,7 @@ export async function createTables() {
         settings_show_landingpages BOOLEAN DEFAULT TRUE,
         settings_show_google_ads BOOLEAN DEFAULT FALSE,
         settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
+        dashboard_widget_visibility JSONB DEFAULT '{}'::jsonb,
         project_locations JSONB DEFAULT '[]'::jsonb,
         
         "createdByAdminId" UUID REFERENCES users(id),
@@ -56,6 +57,7 @@ export async function createTables() {
       ADD COLUMN IF NOT EXISTS settings_show_landingpages BOOLEAN DEFAULT TRUE,
       ADD COLUMN IF NOT EXISTS settings_show_google_ads BOOLEAN DEFAULT FALSE,
       ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS dashboard_widget_visibility JSONB DEFAULT '{}'::jsonb,
       ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb;
     `;
     console.log('Prompt-Tracking-Spalten in "users" erfolgreich geprüft/erstellt.');

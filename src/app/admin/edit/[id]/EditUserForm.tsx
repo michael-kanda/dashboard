@@ -3,6 +3,11 @@
 
 import { useState, FormEvent, useEffect, ChangeEvent } from 'react';
 import { User, ProjectLocation } from '@/types';
+import {
+  DASHBOARD_WIDGET_DEFINITIONS,
+  normalizeDashboardWidgetVisibility,
+  type DashboardWidgetVisibility,
+} from '@/lib/dashboard-widget-visibility';
 import { 
   Pencil, 
   ArrowRepeat, 
@@ -54,6 +59,7 @@ interface ApiPayload {
   settings_show_landingpages: boolean;
   settings_show_google_ads: boolean;
   settings_show_prompt_tracking: boolean;
+  dashboard_widget_visibility: DashboardWidgetVisibility;
   project_locations: ProjectLocation[];
   maintenance_mode: boolean; // NEU
   password?: string; 
@@ -141,6 +147,13 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
 
   const [password, setPassword] = useState('');
   const [projectLocations, setProjectLocations] = useState<ProjectLocation[]>([]);
+  const [widgetVisibility, setWidgetVisibility] = useState<DashboardWidgetVisibility>(
+    normalizeDashboardWidgetVisibility(user.dashboard_widget_visibility, {
+      landingPages: user.settings_show_landingpages,
+      googleAds: user.settings_show_google_ads,
+      promptTracking: user.settings_show_prompt_tracking,
+    })
+  );
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -174,6 +187,11 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
       };
       
       setFormData(newFormData);
+      setWidgetVisibility(normalizeDashboardWidgetVisibility(user.dashboard_widget_visibility, {
+        landingPages: user.settings_show_landingpages,
+        googleAds: user.settings_show_google_ads,
+        promptTracking: user.settings_show_prompt_tracking,
+      }));
       setProjectLocations(normalizeLocations(user.project_locations));
       setPassword('');
       setMessage('');
@@ -246,9 +264,10 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         project_start_date: formData.project_start_date || null,
         project_duration_months: parseInt(formData.project_duration_months, 10) || 6,
         project_timeline_active: formData.project_timeline_active,
-        settings_show_landingpages: formData.settings_show_landingpages,
-        settings_show_google_ads: formData.settings_show_google_ads,
-        settings_show_prompt_tracking: formData.settings_show_prompt_tracking,
+        settings_show_landingpages: widgetVisibility.landingPages,
+        settings_show_google_ads: widgetVisibility.googleAds,
+        settings_show_prompt_tracking: widgetVisibility.promptTracking,
+        dashboard_widget_visibility: widgetVisibility,
         project_locations: projectLocations
           .map((location) => ({
             ...location,
@@ -316,6 +335,11 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         maintenance_mode: Boolean(updatedUser.maintenance_mode), // NEU
       });
       setProjectLocations(normalizeLocations(updatedUser.project_locations));
+      setWidgetVisibility(normalizeDashboardWidgetVisibility(updatedUser.dashboard_widget_visibility, {
+        landingPages: updatedUser.settings_show_landingpages,
+        googleAds: updatedUser.settings_show_google_ads,
+        promptTracking: updatedUser.settings_show_prompt_tracking,
+      }));
       setPassword('');
       setMessage('');
       setSuccessMessage('✅ Benutzer erfolgreich aktualisiert!');
@@ -626,62 +650,85 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
             </fieldset>
 
             {/* --- Dashboard-Sichtbarkeit --- */}
-            <fieldset className="border-t pt-4 mt-4">
-              <legend className="text-sm font-medium text-gray-700 mb-2">Dashboard-Sichtbarkeit</legend>
-              <p className="mb-3 text-xs text-gray-400">
-                Diese Einstellungen steuern ausschließlich die Kundenansicht. Admins sehen verfügbare Widgets weiterhin.
-              </p>
-
-              <div className="space-y-3">
-                {([
-                  {
-                    name: 'settings_show_landingpages',
-                    label: 'Top Landingpages',
-                    description: 'Landingpage-Auswertung im Kunden-Dashboard anzeigen.',
-                  },
-                  {
-                    name: 'settings_show_google_ads',
-                    label: 'Google Ads Performance',
-                    description: 'Google-Ads-Auswertung im Kunden-Dashboard anzeigen, wenn Daten vorhanden sind.',
-                  },
-                  {
-                    name: 'settings_show_prompt_tracking',
-                    label: 'Prompt Tracking',
-                    description: 'Prompt Tracking im Kunden-Dashboard anzeigen, wenn GSC-Daten vorhanden sind.',
-                  },
-                ] as const).map((setting) => {
-                  const enabled = formData[setting.name];
-                  return (
-                    <label
-                      key={setting.name}
-                      htmlFor={setting.name}
-                      className="flex cursor-pointer items-start justify-between gap-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5"
+            {user.role === 'BENUTZER' && (
+              <fieldset className="border-t pt-4 mt-4">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <legend className="text-sm font-medium text-gray-700">Dashboard-Sichtbarkeit</legend>
+                    <p className="mt-1 text-xs text-gray-400">
+                      Steuert die Kundenansicht. Admins sehen verfügbare Widgets weiterhin.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setWidgetVisibility(normalizeDashboardWidgetVisibility(
+                        Object.fromEntries(DASHBOARD_WIDGET_DEFINITIONS.map(({ key }) => [key, true]))
+                      ))}
+                      disabled={isSubmitting}
+                      className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                     >
-                      <span>
-                        <span className="block text-sm font-medium text-gray-700">{setting.label}</span>
-                        <span className="mt-0.5 block text-xs text-gray-400">{setting.description}</span>
-                      </span>
-                      <span className="flex shrink-0 items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id={setting.name}
-                          name={setting.name}
-                          checked={enabled}
-                          onChange={handleInputChange}
-                          disabled={isSubmitting}
-                          className="sr-only"
-                        />
-                        {enabled ? (
-                          <ToggleOn size={26} className="text-green-500" />
-                        ) : (
-                          <ToggleOff size={26} className="text-gray-400" />
-                        )}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
+                      Alle anzeigen
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWidgetVisibility(normalizeDashboardWidgetVisibility(
+                        Object.fromEntries(DASHBOARD_WIDGET_DEFINITIONS.map(({ key }) => [key, false]))
+                      ))}
+                      disabled={isSubmitting}
+                      className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Alle ausblenden
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  {Array.from(new Set(DASHBOARD_WIDGET_DEFINITIONS.map(({ group }) => group))).map((group) => (
+                    <section key={group}>
+                      <h4 className="mb-2 text-xs font-semibold uppercase text-gray-500">{group}</h4>
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {DASHBOARD_WIDGET_DEFINITIONS
+                          .filter((widget) => widget.group === group)
+                          .map((widget) => {
+                            const enabled = widgetVisibility[widget.key];
+                            return (
+                              <label
+                                key={widget.key}
+                                htmlFor={`widget-${widget.key}`}
+                                className="flex min-h-[72px] cursor-pointer items-start justify-between gap-3 rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5"
+                              >
+                                <span>
+                                  <span className="block text-sm font-medium text-gray-700">{widget.label}</span>
+                                  <span className="mt-0.5 block text-xs leading-4 text-gray-400">{widget.description}</span>
+                                </span>
+                                <span className="flex shrink-0 items-center">
+                                  <input
+                                    type="checkbox"
+                                    id={`widget-${widget.key}`}
+                                    checked={enabled}
+                                    onChange={() => setWidgetVisibility((current) => ({
+                                      ...current,
+                                      [widget.key]: !current[widget.key],
+                                    }))}
+                                    disabled={isSubmitting}
+                                    className="sr-only"
+                                  />
+                                  {enabled ? (
+                                    <ToggleOn size={26} className="text-green-500" />
+                                  ) : (
+                                    <ToggleOff size={26} className="text-gray-400" />
+                                  )}
+                                </span>
+                              </label>
+                            );
+                          })}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              </fieldset>
+            )}
 
             {/* --- Standorte / Local SEO --- */}
             <fieldset className="border-t pt-4 mt-4">

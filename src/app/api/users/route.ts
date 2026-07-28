@@ -4,6 +4,7 @@ import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
 import { User } from '@/types';
 import { auth } from '@/lib/auth';
+import { normalizeDashboardWidgetVisibility } from '@/lib/dashboard-widget-visibility';
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -240,7 +241,8 @@ export async function POST(req: NextRequest) {
       ALTER TABLE users
       ADD COLUMN IF NOT EXISTS settings_show_landingpages BOOLEAN DEFAULT TRUE,
       ADD COLUMN IF NOT EXISTS settings_show_google_ads BOOLEAN DEFAULT FALSE,
-      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE
+      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS dashboard_widget_visibility JSONB DEFAULT '{}'::jsonb
     `;
     const body = await req.json();
     const createdByAdminId = session.user.id;
@@ -249,7 +251,7 @@ export async function POST(req: NextRequest) {
       semrush_project_id, semrush_tracking_id, semrush_tracking_id_02, favicon_url,
       project_start_date, project_duration_months, project_timeline_active,
       settings_show_landingpages, settings_show_google_ads,
-      settings_show_prompt_tracking
+      settings_show_prompt_tracking, dashboard_widget_visibility
     } = body;
 
     if (!email || !password || !role) {
@@ -292,6 +294,14 @@ export async function POST(req: NextRequest) {
     const promptTrackingVisible = typeof settings_show_prompt_tracking === 'boolean'
       ? settings_show_prompt_tracking
       : false;
+    const normalizedWidgetVisibility = normalizeDashboardWidgetVisibility(
+      dashboard_widget_visibility,
+      {
+        landingPages: landingPagesVisible,
+        googleAds: googleAdsVisible,
+        promptTracking: promptTrackingVisible,
+      }
+    );
 
     const { rows: newUsers } = await sql<User>`
       INSERT INTO users (
@@ -302,7 +312,7 @@ export async function POST(req: NextRequest) {
         favicon_url,
         project_start_date, project_duration_months, project_timeline_active,
         settings_show_landingpages, settings_show_google_ads,
-        settings_show_prompt_tracking,
+        settings_show_prompt_tracking, dashboard_widget_visibility,
         "createdByAdminId"
       )
       VALUES (
@@ -315,7 +325,7 @@ export async function POST(req: NextRequest) {
         ${favicon_url || null},
         ${startDate}, ${duration}, ${timelineActive},
         ${landingPagesVisible}, ${googleAdsVisible},
-        ${promptTrackingVisible},
+        ${promptTrackingVisible}, ${JSON.stringify(normalizedWidgetVisibility)}::jsonb,
         ${createdByAdminId}
       )
       RETURNING id, email, role, domain, mandant_id, ansprache, permissions, favicon_url`;

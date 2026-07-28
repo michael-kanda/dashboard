@@ -27,6 +27,11 @@ import GoogleAdsWidget from '@/components/GoogleAdsWidget';
 import LocalSeoMapWidget from '@/components/LocalSeoMapWidget';
 import IndexingStatusWidget from '@/components/IndexingStatusWidget';
 import type { ProjectIndexingStatus } from '@/lib/indexing-status';
+import {
+  normalizeDashboardWidgetVisibility,
+  type DashboardWidgetKey,
+  type DashboardWidgetVisibility,
+} from '@/lib/dashboard-widget-visibility';
 
 // PromptTrackingCard dynamisch nur Client-Side laden – verhindert
 // Hydration-Mismatches bei den Number-Formatierungen / shareTrend-Visuals.
@@ -171,6 +176,7 @@ export interface ProjectDashboardProps {
   showLandingPages?: boolean;
   showGoogleAds?: boolean;
   showPromptTracking?: boolean;
+  widgetVisibility?: Partial<DashboardWidgetVisibility> | null;
   dashboardInfoText?: string | null;
   dataMaxEnabled?: boolean;
   indexingStatus?: ProjectIndexingStatus;
@@ -225,6 +231,7 @@ export default function ProjectDashboard({
   showLandingPages = false,
   showGoogleAds = false,
   showPromptTracking = false,
+  widgetVisibility,
   dashboardInfoText = null,
   dataMaxEnabled = true,
   indexingStatus,
@@ -360,10 +367,27 @@ export default function ProjectDashboard({
   };
 
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
-  const shouldRenderChart = isAdmin || showLandingPages;
-  const hasSemrushConfig = !!semrushTrackingId || !!semrushTrackingId02;
+  const resolvedWidgetVisibility = useMemo(
+    () => normalizeDashboardWidgetVisibility(widgetVisibility, {
+      landingPages: showLandingPages,
+      googleAds: showGoogleAds,
+      promptTracking: showPromptTracking,
+    }),
+    [widgetVisibility, showLandingPages, showGoogleAds, showPromptTracking]
+  );
+  const canShowWidget = (key: DashboardWidgetKey) => isAdmin || resolvedWidgetVisibility[key];
+  const shouldRenderTopQueries = canShowWidget('topQueries');
+  const shouldRenderChart = canShowWidget('landingPages');
   const hasKampagne1Config = !!semrushTrackingId;
   const hasKampagne2Config = !!semrushTrackingId02;
+  const shouldRenderSemrushPrimary = hasKampagne1Config && canShowWidget('semrushPrimary');
+  const shouldRenderSemrushSecondary = hasKampagne2Config && canShowWidget('semrushSecondary');
+  const shouldRenderSemrush = shouldRenderSemrushPrimary || shouldRenderSemrushSecondary;
+  const visibleTrafficBreakdownCount = [
+    canShowWidget('channelTraffic'),
+    canShowWidget('countryTraffic'),
+    canShowWidget('deviceTraffic'),
+  ].filter(Boolean).length;
   const safeApiErrors = { ...((apiErrors as any) || {}) };
   if (isTransientGa4Message(safeApiErrors.ga4)) {
     delete safeApiErrors.ga4;
@@ -377,11 +401,13 @@ export default function ProjectDashboard({
     || (data.googleAdsData.rows?.length ?? 0) > 0
     || (data.googleAdsData.campaignRows?.length ?? 0) > 0
   );
-  const shouldRenderGoogleAds = hasGoogleAdsData && (isAdmin || showGoogleAds);
+  const shouldRenderGoogleAds = hasGoogleAdsData && canShowWidget('googleAds');
 
   // ✅ Prompt Tracking Prüfung (nur rendern wenn GSC-Daten vorhanden)
   const hasPromptTracking = !!data.promptTracking;
-  const shouldRenderPromptTracking = hasPromptTracking && (isAdmin || showPromptTracking);
+  const shouldRenderPromptTracking = hasPromptTracking
+    && canShowWidget('aiTraffic')
+    && canShowWidget('promptTracking');
 
   return (
     <div className="min-h-screen flex flex-col dashboard-gradient relative">
@@ -426,7 +452,7 @@ export default function ProjectDashboard({
         />
 
         <Trace at="ProjectTimelineWidget?" />
-        {projectId && projectTimelineActive && (
+        {projectId && projectTimelineActive && canShowWidget('projectTimeline') && (
           <div className="mb-6 print-timeline">
             <ProjectTimelineWidget projectId={projectId} />
           </div>
@@ -434,7 +460,7 @@ export default function ProjectDashboard({
 
         {/* AI WIDGET */}
         <Trace at="AiAnalysisWidget?" />
-        {projectId && (
+        {projectId && canShowWidget('aiAnalysis') && (
           <div id="section-ai-analyse" className="mt-8 scroll-mt-20 print:hidden">
             <AiAnalysisWidget
               projectId={projectId}
@@ -449,72 +475,80 @@ export default function ProjectDashboard({
 
         {/* KPI GRID */}
         <Trace at="TableauKpiGrid?" />
-        <div id="section-kpis" className="mt-8 scroll-mt-20 print-kpi-grid">
-          {extendedKpis && (
-            <TableauKpiGrid
-              kpis={extendedKpis}
-              isLoading={isLoading}
-              allChartData={data.charts as any}
-              apiErrors={safeApiErrors}
-              dateRange={dateRange}
-            />
-          )}
-        </div>
+        {canShowWidget('kpis') && (
+          <div id="section-kpis" className="mt-8 scroll-mt-20 print-kpi-grid">
+            {extendedKpis && (
+              <TableauKpiGrid
+                kpis={extendedKpis}
+                isLoading={isLoading}
+                allChartData={data.charts as any}
+                apiErrors={safeApiErrors}
+                dateRange={dateRange}
+              />
+            )}
+          </div>
+        )}
 
         <Trace at="KpiTrendChart" />
-        <div id="section-verlauf" className="mt-8 scroll-mt-20 print-trend-chart" ref={chartRef}>
-          <KpiTrendChart
-            activeKpi={activeKpi}
-            onKpiChange={(kpi) => setActiveKpi(kpi as ActiveKpi)}
-            allChartData={allChartData}
-            weatherData={data.weatherData}
-          />
-        </div>
+        {canShowWidget('trend') && (
+          <div id="section-verlauf" className="mt-8 scroll-mt-20 print-trend-chart" ref={chartRef}>
+            <KpiTrendChart
+              activeKpi={activeKpi}
+              onKpiChange={(kpi) => setActiveKpi(kpi as ActiveKpi)}
+              allChartData={allChartData}
+              weatherData={data.weatherData}
+            />
+          </div>
+        )}
 
-        {data.localSeo?.locations?.length ? (
+        {data.localSeo?.locations?.length && canShowWidget('localSeo') ? (
           <div id="section-local-seo" className="mt-8 scroll-mt-20 print:hidden">
             <LocalSeoMapWidget data={data.localSeo} projectId={projectId} userRole={userRole} />
           </div>
         ) : null}
 
         <Trace at="GoogleGenAiVisibilityCard?" />
-        <div id="section-google-genai" className="mt-8 scroll-mt-20 print:hidden">
-          <GoogleGenAiVisibilityCard data={data.googleGenAi} projectId={projectId} userRole={userRole} />
-        </div>
+        {canShowWidget('googleGenAi') && (
+          <div id="section-google-genai" className="mt-8 scroll-mt-20 print:hidden">
+            <GoogleGenAiVisibilityCard data={data.googleGenAi} projectId={projectId} userRole={userRole} />
+          </div>
+        )}
 
         {/* KI-Traffic Sektion mit Toggle für Detail-Ansicht */}
         <Trace at="AiTrafficCard" />
-        <div id="section-ki-traffic" className="grid grid-cols-1 gap-6 mt-8 scroll-mt-20 print-traffic-grid">
-          <div className="print-ai-card">
-            <AiTrafficCard
-              projectId={projectId}
-              totalSessions={data.aiTraffic?.totalSessions ?? 0}
-              totalUsers={data.aiTraffic?.totalUsers ?? 0}
-              percentage={data.kpis?.sessions?.value ? ((data.aiTraffic?.totalSessions ?? 0) / data.kpis.sessions.value * 100) : 0}
-              totalSessionsChange={data.aiTraffic?.totalSessionsChange}
-              totalUsersChange={data.aiTraffic?.totalUsersChange}
-              trend={(data.aiTraffic?.trend ?? []).map(item => ({
-                date: item.date,
-                value: (item as any).value ?? (item as any).sessions ?? 0
-              }))}
-              topAiSources={data.aiTraffic?.topAiSources ?? []}
-              className="h-full"
-              isLoading={isLoading}
-              dateRange={dateRange}
-              error={safeApiErrors?.ga4}
-              onDetailClick={projectId ? () => setShowAiTrafficDetail(!showAiTrafficDetail) : undefined}
-              onPromptTrackingClick={shouldRenderPromptTracking ? handlePromptTrackingClick : undefined}
-              detailOpen={showAiTrafficDetail}
-              promptTrackingOpen={showPromptTrackingDetail}
-              promptTracking={data.promptTracking}
-              promptTrackingEnabled={shouldRenderPromptTracking}
-            />
+        {canShowWidget('aiTraffic') && (
+          <div id="section-ki-traffic" className="grid grid-cols-1 gap-6 mt-8 scroll-mt-20 print-traffic-grid">
+            <div className="print-ai-card">
+              <AiTrafficCard
+                projectId={projectId}
+                totalSessions={data.aiTraffic?.totalSessions ?? 0}
+                totalUsers={data.aiTraffic?.totalUsers ?? 0}
+                percentage={data.kpis?.sessions?.value ? ((data.aiTraffic?.totalSessions ?? 0) / data.kpis.sessions.value * 100) : 0}
+                totalSessionsChange={data.aiTraffic?.totalSessionsChange}
+                totalUsersChange={data.aiTraffic?.totalUsersChange}
+                trend={(data.aiTraffic?.trend ?? []).map(item => ({
+                  date: item.date,
+                  value: (item as any).value ?? (item as any).sessions ?? 0
+                }))}
+                topAiSources={data.aiTraffic?.topAiSources ?? []}
+                className="h-full"
+                isLoading={isLoading}
+                dateRange={dateRange}
+                error={safeApiErrors?.ga4}
+                onDetailClick={projectId ? () => setShowAiTrafficDetail(!showAiTrafficDetail) : undefined}
+                onPromptTrackingClick={shouldRenderPromptTracking ? handlePromptTrackingClick : undefined}
+                detailOpen={showAiTrafficDetail}
+                promptTrackingOpen={showPromptTrackingDetail}
+                promptTracking={data.promptTracking}
+                promptTrackingEnabled={shouldRenderPromptTracking}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* KI-Traffic Detail-Ansicht (ausklappbar) */}
         <Trace at="AiTrafficDetailWidgetV2?" />
-        {showAiTrafficDetail && hasAiTraffic && projectId && (
+        {canShowWidget('aiTraffic') && showAiTrafficDetail && hasAiTraffic && projectId && (
           <div className="mt-8 animate-in slide-in-from-top-4 duration-300 print:hidden">
             <AiTrafficDetailWidgetV2
               projectId={projectId}
@@ -545,34 +579,38 @@ export default function ProjectDashboard({
             Kunden ausgeblendet sind und nicht-Admin, fällt TopQueries
             automatisch auf volle Breite zurück. */}
         <Trace at="TopQueries+Landingpages" />
-        <div className={`grid grid-cols-1 ${shouldRenderChart ? 'lg:grid-cols-2' : ''} gap-6 mt-8 lg:items-stretch`}>
-          <div id="section-top-queries" className="scroll-mt-20 print-queries-list lg:h-[816px]">
-            <TopQueriesList
-              queries={data.topQueries ?? []}
-              isLoading={isLoading}
-              className="h-full"
-              dateRange={dateRange}
-              error={safeApiErrors?.gsc}
-            />
-          </div>
-
-          {shouldRenderChart && (
-            <div id="section-landingpages" className="scroll-mt-20 transition-all duration-300 lg:h-[816px]">
-              <div className="print-landing-chart h-full">
-                 <LandingPageChart
-                   data={cleanLandingPages}
-                   isLoading={isLoading}
-                   title="Top Landingpages"
-                   dateRange={dateRange}
-                   queryData={data.landingPageQueries}
-                   projectId={projectId}
-                 />
+        {(shouldRenderTopQueries || shouldRenderChart) && (
+          <div className={`grid grid-cols-1 ${shouldRenderTopQueries && shouldRenderChart ? 'lg:grid-cols-2' : ''} gap-6 mt-8 lg:items-stretch`}>
+            {shouldRenderTopQueries && (
+              <div id="section-top-queries" className="scroll-mt-20 print-queries-list lg:h-[816px]">
+                <TopQueriesList
+                  queries={data.topQueries ?? []}
+                  isLoading={isLoading}
+                  className="h-full"
+                  dateRange={dateRange}
+                  error={safeApiErrors?.gsc}
+                />
               </div>
-            </div>
-          )}
-        </div>
+            )}
 
-        {indexingStatus && projectId && (
+            {shouldRenderChart && (
+              <div id="section-landingpages" className="scroll-mt-20 transition-all duration-300 lg:h-[816px]">
+                <div className="print-landing-chart h-full">
+                  <LandingPageChart
+                    data={cleanLandingPages}
+                    isLoading={isLoading}
+                    title="Top Landingpages"
+                    dateRange={dateRange}
+                    queryData={data.landingPageQueries}
+                    projectId={projectId}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {indexingStatus && projectId && canShowWidget('indexingStatus') && (
           <div id="section-indexing-status" className="mt-8 scroll-mt-20 print:hidden">
             <IndexingStatusWidget
               initialData={indexingStatus}
@@ -584,29 +622,42 @@ export default function ProjectDashboard({
 
         {/* PIE CHARTS */}
         <Trace at="TableauPieCharts" />
-        <div id="section-zugriffe" className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8 scroll-mt-20 print-pie-grid">
-          <TableauPieChart
-            data={data.channelData}
-            title="Zugriffe nach Channel"
-            isLoading={isLoading}
-            error={safeApiErrors?.ga4}
-            dateRange={dateRange}
-          />
-          <TableauPieChart
-            data={data.countryData}
-            title="Zugriffe nach Land"
-            isLoading={isLoading}
-            error={safeApiErrors?.ga4}
-            dateRange={dateRange}
-          />
-          <TableauPieChart
-            data={data.deviceData}
-            title="Zugriffe nach Endgerät"
-            isLoading={isLoading}
-            error={safeApiErrors?.ga4}
-            dateRange={dateRange}
-          />
-        </div>
+        {visibleTrafficBreakdownCount > 0 && (
+          <div
+            id="section-zugriffe"
+            className={`grid grid-cols-1 gap-6 mt-8 scroll-mt-20 print-pie-grid ${
+              visibleTrafficBreakdownCount === 2 ? 'lg:grid-cols-2' : visibleTrafficBreakdownCount === 3 ? 'lg:grid-cols-3' : ''
+            }`}
+          >
+            {canShowWidget('channelTraffic') && (
+              <TableauPieChart
+                data={data.channelData}
+                title="Zugriffe nach Channel"
+                isLoading={isLoading}
+                error={safeApiErrors?.ga4}
+                dateRange={dateRange}
+              />
+            )}
+            {canShowWidget('countryTraffic') && (
+              <TableauPieChart
+                data={data.countryData}
+                title="Zugriffe nach Land"
+                isLoading={isLoading}
+                error={safeApiErrors?.ga4}
+                dateRange={dateRange}
+              />
+            )}
+            {canShowWidget('deviceTraffic') && (
+              <TableauPieChart
+                data={data.deviceData}
+                title="Zugriffe nach Endgerät"
+                isLoading={isLoading}
+                error={safeApiErrors?.ga4}
+                dateRange={dateRange}
+              />
+            )}
+          </div>
+        )}
 
         {/* GOOGLE ADS SEKTION */}
         <Trace at="GoogleAdsWidget?" />
@@ -621,90 +672,97 @@ export default function ProjectDashboard({
         )}
 
         <Trace at="Semrush?" />
-        {hasSemrushConfig && (
-          <div id="section-semrush" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 scroll-mt-20 print-semrush-grid">
-            {hasKampagne1Config && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords projectId={projectId} /></div>}
-            {hasKampagne2Config && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords02 projectId={projectId} /></div>}
+        {shouldRenderSemrush && (
+          <div
+            id="section-semrush"
+            className={`grid grid-cols-1 gap-6 mt-8 scroll-mt-20 print-semrush-grid ${
+              shouldRenderSemrushPrimary && shouldRenderSemrushSecondary ? 'lg:grid-cols-2' : ''
+            }`}
+          >
+            {shouldRenderSemrushPrimary && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords projectId={projectId} /></div>}
+            {shouldRenderSemrushSecondary && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords02 projectId={projectId} /></div>}
           </div>
         )}
 
-        <div id="section-data-info" className="mt-8 scroll-mt-20 print:hidden">
-          <div className="dashboard-widget-surface rounded-lg p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div>
-                <h3 className="text-sm font-semibold text-heading">Hinweis zur Datenbasis</h3>
-                <p className="text-xs text-muted mt-0.5">Methodik, Datenschutz und Messlogik.</p>
+        {canShowWidget('dataInfo') && (
+          <div id="section-data-info" className="mt-8 scroll-mt-20 print:hidden">
+            <div className="dashboard-widget-surface rounded-lg p-4 sm:p-5">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-heading">Hinweis zur Datenbasis</h3>
+                  <p className="text-xs text-muted mt-0.5">Methodik, Datenschutz und Messlogik.</p>
+                </div>
+                {isAdmin && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isEditingInfo ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleSaveInfoText}
+                          disabled={isSavingInfo}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                        >
+                          <Check2 size={14} />
+                          {isSavingInfo ? 'Speichert...' : 'Speichern'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDraftInfoText(infoText);
+                            setIsEditingInfo(false);
+                            setInfoSaveError('');
+                          }}
+                          disabled={isSavingInfo}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-body transition-colors hover:bg-surface-secondary disabled:opacity-50"
+                        >
+                          <X size={14} />
+                          Abbrechen
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingInfo(true)}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-body transition-colors hover:bg-surface-secondary"
+                      >
+                        <PencilSquare size={14} />
+                        Bearbeiten
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
-              {isAdmin && (
-                <div className="flex items-center gap-2 shrink-0">
-                  {isEditingInfo ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleSaveInfoText}
-                        disabled={isSavingInfo}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
-                      >
-                        <Check2 size={14} />
-                        {isSavingInfo ? 'Speichert...' : 'Speichern'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDraftInfoText(infoText);
-                          setIsEditingInfo(false);
-                          setInfoSaveError('');
-                        }}
-                        disabled={isSavingInfo}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-body transition-colors hover:bg-surface-secondary disabled:opacity-50"
-                      >
-                        <X size={14} />
-                        Abbrechen
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingInfo(true)}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-body transition-colors hover:bg-surface-secondary"
-                    >
-                      <PencilSquare size={14} />
-                      Bearbeiten
-                    </button>
-                  )}
+
+              {isEditingInfo ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={draftInfoText}
+                    onChange={(event) => setDraftInfoText(event.target.value)}
+                    rows={8}
+                    maxLength={5000}
+                    className="w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-[11.2px] leading-relaxed text-body outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                  <div className="flex items-center justify-between text-[11px] text-muted">
+                    <span>Leer speichern setzt wieder den Standardtext.</span>
+                    <span>{draftInfoText.length}/5000</span>
+                  </div>
+                  {infoSaveError && <p className="text-xs text-red-500">{infoSaveError}</p>}
+                </div>
+              ) : (
+                <div className="whitespace-pre-line text-[9.6px] sm:text-[11.2px] leading-relaxed text-muted">
+                  {infoText}
                 </div>
               )}
             </div>
-
-            {isEditingInfo ? (
-              <div className="space-y-2">
-                <textarea
-                  value={draftInfoText}
-                  onChange={(event) => setDraftInfoText(event.target.value)}
-                  rows={8}
-                  maxLength={5000}
-                  className="w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-[11.2px] leading-relaxed text-body outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
-                />
-                <div className="flex items-center justify-between text-[11px] text-muted">
-                  <span>Leer speichern setzt wieder den Standardtext.</span>
-                  <span>{draftInfoText.length}/5000</span>
-                </div>
-                {infoSaveError && <p className="text-xs text-red-500">{infoSaveError}</p>}
-              </div>
-            ) : (
-              <div className="whitespace-pre-line text-[9.6px] sm:text-[11.2px] leading-relaxed text-muted">
-                {infoText}
-              </div>
-            )}
           </div>
-        </div>
+        )}
 
         <Trace at="ENDE-MainContent" />
       </div>
 
       {/* DataMax Chat - Floating Button unten rechts (Conditional) */}
       <Trace at="DataMaxChat?" />
-      {dataMaxEnabled && (
+      {dataMaxEnabled && canShowWidget('dataMaxChat') && (
         <DataMaxChat projectId={projectId} dateRange={dateRange} ansprache={userAnsprache} />
       )}
 

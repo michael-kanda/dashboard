@@ -4,6 +4,7 @@ import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
 import { auth } from '@/lib/auth'; 
 import { User } from '@/types';
+import { normalizeDashboardWidgetVisibility } from '@/lib/dashboard-widget-visibility';
 export const revalidate = 0;
 
 type ProjectLocationPayload = {
@@ -99,7 +100,8 @@ export async function GET(
       ALTER TABLE users
       ADD COLUMN IF NOT EXISTS settings_show_landingpages BOOLEAN DEFAULT TRUE,
       ADD COLUMN IF NOT EXISTS settings_show_google_ads BOOLEAN DEFAULT FALSE,
-      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE
+      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS dashboard_widget_visibility JSONB DEFAULT '{}'::jsonb
     `;
     const session = await auth(); 
     
@@ -148,6 +150,7 @@ export async function GET(
         settings_show_landingpages::boolean as settings_show_landingpages,
         settings_show_google_ads::boolean as settings_show_google_ads,
         settings_show_prompt_tracking::boolean as settings_show_prompt_tracking,
+        COALESCE(dashboard_widget_visibility, '{}'::jsonb) as dashboard_widget_visibility,
         COALESCE(project_locations, '[]'::jsonb) as project_locations
       FROM users
       WHERE id = ${targetUserId}::uuid;
@@ -189,7 +192,8 @@ export async function PUT(
       ALTER TABLE users
       ADD COLUMN IF NOT EXISTS settings_show_landingpages BOOLEAN DEFAULT TRUE,
       ADD COLUMN IF NOT EXISTS settings_show_google_ads BOOLEAN DEFAULT FALSE,
-      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE
+      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS dashboard_widget_visibility JSONB DEFAULT '{}'::jsonb
     `;
     const session = await auth(); 
     
@@ -234,6 +238,7 @@ export async function PUT(
         settings_show_landingpages,
         settings_show_google_ads,
         settings_show_prompt_tracking,
+        dashboard_widget_visibility,
         project_locations
     } = body;
 
@@ -247,7 +252,8 @@ export async function PUT(
         mandant_id,
         settings_show_landingpages,
         settings_show_google_ads,
-        settings_show_prompt_tracking
+        settings_show_prompt_tracking,
+        dashboard_widget_visibility
       FROM users
       WHERE id = ${targetUserId}::uuid
     `;
@@ -322,6 +328,14 @@ export async function PUT(
     const promptTrackingVisible = typeof settings_show_prompt_tracking === 'boolean'
       ? settings_show_prompt_tracking
       : targetUser.settings_show_prompt_tracking === true;
+    const normalizedWidgetVisibility = normalizeDashboardWidgetVisibility(
+      dashboard_widget_visibility ?? targetUser.dashboard_widget_visibility,
+      {
+        landingPages: landingPagesVisible,
+        googleAds: googleAdsVisible,
+        promptTracking: promptTrackingVisible,
+      }
+    );
     const normalizedProjectLocations = normalizeProjectLocations(project_locations);
     const normalizedGoogleAdsSheetId = extractGoogleSpreadsheetId(google_ads_sheet_id);
 
@@ -350,6 +364,7 @@ export async function PUT(
             settings_show_landingpages = ${landingPagesVisible},
             settings_show_google_ads = ${googleAdsVisible},
             settings_show_prompt_tracking = ${promptTrackingVisible},
+            dashboard_widget_visibility = ${JSON.stringify(normalizedWidgetVisibility)}::jsonb,
             project_locations = ${JSON.stringify(normalizedProjectLocations)}::jsonb,
             password = ${await bcrypt.hash(password, 10)}
           WHERE id = ${targetUserId}::uuid
@@ -362,6 +377,7 @@ export async function PUT(
             project_start_date, project_duration_months, project_timeline_active,
             maintenance_mode, brand_keywords,
             settings_show_landingpages, settings_show_google_ads, settings_show_prompt_tracking,
+            dashboard_widget_visibility,
             COALESCE(project_locations, '[]'::jsonb) as project_locations;
         `
       : // Query OHNE Passwort
@@ -388,6 +404,7 @@ export async function PUT(
             settings_show_landingpages = ${landingPagesVisible},
             settings_show_google_ads = ${googleAdsVisible},
             settings_show_prompt_tracking = ${promptTrackingVisible},
+            dashboard_widget_visibility = ${JSON.stringify(normalizedWidgetVisibility)}::jsonb,
             project_locations = ${JSON.stringify(normalizedProjectLocations)}::jsonb
           WHERE id = ${targetUserId}::uuid
           RETURNING
@@ -399,6 +416,7 @@ export async function PUT(
             project_start_date, project_duration_months, project_timeline_active,
             maintenance_mode, brand_keywords,
             settings_show_landingpages, settings_show_google_ads, settings_show_prompt_tracking,
+            dashboard_widget_visibility,
             COALESCE(project_locations, '[]'::jsonb) as project_locations;
         `;
 

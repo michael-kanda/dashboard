@@ -35,7 +35,8 @@ async function getUserData(id: string): Promise<UserWithAssignments | null> {
       ALTER TABLE users
       ADD COLUMN IF NOT EXISTS settings_show_landingpages BOOLEAN DEFAULT TRUE,
       ADD COLUMN IF NOT EXISTS settings_show_google_ads BOOLEAN DEFAULT FALSE,
-      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE
+      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS dashboard_widget_visibility JSONB DEFAULT '{}'::jsonb
     `;
     // 1. Benutzerdaten laden
     const { rows: users } = await sql`
@@ -61,6 +62,7 @@ async function getUserData(id: string): Promise<UserWithAssignments | null> {
         settings_show_landingpages::boolean as settings_show_landingpages,
         settings_show_google_ads::boolean as settings_show_google_ads,
         settings_show_prompt_tracking::boolean as settings_show_prompt_tracking,
+        COALESCE(dashboard_widget_visibility, '{}'::jsonb) as dashboard_widget_visibility,
         brand_keywords,
         COALESCE(project_locations, '[]'::jsonb) as project_locations
       FROM users
