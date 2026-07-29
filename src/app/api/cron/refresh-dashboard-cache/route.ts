@@ -1,105 +1,115 @@
-// src/app/api/cron/refresh-dashboard-cache/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
-import type { User } from '@/lib/schemas'; 
+import {
+  ensureDataSyncStateSchema,
+  markDataSyncFinished,
+  markDataSyncStarted,
+} from '@/lib/data-sync-state';
+import type { User } from '@/lib/schemas';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Vercel Pro Limit
+export const maxDuration = 300;
 
-const MAX_EXECUTION_TIME_MS = 50000; // 50s Safety-Buffer
+// Ein kalter GA4-Projektlauf darf bis zu 120 Sekunden benötigen. Deshalb
+// startet der Cron nach 150 Sekunden kein weiteres Projekt mehr und lässt der
+// aktuell laufenden Verarbeitung genügend Abstand zum 300-Sekunden-Limit.
+const MAX_EXECUTION_TIME_MS = 150_000;
 const CACHE_REFRESH_THRESHOLD_HOURS = 20;
+const MAX_USERS_PER_RUN = 50;
 
-// ✅ GET statt POST - Vercel Cron sendet GET-Requests!
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
-  
-  // Auth Check - Vercel sendet Authorization Header automatisch
-  const authHeader = request.headers.get('Authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    console.warn('[CRON Cache] ❌ Unauthorized - Invalid or missing CRON_SECRET');
+  if (request.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('[CRON Cache] ✅ Authentifizierung erfolgreich, starte Job...');
-
   try {
-    // User mit altem/fehlendem Cache laden
+    await ensureDataSyncStateSchema();
+    try {
+      await sql`
+        DELETE FROM ga4_ai_traffic_cache
+        WHERE created_at < NOW() - INTERVAL '14 days'
+      `;
+    } catch (cleanupError) {
+      console.warn(
+        '[CRON Cache] Alte GA4-Cachezeilen konnten nicht bereinigt werden:',
+        cleanupError instanceof Error ? cleanupError.message : cleanupError,
+      );
+    }
+
     const { rows } = await sql`
-      SELECT DISTINCT u.* 
+      SELECT u.*
       FROM users u
-      LEFT JOIN google_data_cache c ON u.id = c.user_id AND c.date_range = '30d'
-      WHERE (u.gsc_site_url IS NOT NULL OR u.ga4_property_id IS NOT NULL)
-        AND u.role != 'SUPERADMIN'
+      LEFT JOIN google_data_cache cache
+        ON cache.user_id = u.id AND cache.date_range = '30d'
+      LEFT JOIN project_data_sync_state state
+        ON state.user_id = u.id AND state.source = 'dashboard-30d'
+      WHERE u.role = 'BENUTZER'
+        AND (u.gsc_site_url IS NOT NULL OR u.ga4_property_id IS NOT NULL)
         AND (
-          c.last_fetched IS NULL 
-          OR c.last_fetched < NOW() - INTERVAL '20 hours'
+          cache.last_fetched IS NULL
+          OR cache.last_fetched < NOW() - INTERVAL '20 hours'
         )
-      ORDER BY COALESCE(c.last_fetched, '1970-01-01') ASC
-      LIMIT 50;
+        AND (state.next_sync_at IS NULL OR state.next_sync_at <= NOW())
+      ORDER BY
+        COALESCE(state.last_attempt_at, '1970-01-01'::timestamptz) ASC,
+        COALESCE(cache.last_fetched, '1970-01-01'::timestamptz) ASC,
+        u.id ASC
+      LIMIT ${MAX_USERS_PER_RUN}
     `;
-    
     const users = rows as unknown as User[];
 
-    console.log(`[CRON Cache] Gefunden: ${users.length} User mit altem/fehlendem Cache (älter als ${CACHE_REFRESH_THRESHOLD_HOURS}h)`);
-
-    if (users.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: 'Alle Caches sind aktuell',
-        processed: 0,
-        total: 0,
-        refreshes: 0
-      });
-    }
-
-    let processedCount = 0;
-    let successfulRefreshes = 0;
-    let failedRefreshes = 0;
+    let processed = 0;
+    let successful = 0;
+    let failed = 0;
     let timeoutReached = false;
+    const errors: string[] = [];
 
-    // Sequenzielle Verarbeitung (stabiler bei Vercel)
     for (const user of users) {
-      // Zeit-Check vor jedem User
       if (Date.now() - startTime > MAX_EXECUTION_TIME_MS) {
-        console.warn('[CRON Cache] ⚠️ Zeitlimit erreicht. Stoppe.');
         timeoutReached = true;
-        break; 
+        break;
       }
 
+      await markDataSyncStarted(user.id, 'dashboard-30d');
       try {
-        // forceRefresh = true erzwingt API-Call trotz Cache
-        await getOrFetchGoogleData(user, '30d', true);
-        successfulRefreshes++;
-        console.log(`[CRON Cache] ✅ User ${user.email} refreshed`);
-      } catch (e: any) {
-        failedRefreshes++;
-        console.error(`[CRON Cache] ❌ User ${user.email}: ${e.message}`);
+        const dashboardData = await getOrFetchGoogleData(user, '30d', true);
+        if (!dashboardData) throw new Error('Keine Dashboard-Daten erzeugt');
+        const criticalError = dashboardData.apiErrors?.ga4 || dashboardData.apiErrors?.gsc;
+        if (criticalError) throw new Error(String(criticalError));
+
+        await markDataSyncFinished(user.id, 'dashboard-30d', { success: true });
+        successful++;
+        console.log(`[CRON Cache] ${user.email}: aktualisiert`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        await markDataSyncFinished(user.id, 'dashboard-30d', {
+          success: false,
+          error: message,
+        });
+        failed++;
+        errors.push(`${user.email}: ${message}`);
+        console.error(`[CRON Cache] ${user.email}:`, message);
       }
-
-      processedCount++;
+      processed++;
     }
-
-    const duration = (Date.now() - startTime) / 1000;
-
-    console.log(`[CRON Cache] 🏁 Fertig in ${duration.toFixed(1)}s - Erfolg: ${successfulRefreshes}, Fehler: ${failedRefreshes}`);
 
     return NextResponse.json({
       success: true,
-      processed: processedCount,
-      total: users.length,
-      refreshes: successfulRefreshes,
-      failed: failedRefreshes,
+      processed,
+      queuedUsers: users.length,
+      refreshes: successful,
+      failed,
       didTimeout: timeoutReached,
-      durationSeconds: duration,
-      cacheThresholdHours: CACHE_REFRESH_THRESHOLD_HOURS
+      incomplete: processed < users.length,
+      durationSeconds: (Date.now() - startTime) / 1000,
+      cacheThresholdHours: CACHE_REFRESH_THRESHOLD_HOURS,
+      errors: errors.length > 0 ? errors : undefined,
     });
-
-  } catch (error: any) {
-    console.error('[CRON Cache] Fatal:', error);
-    return NextResponse.json({ 
-      success: false,
-      message: error.message 
-    }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[CRON Cache] Fatal:', message);
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

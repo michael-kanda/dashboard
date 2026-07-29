@@ -232,6 +232,22 @@ export async function createTables() {
     console.log('Tabelle "google_data_cache" erfolgreich geprüft/erstellt.');
 
     await sql`
+      CREATE TABLE IF NOT EXISTS project_data_sync_state (
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        source VARCHAR(40) NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'idle',
+        last_attempt_at TIMESTAMPTZ NULL,
+        last_success_at TIMESTAMPTZ NULL,
+        next_sync_at TIMESTAMPTZ NULL,
+        consecutive_failures INTEGER NOT NULL DEFAULT 0,
+        last_error TEXT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (user_id, source)
+      );
+    `;
+    console.log('Tabelle "project_data_sync_state" erfolgreich geprüft/erstellt.');
+
+    await sql`
       CREATE TABLE IF NOT EXISTS prompt_cluster_history (
         id SERIAL PRIMARY KEY,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -270,6 +286,7 @@ export async function createTables() {
     await sql`CREATE INDEX IF NOT EXISTS idx_landingpages_user_id ON landingpages(user_id);`;
     await sql`CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);`;
     await sql`CREATE INDEX IF NOT EXISTS idx_google_data_cache_user_id ON google_data_cache(user_id);`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_project_data_sync_due ON project_data_sync_state(source, next_sync_at, last_attempt_at);`;
     await sql`CREATE INDEX IF NOT EXISTS idx_prompt_cluster_history_user_created ON prompt_cluster_history(user_id, created_at DESC);`;
     await sql`CREATE INDEX IF NOT EXISTS idx_prompt_cluster_history_hash ON prompt_cluster_history(user_id, queries_hash, created_at DESC);`;
     await sql`CREATE INDEX IF NOT EXISTS idx_indexing_urls_project_status ON project_indexing_urls(user_id, status);`;

@@ -1,298 +1,284 @@
-// src/app/api/cron/refresh-all-gsc/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { sql, type VercelPoolClient } from '@vercel/postgres';
 import { getGscDataForPagesWithComparison, getSearchConsoleData } from '@/lib/google-api';
+import {
+  ensureDataSyncStateSchema,
+  markDataSyncFinished,
+  markDataSyncStarted,
+} from '@/lib/data-sync-state';
 import type { User } from '@/types';
 
-// Konfiguration
-const BATCH_SIZE = 5;
-const MAX_EXECUTION_TIME_MS = 50 * 1000; // 50s Safety-Buffer
-// Wie viele Tage Tagesdaten der Cron pro Lauf holt. 90 Tage ergibt ein
-// rollendes Fenster: ältere Tage bleiben in der Tabelle (durch UPSERT
-// werden sie nicht gelöscht), neue Tage kommen jede Nacht dazu.
-const GSC_DAILY_HISTORY_DAYS = 90;
+const BATCH_SIZE = 3;
+const MAX_EXECUTION_TIME_MS = 240_000;
+const GSC_INITIAL_HISTORY_DAYS = 90;
+const GSC_INCREMENTAL_DAYS = 7;
+const MAX_USERS_PER_RUN = 50;
 
-// === Hilfsfunktionen ===
+type GscUser = Pick<User, 'id' | 'email' | 'gsc_site_url'>;
 
 function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
-function calculateDateRanges() {
+function calculatePageDateRanges() {
   const today = new Date();
   const endDateCurrent = new Date(today);
   endDateCurrent.setDate(endDateCurrent.getDate() - 2);
-  
+
   const startDateCurrent = new Date(endDateCurrent);
-  const daysBack = 29; 
-  startDateCurrent.setDate(startDateCurrent.getDate() - daysBack);
-  
+  startDateCurrent.setDate(startDateCurrent.getDate() - 29);
+
   const endDatePrevious = new Date(startDateCurrent);
   endDatePrevious.setDate(endDatePrevious.getDate() - 1);
   const startDatePrevious = new Date(endDatePrevious);
-  startDatePrevious.setDate(startDatePrevious.getDate() - daysBack);
-  
+  startDatePrevious.setDate(startDatePrevious.getDate() - 29);
+
   return {
-    currentRange: { startDate: formatDate(startDateCurrent), endDate: formatDate(endDateCurrent) },
-    previousRange: { startDate: formatDate(startDatePrevious), endDate: formatDate(endDatePrevious) },
+    currentRange: {
+      startDate: formatDate(startDateCurrent),
+      endDate: formatDate(endDateCurrent),
+    },
+    previousRange: {
+      startDate: formatDate(startDatePrevious),
+      endDate: formatDate(endDatePrevious),
+    },
   };
 }
 
-// Hilfsfunktion für sichere Rundung (null-safe)
 function safeRound(value: number | null | undefined): number {
-  if (value === null || value === undefined || isNaN(value)) {
-    return 0;
-  }
-  return Math.round(value);
+  return value === null || value === undefined || Number.isNaN(value)
+    ? 0
+    : Math.round(value);
 }
 
-// Für Position mit Rundung
-function roundPosition(value: number | null | undefined): number {
-  if (value === null || value === undefined || isNaN(value)) {
-    return 0;
-  }
-  return Math.round(value);
+async function updateLandingPages(
+  client: VercelPoolClient,
+  user: GscUser,
+  ranges: ReturnType<typeof calculatePageDateRanges>,
+): Promise<number> {
+  const { rows: landingPages } = await client.query<{ id: number; url: string }>(
+    'SELECT id, url FROM landingpages WHERE user_id::text = $1',
+    [user.id],
+  );
+  if (landingPages.length === 0) return 0;
+
+  const metrics = await getGscDataForPagesWithComparison(
+    user.gsc_site_url!,
+    landingPages.map((page) => page.url),
+    ranges.currentRange,
+    ranges.previousRange,
+  );
+  const pageIdByUrl = new Map(landingPages.map((page) => [page.url, page.id]));
+  const updates = Array.from(metrics.entries())
+    .map(([url, data]) => {
+      const id = pageIdByUrl.get(url);
+      if (!id) return null;
+      return {
+        id,
+        clicks: safeRound(data.clicks),
+        clicksChange: safeRound(data.clicks_change),
+        impressions: safeRound(data.impressions),
+        impressionsChange: safeRound(data.impressions_change),
+        position: safeRound(data.position),
+        positionChange: safeRound(data.position_change),
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  if (updates.length === 0) return 0;
+
+  await client.query(
+    `UPDATE landingpages AS lp
+     SET
+       gsc_klicks = data.clicks,
+       gsc_klicks_change = data.clicks_change,
+       gsc_impressionen = data.impressions,
+       gsc_impressionen_change = data.impressions_change,
+       gsc_position = data.position,
+       gsc_position_change = data.position_change,
+       gsc_last_updated = NOW(),
+       gsc_last_range = '30d'
+     FROM (
+       SELECT *
+       FROM UNNEST(
+         $1::int[], $2::int[], $3::int[], $4::int[],
+         $5::int[], $6::int[], $7::int[]
+       )
+       AS u(id, clicks, clicks_change, impressions, impressions_change, position, position_change)
+     ) AS data
+     WHERE lp.id = data.id`,
+    [
+      updates.map((item) => item.id),
+      updates.map((item) => item.clicks),
+      updates.map((item) => item.clicksChange),
+      updates.map((item) => item.impressions),
+      updates.map((item) => item.impressionsChange),
+      updates.map((item) => item.position),
+      updates.map((item) => item.positionChange),
+    ],
+  );
+
+  return updates.length;
 }
 
-// Verarbeitet EINEN einzelnen User
+async function updateDailyHistory(
+  client: VercelPoolClient,
+  siteUrl: string,
+): Promise<{ count: number; mode: 'initial' | 'incremental' }> {
+  const { rows } = await client.query<{ row_count: string }>(
+    'SELECT COUNT(*)::text AS row_count FROM gsc_daily_data WHERE site_url = $1',
+    [siteUrl],
+  );
+  const hasHistory = Number(rows[0]?.row_count ?? 0) >= 30;
+  const historyDays = hasHistory ? GSC_INCREMENTAL_DAYS : GSC_INITIAL_HISTORY_DAYS;
+  const mode = hasHistory ? 'incremental' : 'initial';
+
+  const end = new Date();
+  end.setDate(end.getDate() - 2);
+  const start = new Date(end);
+  start.setDate(start.getDate() - (historyDays - 1));
+
+  const daily = await getSearchConsoleData(siteUrl, formatDate(start), formatDate(end));
+  const byDate = new Map<number, { clicks: number; impressions: number }>();
+  for (const point of daily.clicks.daily) {
+    byDate.set(point.date, { clicks: point.value, impressions: 0 });
+  }
+  for (const point of daily.impressions.daily) {
+    const entry = byDate.get(point.date) ?? { clicks: 0, impressions: 0 };
+    entry.impressions = point.value;
+    byDate.set(point.date, entry);
+  }
+  if (byDate.size === 0) return { count: 0, mode };
+
+  const entries = Array.from(byDate.entries());
+  await client.query(
+    `INSERT INTO gsc_daily_data (site_url, date, clicks, impressions, updated_at)
+     SELECT $1, data.date::date, data.clicks, data.impressions, NOW()
+     FROM UNNEST($2::text[], $3::int[], $4::int[])
+       AS data(date, clicks, impressions)
+     ON CONFLICT (site_url, date)
+     DO UPDATE SET
+       clicks = EXCLUDED.clicks,
+       impressions = EXCLUDED.impressions,
+       updated_at = NOW()`,
+    [
+      siteUrl,
+      entries.map(([timestamp]) => formatDate(new Date(timestamp))),
+      entries.map(([, values]) => safeRound(values.clicks)),
+      entries.map(([, values]) => safeRound(values.impressions)),
+    ],
+  );
+
+  return { count: entries.length, mode };
+}
+
 async function processUser(
-  user: Pick<User, 'id' | 'email' | 'gsc_site_url'>, 
-  ranges: ReturnType<typeof calculateDateRanges>
+  user: GscUser,
+  ranges: ReturnType<typeof calculatePageDateRanges>,
 ) {
-  const logPrefix = `[User ${user.email}]`;
-  let updatedCount = 0;
+  const logPrefix = `[GSC ${user.email}]`;
+  let client: VercelPoolClient | null = null;
 
   try {
-    const client = await sql.connect();
-    
-    try {
-      // 1. Landingpages laden
-      const { rows: landingpageRows } = await client.query<{ id: number; url: string }>(
-        `SELECT id, url FROM landingpages WHERE user_id::text = $1;`,
-        [user.id]
-      );
-
-      if (landingpageRows.length === 0) {
-        client.release();
-        return { success: true, count: 0, msg: 'Keine Landingpages' };
-      }
-
-      const pageUrls = landingpageRows.map(lp => lp.url);
-      const pageIdMap = new Map(landingpageRows.map(lp => [lp.url, lp.id]));
-
-      // 2. GSC Daten holen
-      const gscDataMap = await getGscDataForPagesWithComparison(
-        user.gsc_site_url!,
-        pageUrls,
-        ranges.currentRange,
-        ranges.previousRange
-      );
-
-      // 3. Batch Update in Transaktion
-      await client.query('BEGIN');
-      
-      for (const [url, data] of gscDataMap.entries()) {
-        const landingpageId = pageIdMap.get(url);
-        if (landingpageId) {
-          await client.query(
-            `UPDATE landingpages
-             SET 
-               gsc_klicks = $1, gsc_klicks_change = $2,
-               gsc_impressionen = $3, gsc_impressionen_change = $4,
-               gsc_position = $5, gsc_position_change = $6,
-               gsc_last_updated = NOW(), gsc_last_range = '30d'
-             WHERE id = $7;`,
-            [
-              safeRound(data.clicks),
-              safeRound(data.clicks_change),
-              safeRound(data.impressions),
-              safeRound(data.impressions_change),
-              roundPosition(data.position),
-              safeRound(data.position_change),
-              landingpageId
-            ]
-          );
-          updatedCount++;
-        }
-      }
-
-      await client.query('COMMIT');
-
-      // 4. Daily-Trend-Daten (für Project-Timeline-Widget) auf ein
-      //    rollendes 90-Tage-Fenster updaten. Idempotent via UPSERT.
-      let dailyUpserted = 0;
-      try {
-        const today = new Date();
-        const dailyEnd = new Date(today);
-        dailyEnd.setDate(dailyEnd.getDate() - 2); // GSC hat 2 Tage Delay
-        const dailyStart = new Date(dailyEnd);
-        dailyStart.setDate(dailyStart.getDate() - GSC_DAILY_HISTORY_DAYS);
-
-        const daily = await getSearchConsoleData(
-          user.gsc_site_url!,
-          formatDate(dailyStart),
-          formatDate(dailyEnd)
-        );
-
-        // Map: timestamp -> { clicks, impressions }
-        const byDate = new Map<number, { clicks: number; impressions: number }>();
-        for (const p of daily.clicks.daily) {
-          byDate.set(p.date, { clicks: p.value, impressions: 0 });
-        }
-        for (const p of daily.impressions.daily) {
-          const e = byDate.get(p.date) ?? { clicks: 0, impressions: 0 };
-          e.impressions = p.value;
-          byDate.set(p.date, e);
-        }
-
-        if (byDate.size > 0) {
-          await client.query('BEGIN');
-          for (const [ts, vals] of byDate.entries()) {
-            const dateStr = formatDate(new Date(ts));
-            await client.query(
-              `INSERT INTO gsc_daily_data (site_url, date, clicks, impressions, updated_at)
-               VALUES ($1, $2, $3, $4, NOW())
-               ON CONFLICT (site_url, date)
-               DO UPDATE SET
-                 clicks      = EXCLUDED.clicks,
-                 impressions = EXCLUDED.impressions,
-                 updated_at  = NOW();`,
-              [user.gsc_site_url, dateStr, safeRound(vals.clicks), safeRound(vals.impressions)]
-            );
-            dailyUpserted++;
-          }
-          await client.query('COMMIT');
-        }
-      } catch (dailyErr: any) {
-        // Daily-Sync ist Best-Effort: scheitert er, soll der Page-Update-Teil
-        // trotzdem committed bleiben.
-        try { await client.query('ROLLBACK'); } catch { /* ignore */ }
-        console.warn(`${logPrefix} Daily-Trend-Sync fehlgeschlagen:`, dailyErr?.message || dailyErr);
-      }
-
-      return { success: true, count: updatedCount, dailyUpserted };
-
-    } catch (innerErr) {
-      await client.query('ROLLBACK');
-      throw innerErr;
-    } finally {
-      client.release();
-    }
-
-  } catch (err: any) {
-    console.error(`${logPrefix} Fehler:`, err.message);
-    return { success: false, error: err.message };
+    await markDataSyncStarted(user.id, 'gsc-daily');
+    client = await sql.connect();
+    const updatedPages = await updateLandingPages(client, user, ranges);
+    const daily = await updateDailyHistory(client, user.gsc_site_url!);
+    await markDataSyncFinished(user.id, 'gsc-daily', { success: true });
+    console.log(
+      `${logPrefix} OK: ${updatedPages} Landingpages, ${daily.count} Tageswerte (${daily.mode})`,
+    );
+    return { success: true as const, updatedPages, dailyRows: daily.count, mode: daily.mode };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await markDataSyncFinished(user.id, 'gsc-daily', { success: false, error: message });
+    console.error(`${logPrefix} Fehler:`, message);
+    return { success: false as const, error: message };
+  } finally {
+    client?.release();
   }
 }
 
-// === MAIN ROUTE ===
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Vercel Pro
+export const maxDuration = 300;
 
-// ✅ GET statt POST - Vercel Cron sendet GET-Requests!
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
-  
-  // Auth Check - Vercel sendet Authorization Header automatisch
-  const authHeader = request.headers.get('Authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    console.warn('[CRON GSC] ❌ Unauthorized - Invalid or missing CRON_SECRET');
+  if (request.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('[CRON GSC] ✅ Authentifizierung erfolgreich, starte Job...');
-
-  // Schema sicherstellen — idempotent. So kann das Project-Timeline-Widget
-  // ab dem ersten Cron-Lauf auf gsc_daily_data zugreifen, ohne
-  // 'relation does not exist'-Fehler zu werfen.
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS gsc_daily_data (
-        site_url    TEXT NOT NULL,
-        date        DATE NOT NULL,
-        clicks      INT  NOT NULL DEFAULT 0,
-        impressions INT  NOT NULL DEFAULT 0,
-        updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        site_url TEXT NOT NULL,
+        date DATE NOT NULL,
+        clicks INT NOT NULL DEFAULT 0,
+        impressions INT NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         PRIMARY KEY (site_url, date)
-      );
+      )
     `;
-    await sql`CREATE INDEX IF NOT EXISTS idx_gsc_daily_site_date ON gsc_daily_data(site_url, date);`;
-  } catch (schemaErr: any) {
-    console.error('[CRON GSC] Schema-Setup fehlgeschlagen:', schemaErr?.message || schemaErr);
-    return NextResponse.json({ message: 'Schema-Setup fehlgeschlagen' }, { status: 500 });
-  }
-
-  const { currentRange, previousRange } = calculateDateRanges();
-  const ranges = { currentRange, previousRange };
-
-  try {
-    // User laden
-    const { rows: users } = await sql<Pick<User, 'id' | 'email' | 'gsc_site_url'>>`
-      SELECT id, email, gsc_site_url 
-      FROM users 
-      WHERE role = 'BENUTZER' AND gsc_site_url IS NOT NULL AND gsc_site_url != '';
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_gsc_daily_site_date
+      ON gsc_daily_data(site_url, date)
     `;
+    await ensureDataSyncStateSchema();
 
-    console.log(`[CRON GSC] Starte Batch-Verarbeitung für ${users.length} User.`);
-
-    let processedCount = 0;
-    let totalUpdatedPages = 0;
-    let totalDailyRows = 0;
+    const { rows } = await sql<GscUser>`
+      SELECT u.id::text, u.email, u.gsc_site_url
+      FROM users u
+      LEFT JOIN project_data_sync_state state
+        ON state.user_id = u.id AND state.source = 'gsc-daily'
+      WHERE u.role = 'BENUTZER'
+        AND u.gsc_site_url IS NOT NULL
+        AND u.gsc_site_url != ''
+        AND (state.next_sync_at IS NULL OR state.next_sync_at <= NOW())
+      ORDER BY
+        COALESCE(state.last_attempt_at, '1970-01-01'::timestamptz) ASC,
+        u.id ASC
+      LIMIT ${MAX_USERS_PER_RUN}
+    `;
+    const users = rows;
+    const ranges = calculatePageDateRanges();
+    let processed = 0;
+    let updatedPages = 0;
+    let dailyRows = 0;
+    let initialBackfills = 0;
     const errors: string[] = [];
 
-    // Batch-Verarbeitung (Parallelisierung)
-    for (let i = 0; i < users.length; i += BATCH_SIZE) {
-      
-      // Zeit-Check
-      if (Date.now() - startTime > MAX_EXECUTION_TIME_MS) {
-        console.warn('[CRON GSC] ⚠️ Zeitlimit fast erreicht. Stoppe vorzeitig.');
-        errors.push('Zeitlimit erreicht - Job unvollständig');
-        break; 
-      }
-
-      const batch = users.slice(i, i + BATCH_SIZE);
-      console.log(`[CRON GSC] Verarbeite Batch ${Math.floor(i / BATCH_SIZE) + 1} (${batch.length} User)...`);
-
-      const results = await Promise.allSettled(
-        batch.map(user => processUser(user, ranges))
-      );
-
-      // Ergebnisse auswerten
-      results.forEach((res, idx) => {
-        const user = batch[idx];
-        if (res.status === 'fulfilled') {
-          const val = res.value;
-          if (val.success) {
-            totalUpdatedPages += val.count || 0;
-            totalDailyRows  += val.dailyUpserted || 0;
-          } else {
-            errors.push(`User ${user.email}: ${val.error}`);
-          }
+    for (let index = 0; index < users.length; index += BATCH_SIZE) {
+      if (Date.now() - startTime > MAX_EXECUTION_TIME_MS) break;
+      const batch = users.slice(index, index + BATCH_SIZE);
+      const results = await Promise.all(batch.map((user) => processUser(user, ranges)));
+      for (let resultIndex = 0; resultIndex < results.length; resultIndex++) {
+        const result = results[resultIndex];
+        processed++;
+        if (result.success) {
+          updatedPages += result.updatedPages;
+          dailyRows += result.dailyRows;
+          if (result.mode === 'initial') initialBackfills++;
         } else {
-          errors.push(`User ${user.email}: Kritischer Fehler (Promise rejected)`);
+          errors.push(`${batch[resultIndex].email}: ${result.error}`);
         }
-      });
-
-      processedCount += batch.length;
+      }
     }
-
-    const duration = (Date.now() - startTime) / 1000;
-    console.log(`[CRON GSC] 🏁 Fertig in ${duration.toFixed(1)}s. Seiten: ${totalUpdatedPages}. Daily-Rows: ${totalDailyRows}. Errors: ${errors.length}`);
 
     return NextResponse.json({
       success: true,
-      processedUsers: processedCount,
-      totalUsers: users.length,
-      pagesUpdated: totalUpdatedPages,
-      dailyRowsUpserted: totalDailyRows,
-      durationSeconds: duration,
+      processedUsers: processed,
+      queuedUsers: users.length,
+      pagesUpdated: updatedPages,
+      dailyRowsUpserted: dailyRows,
+      initialBackfills,
+      incrementalWindowDays: GSC_INCREMENTAL_DAYS,
+      durationSeconds: (Date.now() - startTime) / 1000,
+      incomplete: processed < users.length,
       errors: errors.length > 0 ? errors : undefined,
-      incomplete: processedCount < users.length
     });
-
-  } catch (error: any) {
-    console.error('[CRON GSC] Fataler Fehler:', error);
-    return NextResponse.json({ message: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[CRON GSC] Fataler Fehler:', message);
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
