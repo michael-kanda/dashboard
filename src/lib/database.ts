@@ -73,6 +73,10 @@ export async function createTables() {
         sitemap_fingerprint TEXT,
         sitemap_checked_at TIMESTAMP WITH TIME ZONE,
         lock_until TIMESTAMP WITH TIME ZONE,
+        sitemap_entry_count INTEGER NOT NULL DEFAULT 0,
+        excluded_url_count INTEGER NOT NULL DEFAULT 0,
+        excluded_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
+        sync_warning TEXT,
         error_message TEXT,
         updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -111,7 +115,11 @@ export async function createTables() {
       ALTER TABLE project_indexing_sync
         ADD COLUMN IF NOT EXISTS sitemap_fingerprint TEXT,
         ADD COLUMN IF NOT EXISTS sitemap_checked_at TIMESTAMP WITH TIME ZONE,
-        ADD COLUMN IF NOT EXISTS lock_until TIMESTAMP WITH TIME ZONE
+        ADD COLUMN IF NOT EXISTS lock_until TIMESTAMP WITH TIME ZONE,
+        ADD COLUMN IF NOT EXISTS sitemap_entry_count INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS excluded_url_count INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS excluded_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
+        ADD COLUMN IF NOT EXISTS sync_warning TEXT
     `;
     await sql`
       ALTER TABLE project_indexing_urls

@@ -118,6 +118,7 @@ export default function IndexingStatusWidget({
   const [search, setSearch] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
+  const [showExcludedUrls, setShowExcludedUrls] = useState(false);
   const canSync = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
   const progress = data.totalUrls > 0 ? Math.round((data.indexedUrls / data.totalUrls) * 100) : 0;
 
@@ -200,6 +201,39 @@ export default function IndexingStatusWidget({
     { value: 'error', label: 'Fehler', count: data.rows.filter((row) => row.status === 'error').length },
     { value: 'canonical', label: 'Canonical', count: data.rows.filter((row) => row.hasCanonicalIssue).length },
   ];
+  const summaryItems = [
+    {
+      label: 'Sitemap-Einträge',
+      value: data.sitemapEntryCount,
+      description: 'Alle Einträge der erkannten Sitemap.',
+    },
+    {
+      label: 'Relevante Seiten',
+      value: data.totalUrls,
+      description: 'Für die Indexierungsprüfung berücksichtigt.',
+    },
+    {
+      label: 'Technisch ausgeschlossen',
+      value: data.excludedUrlCount,
+      description: 'Feeds, Trackbacks und System-URLs.',
+      showsDetails: true,
+    },
+    {
+      label: 'Indexiert',
+      value: data.indexedUrls,
+      description: 'Von Google geprüft und im Suchindex.',
+    },
+    {
+      label: 'Nicht indexiert',
+      value: data.notIndexedUrls,
+      description: 'Nicht im Google-Index; kann beabsichtigt sein.',
+    },
+    {
+      label: 'Handlungsbedarf',
+      value: data.issueUrls,
+      description: 'Nicht indexiert, Prüffehler oder Canonical-Abweichung.',
+    },
+  ];
 
   return (
     <section className="dashboard-widget-surface overflow-hidden rounded-lg">
@@ -253,36 +287,72 @@ export default function IndexingStatusWidget({
               </div>
             )}
 
-            {data.totalUrls > 0 && (
-              <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border-subtle bg-border-subtle lg:grid-cols-4">
-                {[
-                  {
-                    label: 'Sitemap-URLs',
-                    value: data.totalUrls,
-                    description: 'Alle in der Sitemap gefundenen Seiten.',
-                  },
-                  {
-                    label: 'Indexiert',
-                    value: data.indexedUrls,
-                    description: 'Von Google geprüft und im Suchindex.',
-                  },
-                  {
-                    label: 'Nicht indexiert',
-                    value: data.notIndexedUrls,
-                    description: 'Nicht im Google-Index; kann auch beabsichtigt sein.',
-                  },
-                  {
-                    label: 'Handlungsbedarf',
-                    value: data.issueUrls,
-                    description: 'Nicht indexiert, Prüffehler oder Canonical-Abweichung.',
-                  },
-                ].map((item) => (
+            {(data.sitemapEntryCount > 0 || data.totalUrls > 0) && (
+              <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border-subtle bg-border-subtle lg:grid-cols-3 2xl:grid-cols-6">
+                {summaryItems.map((item) => item.showsDetails ? (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => setShowExcludedUrls((current) => !current)}
+                    disabled={data.excludedUrlCount === 0}
+                    className="bg-surface px-4 py-4 text-left transition-colors hover:bg-surface-secondary disabled:cursor-default disabled:hover:bg-surface"
+                  >
+                    <p className="text-[11px] font-semibold uppercase text-muted">{item.label}</p>
+                    <p className="mt-1 text-2xl font-semibold tabular-nums text-heading">{item.value}</p>
+                    <p className="mt-1.5 text-[11px] leading-4 text-muted">{item.description}</p>
+                  </button>
+                ) : (
                   <div key={item.label} className="bg-surface px-4 py-4">
                     <p className="text-[11px] font-semibold uppercase text-muted">{item.label}</p>
                     <p className="mt-1 text-2xl font-semibold tabular-nums text-heading">{item.value}</p>
                     <p className="mt-1.5 text-[11px] leading-4 text-muted">{item.description}</p>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {data.warningMessage && (
+              <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                {data.warningMessage}
+              </div>
+            )}
+
+            {showExcludedUrls && data.excludedUrls.length > 0 && (
+              <div className="mt-4 overflow-hidden rounded-md border border-border-subtle">
+                <div className="flex items-center justify-between border-b border-border-subtle bg-surface-secondary px-4 py-2.5">
+                  <div>
+                    <p className="text-xs font-semibold text-heading">Technisch ausgeschlossene URLs</p>
+                    <p className="mt-0.5 text-[11px] text-muted">Diese Einträge werden nicht per URL Inspection geprüft.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowExcludedUrls(false)}
+                    className="text-xs font-semibold text-body hover:text-heading"
+                  >
+                    Schließen
+                  </button>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {data.excludedUrls.map((item) => (
+                    <div key={item.url} className="flex flex-col gap-1 border-b border-border-subtle px-4 py-2.5 last:border-0 sm:flex-row sm:items-center sm:justify-between">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="truncate text-xs font-medium text-heading hover:text-[#4285F4]"
+                        title={item.url}
+                      >
+                        {getUrlLabel(item.url)}
+                      </a>
+                      <span className="shrink-0 text-[11px] text-muted">{item.reason}</span>
+                    </div>
+                  ))}
+                </div>
+                {data.excludedUrlCount > data.excludedUrls.length && (
+                  <p className="border-t border-border-subtle bg-surface-secondary px-4 py-2 text-[11px] text-muted">
+                    Angezeigt werden die ersten {data.excludedUrls.length} von {data.excludedUrlCount} ausgeschlossenen URLs.
+                  </p>
+                )}
               </div>
             )}
 

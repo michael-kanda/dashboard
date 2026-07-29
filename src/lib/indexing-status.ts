@@ -22,10 +22,19 @@ export interface IndexingStatusRow {
   hasCanonicalIssue: boolean;
 }
 
+export interface ExcludedSitemapUrl {
+  url: string;
+  reason: string;
+}
+
 export interface ProjectIndexingStatus {
   configured: boolean;
   sitemapUrl: string | null;
   status: 'idle' | 'running' | 'completed' | 'partial' | 'error';
+  sitemapEntryCount: number;
+  excludedUrlCount: number;
+  excludedUrls: ExcludedSitemapUrl[];
+  warningMessage: string | null;
   totalUrls: number;
   indexedUrls: number;
   notIndexedUrls: number;
@@ -55,6 +64,10 @@ const EMPTY_STATUS: ProjectIndexingStatus = {
   configured: false,
   sitemapUrl: null,
   status: 'idle',
+  sitemapEntryCount: 0,
+  excludedUrlCount: 0,
+  excludedUrls: [],
+  warningMessage: null,
   totalUrls: 0,
   indexedUrls: 0,
   notIndexedUrls: 0,
@@ -80,6 +93,10 @@ export async function ensureIndexingStatusSchema() {
       sitemap_fingerprint TEXT,
       sitemap_checked_at TIMESTAMPTZ,
       lock_until TIMESTAMPTZ,
+      sitemap_entry_count INTEGER NOT NULL DEFAULT 0,
+      excluded_url_count INTEGER NOT NULL DEFAULT 0,
+      excluded_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
+      sync_warning TEXT,
       error_message TEXT,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
@@ -118,7 +135,11 @@ export async function ensureIndexingStatusSchema() {
     ALTER TABLE project_indexing_sync
       ADD COLUMN IF NOT EXISTS sitemap_fingerprint TEXT,
       ADD COLUMN IF NOT EXISTS sitemap_checked_at TIMESTAMPTZ,
-      ADD COLUMN IF NOT EXISTS lock_until TIMESTAMPTZ
+      ADD COLUMN IF NOT EXISTS lock_until TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS sitemap_entry_count INTEGER NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS excluded_url_count INTEGER NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS excluded_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
+      ADD COLUMN IF NOT EXISTS sync_warning TEXT
   `;
   await sql`
     ALTER TABLE project_indexing_urls
@@ -185,6 +206,47 @@ function defaultSitemapUrl(config: ProjectConfig) {
   return null;
 }
 
+function getProjectOrigin(config: ProjectConfig) {
+  try {
+    if (config.gsc_site_url?.startsWith('http')) {
+      return new URL(config.gsc_site_url).origin;
+    }
+    if (config.gsc_site_url?.startsWith('sc-domain:')) {
+      return `https://${config.gsc_site_url.slice('sc-domain:'.length).trim()}`;
+    }
+    if (config.domain) {
+      const domain = config.domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+      return `https://${domain}`;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function getTechnicalUrlReason(value: string): string | null {
+  try {
+    const parsed = new URL(value);
+    const pathname = parsed.pathname.toLowerCase().replace(/\/{2,}/g, '/');
+    if (parsed.searchParams.has('feed')) return 'RSS-/Atom-Feed';
+    if (parsed.searchParams.has('replytocom')) return 'Technische Kommentar-URL';
+    if (/\/comments\/feed(?:\/(?:atom|rdf|rss|rss2))?\/?$/.test(pathname)) {
+      return 'Kommentar-Feed';
+    }
+    if (/\/feed(?:\/(?:atom|rdf|rss|rss2))?\/?$/.test(pathname)) {
+      return 'RSS-/Atom-Feed';
+    }
+    if (/\/trackback\/?$/.test(pathname)) return 'Trackback-URL';
+    if (pathname === '/xmlrpc.php') return 'WordPress-Systemendpunkt';
+    if (pathname === '/wp-json' || pathname.startsWith('/wp-json/')) {
+      return 'WordPress-API-Endpunkt';
+    }
+    return null;
+  } catch {
+    return 'Ungültige URL';
+  }
+}
+
 function assertSafeSitemapUrl(value: string, expectedHost?: string) {
   const parsed = new URL(value);
   if (!['http:', 'https:'].includes(parsed.protocol)) {
@@ -240,6 +302,38 @@ async function fetchXml(url: string, deadlineAt: number) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function getSitemapCandidates(config: ProjectConfig, deadlineAt: number) {
+  const configured = config.sitemap_url?.trim();
+  const origin = getProjectOrigin(config);
+  if (!origin) return configured ? [assertSafeSitemapUrl(configured).href] : [];
+  const originUrl = new URL(origin);
+  const candidates = new Set<string>();
+  if (configured) {
+    candidates.add(assertSafeSitemapUrl(configured, originUrl.hostname).href);
+  }
+
+  try {
+    const robotsUrl = new URL('/robots.txt', originUrl).href;
+    const robots = await fetchXml(robotsUrl, deadlineAt);
+    for (const line of robots.split(/\r?\n/)) {
+      const match = line.match(/^\s*sitemap\s*:\s*(\S+)\s*$/i);
+      if (!match?.[1]) continue;
+      try {
+        candidates.add(assertSafeSitemapUrl(match[1], originUrl.hostname).href);
+      } catch (error) {
+        console.warn('[Indexing] Sitemap aus robots.txt übersprungen:', match[1], error);
+      }
+    }
+  } catch (error) {
+    console.warn('[Indexing] robots.txt konnte nicht gelesen werden:', error);
+  }
+
+  for (const pathname of ['/wp-sitemap.xml', '/sitemap_index.xml', '/sitemap.xml']) {
+    candidates.add(new URL(pathname, originUrl).href);
+  }
+  return [...candidates];
 }
 
 async function readSitemapTree(
@@ -368,7 +462,7 @@ export async function syncProjectIndexingStatus(
   `;
   const config = rows[0];
   if (!config?.gsc_site_url) throw new Error('Für das Projekt ist keine GSC Site URL konfiguriert.');
-  const sitemapUrl = defaultSitemapUrl(config);
+  let sitemapUrl = defaultSitemapUrl(config);
   if (!sitemapUrl) throw new Error('Für das Projekt konnte keine Sitemap-URL ermittelt werden.');
 
   const { rows: syncRows } = await sql<{ next_sync_at: string | null; lock_until: string | null }>`
@@ -401,12 +495,55 @@ export async function syncProjectIndexingStatus(
   if (!lockRows.length) return getProjectIndexingStatus(projectId);
 
   try {
-    const entries = (await readSitemapTree(sitemapUrl, deadlineAt))
-      .filter((entry) => propertyAllowsUrl(config.gsc_site_url!, entry.url));
-    if (!entries.length) throw new Error('In der Sitemap wurden keine URLs der GSC-Property gefunden.');
+    const sitemapCandidates = await getSitemapCandidates(config, deadlineAt);
+    let selected: {
+      sitemapUrl: string;
+      propertyEntries: SitemapEntry[];
+      entries: SitemapEntry[];
+      excludedUrls: ExcludedSitemapUrl[];
+    } | null = null;
+    const sitemapErrors: string[] = [];
 
-    const sitemapFingerprint = createSitemapFingerprint(entries);
-    const performance = await loadPagePerformance(config.gsc_site_url, deadlineAt);
+    for (const candidate of sitemapCandidates) {
+      try {
+        const propertyEntries = (await readSitemapTree(candidate, deadlineAt))
+          .filter((entry) => propertyAllowsUrl(config.gsc_site_url!, entry.url));
+        if (!propertyEntries.length) continue;
+
+        const excludedUrls: ExcludedSitemapUrl[] = [];
+        const entries = propertyEntries.filter((entry) => {
+          const reason = getTechnicalUrlReason(entry.url);
+          if (!reason) return true;
+          excludedUrls.push({ url: entry.url, reason });
+          return false;
+        });
+        const candidateResult = { sitemapUrl: candidate, propertyEntries, entries, excludedUrls };
+        if (entries.length) {
+          selected = candidateResult;
+          break;
+        }
+        selected ??= candidateResult;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Sitemap konnte nicht gelesen werden';
+        sitemapErrors.push(`${candidate}: ${message}`);
+      }
+    }
+
+    if (!selected) {
+      const detail = sitemapErrors[0] ? ` ${sitemapErrors[0]}` : '';
+      throw new Error(`In keiner erkannten Sitemap wurden URLs der GSC-Property gefunden.${detail}`);
+    }
+
+    sitemapUrl = selected.sitemapUrl;
+    const { propertyEntries, entries, excludedUrls } = selected;
+    const excludedUrlCount = excludedUrls.length;
+    const warningMessage = excludedUrlCount > 0 && excludedUrlCount >= propertyEntries.length / 2
+      ? 'Die Sitemap enthält überwiegend technische Feed- oder System-URLs. Diese werden nicht als SEO-relevante Seiten bewertet.'
+      : null;
+    const sitemapFingerprint = createSitemapFingerprint(propertyEntries);
+    const performance = entries.length
+      ? await loadPagePerformance(config.gsc_site_url, deadlineAt)
+      : new Map<string, { clicks: number; impressions: number; ctr: number; position: number }>();
     const sitemapPayload = entries.map((entry) => {
       const metrics = performance.get(entry.url);
       return {
@@ -586,6 +723,11 @@ export async function syncProjectIndexingStatus(
           END,
           sitemap_fingerprint = ${sitemapFingerprint},
           sitemap_checked_at = NOW(),
+          sitemap_url = ${sitemapUrl},
+          sitemap_entry_count = ${propertyEntries.length},
+          excluded_url_count = ${excludedUrlCount},
+          excluded_urls = ${JSON.stringify(excludedUrls.slice(0, 500))}::jsonb,
+          sync_warning = ${warningMessage},
           lock_until = NULL,
           error_message = NULL,
           updated_at = NOW()
@@ -617,11 +759,18 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
 
     const { rows: syncRows } = await sql<{
       status: ProjectIndexingStatus['status'];
+      sitemap_url: string | null;
       completed_at: string | null;
       next_sync_at: string | null;
+      sitemap_entry_count: number;
+      excluded_url_count: number;
+      excluded_urls: unknown;
+      sync_warning: string | null;
       error_message: string | null;
     }>`
-      SELECT status, completed_at, next_sync_at, error_message
+      SELECT
+        status, sitemap_url, completed_at, next_sync_at, sitemap_entry_count,
+        excluded_url_count, excluded_urls, sync_warning, error_message
       FROM project_indexing_sync WHERE user_id = ${projectId}::uuid
     `;
     if (!syncRows.length && sitemapUrl && config.gsc_site_url) {
@@ -663,10 +812,29 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
       ),
     }));
     const sync = syncRows[0];
+    const excludedUrls: ExcludedSitemapUrl[] = [];
+    if (Array.isArray(sync?.excluded_urls)) {
+      for (const item of sync.excluded_urls) {
+        if (!item || typeof item !== 'object') continue;
+        const raw = item as Record<string, unknown>;
+        if (typeof raw.url === 'string' && typeof raw.reason === 'string') {
+          excludedUrls.push({ url: raw.url, reason: raw.reason });
+        }
+      }
+    }
+    const resolvedSitemapUrl = sync?.sitemap_url || sitemapUrl;
+    const storedSitemapEntryCount = Number(sync?.sitemap_entry_count ?? 0);
+    const excludedUrlCount = Number(sync?.excluded_url_count ?? 0);
     return {
-      configured: Boolean(sitemapUrl && config.gsc_site_url),
-      sitemapUrl,
+      configured: Boolean(resolvedSitemapUrl && config.gsc_site_url),
+      sitemapUrl: resolvedSitemapUrl,
       status: sync?.status ?? 'idle',
+      sitemapEntryCount: storedSitemapEntryCount > 0
+        ? storedSitemapEntryCount
+        : mapped.length + excludedUrlCount,
+      excludedUrlCount,
+      excludedUrls,
+      warningMessage: sync?.sync_warning ?? null,
       totalUrls: mapped.length,
       indexedUrls: mapped.filter((row) => row.status === 'indexed').length,
       notIndexedUrls: mapped.filter((row) => row.status === 'not_indexed').length,
