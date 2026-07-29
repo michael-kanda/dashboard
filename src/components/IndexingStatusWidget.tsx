@@ -92,7 +92,9 @@ function StatusBadge({ row }: { row: IndexingStatusRow }) {
 function getHint(row: IndexingStatusRow) {
   if (row.inspectionError) return row.inspectionError;
   if (row.hasCanonicalIssue) return 'Google verwendet eine andere kanonische URL.';
-  if (row.status === 'pending') return 'URL wartet auf die nächste URL-Inspection.';
+  if (row.status === 'pending') {
+    return 'Noch nicht geprüft. Die URL wurde erkannt und ist für die automatische Google-Indexprüfung vorgemerkt.';
+  }
   return row.coverageState || (row.status === 'indexed' ? 'URL ist im Google-Index.' : 'Indexierungsstatus prüfen.');
 }
 
