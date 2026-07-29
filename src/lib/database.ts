@@ -77,6 +77,10 @@ export async function createTables() {
         excluded_url_count INTEGER NOT NULL DEFAULT 0,
         excluded_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
         sync_warning TEXT,
+        progress_stage VARCHAR(20) NOT NULL DEFAULT 'idle',
+        progress_total INTEGER NOT NULL DEFAULT 0,
+        progress_completed INTEGER NOT NULL DEFAULT 0,
+        progress_due_total INTEGER NOT NULL DEFAULT 0,
         error_message TEXT,
         updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -119,7 +123,11 @@ export async function createTables() {
         ADD COLUMN IF NOT EXISTS sitemap_entry_count INTEGER NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS excluded_url_count INTEGER NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS excluded_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
-        ADD COLUMN IF NOT EXISTS sync_warning TEXT
+        ADD COLUMN IF NOT EXISTS sync_warning TEXT,
+        ADD COLUMN IF NOT EXISTS progress_stage VARCHAR(20) NOT NULL DEFAULT 'idle',
+        ADD COLUMN IF NOT EXISTS progress_total INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS progress_completed INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS progress_due_total INTEGER NOT NULL DEFAULT 0
     `;
     await sql`
       ALTER TABLE project_indexing_urls

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import {
+  getProjectIndexingProgress,
   getProjectIndexingStatus,
   syncProjectIndexingStatus,
 } from '@/lib/indexing-status';
@@ -22,13 +23,20 @@ async function authorize(projectId: string, write = false) {
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const permission = await authorize(id);
   if ('error' in permission) {
     return NextResponse.json({ message: permission.error }, { status: permission.status });
+  }
+  if (request.nextUrl.searchParams.get('progress') === '1') {
+    try {
+      return NextResponse.json(await getProjectIndexingProgress(id));
+    } catch {
+      return NextResponse.json({ message: 'Fortschritt noch nicht verfügbar' }, { status: 503 });
+    }
   }
   return NextResponse.json(await getProjectIndexingStatus(id));
 }

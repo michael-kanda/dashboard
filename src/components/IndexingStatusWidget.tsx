@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   CheckCircle2,
@@ -14,6 +14,7 @@ import {
 import type {
   IndexingStatusRow,
   IndexingUrlStatus,
+  ProjectIndexingProgress,
   ProjectIndexingStatus,
 } from '@/lib/indexing-status';
 
@@ -108,6 +109,22 @@ function escapeCsv(value: string | number | null | undefined) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
+function getSyncProgressLabel(data: ProjectIndexingStatus) {
+  if (data.progressStage === 'sitemap') return 'Sitemap wird gelesen …';
+  if (data.progressStage === 'gsc') return 'GSC-Daten werden geladen …';
+  if (data.progressStage === 'inspection') {
+    if (data.progressTotal === 0) return 'Keine fälligen URLs gefunden.';
+    const deferred = Math.max(0, data.progressDueTotal - data.progressTotal);
+    return `${data.progressCompleted} von ${data.progressTotal} URLs in diesem Lauf geprüft${
+      deferred > 0 ? ` · ${deferred} weitere vorgemerkt` : ''
+    }`;
+  }
+  if (data.progressStage === 'paused') return 'Lauf abgeschlossen · weitere URLs sind vorgemerkt.';
+  if (data.progressStage === 'completed') return 'Prüfung abgeschlossen.';
+  if (data.progressStage === 'error') return 'Prüfung mit Fehler beendet.';
+  return 'Prüfung wird vorbereitet …';
+}
+
 export default function IndexingStatusWidget({
   initialData,
   projectId,
@@ -121,6 +138,40 @@ export default function IndexingStatusWidget({
   const [showExcludedUrls, setShowExcludedUrls] = useState(false);
   const canSync = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
   const progress = data.totalUrls > 0 ? Math.round((data.indexedUrls / data.totalUrls) * 100) : 0;
+  const showSyncProgress = isSyncing || data.status === 'running';
+  const runProgress = data.progressTotal > 0
+    ? Math.round((data.progressCompleted / data.progressTotal) * 100)
+    : 0;
+
+  useEffect(() => {
+    if (!showSyncProgress) return;
+    let cancelled = false;
+    let requestRunning = false;
+
+    const refreshProgress = async () => {
+      if (requestRunning) return;
+      requestRunning = true;
+      try {
+        const response = await fetch(`/api/projects/${projectId}/indexing-status?progress=1`, {
+          cache: 'no-store',
+        });
+        if (!response.ok || cancelled) return;
+        const progressData = await response.json() as ProjectIndexingProgress;
+        setData((current) => ({ ...current, ...progressData }));
+      } catch {
+        // Der abschließende POST liefert weiterhin das vollständige Ergebnis.
+      } finally {
+        requestRunning = false;
+      }
+    };
+
+    void refreshProgress();
+    const interval = window.setInterval(refreshProgress, 2_500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [projectId, showSyncProgress]);
 
   const filteredRows = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase('de-DE');
@@ -135,6 +186,14 @@ export default function IndexingStatusWidget({
   async function runSync() {
     setIsSyncing(true);
     setSyncError('');
+    setData((current) => ({
+      ...current,
+      status: 'running',
+      progressStage: 'sitemap',
+      progressTotal: 0,
+      progressCompleted: 0,
+      progressDueTotal: 0,
+    }));
     try {
       const response = await fetch(`/api/projects/${projectId}/indexing-status`, {
         method: 'POST',
@@ -144,6 +203,7 @@ export default function IndexingStatusWidget({
       setData(result);
     } catch (error) {
       setSyncError(error instanceof Error ? error.message : 'Abgleich fehlgeschlagen');
+      setData((current) => ({ ...current, status: 'error', progressStage: 'error' }));
     } finally {
       setIsSyncing(false);
     }
@@ -250,26 +310,43 @@ export default function IndexingStatusWidget({
             </p>
           </div>
           {data.configured && (
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={exportCsv}
-                disabled={!filteredRows.length}
-                className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body shadow-sm transition-colors hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Download size={15} />
-                CSV
-              </button>
-              {canSync && (
+            <div className="flex flex-col items-start gap-2 sm:items-end">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={runSync}
-                  disabled={isSyncing}
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body shadow-sm transition-colors hover:bg-surface-secondary disabled:cursor-wait disabled:opacity-60"
+                  onClick={exportCsv}
+                  disabled={!filteredRows.length}
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body shadow-sm transition-colors hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <RefreshCw size={15} className={isSyncing ? 'animate-spin' : ''} />
-                  {isSyncing ? 'Prüfung läuft…' : 'Jetzt prüfen'}
+                  <Download size={15} />
+                  CSV
                 </button>
+                {canSync && (
+                  <button
+                    type="button"
+                    onClick={runSync}
+                    disabled={showSyncProgress}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body shadow-sm transition-colors hover:bg-surface-secondary disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <RefreshCw size={15} className={showSyncProgress ? 'animate-spin' : ''} />
+                    {showSyncProgress ? 'Prüfung läuft…' : 'Jetzt prüfen'}
+                  </button>
+                )}
+              </div>
+              {showSyncProgress && (
+                <div className="w-full min-w-56 max-w-80">
+                  <p className="text-right text-[11px] font-medium text-muted">
+                    {getSyncProgressLabel(data)}
+                  </p>
+                  {data.progressStage === 'inspection' && data.progressTotal > 0 && (
+                    <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-tertiary">
+                      <div
+                        className="h-full rounded-full bg-[#4285F4] transition-[width]"
+                        style={{ width: `${runProgress}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}

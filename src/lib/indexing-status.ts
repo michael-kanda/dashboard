@@ -35,6 +35,10 @@ export interface ProjectIndexingStatus {
   excludedUrlCount: number;
   excludedUrls: ExcludedSitemapUrl[];
   warningMessage: string | null;
+  progressStage: 'idle' | 'sitemap' | 'gsc' | 'inspection' | 'paused' | 'completed' | 'error';
+  progressTotal: number;
+  progressCompleted: number;
+  progressDueTotal: number;
   totalUrls: number;
   indexedUrls: number;
   notIndexedUrls: number;
@@ -46,6 +50,11 @@ export interface ProjectIndexingStatus {
   performanceRange: string;
   rows: IndexingStatusRow[];
 }
+
+export type ProjectIndexingProgress = Pick<
+  ProjectIndexingStatus,
+  'status' | 'progressStage' | 'progressTotal' | 'progressCompleted' | 'progressDueTotal'
+>;
 
 type ProjectConfig = {
   id: string;
@@ -68,6 +77,10 @@ const EMPTY_STATUS: ProjectIndexingStatus = {
   excludedUrlCount: 0,
   excludedUrls: [],
   warningMessage: null,
+  progressStage: 'idle',
+  progressTotal: 0,
+  progressCompleted: 0,
+  progressDueTotal: 0,
   totalUrls: 0,
   indexedUrls: 0,
   notIndexedUrls: 0,
@@ -97,6 +110,10 @@ export async function ensureIndexingStatusSchema() {
       excluded_url_count INTEGER NOT NULL DEFAULT 0,
       excluded_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
       sync_warning TEXT,
+      progress_stage VARCHAR(20) NOT NULL DEFAULT 'idle',
+      progress_total INTEGER NOT NULL DEFAULT 0,
+      progress_completed INTEGER NOT NULL DEFAULT 0,
+      progress_due_total INTEGER NOT NULL DEFAULT 0,
       error_message TEXT,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
@@ -139,7 +156,11 @@ export async function ensureIndexingStatusSchema() {
       ADD COLUMN IF NOT EXISTS sitemap_entry_count INTEGER NOT NULL DEFAULT 0,
       ADD COLUMN IF NOT EXISTS excluded_url_count INTEGER NOT NULL DEFAULT 0,
       ADD COLUMN IF NOT EXISTS excluded_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
-      ADD COLUMN IF NOT EXISTS sync_warning TEXT
+      ADD COLUMN IF NOT EXISTS sync_warning TEXT,
+      ADD COLUMN IF NOT EXISTS progress_stage VARCHAR(20) NOT NULL DEFAULT 'idle',
+      ADD COLUMN IF NOT EXISTS progress_total INTEGER NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS progress_completed INTEGER NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS progress_due_total INTEGER NOT NULL DEFAULT 0
   `;
   await sql`
     ALTER TABLE project_indexing_urls
@@ -477,16 +498,23 @@ export async function syncProjectIndexingStatus(
 
   const { rows: lockRows } = await sql<{ user_id: string }>`
     INSERT INTO project_indexing_sync (
-      user_id, sitemap_url, status, started_at, next_sync_at, lock_until, error_message, updated_at
+      user_id, sitemap_url, status, started_at, next_sync_at, lock_until,
+      progress_stage, progress_total, progress_completed, progress_due_total,
+      error_message, updated_at
     )
     VALUES (
-      ${projectId}::uuid, ${sitemapUrl}, 'running', NOW(), NOW(), NOW() + INTERVAL '8 minutes', NULL, NOW()
+      ${projectId}::uuid, ${sitemapUrl}, 'running', NOW(), NOW(), NOW() + INTERVAL '8 minutes',
+      'sitemap', 0, 0, 0, NULL, NOW()
     )
     ON CONFLICT (user_id) DO UPDATE SET
       sitemap_url = EXCLUDED.sitemap_url,
       status = 'running',
       started_at = NOW(),
       lock_until = NOW() + INTERVAL '8 minutes',
+      progress_stage = 'sitemap',
+      progress_total = 0,
+      progress_completed = 0,
+      progress_due_total = 0,
       error_message = NULL,
       updated_at = NOW()
     WHERE project_indexing_sync.lock_until IS NULL OR project_indexing_sync.lock_until <= NOW()
@@ -541,6 +569,11 @@ export async function syncProjectIndexingStatus(
       ? 'Die Sitemap enthält überwiegend technische Feed- oder System-URLs. Diese werden nicht als SEO-relevante Seiten bewertet.'
       : null;
     const sitemapFingerprint = createSitemapFingerprint(propertyEntries);
+    await sql`
+      UPDATE project_indexing_sync
+      SET progress_stage = 'gsc', sitemap_url = ${sitemapUrl}, updated_at = NOW()
+      WHERE user_id = ${projectId}::uuid
+    `;
     const performance = entries.length
       ? await loadPagePerformance(config.gsc_site_url, deadlineAt)
       : new Map<string, { clicks: number; impressions: number; ctr: number; position: number }>();
@@ -623,8 +656,8 @@ export async function syncProjectIndexingStatus(
     `;
 
     const maxInspections = options.maxInspections ?? 120;
-    const { rows: candidates } = await sql<{ url: string }>`
-      SELECT url
+    const { rows: candidates } = await sql<{ url: string; due_total: number }>`
+      SELECT url, COUNT(*) OVER()::int AS due_total
       FROM project_indexing_urls
       WHERE user_id = ${projectId}::uuid
         AND is_in_sitemap = TRUE
@@ -647,6 +680,16 @@ export async function syncProjectIndexingStatus(
         next_inspection_at ASC NULLS FIRST,
         inspected_at ASC NULLS FIRST
       LIMIT ${maxInspections}
+    `;
+    const dueTotal = Number(candidates[0]?.due_total ?? 0);
+    await sql`
+      UPDATE project_indexing_sync
+      SET progress_stage = 'inspection',
+          progress_total = ${candidates.length},
+          progress_completed = 0,
+          progress_due_total = ${dueTotal},
+          updated_at = NOW()
+      WHERE user_id = ${projectId}::uuid
     `;
 
     const searchconsole = google.searchconsole({ version: 'v1', auth: createGscAuth() });
@@ -702,6 +745,17 @@ export async function syncProjectIndexingStatus(
                 inspection_error = ${message}
             WHERE user_id = ${projectId}::uuid AND url = ${url}
           `;
+        } finally {
+          try {
+            await sql`
+              UPDATE project_indexing_sync
+              SET progress_completed = LEAST(progress_completed + 1, progress_total),
+                  updated_at = NOW()
+              WHERE user_id = ${projectId}::uuid
+            `;
+          } catch (progressError) {
+            console.warn('[Indexing] Fortschritt konnte nicht aktualisiert werden:', progressError);
+          }
         }
       },
     );
@@ -710,12 +764,19 @@ export async function syncProjectIndexingStatus(
       SELECT COUNT(*)::int AS count
       FROM project_indexing_urls
       WHERE user_id = ${projectId}::uuid AND is_in_sitemap = TRUE
-        AND (inspected_at IS NULL OR status = 'pending')
+        AND (
+          inspected_at IS NULL
+          OR next_inspection_at IS NULL
+          OR next_inspection_at <= NOW()
+          OR status = 'pending'
+          OR (sitemap_lastmod IS NOT NULL AND sitemap_lastmod > inspected_at)
+        )
     `;
     const partial = (pendingRows[0]?.count ?? 0) > 0;
     await sql`
       UPDATE project_indexing_sync
       SET status = ${partial ? 'partial' : 'completed'},
+          progress_stage = ${partial ? 'paused' : 'completed'},
           completed_at = NOW(),
           next_sync_at = CASE
             WHEN ${partial} THEN NOW() + INTERVAL '24 hours'
@@ -739,7 +800,7 @@ export async function syncProjectIndexingStatus(
     await sql`
       UPDATE project_indexing_sync
       SET status = 'error', completed_at = NOW(), next_sync_at = NOW() + INTERVAL '48 hours',
-          lock_until = NULL, error_message = ${message}, updated_at = NOW()
+          progress_stage = 'error', lock_until = NULL, error_message = ${message}, updated_at = NOW()
       WHERE user_id = ${projectId}::uuid
     `;
     throw error;
@@ -766,11 +827,16 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
       excluded_url_count: number;
       excluded_urls: unknown;
       sync_warning: string | null;
+      progress_stage: ProjectIndexingStatus['progressStage'];
+      progress_total: number;
+      progress_completed: number;
+      progress_due_total: number;
       error_message: string | null;
     }>`
       SELECT
         status, sitemap_url, completed_at, next_sync_at, sitemap_entry_count,
-        excluded_url_count, excluded_urls, sync_warning, error_message
+        excluded_url_count, excluded_urls, sync_warning, progress_stage,
+        progress_total, progress_completed, progress_due_total, error_message
       FROM project_indexing_sync WHERE user_id = ${projectId}::uuid
     `;
     if (!syncRows.length && sitemapUrl && config.gsc_site_url) {
@@ -835,6 +901,10 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
       excludedUrlCount,
       excludedUrls,
       warningMessage: sync?.sync_warning ?? null,
+      progressStage: sync?.progress_stage ?? 'idle',
+      progressTotal: Number(sync?.progress_total ?? 0),
+      progressCompleted: Number(sync?.progress_completed ?? 0),
+      progressDueTotal: Number(sync?.progress_due_total ?? 0),
       totalUrls: mapped.length,
       indexedUrls: mapped.filter((row) => row.status === 'indexed').length,
       notIndexedUrls: mapped.filter((row) => row.status === 'not_indexed').length,
@@ -850,4 +920,28 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
     console.error('[Indexing] Status konnte nicht geladen werden:', error);
     return EMPTY_STATUS;
   }
+}
+
+export async function getProjectIndexingProgress(
+  projectId: string,
+): Promise<ProjectIndexingProgress> {
+  const { rows } = await sql<{
+    status: ProjectIndexingStatus['status'];
+    progress_stage: ProjectIndexingStatus['progressStage'];
+    progress_total: number;
+    progress_completed: number;
+    progress_due_total: number;
+  }>`
+    SELECT status, progress_stage, progress_total, progress_completed, progress_due_total
+    FROM project_indexing_sync
+    WHERE user_id = ${projectId}::uuid
+  `;
+  const progress = rows[0];
+  return {
+    status: progress?.status ?? 'idle',
+    progressStage: progress?.progress_stage ?? 'idle',
+    progressTotal: Number(progress?.progress_total ?? 0),
+    progressCompleted: Number(progress?.progress_completed ?? 0),
+    progressDueTotal: Number(progress?.progress_due_total ?? 0),
+  };
 }
