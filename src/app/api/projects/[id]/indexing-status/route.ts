@@ -33,7 +33,11 @@ export async function GET(
   }
   if (request.nextUrl.searchParams.get('progress') === '1') {
     try {
-      return NextResponse.json(await getProjectIndexingProgress(id));
+      return NextResponse.json(await getProjectIndexingProgress(id), {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      });
     } catch {
       return NextResponse.json({ message: 'Fortschritt noch nicht verfügbar' }, { status: 503 });
     }

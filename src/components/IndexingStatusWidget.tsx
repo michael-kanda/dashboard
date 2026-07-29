@@ -144,6 +144,12 @@ export default function IndexingStatusWidget({
   const runProgress = data.progressTotal > 0
     ? Math.round((data.progressCompleted / data.progressTotal) * 100)
     : 0;
+  const syncButtonLabel =
+    showSyncProgress && data.progressStage === 'inspection' && data.progressTotal > 0
+      ? `${data.progressCompleted}/${data.progressTotal} geprüft`
+      : showSyncProgress
+        ? 'Prüfung läuft…'
+        : 'Jetzt prüfen';
 
   useEffect(() => {
     if (!showSyncProgress) return;
@@ -154,8 +160,9 @@ export default function IndexingStatusWidget({
       if (requestRunning) return;
       requestRunning = true;
       try {
-        const response = await fetch(`/api/projects/${projectId}/indexing-status?progress=1`, {
+        const response = await fetch(`/api/projects/${projectId}/indexing-status?progress=1&t=${Date.now()}`, {
           cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
         });
         if (!response.ok || cancelled) return;
         const progressData = await response.json() as ProjectIndexingProgress;
@@ -312,8 +319,8 @@ export default function IndexingStatusWidget({
             </p>
           </div>
           {data.configured && (
-            <div className="flex flex-col items-start gap-2 sm:items-end">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-[240px] flex-col items-stretch gap-2">
+              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                 <button
                   type="button"
                   onClick={exportCsv}
@@ -331,25 +338,34 @@ export default function IndexingStatusWidget({
                     className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body shadow-sm transition-colors hover:bg-surface-secondary disabled:cursor-wait disabled:opacity-60"
                   >
                     <RefreshCw size={15} className={showSyncProgress ? 'animate-spin' : ''} />
-                    {showSyncProgress ? 'Prüfung läuft…' : 'Jetzt prüfen'}
+                    {syncButtonLabel}
                   </button>
                 )}
               </div>
-              {showSyncProgress && (
-                <div className="w-full min-w-56 max-w-80">
-                  <p className="text-right text-[11px] font-medium text-muted">
-                    {getSyncProgressLabel(data)}
-                  </p>
-                  {data.progressStage === 'inspection' && data.progressTotal > 0 && (
-                    <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-tertiary">
-                      <div
-                        className="h-full rounded-full bg-[#4285F4] transition-[width]"
-                        style={{ width: `${runProgress}%` }}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
+              <div
+                aria-live="polite"
+                className={`min-h-[38px] w-full rounded-md border px-3 py-2 transition-opacity ${
+                  showSyncProgress
+                    ? 'border-[#4285F4]/30 bg-[#4285F4]/5 opacity-100'
+                    : 'pointer-events-none border-transparent opacity-0'
+                }`}
+              >
+                {showSyncProgress && (
+                  <>
+                    <p className="text-left text-xs font-semibold text-body">
+                      {getSyncProgressLabel(data)}
+                    </p>
+                    {data.progressStage === 'inspection' && data.progressTotal > 0 && (
+                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-tertiary">
+                        <div
+                          className="h-full rounded-full bg-[#4285F4] transition-[width]"
+                          style={{ width: `${runProgress}%` }}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
