@@ -190,7 +190,7 @@ export default function Sidebar() {
     { href: '/', label: 'Dashboard', icon: <Speedometer2 size={18} />, visible: isUser },
     { href: '/admin/redaktionsplan', label: 'Redaktionspläne', icon: <CalendarCheck size={18} />, visible: isAdmin },
     { href: '/dashboard/freigabe', label: 'Redaktionsplan', icon: <CalendarCheck size={18} />, visible: shouldShowRedaktionsplanForUser },
-    { href: '/admin/ki-tool', label: 'KI Tool', icon: <Magic size={18} />, visible: shouldShowKiTool },
+    { href: '/admin/ki-tool', label: 'Content Studio', icon: <Magic size={18} />, visible: shouldShowKiTool },
   ];
 
   const adminNavItems: NavItem[] = [

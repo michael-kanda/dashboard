@@ -84,6 +84,13 @@ ALTER TABLE landingpages
   ADD COLUMN IF NOT EXISTS suchvolumen INTEGER,
   ADD COLUMN IF NOT EXISTS aktuelle_position INTEGER,
   ADD COLUMN IF NOT EXISTS comment TEXT,
+  ADD COLUMN IF NOT EXISTS content_type VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS content_markdown TEXT,
+  ADD COLUMN IF NOT EXISTS content_outline JSONB,
+  ADD COLUMN IF NOT EXISTS meta_title TEXT,
+  ADD COLUMN IF NOT EXISTS meta_description TEXT,
+  ADD COLUMN IF NOT EXISTS internal_links JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS content_brief JSONB,
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
 UPDATE landingpages SET updated_at = created_at WHERE updated_at IS NULL;
 

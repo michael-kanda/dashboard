@@ -24,7 +24,7 @@ interface TransitioningLightboxProps {
 
 /**
  * Eine wiederverwendbare, animierte Lightbox/Loading-Anzeige für Übergänge oder Stream-Wartezeiten.
- * Der Code und die Stile sind aus src/app/admin/ki-tool/page.tsx abgeleitet.
+ * Gemeinsame Lightbox für gestreamte KI-Antworten.
  */
 export default function TransitioningLightbox({ 
   message, 

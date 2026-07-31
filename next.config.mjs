@@ -47,6 +47,7 @@ const nextConfig = {
   },
   // WICHTIG: Damit @react-pdf/renderer im App Router funktioniert
   experimental: {
+    optimizePackageImports: ['react-bootstrap-icons', 'lucide-react'],
     serverComponentsExternalPackages: [
       '@react-pdf/renderer',
       '@getbrevo/brevo',

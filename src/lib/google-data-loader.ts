@@ -473,7 +473,9 @@ export async function getOrFetchGoogleData(
       };
 
       topQueries = await getTopQueries(user.gsc_site_url, startDateStr, endDateStr);
-      landingPageQueries = await getQueriesByLandingPageObject(user.gsc_site_url, startDateStr, endDateStr, 5);
+      // Derselbe GSC-Call liefert auch den Content-Studio-Kontext. Mehr Queries
+      // pro URL erhöhen nur die lokale Auswertung, nicht die API-Last.
+      landingPageQueries = await getQueriesByLandingPageObject(user.gsc_site_url, startDateStr, endDateStr, 20);
 
       try {
         const [genAiCurrent, genAiPrevious] = await Promise.all([

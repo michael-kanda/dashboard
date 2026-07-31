@@ -21,6 +21,7 @@
 - **Lokale Sichtbarkeit:** Standort-Performance nach Stadt, PLZ, lokalen Queries und Standort-Landingpages — inklusive Karte, manueller Pin-Positionierung und DataMax-Auswertung.
 - **GEO-Sichtbarkeits-Score:** Eine einzige Kennzahl von 0–100 zeigt, wie gut deine Inhalte in der KI-Suche sichtbar sind. Aus Anteil, Quellen-Vielfalt und Wachstum berechnet.
 - **Prompt Tracking & Research:** Erkenne lange, konversationsartige Suchanfragen direkt in der Google Search Console und nutze sie als Research-Proxy für Decision-Prompts, nicht als offiziellen Google-Sichtbarkeitswert.
+- **KI Content Studio:** Erstellt und optimiert Landingpages sowie Artikel in einem geführten Workflow aus GSC-, GA4-, Sitemap- und Indexierungsdaten.
 - **Proaktive Insights:** Anomalie-Erkennung meldet Spikes und Einbrüche pro KI-Quelle automatisch — du musst keine Trends mehr selbst suchen.
 - **Verstehen statt rätseln:** Der KI-Assistent **DataMax** erklärt deine Daten in Klartext und liefert konkrete Empfehlungen.
 
@@ -52,6 +53,8 @@ Für lokale Projekte kann DataPeak mehrere Standorte abbilden, z.B. Kanzlei Wien
 - **Intent-Kategorisierung & User-Journey:** Welche Seiten besuchen KI-Nutzer nach dem Einstieg?
 - **Wetter- & Feiertagsanzeige:** Verstehe Traffic-Einbrüche und -Spitzen im Kontext.
 - **DataMax KI-Assistent:** Erklärt Trends in Klartext und empfiehlt nächste Schritte — inklusive lokaler Sichtbarkeit, Standortvergleich und Datenlücken bei Landingpages/PLZ-Konfiguration.
+- **KI Content Studio für Landingpages und Artikel:** Modus für neue Inhalte oder bestehende URLs, automatisches Datenbriefing, editierbare Gliederung, sichere Entwurfserstellung, SEO-Metadaten, Schema-Export und Versionen im Redaktionsplan.
+- **Datenbasierte interne Verlinkung:** Empfiehlt ausschließlich indexierte, kanonische URLs aus der gespeicherten Sitemap und berücksichtigt thematische Relevanz sowie GSC-Leistung.
 - **PDF-Reports auf Knopfdruck:** Saubere Analysen für dich oder deine Stakeholder.
 
 ### Technischer Stack
@@ -91,6 +94,14 @@ DataPeak trennt lokale Daten bewusst nach Quelle:
 - **Kartenposition:** Pins werden aus Standortdaten geschätzt, können aber von Superadmins manuell auf der Karte korrigiert werden. Gespeichert werden `mapX/mapY` als Prozentwerte, nicht absolute Pixel.
 - **DataMax:** Der KI-Assistent bekommt die lokalen Kennzahlen samt Datenlogik im Kontext und kann Standortvergleiche, lokale Landingpage-Chancen und Datenlücken erklären.
 
+### Methodik: KI Content Studio
+
+- **GSC:** Für bestehende Seiten werden URL-bezogene Suchanfragen priorisiert. Bei neuen Seiten entsteht ein thematisches Cluster aus den Projektqueries.
+- **GA4:** Sessions, neue Nutzer, Engagement und Conversions steuern die redaktionelle Priorisierung, werden aber nicht als öffentliche Tatsachenbehauptungen in den Text geschrieben.
+- **Sitemap und Indexierung:** Interne Links stammen nur aus dem gespeicherten Sitemap-Bestand. Nicht indexierte Seiten und abweichende Canonicals werden ausgeschlossen.
+- **Sicherer Entwurf:** DataPeak erzeugt zuerst eine freizugebende Gliederung. Testimonials, Bewertungen, Fallbeispiele, Personen und Kennzahlen dürfen nicht erfunden werden.
+- **Redaktionsplan:** Der aktuelle Entwurf wird im Landingpage-/Artikel-Datensatz gespeichert; jede Speicherung legt zusätzlich eine wiederherstellbare Version an.
+
 ### Zielgruppe
 
 Jeder Webseitenbetreiber mit Zugang zu Google Search Console und Google Analytics 4. Aktuell werden exklusive Testzugänge vergeben — eine Self-Service-Version ist in Planung.
@@ -111,6 +122,7 @@ Testzugang anfragen auf [designare.at/data-peak-dashboard](https://designare.at/
 - **Local visibility:** Location performance by city, postal code, local queries, and location landing pages — including a map, manual pin positioning, and DataMax analysis.
 - **GEO Visibility Score:** A single 0–100 metric shows how well your content is surfaced in AI search. Calculated from share, source diversity, and growth.
 - **Prompt Tracking & Research:** Identify long, conversational search queries straight from Google Search Console and use them as a research proxy for decision prompts, not as an official Google visibility metric.
+- **AI Content Studio:** Creates and optimizes landing pages and articles through a guided workflow using GSC, GA4, sitemap, and indexing data.
 - **Proactive insights:** Anomaly detection automatically flags spikes and drops per AI source — you no longer have to spot trends yourself.
 - **Understand instead of guessing:** The AI assistant **DataMax** explains your data in plain language and delivers concrete recommendations.
 
@@ -142,6 +154,8 @@ For local projects, DataPeak can represent multiple locations such as a main off
 - **Intent categorization & user journey:** See which pages AI-referred visitors go to next.
 - **Weather & holiday overlay:** Understand traffic drops and spikes in context.
 - **DataMax AI assistant:** Explains trends in plain language and recommends next steps — including local visibility, location comparisons, and data gaps in landing page / postal code configuration.
+- **AI Content Studio for landing pages and articles:** Supports new content and existing URL optimization, automated data briefs, editable outlines, safe draft generation, SEO metadata, schema export, and editorial versions.
+- **Data-driven internal linking:** Recommends only indexed canonical URLs from the stored sitemap, ranked by topical relevance and GSC performance.
 - **One-click PDF reports:** Clean analyses for you or your stakeholders.
 
 ### Tech Stack
@@ -180,6 +194,14 @@ DataPeak separates local data by source:
 - **GA4 signals:** New users, sessions, and conversions per location primarily come from configured location landing pages. If no landing pages are configured for a location, DataPeak falls back to GA4 city data.
 - **Map positions:** Pins are estimated from location data but can be manually corrected by superadmins. Positions are stored as `mapX/mapY` percentage values rather than absolute pixels.
 - **DataMax:** The AI assistant receives local metrics and the underlying data logic as context, allowing it to explain location comparisons, local landing page opportunities, and configuration gaps.
+
+### Methodology: AI Content Studio
+
+- **GSC:** Existing pages use URL-specific queries; new pages use a topic cluster derived from project queries.
+- **GA4:** Sessions, new users, engagement, and conversions guide editorial priority but are not turned into public claims.
+- **Sitemap and indexing:** Internal links come only from the stored sitemap. Non-indexed pages and canonical mismatches are excluded.
+- **Safe drafting:** DataPeak generates an editable outline first and prohibits invented testimonials, ratings, case studies, people, or performance figures.
+- **Editorial workflow:** The current draft is saved to the landing page/article record and every save creates a restorable version.
 
 ### Who Is It For?
 
