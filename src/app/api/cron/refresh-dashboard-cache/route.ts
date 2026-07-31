@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
 import {
-  ensureDataSyncStateSchema,
   markDataSyncFinished,
   markDataSyncStarted,
 } from '@/lib/data-sync-state';
@@ -25,7 +24,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    await ensureDataSyncStateSchema();
     try {
       await sql`
         DELETE FROM ga4_ai_traffic_cache

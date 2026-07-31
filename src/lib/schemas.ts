@@ -4,8 +4,10 @@ import { z } from 'zod';
 export const UserSchema = z.object({
   id: z.string(),
   email: z.string().email(),
+  password: z.string().optional(),
   role: z.enum(['SUPERADMIN', 'ADMIN', 'BENUTZER']),
   domain: z.string().nullable().optional(),
+  sitemap_url: z.string().nullable().optional(),
   mandant_id: z.string().nullable().optional(),
   ansprache: z.string().nullable().optional(),
   // Permissions können null, ein Array oder ein String sein - wir normalisieren es zu Array
@@ -28,12 +30,17 @@ export const UserSchema = z.object({
   assigned_admins: z.string().nullable().optional(),
   assigned_projects: z.string().nullable().optional(),
   creator_email: z.string().nullable().optional(),
+  createdByAdminId: z.string().nullable().optional(),
   
   // Projekt-Timeline
   project_timeline_active: z.boolean().nullable().optional().default(false),
   project_start_date: z.date().nullable().optional(), // Postgres Date objekt
   project_duration_months: z.number().nullable().optional(),
   createdAt: z.date().nullable().optional(),
+  semrush_organic_keywords: z.coerce.number().nullable().optional(),
+  semrush_organic_traffic: z.coerce.number().nullable().optional(),
+  semrush_last_fetched: z.string().nullable().optional(),
+  maintenance_mode: z.boolean().nullable().optional(),
   
 // Einstellungen
   settings_show_landingpages: z.boolean().nullable().optional().default(true),
@@ -62,6 +69,12 @@ export const UserSchema = z.object({
     landingPages: z.array(z.string()).optional(),
     keywords: z.array(z.string()).optional(),
   })).nullable().optional(),
+  landingpages_count: z.coerce.number().optional(),
+  landingpages_offen: z.coerce.number().optional(),
+  landingpages_in_pruefung: z.coerce.number().optional(),
+  landingpages_freigegeben: z.coerce.number().optional(),
+  landingpages_gesperrt: z.coerce.number().optional(),
+  total_impression_change: z.coerce.number().optional(),
 });
 
 // Schema für die Projekt-Übersicht (User + KPIs)

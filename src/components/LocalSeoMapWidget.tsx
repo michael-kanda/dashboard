@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent } from 'react';
 import type { LocalSeoData, LocalSeoLocationData } from '@/lib/dashboard-shared';
 import austriaGeoJson from '@/data/austria-bundeslaender.json';
+import GoogleCleanUnderline from '@/components/ui/GoogleCleanUnderline';
 
 interface LocalSeoMapWidgetProps {
   data?: LocalSeoData;
@@ -261,28 +262,6 @@ const knownCitySvgPoints: Record<string, { x: number; y: number }> = {
   innsbruck: { x: 202, y: 278 },
   klagenfurt: { x: 520, y: 326 },
 };
-
-function GoogleCleanUnderline({ id }: { id: string }) {
-  return (
-    <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
-        <defs>
-          <linearGradient id={id} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#4285F4" />
-            <stop offset="25%" stopColor="#4285F4" />
-            <stop offset="25%" stopColor="#EA4335" />
-            <stop offset="50%" stopColor="#EA4335" />
-            <stop offset="50%" stopColor="#FBBC05" />
-            <stop offset="75%" stopColor="#FBBC05" />
-            <stop offset="75%" stopColor="#34A853" />
-            <stop offset="100%" stopColor="#34A853" />
-          </linearGradient>
-        </defs>
-        <rect width="100%" height="12" rx="6" fill={`url(#${id})`} />
-      </svg>
-    </div>
-  );
-}
 
 function projectToAustriaSvg(location: LocalSeoLocationData) {
   if (typeof location.mapX === 'number' && typeof location.mapY === 'number') {

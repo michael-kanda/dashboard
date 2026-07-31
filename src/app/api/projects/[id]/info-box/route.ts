@@ -26,8 +26,6 @@ export async function PUT(
       return NextResponse.json({ message: 'Infobox-Text ist zu lang.' }, { status: 400 });
     }
 
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dashboard_info_text TEXT NULL`;
-
     if (role === 'ADMIN') {
       const { rows } = await sql`
         SELECT 1

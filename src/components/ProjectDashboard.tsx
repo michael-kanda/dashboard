@@ -128,33 +128,6 @@ const TableauPieChart = dynamic(
   }
 );
 
-// 🔍 DIAGNOSTIK – nur Server-Side ausführen, später wieder entfernen
-// PromptTrackingCard wird via dynamic() geladen → kein direkter Check mehr nötig
-if (typeof window === 'undefined') {
-  const _components = {
-    TableauKpiGrid, TableauPieChart, KpiTrendChart, AiTrafficCard,
-    AiTrafficDetailWidgetV2, TopQueriesList, SemrushTopKeywords,
-    SemrushTopKeywords02, GlobalHeader, ProjectTimelineWidget,
-    AiAnalysisWidget, LandingPageChart, DataMaxChat, GoogleAdsWidget,
-    GoogleGenAiVisibilityCard, LocalSeoMapWidget,
-  };
-  for (const [name, comp] of Object.entries(_components)) {
-    if (typeof comp === 'undefined') {
-      console.error(`[DASHBOARD-DEBUG] >>> ${name} is UNDEFINED on server <<<`);
-    } else {
-      console.log(`[DASHBOARD-DEBUG] ${name}: ${typeof comp}`);
-    }
-  }
-}
-
-// 🔍 TRACE-Helper: gibt null zurück, loggt nur server-side
-const Trace = ({ at }: { at: string }) => {
-  if (typeof window === 'undefined') {
-    console.log(`[TRACE] →${at}`);
-  }
-  return null;
-};
-
 export interface ProjectDashboardProps {
   data: ProjectDashboardData;
   isLoading: boolean;
@@ -440,7 +413,6 @@ export default function ProjectDashboard({
       )}
 
       <div className="flex-grow w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Trace at="GlobalHeader" />
         <GlobalHeader
           domain={domain}
           projectId={projectId}
@@ -451,7 +423,6 @@ export default function ProjectDashboard({
           userAnsprache={userAnsprache}
         />
 
-        <Trace at="ProjectTimelineWidget?" />
         {projectId && projectTimelineActive && canShowWidget('projectTimeline') && (
           <div className="mb-6 print-timeline">
             <ProjectTimelineWidget projectId={projectId} />
@@ -459,7 +430,6 @@ export default function ProjectDashboard({
         )}
 
         {/* AI WIDGET */}
-        <Trace at="AiAnalysisWidget?" />
         {projectId && canShowWidget('aiAnalysis') && (
           <div id="section-ai-analyse" className="mt-8 scroll-mt-20 print:hidden">
             <AiAnalysisWidget
@@ -474,7 +444,6 @@ export default function ProjectDashboard({
         )}
 
         {/* KPI GRID */}
-        <Trace at="TableauKpiGrid?" />
         {canShowWidget('kpis') && (
           <div id="section-kpis" className="mt-8 scroll-mt-20 print-kpi-grid">
             {extendedKpis && (
@@ -489,7 +458,6 @@ export default function ProjectDashboard({
           </div>
         )}
 
-        <Trace at="KpiTrendChart" />
         {canShowWidget('trend') && (
           <div id="section-verlauf" className="mt-8 scroll-mt-20 print-trend-chart" ref={chartRef}>
             <KpiTrendChart
@@ -507,7 +475,6 @@ export default function ProjectDashboard({
           </div>
         ) : null}
 
-        <Trace at="GoogleGenAiVisibilityCard?" />
         {canShowWidget('googleGenAi') && (
           <div id="section-google-genai" className="mt-8 scroll-mt-20 print:hidden">
             <GoogleGenAiVisibilityCard data={data.googleGenAi} projectId={projectId} userRole={userRole} />
@@ -515,7 +482,6 @@ export default function ProjectDashboard({
         )}
 
         {/* KI-Traffic Sektion mit Toggle für Detail-Ansicht */}
-        <Trace at="AiTrafficCard" />
         {canShowWidget('aiTraffic') && (
           <div id="section-ki-traffic" className="grid grid-cols-1 gap-6 mt-8 scroll-mt-20 print-traffic-grid">
             <div className="print-ai-card">
@@ -547,7 +513,6 @@ export default function ProjectDashboard({
         )}
 
         {/* KI-Traffic Detail-Ansicht (ausklappbar) */}
-        <Trace at="AiTrafficDetailWidgetV2?" />
         {canShowWidget('aiTraffic') && showAiTrafficDetail && hasAiTraffic && projectId && (
           <div className="mt-8 animate-in slide-in-from-top-4 duration-300 print:hidden">
             <AiTrafficDetailWidgetV2
@@ -558,7 +523,6 @@ export default function ProjectDashboard({
         )}
 
         {/* PROMPT TRACKING Detail-Ansicht (ausklappbar) */}
-        <Trace at="PromptTrackingCard?" />
         {showPromptTrackingDetail && shouldRenderPromptTracking && (
           <div
             id="section-prompt-tracking"
@@ -578,7 +542,6 @@ export default function ProjectDashboard({
             (je 50% Breite), auf Mobile gestapelt. Wenn Landingpages für
             Kunden ausgeblendet sind und nicht-Admin, fällt TopQueries
             automatisch auf volle Breite zurück. */}
-        <Trace at="TopQueries+Landingpages" />
         {(shouldRenderTopQueries || shouldRenderChart) && (
           <div className={`grid grid-cols-1 ${shouldRenderTopQueries && shouldRenderChart ? 'lg:grid-cols-2' : ''} gap-6 mt-8 lg:items-stretch`}>
             {shouldRenderTopQueries && (
@@ -621,7 +584,6 @@ export default function ProjectDashboard({
         )}
 
         {/* PIE CHARTS */}
-        <Trace at="TableauPieCharts" />
         {visibleTrafficBreakdownCount > 0 && (
           <div
             id="section-zugriffe"
@@ -660,7 +622,6 @@ export default function ProjectDashboard({
         )}
 
         {/* GOOGLE ADS SEKTION */}
-        <Trace at="GoogleAdsWidget?" />
         {shouldRenderGoogleAds && (
           <div id="section-google-ads" className="mt-8 scroll-mt-20 transition-all duration-300">
             <GoogleAdsWidget
@@ -671,7 +632,6 @@ export default function ProjectDashboard({
           </div>
         )}
 
-        <Trace at="Semrush?" />
         {shouldRenderSemrush && (
           <div
             id="section-semrush"
@@ -757,16 +717,13 @@ export default function ProjectDashboard({
           </div>
         )}
 
-        <Trace at="ENDE-MainContent" />
       </div>
 
       {/* DataMax Chat - Floating Button unten rechts (Conditional) */}
-      <Trace at="DataMaxChat?" />
       {dataMaxEnabled && canShowWidget('dataMaxChat') && (
         <DataMaxChat projectId={projectId} dateRange={dateRange} ansprache={userAnsprache} />
       )}
 
-      <Trace at="ENDE-Render" />
 
       {/* Animation Styles */}
       <style jsx global>{`

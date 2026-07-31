@@ -63,6 +63,13 @@ Für lokale Projekte kann DataPeak mehrere Standorte abbilden, z.B. Kanzlei Wien
 - **APIs:** Google Search Console API, Google Analytics 4 Data API (via OAuth2), Google GenAI Search-Console-Signale je nach Rollout/API-Verfügbarkeit
 - **Hosting:** Vercel
 
+### Betrieb und Datenbank
+
+- Datenbankänderungen liegen versioniert unter `migrations/` und werden vor dem Deployment mit `npm run db:migrate` angewendet.
+- Seiten, API-Routen und Cronjobs führen keine Schemaänderungen während eines Requests aus.
+- `npm run audit:code` prüft auf Runtime-DDL, exakte TypeScript-Duplikate, verwaiste Module und ungewollte Server-zu-UI-Abhängigkeiten.
+- `npm run build` bleibt die abschließende Produktionsprüfung.
+
 ### Datensicherheit
 
 DataPeak nutzt ausschließlich offizielle Google-APIs via OAuth2. Daten werden in einer dedizierten Vercel-Umgebung sicher verarbeitet — kein Drittanbieter sieht deine Analytics-Daten.
@@ -145,6 +152,13 @@ For local projects, DataPeak can represent multiple locations such as a main off
 - **Database:** Vercel Postgres
 - **APIs:** Google Search Console API, Google Analytics 4 Data API (via OAuth2), Google GenAI Search Console signals depending on rollout/API availability
 - **Hosting:** Vercel
+
+### Operations and Database
+
+- Database changes are versioned in `migrations/` and applied before deployment with `npm run db:migrate`.
+- Pages, API routes, and cron jobs do not modify the schema during requests.
+- `npm run audit:code` checks for runtime DDL, exact TypeScript duplicates, orphaned modules, and unintended server-to-UI dependencies.
+- `npm run build` remains the final production verification.
 
 ### Data Security
 

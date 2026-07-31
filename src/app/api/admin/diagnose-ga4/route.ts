@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
 import { google } from 'googleapis';
-import { JWT } from 'google-auth-library';
 import { buildAiTrafficDimensionFilter } from '@/lib/ai-sources';
+import { createGoogleAuth, GOOGLE_SCOPES } from '@/lib/google-auth';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -26,27 +26,8 @@ interface DiagnoseArgs {
   reports?: string[];
 }
 
-function createAuth(): JWT {
-  if (process.env.GOOGLE_CREDENTIALS) {
-    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-    return new JWT({
-      email: credentials.client_email,
-      key: credentials.private_key,
-      scopes: ['https://www.googleapis.com/auth/analytics.readonly'],
-    });
-  }
-
-  const privateKeyBase64 = process.env.GOOGLE_PRIVATE_KEY_BASE64;
-  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  if (!privateKeyBase64 || !clientEmail) {
-    throw new Error('Google Credentials fehlen.');
-  }
-
-  return new JWT({
-    email: clientEmail,
-    key: Buffer.from(privateKeyBase64, 'base64').toString('utf8'),
-    scopes: ['https://www.googleapis.com/auth/analytics.readonly'],
-  });
+function createAuth() {
+  return createGoogleAuth([GOOGLE_SCOPES.analytics]);
 }
 
 function clampNumber(value: string | null, fallback: number, min: number, max: number) {

@@ -1,23 +1,47 @@
-// src/app/api/clear-cache/route.ts
-// ADMIN VERSION - KEINE AUTH CHECKS
-// ⚠️ NUR FÜR DEVELOPMENT/TESTING - FÜR PRODUCTION SPÄTER AUTH HINZUFÜGEN
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
+import { auth } from '@/lib/auth';
+
+type ClearCacheBody = {
+  dateRange?: string;
+  userId?: string;
+};
+
+async function isSuperAdmin() {
+  const session = await auth();
+  return session?.user?.role === 'SUPERADMIN';
+}
+
+function parseBody(value: unknown): ClearCacheBody {
+  if (!value || typeof value !== 'object') return {};
+
+  const body = value as Record<string, unknown>;
+  return {
+    dateRange: typeof body.dateRange === 'string' && body.dateRange.trim()
+      ? body.dateRange.trim()
+      : undefined,
+    userId: typeof body.userId === 'string' && body.userId.trim()
+      ? body.userId.trim()
+      : undefined,
+  };
+}
 
 export async function POST(request: NextRequest) {
+  if (!(await isSuperAdmin())) {
+    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 403 });
+  }
+
   try {
     // KORREKTUR: Robusteres Parsing des Request-Bodies.
     // Verhindert Absturz ("SyntaxError"), wenn das Frontend keinen Body sendet.
-    let body: any = {};
+    let body: ClearCacheBody = {};
     try {
       const text = await request.text();
       if (text && text.trim().length > 0) {
-        body = JSON.parse(text);
+        body = parseBody(JSON.parse(text));
       }
-    } catch (e) {
-      console.warn('[Clear Cache] Warnung: Kein valider JSON-Body empfangen. Fahre mit Standardwerten fort.');
-      // Wir machen weiter mit einem leeren Objekt -> das führt unten zum Löschen des gesamten Caches (Default-Verhalten)
+    } catch {
+      return NextResponse.json({ error: 'Ungueltiger JSON-Body' }, { status: 400 });
     }
 
     const { dateRange, userId } = body;
@@ -83,10 +107,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Clear Cache] CRITICAL Error:', error);
     return NextResponse.json(
-      { error: 'Cache konnte nicht gelöscht werden', details: error.message },
+      {
+        error: 'Cache konnte nicht geloescht werden',
+        details: error instanceof Error ? error.message : 'Unbekannter Fehler',
+      },
       { status: 500 }
     );
   }
@@ -94,6 +121,10 @@ export async function POST(request: NextRequest) {
 
 // GET zum Anzeigen aller Caches (Superadmin View)
 export async function GET(request: NextRequest) {
+  if (!(await isSuperAdmin())) {
+    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 403 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
@@ -160,10 +191,13 @@ export async function GET(request: NextRequest) {
       totalEntries: cacheInfo.length
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Cache Info] Error:', error);
     return NextResponse.json(
-      { error: 'Cache-Info konnte nicht abgerufen werden', details: error.message },
+      {
+        error: 'Cache-Info konnte nicht abgerufen werden',
+        details: error instanceof Error ? error.message : 'Unbekannter Fehler',
+      },
       { status: 500 }
     );
   }

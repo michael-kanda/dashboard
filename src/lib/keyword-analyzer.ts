@@ -470,44 +470,6 @@ function generateIntentGuidance(intent: SearchIntent): string {
   }
 }
 
-// ============================================================================
-// UTILITY EXPORTS (unverändert)
-// ============================================================================
-
-export function getMainKeyword(keywords: Keyword[], fallback?: string): string {
-  if (!keywords || keywords.length === 0) {
-    return fallback || '';
-  }
-  
-  const sorted = [...keywords].sort((a, b) => b.clicks - a.clicks);
-  return sorted[0]?.query || fallback || '';
-}
-
-export function isQuestionKeyword(query: string): boolean {
-  const firstWord = query.toLowerCase().split(/\s+/)[0];
-  return [...QUESTION_WORDS_DE, ...QUESTION_WORDS_EN].includes(firstWord);
-}
-
-export function calculateKeywordDensity(text: string, keyword: string): number {
-  const cleanText = text.toLowerCase().replace(/[^\w\säöüß]/g, '');
-  const words = cleanText.split(/\s+/).filter(w => w.length > 0);
-  const keywordLower = keyword.toLowerCase();
-  
-  if (words.length === 0) return 0;
-  
-  let count = 0;
-  const keywordWords = keywordLower.split(/\s+/);
-  
-  for (let i = 0; i <= words.length - keywordWords.length; i++) {
-    const slice = words.slice(i, i + keywordWords.length).join(' ');
-    if (slice === keywordLower) {
-      count++;
-    }
-  }
-  
-  const density = (count * keywordWords.length) / words.length * 100;
-  return Math.round(density * 100) / 100;
-}
 
 // ✅ NEU: Export Intent-Analyzer Funktionen
 export { 

@@ -237,13 +237,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await sql`
-      ALTER TABLE users
-      ADD COLUMN IF NOT EXISTS settings_show_landingpages BOOLEAN DEFAULT TRUE,
-      ADD COLUMN IF NOT EXISTS settings_show_google_ads BOOLEAN DEFAULT FALSE,
-      ADD COLUMN IF NOT EXISTS settings_show_prompt_tracking BOOLEAN DEFAULT FALSE,
-      ADD COLUMN IF NOT EXISTS dashboard_widget_visibility JSONB DEFAULT '{}'::jsonb
-    `;
     const body = await req.json();
     const createdByAdminId = session.user.id;
     const { 

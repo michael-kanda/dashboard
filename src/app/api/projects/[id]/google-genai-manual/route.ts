@@ -63,7 +63,6 @@ export async function POST(
       }, { status: 400 });
     }
 
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_genai_manual_data JSONB NULL`;
     await sql`
       UPDATE users
       SET google_genai_manual_data = ${JSON.stringify({
@@ -96,7 +95,6 @@ export async function DELETE(
       return NextResponse.json({ message: permission.message }, { status: permission.status });
     }
 
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_genai_manual_data JSONB NULL`;
     await sql`
       UPDATE users
       SET google_genai_manual_data = NULL,

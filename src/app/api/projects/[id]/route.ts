@@ -68,8 +68,6 @@ export async function GET(
       return NextResponse.json({ message: 'Keine Berechtigung.' }, { status: 403 });
     }
 
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_genai_manual_data JSONB NULL`;
-
     // ========== PROJEKT-DATEN LADEN ==========
     // WICHTIG: brand_keywords und project_locations MÜSSEN mitgeladen werden.
     // Diese Route und die Server-Seite (projekt/[id]/page.tsx) schreiben in

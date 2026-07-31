@@ -13,28 +13,6 @@ type ToolRunPayload = {
   resultText?: string;
 };
 
-async function ensureKiToolRunsTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS ki_tool_runs (
-      id SERIAL PRIMARY KEY,
-      project_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      created_by UUID REFERENCES users(id) ON DELETE SET NULL,
-      tool VARCHAR(80) NOT NULL,
-      inputs JSONB NOT NULL DEFAULT '{}'::jsonb,
-      data_sources TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
-      content_brief JSONB NOT NULL DEFAULT '{}'::jsonb,
-      result_text TEXT,
-      status VARCHAR(30) NOT NULL DEFAULT 'success',
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
-  `;
-
-  await sql`
-    CREATE INDEX IF NOT EXISTS idx_ki_tool_runs_project_created
-    ON ki_tool_runs(project_id, created_at DESC);
-  `;
-}
-
 function canUseKiSuite(role?: string) {
   return role === 'ADMIN' || role === 'SUPERADMIN';
 }
@@ -69,8 +47,6 @@ export async function GET(request: NextRequest) {
     if (!(await canAccessProject(projectId, session.user.id, session.user.role))) {
       return NextResponse.json({ message: 'Zugriff auf dieses Projekt verweigert' }, { status: 403 });
     }
-
-    await ensureKiToolRunsTable();
 
     const { rows } = await sql`
       SELECT
@@ -118,8 +94,6 @@ export async function POST(request: NextRequest) {
     if (!(await canAccessProject(projectId, session.user.id, session.user.role))) {
       return NextResponse.json({ message: 'Zugriff auf dieses Projekt verweigert' }, { status: 403 });
     }
-
-    await ensureKiToolRunsTable();
 
     const client = await sql.connect();
     try {

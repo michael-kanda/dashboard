@@ -1,6 +1,6 @@
 // src/lib/dashboard-shared.ts
 
-import { DateRangeOption } from "@/components/DateRangeSelector";
+import type { DateRangeOption } from '@/types/date-range';
 import type {
   KpiDatum,
   ChartPoint,
@@ -275,43 +275,6 @@ export interface LocalSeoData {
     newUsers?: number;
     conversions: number;
   };
-}
-
-export const ZERO_KPI: KpiDatum = { value: 0, change: 0 };
-
-export function normalizeFlatKpis(input?: ProjectDashboardData['kpis']) {
-  return {
-    clicks:            input?.clicks            ?? ZERO_KPI,
-    impressions:       input?.impressions       ?? ZERO_KPI,
-    sessions:          input?.sessions          ?? ZERO_KPI,
-    totalUsers:        input?.totalUsers        ?? ZERO_KPI,
-    conversions:       input?.conversions       ?? ZERO_KPI,
-    engagementRate:    input?.engagementRate    ?? ZERO_KPI,
-    bounceRate:        input?.bounceRate        ?? ZERO_KPI,
-    newUsers:          input?.newUsers          ?? ZERO_KPI,
-    avgEngagementTime: input?.avgEngagementTime ?? ZERO_KPI,
-    genAiImpressions:  input?.genAiImpressions  ?? ZERO_KPI,
-    paidSearch:        input?.paidSearch        ?? ZERO_KPI,
-  };
-}
-
-export function hasDashboardData(data: ProjectDashboardData): boolean {
-  if (
-    data.apiErrors?.gsc &&
-    data.apiErrors?.ga4 &&
-    (!data.bingData || data.bingData.length === 0)
-  ) {
-    return false;
-  }
-  const k = normalizeFlatKpis(data.kpis);
-  if (
-    k.clicks.value > 0 ||
-    k.sessions.value > 0 ||
-    (data.bingData && data.bingData.length > 0)
-  ) {
-    return true;
-  }
-  return false;
 }
 
 export function calculatePromptTrackingSignal(

@@ -1,25 +1,7 @@
 // src/lib/demo-data.ts
 import type { ProjectDashboardData, ConvertingPageData } from '@/lib/dashboard-shared';
 import type { TopQueryData } from '@/types/dashboard';
-
-// ✅ Lokale Type Definition um zirkuläre Imports zu vermeiden
-type AiTrafficData = {
-  totalSessions: number;
-  totalUsers: number;
-  totalSessionsChange?: number;
-  totalUsersChange?: number;
-  sessionsBySource: { [key: string]: number };
-  topAiSources: Array<{
-    source: string;
-    sessions: number;
-    users: number;
-    percentage: number;
-  }>;
-  trend: Array<{
-    date: number;
-    sessions: number;
-  }>;
-};
+import type { AiTrafficData } from '@/types/ai-traffic';
 
 /**
  * Generiert realistische Demo-Daten für Demo-Accounts

@@ -496,7 +496,7 @@ export function isTransactional(keyword: string): boolean {
 /**
  * Extrahiert die wichtigsten Intent-Signale
  */
-export function getTopSignals(analysis: IntentAnalysis, limit: number = 3): IntentSignal[] {
+function getTopSignals(analysis: IntentAnalysis, limit: number = 3): IntentSignal[] {
   return analysis.signals
     .sort((a, b) => b.weight - a.weight)
     .slice(0, limit);

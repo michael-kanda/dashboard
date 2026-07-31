@@ -2,7 +2,7 @@
 // Erweiterte KI-Traffic Analyse mit User-Journey und Intent-Kategorisierung
 
 import { google } from 'googleapis';
-import { JWT } from 'google-auth-library';
+import { createGoogleAuth, GOOGLE_SCOPES } from './google-auth';
 import { normalizeSource, buildAiTrafficDimensionFilter } from './ai-sources';
 
 // ============================================================================
@@ -282,34 +282,8 @@ export const HOMEPAGE_INTENT: IntentCategory = {
 // HELPER FUNKTIONEN
 // ============================================================================
 
-function createAuth(): JWT {
-  if (process.env.GOOGLE_CREDENTIALS) {
-    try {
-      const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-      return new JWT({
-        email: credentials.client_email,
-        key: credentials.private_key,
-        scopes: ['https://www.googleapis.com/auth/analytics.readonly'],
-      });
-    } catch (e) {
-      console.error('Fehler beim Parsen der GOOGLE_CREDENTIALS:', e);
-      throw new Error('Google Credentials invalid');
-    }
-  }
-  
-  const privateKeyBase64 = process.env.GOOGLE_PRIVATE_KEY_BASE64;
-  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-
-  if (!privateKeyBase64 || !clientEmail) {
-    throw new Error('Google API Credentials fehlen.');
-  }
-
-  const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
-  return new JWT({
-    email: clientEmail,
-    key: privateKey,
-    scopes: ['https://www.googleapis.com/auth/analytics.readonly'],
-  });
+function createAuth() {
+  return createGoogleAuth([GOOGLE_SCOPES.analytics]);
 }
 
 /**

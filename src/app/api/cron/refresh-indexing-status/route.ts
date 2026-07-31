@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
-import {
-  ensureIndexingStatusSchema,
-  syncProjectIndexingStatus,
-} from '@/lib/indexing-status';
+import { syncProjectIndexingStatus } from '@/lib/indexing-status';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -13,7 +10,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  await ensureIndexingStatusSchema();
   const { rows: projects } = await sql<{ id: string; email: string }>`
     SELECT u.id::text, u.email
     FROM users u

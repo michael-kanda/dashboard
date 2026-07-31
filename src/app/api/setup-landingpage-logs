@@ -1,8 +1,0 @@
-CREATE TABLE IF NOT EXISTS landingpage_logs (
-    id SERIAL PRIMARY KEY,
-    landingpage_id INTEGER NOT NULL REFERENCES landingpages(id) ON DELETE CASCADE, -- Verknüpfung zur Landingpage
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL, -- Wer hat die Aktion ausgeführt (Admin oder Kunde)
-    user_email VARCHAR(255), -- E-Mail des Benutzers zur Anzeige
-    action TEXT NOT NULL, -- Beschreibung der Aktion (z.B. "Status auf 'Freigegeben' gesetzt")
-    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP -- Zeitstempel
-);

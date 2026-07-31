@@ -164,13 +164,3 @@ export function weatherMapToObject(map: Map<string, DailyWeather>): Record<strin
   map.forEach((val, key) => { obj[key] = val; });
   return obj;
 }
-
-/**
- * Rekonstruiert die Map aus einem deserialisierten Objekt.
- */
-export function objectToWeatherMap(obj?: Record<string, DailyWeather> | null): Map<string, DailyWeather> {
-  const map = new Map<string, DailyWeather>();
-  if (!obj) return map;
-  Object.entries(obj).forEach(([key, val]) => map.set(key, val));
-  return map;
-}

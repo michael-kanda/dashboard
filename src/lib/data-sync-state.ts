@@ -2,27 +2,6 @@ import { sql } from '@vercel/postgres';
 
 export type DataSyncSource = 'gsc-daily' | 'dashboard-30d';
 
-export async function ensureDataSyncStateSchema(): Promise<void> {
-  await sql`
-    CREATE TABLE IF NOT EXISTS project_data_sync_state (
-      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      source VARCHAR(40) NOT NULL,
-      status VARCHAR(20) NOT NULL DEFAULT 'idle',
-      last_attempt_at TIMESTAMPTZ NULL,
-      last_success_at TIMESTAMPTZ NULL,
-      next_sync_at TIMESTAMPTZ NULL,
-      consecutive_failures INTEGER NOT NULL DEFAULT 0,
-      last_error TEXT NULL,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      PRIMARY KEY (user_id, source)
-    )
-  `;
-  await sql`
-    CREATE INDEX IF NOT EXISTS idx_project_data_sync_due
-    ON project_data_sync_state(source, next_sync_at, last_attempt_at)
-  `;
-}
-
 export async function markDataSyncStarted(
   userId: string,
   source: DataSyncSource,

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
-// import NotificationBell from '@/components/NotificationBell';
 import { useTheme } from '@/components/ThemeProvider';
 import { useState, useEffect, useCallback } from 'react';
 import { 

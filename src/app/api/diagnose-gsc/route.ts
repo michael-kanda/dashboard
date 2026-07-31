@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
 import { google } from 'googleapis';
-import { JWT } from 'google-auth-library';
+import { GOOGLE_SCOPES, tryCreateGoogleAuth } from '@/lib/google-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,34 +85,8 @@ async function queryGscDimensionWithAppearanceFilter(
   return (response.data.rows || []) as GscDiagnosticRow[];
 }
 
-function createAuth(): JWT | null {
-  try {
-    if (process.env.GOOGLE_CREDENTIALS) {
-      const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-      return new JWT({
-        email: credentials.client_email,
-        key: credentials.private_key,
-        scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
-      });
-    }
-    
-    const privateKeyBase64 = process.env.GOOGLE_PRIVATE_KEY_BASE64;
-    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-
-    if (!privateKeyBase64 || !clientEmail) {
-      return null;
-    }
-
-    const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
-    return new JWT({
-      email: clientEmail,
-      key: privateKey,
-      scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
-    });
-  } catch (e) {
-    console.error('Auth creation error:', e);
-    return null;
-  }
+function createAuth() {
+  return tryCreateGoogleAuth([GOOGLE_SCOPES.searchConsole]);
 }
 
 export async function GET(request: NextRequest) {

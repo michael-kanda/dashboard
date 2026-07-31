@@ -34,12 +34,6 @@ interface ExtendedUser extends User {
 
 async function loadData(projectId: string, dateRange: string) {
   try {
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dashboard_info_text TEXT NULL`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_genai_manual_data JSONB NULL`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS sitemap_url TEXT NULL`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dashboard_widget_visibility JSONB DEFAULT '{}'::jsonb`;
-
     const { rows } = await sql`
       SELECT
         u.id::text as id, 
@@ -106,13 +100,10 @@ export default async function ProjectPage({
   params: { id: string },
   searchParams: { range?: string }
 }) {
-  console.log('[PAGE-TRACE] ProjectPage ENTRY');
-  
   const projectId = params.id;
   const dateRange = (searchParams.range as DateRangeOption) || '30d';
 
   const session = await auth();
-  console.log('[PAGE-TRACE] after auth, role=', session?.user?.role, 'projectId=', projectId);
 
   if (!session?.user) {
     redirect('/login');
@@ -122,12 +113,9 @@ export default async function ProjectPage({
     redirect('/');
   }
 
-  console.log('[PAGE-TRACE] before loadData');
   const data = await loadData(projectId, dateRange);
-  console.log('[PAGE-TRACE] after loadData, hasData=', !!data, 'hasDashboardData=', !!data?.dashboardData);
 
   if (!data || !data.dashboardData) {
-    console.log('[PAGE-TRACE] returning early: no data');
     return (
       <div className="flex justify-center items-center min-h-screen bg-surface-secondary">
         <p className="text-muted">Projekt nicht gefunden oder keine Daten verfügbar.</p>
@@ -141,40 +129,30 @@ export default async function ProjectPage({
   const timelineActive = projectUser.project_timeline_active === true;
   const isDataMaxEnabled = projectUser.data_max_enabled !== false;
 
-  console.log('[PAGE-TRACE] computed flags: timelineActive=', timelineActive, 'isDataMaxEnabled=', isDataMaxEnabled);
-  console.log('[PAGE-TRACE] about to create client-only dashboard element');
-  
-  try {
-    const dashboardEl = (
-      <ProjectDashboardClient
-        data={dashboardData}
-        isLoading={false}
-        dateRange={dateRange}
-        projectId={projectUser.id}
-        domain={projectUser.domain || ''}
-        faviconUrl={projectUser.favicon_url || undefined}
-        semrushTrackingId={projectUser.semrush_tracking_id || undefined}
-        semrushTrackingId02={projectUser.semrush_tracking_id_02 || undefined}
-        projectTimelineActive={timelineActive}
-        countryData={dashboardData.countryData}
-        channelData={dashboardData.channelData}
-        deviceData={dashboardData.deviceData}
-        userRole={session.user.role}
-        userEmail={supportEmail}
-        userAnsprache={session.user.ansprache || null}
-        showLandingPages={projectUser.settings_show_landingpages !== false}
-        showGoogleAds={projectUser.settings_show_google_ads === true}
-        showPromptTracking={projectUser.settings_show_prompt_tracking === true}
-        widgetVisibility={projectUser.dashboard_widget_visibility}
-        dashboardInfoText={projectUser.dashboard_info_text || null}
-        dataMaxEnabled={isDataMaxEnabled}
-        indexingStatus={indexingStatus}
-      />
-    );
-    console.log('[PAGE-TRACE] ✓ created ProjectDashboardClient element');
-    return dashboardEl;
-  } catch (e) {
-    console.error('[PAGE-TRACE] ✗ FAILED creating ProjectDashboardClient element:', e);
-    throw e;
-  }
+  return (
+    <ProjectDashboardClient
+      data={dashboardData}
+      isLoading={false}
+      dateRange={dateRange}
+      projectId={projectUser.id}
+      domain={projectUser.domain || ''}
+      faviconUrl={projectUser.favicon_url || undefined}
+      semrushTrackingId={projectUser.semrush_tracking_id || undefined}
+      semrushTrackingId02={projectUser.semrush_tracking_id_02 || undefined}
+      projectTimelineActive={timelineActive}
+      countryData={dashboardData.countryData}
+      channelData={dashboardData.channelData}
+      deviceData={dashboardData.deviceData}
+      userRole={session.user.role}
+      userEmail={supportEmail}
+      userAnsprache={session.user.ansprache || null}
+      showLandingPages={projectUser.settings_show_landingpages !== false}
+      showGoogleAds={projectUser.settings_show_google_ads === true}
+      showPromptTracking={projectUser.settings_show_prompt_tracking === true}
+      widgetVisibility={projectUser.dashboard_widget_visibility}
+      dashboardInfoText={projectUser.dashboard_info_text || null}
+      dataMaxEnabled={isDataMaxEnabled}
+      indexingStatus={indexingStatus}
+    />
+  );
 }

@@ -2,8 +2,9 @@
 'use client';
 
 import React from 'react';
+import type { DateRangeOption } from '@/types/date-range';
 
-export type DateRangeOption = '30d' | '3m' | '6m' | '12m' | '18m' | '24m';
+export type { DateRangeOption } from '@/types/date-range';
 
 interface DateRangeSelectorProps {
   value: DateRangeOption;

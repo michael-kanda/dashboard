@@ -1,6 +1,6 @@
 import { load } from 'cheerio';
 import { createHash } from 'crypto';
-import { JWT } from 'google-auth-library';
+import { createGoogleAuth, GOOGLE_SCOPES } from '@/lib/google-auth';
 import { google } from 'googleapis';
 import { sql } from '@vercel/postgres';
 
@@ -93,107 +93,8 @@ const EMPTY_STATUS: ProjectIndexingStatus = {
   rows: [],
 };
 
-export async function ensureIndexingStatusSchema() {
-  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS sitemap_url TEXT NULL`;
-  await sql`
-    CREATE TABLE IF NOT EXISTS project_indexing_sync (
-      user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-      sitemap_url TEXT,
-      status VARCHAR(20) NOT NULL DEFAULT 'idle',
-      started_at TIMESTAMPTZ,
-      completed_at TIMESTAMPTZ,
-      next_sync_at TIMESTAMPTZ,
-      sitemap_fingerprint TEXT,
-      sitemap_checked_at TIMESTAMPTZ,
-      lock_until TIMESTAMPTZ,
-      sitemap_entry_count INTEGER NOT NULL DEFAULT 0,
-      excluded_url_count INTEGER NOT NULL DEFAULT 0,
-      excluded_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
-      sync_warning TEXT,
-      progress_stage VARCHAR(20) NOT NULL DEFAULT 'idle',
-      progress_total INTEGER NOT NULL DEFAULT 0,
-      progress_completed INTEGER NOT NULL DEFAULT 0,
-      progress_due_total INTEGER NOT NULL DEFAULT 0,
-      error_message TEXT,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `;
-  await sql`
-    CREATE TABLE IF NOT EXISTS project_indexing_urls (
-      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      url TEXT NOT NULL,
-      source_sitemap TEXT,
-      sitemap_lastmod TIMESTAMPTZ,
-      is_in_sitemap BOOLEAN NOT NULL DEFAULT TRUE,
-      status VARCHAR(20) NOT NULL DEFAULT 'pending',
-      verdict TEXT,
-      coverage_state TEXT,
-      robots_txt_state TEXT,
-      indexing_state TEXT,
-      page_fetch_state TEXT,
-      google_canonical TEXT,
-      user_canonical TEXT,
-      last_crawl_time TIMESTAMPTZ,
-      inspected_at TIMESTAMPTZ,
-      next_inspection_at TIMESTAMPTZ,
-      inspection_attempts INTEGER NOT NULL DEFAULT 0,
-      change_detected_at TIMESTAMPTZ,
-      inspection_error TEXT,
-      clicks DOUBLE PRECISION NOT NULL DEFAULT 0,
-      impressions DOUBLE PRECISION NOT NULL DEFAULT 0,
-      ctr DOUBLE PRECISION NOT NULL DEFAULT 0,
-      position DOUBLE PRECISION,
-      discovered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      PRIMARY KEY (user_id, url)
-    )
-  `;
-  await sql`
-    ALTER TABLE project_indexing_sync
-      ADD COLUMN IF NOT EXISTS sitemap_fingerprint TEXT,
-      ADD COLUMN IF NOT EXISTS sitemap_checked_at TIMESTAMPTZ,
-      ADD COLUMN IF NOT EXISTS lock_until TIMESTAMPTZ,
-      ADD COLUMN IF NOT EXISTS sitemap_entry_count INTEGER NOT NULL DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS excluded_url_count INTEGER NOT NULL DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS excluded_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
-      ADD COLUMN IF NOT EXISTS sync_warning TEXT,
-      ADD COLUMN IF NOT EXISTS progress_stage VARCHAR(20) NOT NULL DEFAULT 'idle',
-      ADD COLUMN IF NOT EXISTS progress_total INTEGER NOT NULL DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS progress_completed INTEGER NOT NULL DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS progress_due_total INTEGER NOT NULL DEFAULT 0
-  `;
-  await sql`
-    ALTER TABLE project_indexing_urls
-      ADD COLUMN IF NOT EXISTS next_inspection_at TIMESTAMPTZ,
-      ADD COLUMN IF NOT EXISTS inspection_attempts INTEGER NOT NULL DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS change_detected_at TIMESTAMPTZ
-  `;
-  await sql`CREATE INDEX IF NOT EXISTS idx_indexing_urls_project_status ON project_indexing_urls(user_id, status)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_indexing_urls_inspected ON project_indexing_urls(user_id, inspected_at)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_indexing_urls_due ON project_indexing_urls(user_id, next_inspection_at) WHERE is_in_sitemap = TRUE`;
-}
-
 function createGscAuth() {
-  if (process.env.GOOGLE_CREDENTIALS) {
-    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-    return new JWT({
-      email: credentials.client_email,
-      key: credentials.private_key,
-      scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
-    });
-  }
-
-  const privateKeyBase64 = process.env.GOOGLE_PRIVATE_KEY_BASE64;
-  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  if (!privateKeyBase64 || !clientEmail) {
-    throw new Error('Google Search Console Zugangsdaten fehlen.');
-  }
-
-  return new JWT({
-    email: clientEmail,
-    key: Buffer.from(privateKeyBase64, 'base64').toString('utf-8'),
-    scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
-  });
+  return createGoogleAuth([GOOGLE_SCOPES.searchConsole]);
 }
 
 function normalizeDomain(value: string) {
@@ -475,7 +376,6 @@ export async function syncProjectIndexingStatus(
   options: { force?: boolean; maxInspections?: number; deadlineAt?: number } = {},
 ) {
   const deadlineAt = options.deadlineAt ?? Date.now() + 240_000;
-  await ensureIndexingStatusSchema();
   const { rows } = await sql<ProjectConfig>`
     SELECT id::text, domain, gsc_site_url, sitemap_url
     FROM users
@@ -809,7 +709,6 @@ export async function syncProjectIndexingStatus(
 
 export async function getProjectIndexingStatus(projectId: string): Promise<ProjectIndexingStatus> {
   try {
-    await ensureIndexingStatusSchema();
     const { rows: projectRows } = await sql<ProjectConfig>`
       SELECT id::text, domain, gsc_site_url, sitemap_url
       FROM users WHERE id = ${projectId}::uuid

@@ -62,9 +62,10 @@ google.options({
   // pro Call (Wartezeit + Request) über ga4RunReport.
   timeout: 30_000,
 });
-import { JWT } from 'google-auth-library';
 import { ChartEntry, type GoogleGenAiPerformanceData, type GoogleGenAiBreakdownItem } from '@/lib/dashboard-shared';
 import type { TopQueryData } from '@/types/dashboard';
+import type { AiTrafficData } from '@/types/ai-traffic';
+import { createGoogleAuth, GOOGLE_SCOPES } from '@/lib/google-auth';
 import {
   getGa4PropertyLockKeyFromCacheKey,
   releaseGa4RequestLock,
@@ -370,69 +371,14 @@ export interface Ga4ExtendedData {
   paidSearch: DateRangeData;
 }
 
-export interface AiTrafficData {
-  totalSessions: number;
-  totalUsers: number;
-  totalSessionsChange?: number;
-  totalUsersChange?: number;
-  sessionsBySource: {
-    [key: string]: number;
-  };
-  topAiSources: Array<{
-    source: string;
-    sessions: number;
-    users: number;
-    percentage: number;
-  }>;
-  trend: Array<{
-    date: number;
-    sessions: number;
-  }>;
-}
-
 // --- Authentifizierung ---
 
-function createAuth(): JWT {
-  if (process.env.GOOGLE_CREDENTIALS) {
-    try {
-      const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-      return new JWT({
-        email: credentials.client_email,
-        key: credentials.private_key,
-        scopes: [
-          'https://www.googleapis.com/auth/webmasters.readonly',
-          'https://www.googleapis.com/auth/analytics.readonly',
-          'https://www.googleapis.com/auth/spreadsheets.readonly',
-        ],
-      });
-    } catch (e) {
-      console.error('Fehler beim Parsen der GOOGLE_CREDENTIALS:', e);
-      throw new Error('Google Credentials invalid');
-    }
-  }
-
-  // Fallback für alte Env Vars
-  const privateKeyBase64 = process.env.GOOGLE_PRIVATE_KEY_BASE64;
-  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-
-  if (!privateKeyBase64 || !clientEmail) {
-    throw new Error('Google API Credentials fehlen.');
-  }
-
-  try {
-    const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
-    return new JWT({
-      email: clientEmail,
-      key: privateKey,
-      scopes: [
-        'https://www.googleapis.com/auth/webmasters.readonly',
-        'https://www.googleapis.com/auth/analytics.readonly',
-        'https://www.googleapis.com/auth/spreadsheets.readonly',
-      ],
-    });
-  } catch (error) {
-    throw new Error('Fehler beim Initialisieren der Google API Authentifizierung.');
-  }
+function createAuth() {
+  return createGoogleAuth([
+    GOOGLE_SCOPES.searchConsole,
+    GOOGLE_SCOPES.analytics,
+    GOOGLE_SCOPES.sheets,
+  ]);
 }
 
 // --- Sheet API ---
@@ -1520,7 +1466,7 @@ export async function getGscPageCtr(
 // Queries nach Landingpage
 // ============================================================================
 
-export async function getQueriesByLandingPage(
+async function getQueriesByLandingPage(
   siteUrl: string,
   startDate: string,
   endDate: string,

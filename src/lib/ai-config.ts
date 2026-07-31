@@ -166,28 +166,3 @@ export async function streamTextSafe(
   console.error('❌ AI-Manager: Alle Modelle erschöpft!', finalError);
   throw finalError;
 }
-
-// ============================================================================
-// CONVENIENCE: Response mit Headers erstellen
-// ============================================================================
-
-/**
- * Erstellt eine Text Stream Response mit AI-Status-Headers
- * Optional - kann verwendet werden, um Model-Info im Response-Header zu haben
- * 
- * @example
- * const result = await streamTextSafe({ prompt: '...' });
- * return createAIStreamResponse(result);
- */
-export function createAIStreamResponse(
-  result: EnhancedStreamResult,
-  additionalHeaders?: Record<string, string>
-): Response {
-  return result.toTextStreamResponse({
-    headers: {
-      'X-AI-Model': result._modelName || 'unknown',
-      'X-AI-Status': result._status || 'unknown',
-      ...additionalHeaders,
-    },
-  });
-}

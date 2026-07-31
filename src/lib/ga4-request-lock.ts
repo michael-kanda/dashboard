@@ -7,23 +7,6 @@ export interface Ga4RequestLock {
 
 const DEFAULT_GA4_LOCK_TTL_MS = 2 * 60 * 1000;
 
-let lockTableReady: Promise<void> | null = null;
-
-async function ensureGa4LockTable(): Promise<void> {
-  if (!lockTableReady) {
-    lockTableReady = sql`
-      CREATE TABLE IF NOT EXISTS ga4_request_locks (
-        lock_key TEXT PRIMARY KEY,
-        lock_token TEXT NOT NULL,
-        locked_until TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-      )
-    `.then(() => undefined);
-  }
-
-  await lockTableReady;
-}
-
 export function getGa4PropertyLockKey(propertyId: string | null | undefined): string | null {
   const normalized = String(propertyId ?? '').trim();
   return normalized ? `ga4-property:${normalized}` : null;
@@ -39,8 +22,6 @@ export async function tryAcquireGa4RequestLock(
   ttlMs = DEFAULT_GA4_LOCK_TTL_MS
 ): Promise<Ga4RequestLock | null> {
   try {
-    await ensureGa4LockTable();
-
     const token = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const lockedUntil = new Date(Date.now() + ttlMs).toISOString();
     const { rows } = await sql`

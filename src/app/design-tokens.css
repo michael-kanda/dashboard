@@ -16,11 +16,9 @@
 :root {
 /* ── 01. TYPOGRAPHY ─────────────────────────────────────── */
 /*
- * Font wechseln = 2 Stellen ändern:
- *   1. layout.tsx  → next/font import + className auf <body>
- *   2. Diese Variable → Font-Name für Tailwind/CSS
+ * Font wechseln = Stylesheet-Link in layout.tsx und diese Variable anpassen.
  */
---dp-font-sans: 'Poppins', var(--font-poppins), Arial, Helvetica, sans-serif;
+--dp-font-sans: 'Poppins', Arial, Helvetica, sans-serif;
    --dp-font-mono: 'Courier New', Courier, monospace;
 
   --dp-text-xs:   0.625rem;   /*  10px  labels, badges        */

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sql, type VercelPoolClient } from '@vercel/postgres';
 import { getGscDataForPagesWithComparison, getSearchConsoleData } from '@/lib/google-api';
 import {
-  ensureDataSyncStateSchema,
   markDataSyncFinished,
   markDataSyncStarted,
 } from '@/lib/data-sync-state';
@@ -209,22 +208,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS gsc_daily_data (
-        site_url TEXT NOT NULL,
-        date DATE NOT NULL,
-        clicks INT NOT NULL DEFAULT 0,
-        impressions INT NOT NULL DEFAULT 0,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        PRIMARY KEY (site_url, date)
-      )
-    `;
-    await sql`
-      CREATE INDEX IF NOT EXISTS idx_gsc_daily_site_date
-      ON gsc_daily_data(site_url, date)
-    `;
-    await ensureDataSyncStateSchema();
-
     const { rows } = await sql<GscUser>`
       SELECT u.id::text, u.email, u.gsc_site_url
       FROM users u

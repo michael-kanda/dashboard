@@ -45,8 +45,6 @@ export async function PATCH(
     return NextResponse.json({ message: 'Keine gültigen Positionen übergeben.' }, { status: 400 });
   }
 
-  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS project_locations JSONB DEFAULT '[]'::jsonb`;
-
   const { rows } = await sql`
     SELECT COALESCE(project_locations, '[]'::jsonb) as project_locations
     FROM users
