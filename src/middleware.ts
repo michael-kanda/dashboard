@@ -1,10 +1,10 @@
 // src/middleware.ts
 import NextAuth from 'next-auth';
-import { authConfig } from '@/lib/auth';
+import { baseAuthConfig } from '@/lib/auth-config';
 import { NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 
-const { auth } = NextAuth(authConfig);
+const { auth } = NextAuth(baseAuthConfig);
 
 export default auth(async (req) => {
   const { nextUrl } = req;

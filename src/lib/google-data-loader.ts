@@ -18,9 +18,9 @@ import {
   getGoogleAdsFromSheet,
   getPromptLikeQueries,
   DEFAULT_PROMPT_TRACKING_MIN_WORDS,
-  type AiTrafficData,
   type GoogleAdsData,
 } from '@/lib/google-api';
+import type { AiTrafficData } from '@/types/ai-traffic';
 import { detectBrandKeywords } from '@/lib/prompt-tracking/brand-detector';
 import { normalizeManualGoogleGenAiData } from '@/lib/google-genai-manual';
 import { getBingData } from '@/lib/bing-api';
