@@ -163,25 +163,22 @@ async function loadExistingPage(url: string): Promise<ExistingPageSnapshot> {
     const bodyText = $('main').text() || $('article').text() || $('body').text();
     const cleanText = bodyText.replace(/\s+/g, ' ').trim();
     const origin = new URL(url).origin;
-    const internalLinks = Array.from(new Map(
-      $('a[href]')
-        .map((_, element) => {
-          const href = $(element).attr('href');
-          if (!href) return null;
-          try {
-            const resolved = new URL(href, url);
-            if (resolved.origin !== origin) return null;
-            return [normalizeComparableUrl(resolved.toString()), {
-              anchor: $(element).text().replace(/\s+/g, ' ').trim() || urlLabel(resolved.toString()),
-              url: resolved.toString(),
-            }] as const;
-          } catch {
-            return null;
-          }
-        })
-        .get()
-        .filter((item): item is readonly [string, { anchor: string; url: string }] => Boolean(item))
-    ).values()).slice(0, 30);
+    const linksByUrl = new Map<string, { anchor: string; url: string }>();
+    for (const element of $('a[href]').toArray()) {
+      const href = $(element).attr('href');
+      if (!href) continue;
+      try {
+        const resolved = new URL(href, url);
+        if (resolved.origin !== origin) continue;
+        linksByUrl.set(normalizeComparableUrl(resolved.toString()), {
+          anchor: $(element).text().replace(/\s+/g, ' ').trim() || urlLabel(resolved.toString()),
+          url: resolved.toString(),
+        });
+      } catch {
+        // Ungültige href-Werte sind keine verwertbaren internen Linkziele.
+      }
+    }
+    const internalLinks = Array.from(linksByUrl.values()).slice(0, 30);
 
     return {
       reachable: true,
