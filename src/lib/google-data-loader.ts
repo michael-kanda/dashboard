@@ -42,6 +42,8 @@ import type { TopQueryData, ChartPoint } from '@/types/dashboard';
 import { getDemoAnalyticsData } from '@/lib/demo-data';
 import { fetchWeatherData, weatherMapToObject } from '@/lib/weather';
 
+const TOP_QUERIES_DATA_VERSION = 1;
+
 function getShortErrorMessage(error: unknown): string {
   const err = error as any;
   return (
@@ -131,6 +133,46 @@ function normalizePath(value: string) {
   } catch {
     return value.endsWith('/') && value.length > 1 ? value.slice(0, -1) : value;
   }
+}
+
+function normalizeLandingPageKey(value: string) {
+  if (!value) return '';
+  try {
+    const path = value.startsWith('http')
+      ? new URL(value).pathname
+      : value.split(/[?#]/, 1)[0];
+    const withSlash = path.startsWith('/') ? path : `/${path}`;
+    return withSlash.endsWith('/') && withSlash.length > 1
+      ? withSlash.slice(0, -1)
+      : withSlash;
+  } catch {
+    return '';
+  }
+}
+
+function addLandingPageConversions(
+  queries: TopQueryData[],
+  pages: ConvertingPageData[]
+): TopQueryData[] {
+  const conversionsByPath = new Map<string, number>();
+
+  for (const page of pages) {
+    const path = normalizeLandingPageKey(page.path);
+    if (!path) continue;
+    conversionsByPath.set(
+      path,
+      (conversionsByPath.get(path) ?? 0) + Number(page.conversions || 0)
+    );
+  }
+
+  return queries.map((query) => {
+    const path = normalizeLandingPageKey(query.url || '');
+    if (!path || !conversionsByPath.has(path)) return query;
+    return {
+      ...query,
+      landingPageConversions: conversionsByPath.get(path),
+    };
+  });
 }
 
 function getCityNeedles(value: string) {
@@ -371,6 +413,10 @@ export async function getOrFetchGoogleData(
           cachedPromptMinWords === DEFAULT_PROMPT_TRACKING_MIN_WORDS;
         const cachedGenAiVersion = cacheEntry.data?.googleGenAi?.dataVersion;
         const genAiCacheIsCurrent = !user.gsc_site_url || cachedGenAiVersion === GOOGLE_GENAI_DATA_VERSION;
+        const topQueriesCacheIsCurrent =
+          !user.gsc_site_url ||
+          !user.ga4_property_id ||
+          cacheEntry.data?.topQueriesDataVersion === TOP_QUERIES_DATA_VERSION;
         const cachedLocalSeoLocations = cacheEntry.data?.localSeo?.locations;
         const localSeoCacheIsCurrent =
           !Array.isArray(cachedLocalSeoLocations) ||
@@ -391,6 +437,7 @@ export async function getOrFetchGoogleData(
           (now - lastFetched) / (1000 * 60 * 60) < effectiveMaxAgeHours &&
           promptCacheIsCurrent &&
           genAiCacheIsCurrent &&
+          topQueriesCacheIsCurrent &&
           localSeoCacheIsCurrent &&
           googleAdsCacheIsCurrent
         ) {
@@ -402,6 +449,9 @@ export async function getOrFetchGoogleData(
         }
         if (!genAiCacheIsCurrent) {
           console.log(`[Google Cache] 🔄 MISS wegen Google-GenAI-Migration (${cachedGenAiVersion ?? 'kein Block'} → ${GOOGLE_GENAI_DATA_VERSION})`);
+        }
+        if (!topQueriesCacheIsCurrent) {
+          console.log('[Google Cache] 🔄 MISS wegen Top-Queries-GA4-Migration');
         }
         if (!localSeoCacheIsCurrent) {
           console.log('[Google Cache] 🔄 MISS wegen Local-SEO-NewUsers-Migration');
@@ -630,6 +680,7 @@ export async function getOrFetchGoogleData(
           });
         });
         topConvertingPages = Array.from(pageMap.values());
+        topQueries = addLandingPageConversions(topQueries, topConvertingPages);
       } catch (e) { console.warn('[GA4] Konnte Top-Pages nicht laden:', getShortErrorMessage(e)); }
 
       try {
@@ -710,7 +761,10 @@ export async function getOrFetchGoogleData(
       genAiImpressions: (googleGenAi?.trend || []).map(point => ({ date: point.date, value: point.impressions })),
       paidSearch: currentData.paidSearch.daily || []
     },
-    topQueries, landingPageQueries, topConvertingPages,
+    topQueries,
+    topQueriesDataVersion: TOP_QUERIES_DATA_VERSION,
+    landingPageQueries,
+    topConvertingPages,
     localSeo: buildLocalSeoData((user as any).project_locations, topQueries, topConvertingPages, cityData),
     aiTraffic, countryData, channelData, deviceData,
     bingData, weatherData, googleAdsData, googleGenAi, promptTracking,

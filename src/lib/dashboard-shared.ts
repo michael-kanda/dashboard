@@ -219,6 +219,7 @@ export interface ProjectDashboardData {
     paidSearch?: ChartPoint[];
   };
   topQueries?: TopQueryData[];
+  topQueriesDataVersion?: number;
   topConvertingPages?: ConvertingPageData[];
   aiTraffic?: AiTrafficData;
   bingData?: BingDataPoint[];

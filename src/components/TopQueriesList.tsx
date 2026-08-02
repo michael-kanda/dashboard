@@ -14,15 +14,7 @@ import {
 } from 'react-bootstrap-icons';
 import { cn } from '@/lib/utils';
 import { type DateRangeOption, getRangeLabel } from '@/components/DateRangeSelector';
-
-type TopQueryData = {
-  query: string;
-  clicks: number;
-  impressions: number;
-  ctr: number;
-  position: number;
-  url?: string; // Landingpage URL (optional für Abwärtskompatibilität)
-};
+import type { TopQueryData } from '@/types/dashboard';
 
 interface TopQueriesListProps {
   queries: TopQueryData[];
@@ -171,7 +163,15 @@ export default function TopQueriesList({
   const handleExportCsv = () => {
     if (!displayedQueries.length) return;
     const escape = (val: string) => `"${val.replace(/"/g, '""')}"`;
-    const header = ['Suchanfrage', 'Landingpage', 'Klicks', 'Impressionen', 'CTR (%)', 'Position'];
+    const header = [
+      'Suchanfrage',
+      'Landingpage',
+      'Klicks',
+      'Impressionen',
+      'CTR (%)',
+      'Position',
+      'GA4-Conversions der Landingpage',
+    ];
     const rows = displayedQueries.map((q) => [
       escape(q.query),
       escape(q.url || ''),
@@ -179,6 +179,7 @@ export default function TopQueriesList({
       q.impressions,
       (q.ctr * 100).toFixed(2).replace('.', ','),
       q.position.toFixed(1).replace('.', ','),
+      q.landingPageConversions ?? '',
     ]);
     const csv = [header.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -282,9 +283,12 @@ export default function TopQueriesList({
 
   // ── Subtitle für Normal-State ────────────────────────────
   const subtitleParts = [
-    'Quelle GSC',
+    queries.some((query) => query.landingPageConversions !== undefined) ? 'Quelle GSC + GA4' : 'Quelle GSC',
     rangeLabel,
-    `${displayedQueries.length} ${displayedQueries.length === 1 ? 'Eintrag' : 'Einträge'}`
+    `${displayedQueries.length} ${displayedQueries.length === 1 ? 'Eintrag' : 'Einträge'}`,
+    queries.some((query) => query.landingPageConversions !== undefined)
+      ? 'LP-Conv. = Conversions der zugeordneten Landingpage'
+      : null,
   ].filter(Boolean);
 
   // ── Totals für Footer ────────────────────────────────────
@@ -305,7 +309,7 @@ export default function TopQueriesList({
             <Search className="text-faint" size={28} />
             <p>
               {searchTerm
-                ? <>Keine Ergebnisse für „<span className="font-medium text-body">{searchTerm}</span>"</>
+                ? <>Keine Ergebnisse für „<span className="font-medium text-body">{searchTerm}</span>“</>
                 : 'Keine Suchanfragen gefunden.'}
             </p>
           </div>
@@ -313,11 +317,12 @@ export default function TopQueriesList({
           <div className="h-full overflow-y-auto pr-3 custom-scrollbar">
             <table className="w-full border-collapse table-fixed">
               <colgroup>
-                <col style={{ width: '48%' }} />
+                <col style={{ width: '39%' }} />
+                <col style={{ width: '10%' }} />
                 <col style={{ width: '13%' }} />
-                <col style={{ width: '14%' }} />
+                <col style={{ width: '10%' }} />
                 <col style={{ width: '11%' }} />
-                <col style={{ width: '14%' }} />
+                <col style={{ width: '17%' }} />
               </colgroup>
 
               <thead className="bg-surface">
@@ -327,6 +332,7 @@ export default function TopQueriesList({
                   {renderSortHeader('impressions', 'Impr.', true)}
                   {renderSortHeader('ctr', 'CTR', true)}
                   {renderSortHeader('position', 'Pos.', true)}
+                  {renderSortHeader('landingPageConversions', 'LP-Conv.', true)}
                 </tr>
               </thead>
 
@@ -361,6 +367,14 @@ export default function TopQueriesList({
                       </td>
                       <td className="px-2 py-3 text-right align-top whitespace-nowrap">
                         {renderPosition(query.position)}
+                      </td>
+                      <td
+                        className="px-2 py-3 text-right align-top text-sm font-medium text-strong whitespace-nowrap"
+                        title="GA4-Conversions der zugeordneten Landingpage, nicht der einzelnen Suchanfrage"
+                      >
+                        {query.landingPageConversions === undefined
+                          ? '–'
+                          : query.landingPageConversions.toLocaleString('de-DE', { maximumFractionDigits: 2 })}
                       </td>
                     </tr>
                   );

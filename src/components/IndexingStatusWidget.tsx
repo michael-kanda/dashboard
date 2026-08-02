@@ -317,6 +317,11 @@ export default function IndexingStatusWidget({
             <p className="mt-1 text-xs text-muted">
               Sitemap alle 48 Stunden · Änderungen priorisiert · stabile URLs zyklisch · GSC-Leistung: {data.performanceRange}
             </p>
+            {data.lastSyncedAt && (
+              <p className="mt-1 text-[11px] text-muted">
+                Zuletzt aktualisiert am {formatDate(data.lastSyncedAt, true)} Uhr
+              </p>
+            )}
           </div>
           {data.configured && (
             <div className="flex min-w-[240px] flex-col items-stretch gap-2">
