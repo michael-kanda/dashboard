@@ -38,8 +38,9 @@ Für lokale Projekte kann DataPeak mehrere Standorte abbilden, z.B. Kanzlei Wien
 - **Zentrales Dashboard:** Impressionen, Klicks, Besucher, Conversions, Verweildauer und Absprungrate — mit Vergleich zum Vormonat.
 - **Top 100 Suchanfragen mit Landingpage-Zuordnung:** Erkenne sofort, welche Seite für welches Keyword rankt.
 - **Traffic-Segmentierung:** Nach Channel (Organic, Direct, Referral, Social), Land und Endgerät (Desktop, Mobile, Tablet).
-- **Lokale Sichtbarkeit:** Standort-Widget mit Österreich-Karte, Standort-Ranking, GSC-Klicks/Impressionen, CTR, Position, GA4 neue Besucher, Sessions und Conversions pro Standort.
+- **Lokale Sichtbarkeit:** Standort-Widget mit Österreich-Karte, Standortvergleich, GSC-Klicks/Impressionen, CTR, Position, GA4 neue Besucher, Sessions und Conversions pro Standort.
 - **Manuelle Karten-Pins:** Superadmins können Standort-Pins direkt auf der Karte verschieben. Die Position wird unabhängig von der Bildschirmgröße stabil gespeichert.
+- **Google-Unternehmensprofile:** Standorte können mit Google Place ID, Maps-Link und optionalem Bild verknüpft werden. Die Karte zeigt eine kompakte Vorschau mit Profilbild, Kategorie, Bewertung und Öffnungsstatus.
 - **Google GenAI Sichtbarkeit:** Eigener Search-Console-Block für offizielle GenAI-Impressions aus Google AI Overviews / AI Mode — inklusive Status, Trend, Top-Seiten und Rollout-Hinweis, wenn die Daten noch nicht verfügbar sind.
 - **KI-Traffic-Analyse:** ChatGPT, Claude, Perplexity und Google Gemini werden automatisch erkannt — inkl. Sitzungen, Nutzer, Folgepfade und Interaktionsrate. Pro KI-Quelle: Top-Landingpage, Conversion-Rate und 14-Tage-Sparkline auf einen Blick.
 - **Multi-Line Trend-Chart pro KI-Modell:** Vergleiche das Wachstum von ChatGPT vs. Gemini vs. Perplexity direkt nebeneinander — Trends, die im aggregierten Verlauf untergehen, werden sofort sichtbar.
@@ -55,6 +56,8 @@ Für lokale Projekte kann DataPeak mehrere Standorte abbilden, z.B. Kanzlei Wien
 - **DataMax KI-Assistent:** Erklärt Trends in Klartext und empfiehlt nächste Schritte — inklusive lokaler Sichtbarkeit, Standortvergleich und Datenlücken bei Landingpages/PLZ-Konfiguration.
 - **KI Content Studio für Landingpages und Artikel:** Modus für neue Inhalte oder bestehende URLs, automatisches Datenbriefing, editierbare Gliederung, sichere Entwurfserstellung, SEO-Metadaten, Schema-Export und Versionen im Redaktionsplan.
 - **Datenbasierte interne Verlinkung:** Empfiehlt ausschließlich indexierte, kanonische URLs aus der gespeicherten Sitemap und berücksichtigt thematische Relevanz sowie GSC-Leistung.
+- **Indexierungsstatus:** Gleicht Sitemap-URLs ressourcenschonend mit der Google URL Inspection API ab, priorisiert Änderungen und leistungsstarke Seiten und zeigt Indexierung, Handlungsbedarf, Canonical-Abweichungen und Prüffortschritt inklusive CSV-Export.
+- **Dashboard-Sichtbarkeit pro Projekt:** Admins und Superadmins steuern unter „Benutzer bearbeiten“, welche Widgets für den jeweiligen Benutzer sichtbar sind.
 - **PDF-Reports auf Knopfdruck:** Saubere Analysen für dich oder deine Stakeholder.
 
 ### Technischer Stack
@@ -62,7 +65,7 @@ Für lokale Projekte kann DataPeak mehrere Standorte abbilden, z.B. Kanzlei Wien
 - **Framework:** Next.js 14
 - **Sprache:** TypeScript
 - **KI:** Vercel AI SDK + Google Gemini (für DataMax und Prompt-Cluster-Analyse)
-- **Datenbank:** Vercel Postgres
+- **Datenbank:** Neon Postgres über die serverlose Vercel-Integration
 - **APIs:** Google Search Console API, Google Analytics 4 Data API (via OAuth2), Google GenAI Search-Console-Signale je nach Rollout/API-Verfügbarkeit
 - **Hosting:** Vercel
 
@@ -70,6 +73,9 @@ Für lokale Projekte kann DataPeak mehrere Standorte abbilden, z.B. Kanzlei Wien
 
 - Datenbankänderungen liegen versioniert unter `migrations/` und werden vor dem Deployment mit `npm run db:migrate` angewendet.
 - Seiten, API-Routen und Cronjobs führen keine Schemaänderungen während eines Requests aus.
+- GSC-, GA4-, Dashboard- und Indexierungsdaten werden inkrementell aktualisiert und zwischengespeichert, damit unveränderte Daten nicht bei jedem Projektaufruf neu geladen werden.
+- Der Indexierungsstatus wird automatisch im 48-Stunden-Zyklus fortgesetzt. Geänderte und noch offene URLs werden priorisiert; Laufzeit- und API-Budgets verhindern lange Serverless-Aufrufe.
+- Temporäre Neon-Verbindungsfehler werden in Cronjobs kontrolliert wiederholt und als vorübergehend gemeldet, statt einen unkontrollierten Prozessabbruch auszulösen.
 - `npm run audit:code` prüft auf Runtime-DDL, exakte TypeScript-Duplikate, verwaiste Module und ungewollte Server-zu-UI-Abhängigkeiten.
 - `npm run build` bleibt die abschließende Produktionsprüfung.
 
@@ -92,7 +98,15 @@ DataPeak trennt lokale Daten bewusst nach Quelle:
 - **GSC-Signale:** Lokale Queries werden über Standortname, PLZ, Stadt, Keywords/Aliase und konfigurierte Standort-Landingpages gematcht. Daraus entstehen Klicks, Impressionen, CTR, durchschnittliche Position und Top-Queries pro Standort.
 - **GA4-Signale:** Neue Besucher, Sessions und Conversions pro Standort kommen primär aus den konfigurierten Standort-Landingpages. Nur wenn für einen Standort keine Landingpages hinterlegt sind, nutzt DataPeak GA4-Stadt-Daten als Fallback.
 - **Kartenposition:** Pins werden aus Standortdaten geschätzt, können aber von Superadmins manuell auf der Karte korrigiert werden. Gespeichert werden `mapX/mapY` als Prozentwerte, nicht absolute Pixel.
+- **Google-Unternehmensprofil:** Optional hinterlegte Place IDs werden serverseitig über Google Places aufgelöst. Profilbild, Kategorie, Bewertung und Öffnungsstatus ergänzen die Standortdaten, fließen aber nicht in die GSC- oder GA4-Kennzahlen ein.
 - **DataMax:** Der KI-Assistent bekommt die lokalen Kennzahlen samt Datenlogik im Kontext und kann Standortvergleiche, lokale Landingpage-Chancen und Datenlücken erklären.
+
+### Methodik: Indexierungsstatus
+
+- **Sitemap-Erkennung:** DataPeak erkennt Sitemap-Indexdateien, lädt die enthaltenen Sitemaps rekursiv und filtert technische URLs wie Feeds, Kommentare und andere nicht relevante Systempfade heraus.
+- **Persistenter Abgleich:** Ergebnisse werden in Neon Postgres gespeichert. Neue oder geänderte URLs werden zuerst geprüft; stabile URLs folgen zyklisch, statt bei jedem Lauf vollständig neu abgefragt zu werden.
+- **Google URL Inspection:** Der offizielle Inspection-Status liefert Indexierung, Coverage, Canonical und Crawl-Informationen. Offene URLs werden innerhalb des verfügbaren API- und Laufzeitbudgets in späteren automatischen Läufen fortgesetzt.
+- **Transparenz:** Das Widget zeigt Live-Fortschritt, Statushinweise, Handlungsbedarf und einen CSV-Export. „Handlungsbedarf“ bezeichnet URLs mit einem konkreten Indexierungsproblem, nicht jede noch ungeprüfte URL.
 
 ### Methodik: KI Content Studio
 
@@ -139,8 +153,9 @@ For local projects, DataPeak can represent multiple locations such as a main off
 - **Central dashboard:** Impressions, clicks, visitors, conversions, time on site, and bounce rate — with month-over-month comparison.
 - **Top 100 search queries with landing page mapping:** See instantly which page ranks for which keyword.
 - **Traffic segmentation:** By channel (Organic, Direct, Referral, Social), country, and device (Desktop, Mobile, Tablet).
-- **Local visibility:** Location widget with map, location ranking, GSC clicks/impressions, CTR, position, GA4 new users, sessions, and conversions per location.
+- **Local visibility:** Location widget with map, location comparison, GSC clicks/impressions, CTR, position, GA4 new users, sessions, and conversions per location.
 - **Manual map pins:** Superadmins can drag location pins directly on the map. Positions are saved responsively and remain stable across screen sizes.
+- **Google Business Profiles:** Locations can be linked with a Google Place ID, Maps URL, and optional image. The map renders a compact profile preview with image, category, rating, and opening status.
 - **Google GenAI visibility:** Dedicated Search Console block for official GenAI impressions from Google AI Overviews / AI Mode — including status, trend, top pages, and rollout messaging when the data is not available yet.
 - **AI traffic analysis:** ChatGPT, Claude, Perplexity, and Google Gemini are detected automatically — including sessions, users, follow-up paths, and engagement rate. Per AI source: top landing page, conversion rate, and a 14-day sparkline at a glance.
 - **Multi-line trend chart per AI model:** Compare the growth of ChatGPT vs. Gemini vs. Perplexity side by side — trends that get lost in an aggregated view become immediately visible.
@@ -156,6 +171,8 @@ For local projects, DataPeak can represent multiple locations such as a main off
 - **DataMax AI assistant:** Explains trends in plain language and recommends next steps — including local visibility, location comparisons, and data gaps in landing page / postal code configuration.
 - **AI Content Studio for landing pages and articles:** Supports new content and existing URL optimization, automated data briefs, editable outlines, safe draft generation, SEO metadata, schema export, and editorial versions.
 - **Data-driven internal linking:** Recommends only indexed canonical URLs from the stored sitemap, ranked by topical relevance and GSC performance.
+- **Indexing status:** Efficiently compares sitemap URLs with the Google URL Inspection API, prioritizes changed and high-performing pages, and reports indexing, actionable issues, canonical mismatches, and live progress with CSV export.
+- **Per-project dashboard visibility:** Admins and superadmins control which widgets are visible to each user from the user editing screen.
 - **One-click PDF reports:** Clean analyses for you or your stakeholders.
 
 ### Tech Stack
@@ -163,7 +180,7 @@ For local projects, DataPeak can represent multiple locations such as a main off
 - **Framework:** Next.js 14
 - **Language:** TypeScript
 - **AI:** Vercel AI SDK + Google Gemini (powers DataMax and prompt cluster analysis)
-- **Database:** Vercel Postgres
+- **Database:** Neon Postgres through the serverless Vercel integration
 - **APIs:** Google Search Console API, Google Analytics 4 Data API (via OAuth2), Google GenAI Search Console signals depending on rollout/API availability
 - **Hosting:** Vercel
 
@@ -171,6 +188,9 @@ For local projects, DataPeak can represent multiple locations such as a main off
 
 - Database changes are versioned in `migrations/` and applied before deployment with `npm run db:migrate`.
 - Pages, API routes, and cron jobs do not modify the schema during requests.
+- GSC, GA4, dashboard, and indexing data are refreshed incrementally and cached so unchanged data is not fetched again on every project view.
+- Indexing checks continue automatically on a 48-hour cycle. Changed and pending URLs are prioritized, while runtime and API budgets keep serverless executions bounded.
+- Cron jobs retry transient Neon connection failures and return a controlled temporary status instead of failing through an unhandled process error.
 - `npm run audit:code` checks for runtime DDL, exact TypeScript duplicates, orphaned modules, and unintended server-to-UI dependencies.
 - `npm run build` remains the final production verification.
 
@@ -193,7 +213,15 @@ DataPeak separates local data by source:
 - **GSC signals:** Local queries are matched by location name, postal code, city, keyword aliases, and configured location landing pages. This produces clicks, impressions, CTR, average position, and top queries per location.
 - **GA4 signals:** New users, sessions, and conversions per location primarily come from configured location landing pages. If no landing pages are configured for a location, DataPeak falls back to GA4 city data.
 - **Map positions:** Pins are estimated from location data but can be manually corrected by superadmins. Positions are stored as `mapX/mapY` percentage values rather than absolute pixels.
+- **Google Business Profile:** Optional Place IDs are resolved server-side through Google Places. Profile image, category, rating, and opening status enrich the location view but do not alter GSC or GA4 metrics.
 - **DataMax:** The AI assistant receives local metrics and the underlying data logic as context, allowing it to explain location comparisons, local landing page opportunities, and configuration gaps.
+
+### Methodology: Indexing Status
+
+- **Sitemap discovery:** DataPeak recognizes sitemap index files, recursively loads their child sitemaps, and removes technical URLs such as feeds, comment endpoints, and irrelevant system paths.
+- **Persistent comparison:** Results are stored in Neon Postgres. New and changed URLs are checked first; stable URLs are revisited cyclically instead of being fetched on every run.
+- **Google URL Inspection:** The official inspection response supplies indexing, coverage, canonical, and crawl information. Pending URLs continue in later automatic runs within the available API and runtime budget.
+- **Transparency:** The widget provides live progress, status explanations, actionable issues, and CSV export. “Action required” means a URL has a concrete indexing problem; it does not include every URL that is still pending inspection.
 
 ### Methodology: AI Content Studio
 
