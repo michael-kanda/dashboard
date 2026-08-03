@@ -91,17 +91,17 @@ function LoginVisualCard() {
               </svg>
             </div>
 
-            <div className="absolute bottom-[5%] right-[-6%] w-[clamp(184px,16vw,212px)] rounded-lg border border-white/70 bg-white/95 p-3 text-[#344054] shadow-[0_12px_30px_rgba(15,23,42,0.2)]">
+            <div className="absolute bottom-[5%] right-[-6%] w-[clamp(216px,19vw,250px)] rounded-lg border border-white/70 bg-white/95 p-4 text-[#344054] shadow-[0_12px_30px_rgba(15,23,42,0.2)]">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[12px] font-bold">Indexierungsstatus</p>
-                <span className="whitespace-nowrap text-[10px] text-[#667085]">Heute geprüft</span>
+                <p className="text-[13px] font-bold">Indexierungsstatus</p>
+                <span className="whitespace-nowrap text-[11px] text-[#667085]">Heute geprüft</span>
               </div>
-              <div className="mt-2 flex items-center gap-3">
+              <div className="mt-2.5 flex items-center gap-3.5">
                 <svg
                   role="img"
                   aria-label="61 Prozent der Sitemap-URLs sind indexiert"
                   viewBox="0 0 64 64"
-                  className="h-[54px] w-[54px] shrink-0"
+                  className="h-16 w-16 shrink-0"
                 >
                   <circle cx="32" cy="32" r="24" fill="none" stroke="#fee2e2" strokeWidth="7" />
                   <circle
@@ -118,7 +118,7 @@ function LoginVisualCard() {
                   <text x="32" y="30" textAnchor="middle" className="fill-[#344054] text-[12px] font-bold">61 %</text>
                   <text x="32" y="41" textAnchor="middle" className="fill-[#667085] text-[6px] font-bold">INDEXIERT</text>
                 </svg>
-                <div className="min-w-0 flex-1 space-y-1.5 text-[10px]">
+                <div className="min-w-0 flex-1 space-y-2 text-[11px]">
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-[#34a853]" />Indexiert</span>
                     <strong>122</strong>
