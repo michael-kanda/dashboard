@@ -18,17 +18,118 @@ import { motion } from 'framer-motion';
 function LoginVisualCard() {
   return (
     <aside className="hidden h-full w-full bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
-      <div className="flex h-full items-center justify-center overflow-hidden rounded-xl bg-[#188bdb] px-[clamp(40px,5vw,76px)] py-[clamp(48px,7vh,92px)]">
-        <div className="flex w-full max-w-[620px] flex-col items-stretch">
-          <div className="relative h-[clamp(360px,62vh,680px)] w-full">
+      <div
+        className="relative h-full overflow-hidden rounded-xl bg-[#188bdb]"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,0.075) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.075) 1px, transparent 1px)',
+          backgroundSize: '42px 42px',
+        }}
+      >
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 900 1000"
+          preserveAspectRatio="none"
+          className="pointer-events-none absolute inset-0 h-full w-full opacity-30"
+        >
+          <path
+            d="M-80 770 C 150 690, 255 790, 440 640 S 760 520, 980 315"
+            fill="none"
+            stroke="rgba(255,255,255,0.42)"
+            strokeWidth="3"
+          />
+          <path
+            d="M-40 825 C 160 760, 315 815, 475 690 S 750 615, 950 470"
+            fill="none"
+            stroke="rgba(255,255,255,0.3)"
+            strokeWidth="2"
+            strokeDasharray="10 13"
+          />
+        </svg>
+
+        <div className="absolute left-[7%] top-[7%] z-10 text-white">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-white/75">
+            DataPeak Live
+          </p>
+          <h2 className="text-[clamp(16px,1.25vw,22px)] font-bold leading-tight">
+            Aus Daten werden Entscheidungen.
+          </h2>
+          <svg aria-hidden="true" viewBox="0 0 180 7" className="mt-3 h-[7px] w-[150px]">
+            <path d="M1 3.5H44" stroke="#FFFFFF" strokeWidth="5" />
+            <path d="M44 3.5H87" stroke="#FBBC04" strokeWidth="5" />
+            <path d="M87 3.5H130" stroke="#34A853" strokeWidth="5" />
+            <path d="M130 3.5H179" stroke="#8B5CF6" strokeWidth="5" />
+          </svg>
+        </div>
+
+        <div className="absolute inset-x-[10%] bottom-[4%] top-[17%]">
+          <div className="relative h-full w-full">
             <Image
               src="/login-image.webp"
-              alt="DataPeak Login Visual"
+              alt="Vorschau des DataPeak Dashboards"
               fill
               className="object-contain drop-shadow-[0_18px_22px_rgba(15,23,42,0.25)]"
               sizes="50vw"
               priority
             />
+
+            <div className="absolute left-[-5%] top-[61%] w-[118px] rounded-lg border border-white/60 bg-white/95 p-3 text-[#344054] shadow-[0_10px_28px_rgba(15,23,42,0.2)] xl:w-[132px]">
+              <p className="text-[11px] font-medium text-[#667085]">Conversions</p>
+              <p className="mt-0.5 text-[18px] font-bold leading-none">184</p>
+              <p className="mt-1.5 text-[12px] font-semibold text-[#16a05d]">+18,9 %</p>
+              <svg aria-hidden="true" viewBox="0 0 70 18" className="mt-2 h-[18px] w-[70px]">
+                <path d="M1 15 L12 12 L22 13 L34 7 L45 9 L57 4 L69 2" fill="none" stroke="#16a05d" strokeWidth="2" />
+              </svg>
+            </div>
+
+            <div className="absolute right-[-6%] top-[17%] w-[118px] rounded-lg border border-white/60 bg-white/95 p-3 text-[#344054] shadow-[0_10px_28px_rgba(15,23,42,0.2)] xl:w-[132px]">
+              <p className="text-[11px] font-medium text-[#667085]">KI-Traffic</p>
+              <p className="mt-0.5 text-[15px] font-bold leading-tight">84 Sitzungen</p>
+              <p className="mt-1.5 text-[12px] font-semibold text-[#16a05d]">+22,4 %</p>
+              <svg aria-hidden="true" viewBox="0 0 70 18" className="mt-2 h-[18px] w-[70px]">
+                <path d="M1 15 L11 13 L21 9 L31 11 L42 6 L54 5 L69 1" fill="none" stroke="#8b5cf6" strokeWidth="2" />
+              </svg>
+            </div>
+
+            <div className="absolute bottom-[5%] right-[-6%] w-[clamp(184px,16vw,212px)] rounded-lg border border-white/70 bg-white/95 p-3 text-[#344054] shadow-[0_12px_30px_rgba(15,23,42,0.2)]">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[12px] font-bold">Indexierungsstatus</p>
+                <span className="whitespace-nowrap text-[10px] text-[#667085]">Heute geprüft</span>
+              </div>
+              <div className="mt-2 flex items-center gap-3">
+                <svg
+                  role="img"
+                  aria-label="61 Prozent der Sitemap-URLs sind indexiert"
+                  viewBox="0 0 64 64"
+                  className="h-[54px] w-[54px] shrink-0"
+                >
+                  <circle cx="32" cy="32" r="24" fill="none" stroke="#fee2e2" strokeWidth="7" />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="24"
+                    fill="none"
+                    stroke="#34a853"
+                    strokeWidth="7"
+                    strokeLinecap="round"
+                    strokeDasharray="92 151"
+                    transform="rotate(-90 32 32)"
+                  />
+                  <text x="32" y="30" textAnchor="middle" className="fill-[#344054] text-[12px] font-bold">61 %</text>
+                  <text x="32" y="41" textAnchor="middle" className="fill-[#667085] text-[6px] font-bold">INDEXIERT</text>
+                </svg>
+                <div className="min-w-0 flex-1 space-y-1.5 text-[10px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-[#34a853]" />Indexiert</span>
+                    <strong>122</strong>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-[#ef4444]" />Handlungsbedarf</span>
+                    <strong>77</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -105,8 +206,11 @@ export default function LoginForm() {
                       priority
                     />
                   </div>
-                  <p className="m-0 text-left text-[18px] font-semibold leading-tight text-[#344054]">
-                    Loggen Sie sich in Ihren Account ein
+                  <h1 className="m-0 text-left text-[21px] font-bold leading-tight text-[#344054]">
+                    Willkommen zurück
+                  </h1>
+                  <p className="mt-1 text-left text-[15px] font-medium text-[#667085]">
+                    Ihre aktuellen Daten warten bereits.
                   </p>
                 </div>
 
@@ -195,6 +299,10 @@ export default function LoginForm() {
                     </>
                   )}
                 </button>
+                <p className="flex items-center justify-center gap-1.5 pt-1 text-[11px] font-medium text-[#98a2b3]">
+                  <Lock size={11} aria-hidden="true" />
+                  Sichere Verbindung
+                </p>
               </form>
             </>
           ) : (
