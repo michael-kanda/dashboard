@@ -6,9 +6,6 @@ import {
   ExclamationTriangleFill,
   Search,
   X,
-  ArrowUp,
-  ArrowDown,
-  ArrowDownUp,
   Link45deg,
   Download
 } from 'react-bootstrap-icons';
@@ -63,20 +60,9 @@ export default function TopQueriesList({
   dateRange,
   error = null
 }: TopQueriesListProps) {
-  const [sortField, setSortField] = useState<keyof TopQueryData | null>('clicks');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [searchTerm, setSearchTerm] = useState('');
 
   const rangeLabel = dateRange ? getRangeLabel(dateRange) : null;
-
-  const handleSort = (field: keyof TopQueryData) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('desc');
-    }
-  };
 
   const displayedQueries = React.useMemo(() => {
     let data = queries || [];
@@ -87,20 +73,8 @@ export default function TopQueriesList({
         (q.url && q.url.toLowerCase().includes(lowerTerm))
       );
     }
-    if (!sortField) return data;
-
-    return [...data].sort((a, b) => {
-      const aVal = a[sortField];
-      const bVal = b[sortField];
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      }
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-      return 0;
-    });
-  }, [queries, sortField, sortDirection, searchTerm]);
+    return [...data].sort((a, b) => b.clicks - a.clicks || b.impressions - a.impressions);
+  }, [queries, searchTerm]);
 
   // ── Position-Anzeige: Dot + Zahl, einheitlicher Stil ──────
   const renderPosition = (position: number) => {
@@ -125,37 +99,6 @@ export default function TopQueriesList({
     }
     return (
       <span className="font-medium text-muted">{formatted}</span>
-    );
-  };
-
-  // ── Sort-Header-Renderer ──────────────────────────────────
-  const renderSortHeader = (
-    field: keyof TopQueryData,
-    label: string,
-    rightAligned = false
-  ) => {
-    const isActive = sortField === field;
-
-    return (
-      <th
-        onClick={() => handleSort(field)}
-        className={cn(
-          "sticky top-0 z-30 px-2 py-3 text-[11px] font-medium uppercase tracking-wider cursor-pointer select-none border-b border-theme-border-subtle hover:text-body transition-colors bg-surface shadow-[0_1px_0_rgba(148,163,184,0.22)]",
-          rightAligned ? "text-right" : "text-left",
-          isActive ? "text-body" : "text-faint"
-        )}
-      >
-        <div className={cn("flex items-center gap-1", rightAligned && "justify-end")}>
-          <span>{label}</span>
-          {isActive ? (
-            sortDirection === 'desc'
-              ? <ArrowDown size={10} className="text-body" />
-              : <ArrowUp size={10} className="text-body" />
-          ) : (
-            <ArrowDownUp size={10} className="opacity-40" />
-          )}
-        </div>
-      </th>
     );
   };
 
@@ -254,7 +197,7 @@ export default function TopQueriesList({
   // ── Loading State ────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className={cn("dashboard-widget-surface rounded-lg p-5 flex flex-col", className)}>
+      <div className={cn("dashboard-widget-surface rounded-xl p-5 flex flex-col", className)}>
         {renderHeader('Lade Daten...')}
         <div className="animate-pulse space-y-2">
           {[...Array(5)].map((_, i) => (
@@ -268,7 +211,7 @@ export default function TopQueriesList({
   // ── Error State ──────────────────────────────────────────
   if (error) {
     return (
-      <div className={cn("dashboard-widget-surface rounded-lg p-5 flex flex-col", className)}>
+      <div className={cn("dashboard-widget-surface rounded-xl p-5 flex flex-col", className)}>
         {renderHeader('Quelle GSC')}
         <div className="py-12 text-center flex flex-col items-center gap-2">
           <ExclamationTriangleFill className="text-red-500" size={24} />
@@ -283,6 +226,7 @@ export default function TopQueriesList({
 
   // ── Subtitle für Normal-State ────────────────────────────
   const subtitleParts = [
+    'Sortiert nach Klicks',
     queries.some((query) => query.landingPageConversions !== undefined) ? 'Quelle GSC + GA4' : 'Quelle GSC',
     rangeLabel,
     `${displayedQueries.length} ${displayedQueries.length === 1 ? 'Eintrag' : 'Einträge'}`,
@@ -297,12 +241,15 @@ export default function TopQueriesList({
   const avgCtr = totalImpressions > 0
     ? (totalClicks / totalImpressions) * 100
     : 0;
+  const maxClicks = displayedQueries.length > 0
+    ? Math.max(...displayedQueries.map((query) => query.clicks))
+    : 0;
 
   return (
-    <div className={cn("dashboard-widget-surface rounded-lg p-5 flex flex-col min-h-0", className)}>
+    <div className={cn("dashboard-widget-surface rounded-xl p-5 flex flex-col min-h-0", className)}>
       {renderHeader(subtitleParts.join(' · '))}
 
-      {/* Tabelle */}
+      {/* Liste im Stil der Top Landingpages */}
       <div className="flex-grow min-h-0">
         {displayedQueries.length === 0 ? (
           <div className="py-12 text-center text-sm text-muted flex flex-col items-center gap-2">
@@ -315,72 +262,72 @@ export default function TopQueriesList({
           </div>
         ) : (
           <div className="h-full overflow-y-auto pr-3 custom-scrollbar">
-            <table className="w-full border-collapse table-fixed">
-              <colgroup>
-                <col style={{ width: '39%' }} />
-                <col style={{ width: '10%' }} />
-                <col style={{ width: '13%' }} />
-                <col style={{ width: '10%' }} />
-                <col style={{ width: '11%' }} />
-                <col style={{ width: '17%' }} />
-              </colgroup>
+            {displayedQueries.map((query, index) => {
+              const formattedPath = formatUrl(query.url);
+              const barWidthPercent = maxClicks > 0
+                ? Math.max((query.clicks / maxClicks) * 100, 2)
+                : 2;
 
-              <thead className="bg-surface">
-                <tr>
-                  {renderSortHeader('query', 'Suchanfrage')}
-                  {renderSortHeader('clicks', 'Klicks', true)}
-                  {renderSortHeader('impressions', 'Impr.', true)}
-                  {renderSortHeader('ctr', 'CTR', true)}
-                  {renderSortHeader('position', 'Pos.', true)}
-                  {renderSortHeader('landingPageConversions', 'LP-Conv.', true)}
-                </tr>
-              </thead>
-
-              <tbody>
-                {displayedQueries.map((query, index) => {
-                  const formattedPath = formatUrl(query.url);
-
-                  return (
-                    <tr
-                      key={`${query.query}-${index}`}
-                      className="border-b border-theme-border-subtle hover:bg-surface-secondary/40 transition-colors"
-                    >
-                      <td className="px-2 py-3 align-top">
-                        <div className="text-sm font-medium text-heading break-words">
-                          {query.query}
+              return (
+                <div
+                  key={`${query.query}-${index}`}
+                  className="group border-t border-theme-border-subtle py-3 first:border-t-0"
+                >
+                  <div className="mb-2 flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 truncate text-sm font-medium text-heading" title={query.query}>
+                        {query.query}
+                      </div>
+                      {formattedPath ? (
+                        <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted" title={query.url}>
+                          <Link45deg size={12} className="flex-shrink-0 text-faint" />
+                          <span className="truncate font-mono text-[11px]">{formattedPath}</span>
                         </div>
-                        {formattedPath && (
-                          <div className="flex items-center gap-1 mt-1 text-xs text-muted" title={query.url}>
-                            <Link45deg size={12} className="text-faint flex-shrink-0" />
-                            <span className="font-mono text-[11px] truncate">{formattedPath}</span>
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-2 py-3 text-right align-top text-sm font-medium text-strong whitespace-nowrap">
+                      ) : (
+                        <div className="text-xs italic text-faint">Keine Landingpage zugeordnet</div>
+                      )}
+                    </div>
+
+                    <div className="min-w-[76px] flex-shrink-0 text-right">
+                      <div className="text-sm font-medium leading-tight text-strong">
                         {query.clicks.toLocaleString('de-DE')}
-                      </td>
-                      <td className="px-2 py-3 text-right align-top text-sm text-body whitespace-nowrap">
-                        {query.impressions.toLocaleString('de-DE')}
-                      </td>
-                      <td className="px-2 py-3 text-right align-top text-sm text-body whitespace-nowrap">
-                        {(query.ctr * 100).toFixed(1).replace('.', ',')}%
-                      </td>
-                      <td className="px-2 py-3 text-right align-top whitespace-nowrap">
-                        {renderPosition(query.position)}
-                      </td>
-                      <td
-                        className="px-2 py-3 text-right align-top text-sm font-medium text-strong whitespace-nowrap"
-                        title="GA4-Conversions der zugeordneten Landingpage, nicht der einzelnen Suchanfrage"
-                      >
+                      </div>
+                      <div className="mt-1 text-[11px] text-faint">Klicks</div>
+                    </div>
+                  </div>
+
+                  <div className="mb-2.5 h-[3px] overflow-hidden rounded-full bg-surface-tertiary">
+                    <div
+                      className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                      style={{ width: `${barWidthPercent}%` }}
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-xs text-muted">
+                    <span>
+                      <span className="text-faint">Impr.</span>{' '}
+                      <span className="font-medium text-strong">{query.impressions.toLocaleString('de-DE')}</span>
+                    </span>
+                    <span>
+                      <span className="text-faint">CTR</span>{' '}
+                      <span className="font-medium text-strong">{(query.ctr * 100).toFixed(1).replace('.', ',')}%</span>
+                    </span>
+                    <span>
+                      <span className="text-faint">Pos.</span>{' '}
+                      {renderPosition(query.position)}
+                    </span>
+                    <span title="GA4-Conversions der zugeordneten Landingpage, nicht der einzelnen Suchanfrage">
+                      <span className="text-faint">LP-Conv.</span>{' '}
+                      <span className="font-medium text-strong">
                         {query.landingPageConversions === undefined
                           ? '–'
                           : query.landingPageConversions.toLocaleString('de-DE', { maximumFractionDigits: 2 })}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
