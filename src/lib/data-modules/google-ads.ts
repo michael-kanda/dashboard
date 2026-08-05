@@ -2,6 +2,7 @@ import type { GoogleAdsData, ProjectDashboardData } from '../dashboard-shared';
 import {
   createDataIssue,
   resolveDataStatus,
+  selectMetricMetadata,
   type DataModuleResult,
 } from './contracts.ts';
 
@@ -35,7 +36,7 @@ export function createGoogleAdsDataModule(
       status: resolveDataStatus({ configured, hasData: hasRows, issues }),
       configured,
       fromCache: input.fromCache === true,
-      lastUpdatedAt: null,
+      lastUpdatedAt: input.metricMetadata?.['googleAds.cost']?.updatedAt ?? null,
       issues,
     },
     data: {
@@ -45,5 +46,6 @@ export function createGoogleAdsDataModule(
       hasRows,
       hasRenderableData,
     },
+    metrics: selectMetricMetadata(input.metricMetadata, ['googleAds.']),
   };
 }

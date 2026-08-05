@@ -5,7 +5,6 @@ import { type User } from '@/lib/schemas';
 import {
   getSearchConsoleData,
   getGoogleGenAiPerformanceData,
-  GOOGLE_GENAI_DATA_VERSION,
   getAnalyticsData,
   getTopQueries,
   getAiTrafficData,
@@ -41,6 +40,12 @@ import type { TopQueryData, ChartPoint } from '@/types/dashboard';
 
 import { getDemoAnalyticsData } from '@/lib/demo-data';
 import { fetchWeatherData, weatherMapToObject } from '@/lib/weather';
+import {
+  attachDashboardMetricMetadata,
+  extractDashboardMetricValues,
+} from '@/lib/metric-metadata';
+import { persistMetricSnapshots } from '@/lib/metric-snapshot-store';
+import { readDashboardSnapshot } from '@/lib/sync/dashboard-snapshot';
 
 const TOP_QUERIES_DATA_VERSION = 1;
 
@@ -51,12 +56,6 @@ function getShortErrorMessage(error: unknown): string {
     err?.response?.data?.error?.message ||
     (error instanceof Error ? error.message : String(error))
   );
-}
-
-function getCacheDuration(dateRange: string): number {
-  if (dateRange === '18m' || dateRange === '24m') return 72;
-  if (dateRange === '12m') return 48;
-  return 24;
 }
 
 interface RawApiData {
@@ -392,77 +391,16 @@ export async function getOrFetchGoogleData(
   const isDemo = user.email?.includes('demo') || user.domain?.includes('demo-shop');
   if (isDemo) {
     console.log('[Google Data Loader] Demo-User erkannt. Lade Demo-Daten...');
-    return getDemoAnalyticsData(dateRange);
+    return attachDashboardMetricMetadata(getDemoAnalyticsData(dateRange), dateRange);
   }
 
   if (!forceRefresh) {
-    try {
-      const { rows } = await sql`
-        SELECT data, last_fetched
-        FROM google_data_cache
-        WHERE user_id = ${userId}::uuid AND date_range = ${dateRange}
-        LIMIT 1
-      `;
-      if (rows.length > 0) {
-        const cacheEntry = rows[0];
-        const lastFetched = new Date(cacheEntry.last_fetched).getTime();
-        const now = Date.now();
-        const cachedPromptMinWords = cacheEntry.data?.promptTracking?.minWords;
-        const promptCacheIsCurrent =
-          !cacheEntry.data?.promptTracking ||
-          cachedPromptMinWords === DEFAULT_PROMPT_TRACKING_MIN_WORDS;
-        const cachedGenAiVersion = cacheEntry.data?.googleGenAi?.dataVersion;
-        const genAiCacheIsCurrent = !user.gsc_site_url || cachedGenAiVersion === GOOGLE_GENAI_DATA_VERSION;
-        const topQueriesCacheIsCurrent =
-          !user.gsc_site_url ||
-          !user.ga4_property_id ||
-          cacheEntry.data?.topQueriesDataVersion === TOP_QUERIES_DATA_VERSION;
-        const cachedLocalSeoLocations = cacheEntry.data?.localSeo?.locations;
-        const localSeoCacheIsCurrent =
-          !Array.isArray(cachedLocalSeoLocations) ||
-          cachedLocalSeoLocations.length === 0 ||
-          cacheEntry.data?.localSeo?.calculationVersion === 2;
-        const wantedGoogleAdsSheetId = user.google_ads_sheet_id?.trim() || null;
-        const cachedGoogleAdsData = cacheEntry.data?.googleAdsData;
-        const googleAdsCacheIsCurrent = wantedGoogleAdsSheetId
-          ? cachedGoogleAdsData?.source === 'sheet' &&
-            cachedGoogleAdsData?.configuredSheetId === wantedGoogleAdsSheetId
-          : cachedGoogleAdsData?.source !== 'sheet';
-        // Defekte Alt-Einträge (mit gespeicherten API-Fehlern) nur kurz vertrauen,
-        // damit ein früher persistiertes Blip-Ergebnis sich von selbst heilt.
-        const cachedHadErrors = !!cacheEntry.data?.apiErrors;
-        const effectiveMaxAgeHours = cachedHadErrors ? 1 : getCacheDuration(dateRange);
-
-        if (
-          (now - lastFetched) / (1000 * 60 * 60) < effectiveMaxAgeHours &&
-          promptCacheIsCurrent &&
-          genAiCacheIsCurrent &&
-          topQueriesCacheIsCurrent &&
-          localSeoCacheIsCurrent &&
-          googleAdsCacheIsCurrent
-        ) {
-          console.log(`[Google Cache] ✅ HIT für ${user.email}${cachedHadErrors ? ' (degraded, kurze TTL)' : ''}`);
-          return { ...cacheEntry.data, fromCache: true };
-        }
-        if (!promptCacheIsCurrent) {
-          console.log(`[Google Cache] 🔄 MISS wegen Prompt-Tracking-Schwelle (${cachedPromptMinWords} → ${DEFAULT_PROMPT_TRACKING_MIN_WORDS})`);
-        }
-        if (!genAiCacheIsCurrent) {
-          console.log(`[Google Cache] 🔄 MISS wegen Google-GenAI-Migration (${cachedGenAiVersion ?? 'kein Block'} → ${GOOGLE_GENAI_DATA_VERSION})`);
-        }
-        if (!topQueriesCacheIsCurrent) {
-          console.log('[Google Cache] 🔄 MISS wegen Top-Queries-GA4-Migration');
-        }
-        if (!localSeoCacheIsCurrent) {
-          console.log('[Google Cache] 🔄 MISS wegen Local-SEO-NewUsers-Migration');
-        }
-        if (!googleAdsCacheIsCurrent) {
-          console.log('[Google Cache] 🔄 MISS wegen Google-Ads-Sheet-Konfiguration');
-        }
-      }
-    } catch (error) {
-      console.warn('[Google Cache] Lesefehler:', error);
-    }
+    const snapshot = await readDashboardSnapshot(user, dateRange, {
+      enqueueIfStale: true,
+      priority: 50,
+    });
+    console.log(`[Google Cache] ${snapshot.data ? '✅ SNAPSHOT' : '⏳ AUSSTEHEND'} für ${user.email}`);
+    return snapshot.data;
   }
 
   console.log(`[Google Cache] 🔄 Lade frische Daten für ${user.email}...`);
@@ -477,7 +415,7 @@ export async function getOrFetchGoogleData(
   if (dateRange === '12m') days = 365;
   if (dateRange === '18m') days = 548;
   if (dateRange === '24m') days = 730;
-  start.setDate(end.getDate() - days);
+  start.setDate(end.getDate() - (days - 1));
 
   const startDateStr = start.toISOString().split('T')[0];
   const endDateStr = end.toISOString().split('T')[0];
@@ -485,7 +423,7 @@ export async function getOrFetchGoogleData(
   const prevEnd = new Date(start);
   prevEnd.setDate(prevEnd.getDate() - 1);
   const prevStart = new Date(prevEnd);
-  prevStart.setDate(prevEnd.getDate() - days);
+  prevStart.setDate(prevEnd.getDate() - (days - 1));
   const prevStartStr = prevStart.toISOString().split('T')[0];
   const prevEndStr = prevEnd.toISOString().split('T')[0];
 
@@ -778,20 +716,28 @@ export async function getOrFetchGoogleData(
   // guten Eintrag und der Kunde sieht stunden-/tagelang Nullen.
   // Nicht-kritische Quellen (Bing, Ads, Weather) sind hier bewusst egal.
   // ════════════════════════════════════════════════════════════════════
+  const synchronizedAt = new Date().toISOString();
+  const enrichedFreshData = attachDashboardMetricMetadata(freshData, dateRange, synchronizedAt);
   const hasCriticalErrors = !!(apiErrors.ga4 || apiErrors.gsc);
 
   if (!hasCriticalErrors) {
     try {
       await sql`
         INSERT INTO google_data_cache (user_id, date_range, data, last_fetched)
-        VALUES (${userId}::uuid, ${dateRange}, ${JSON.stringify(freshData)}::jsonb, NOW())
+        VALUES (${userId}::uuid, ${dateRange}, ${JSON.stringify(enrichedFreshData)}::jsonb, NOW())
         ON CONFLICT (user_id, date_range)
-        DO UPDATE SET data = ${JSON.stringify(freshData)}::jsonb, last_fetched = NOW();
+        DO UPDATE SET data = ${JSON.stringify(enrichedFreshData)}::jsonb, last_fetched = NOW();
       `;
+      await persistMetricSnapshots(
+        userId,
+        dateRange,
+        extractDashboardMetricValues(enrichedFreshData),
+        enrichedFreshData.metricMetadata ?? {},
+      );
     } catch (e) { console.error('[Cache Write Error]', e); }
   } else {
     console.warn('[Cache Write] Übersprungen wegen kritischer API-Fehler:', apiErrors);
   }
 
-  return freshData;
+  return enrichedFreshData;
 }

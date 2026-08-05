@@ -8,16 +8,11 @@ import { User } from '@/lib/schemas';
 import ProjectDashboardClient from '@/components/ProjectDashboardClient';
 import { DateRangeOption } from '@/components/DateRangeSelector';
 import { getProjectIndexingStatus } from '@/lib/indexing-status';
+import DashboardSyncPending from '@/components/DashboardSyncPending';
 
-// Vercel-Function-Timeout für diese Seite hochsetzen.
-// 120 s, abgestimmt auf die GA4-Cache-Schicht in lib/google-api.ts:
-// Beim Cold-Load (Cache leer) darf ein einzelner GA4-Report bis zu 55 s
-// brauchen (sehr langsame Properties), und Hintergrund-Refreshes via
-// waitUntil zählen ebenfalls zur Function-Laufzeit. Mit 60 s wurde die
-// Function gekillt, bevor langsame Reports fertig waren ("Task timed out
-// after 60 seconds"). Hinweis: Mit Fluid Compute (Standard) erlaubt der
-// Pro-Plan bis zu 300 s — 60 s ist NICHT mehr das Maximum.
-export const maxDuration = 120;
+// Projektseiten lesen nur Neon-Snapshots. Externe Google-Aufrufe laufen
+// ausschließlich im zentralen Sync-Dispatcher.
+export const maxDuration = 30;
 
 // Erweiterter Typ für unsere Query-Ergebnisse
 interface ExtendedUser extends User {
@@ -115,15 +110,24 @@ export default async function ProjectPage({
 
   const data = await loadData(projectId, dateRange);
 
-  if (!data || !data.dashboardData) {
+  if (!data) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-surface-secondary">
-        <p className="text-muted">Projekt nicht gefunden oder keine Daten verfügbar.</p>
+        <p className="text-muted">Projekt nicht gefunden.</p>
       </div>
     );
   }
 
   const { projectUser, dashboardData, indexingStatus } = data;
+
+  if (!dashboardData) {
+    return (
+      <DashboardSyncPending
+        domain={projectUser.domain}
+        dateRange={dateRange}
+      />
+    );
+  }
 
   const supportEmail = projectUser.assigned_admins || projectUser.creator_email || '';
   const timelineActive = projectUser.project_timeline_active === true;

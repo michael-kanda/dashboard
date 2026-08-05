@@ -6,6 +6,7 @@ import type {
 import {
   finiteNumber,
   resolveDataStatus,
+  selectMetricMetadata,
   type DataModuleResult,
 } from './contracts.ts';
 
@@ -49,7 +50,7 @@ export function createLocalSeoDataModule(
       status: resolveDataStatus({ configured: hasLocations, hasData: hasLocations, issues: [] }),
       configured: hasLocations,
       fromCache: input.fromCache === true,
-      lastUpdatedAt: null,
+      lastUpdatedAt: input.metricMetadata?.['localSeo.sessions']?.updatedAt ?? null,
       issues: [],
     },
     data: {
@@ -61,5 +62,6 @@ export function createLocalSeoDataModule(
         gsc: 'landing-pages-and-keyword-aliases',
       },
     },
+    metrics: selectMetricMetadata(input.metricMetadata, ['localSeo.']),
   };
 }

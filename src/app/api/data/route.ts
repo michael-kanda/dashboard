@@ -61,8 +61,9 @@ export async function GET(request: Request) {
 
       if (!dashboardData) {
         return NextResponse.json({
-          message: 'Für dieses Projekt sind weder GSC noch GA4 konfiguriert.'
-        }, { status: 404 });
+          pending: true,
+          message: 'Der angeforderte Zeitraum wurde zur Synchronisierung eingereiht.'
+        }, { status: 202 });
       }
       return NextResponse.json(dashboardData);
     }
@@ -123,8 +124,9 @@ export async function GET(request: Request) {
 
       if (!dashboardData) {
         return NextResponse.json({
-          message: 'Für diesen Benutzer sind keine Google-Properties konfiguriert.'
-        }, { status: 404 });
+          pending: true,
+          message: 'Der angeforderte Zeitraum wurde zur Synchronisierung eingereiht.'
+        }, { status: 202 });
       }
       return NextResponse.json(dashboardData);
     }

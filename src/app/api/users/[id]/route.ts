@@ -1,5 +1,6 @@
 // src/app/api/users/[id]/route.ts
 import { NextResponse, NextRequest } from 'next/server';
+import { enqueueProjectSyncJob } from '@/lib/sync/job-queue';
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
 import { auth } from '@/lib/auth'; 
@@ -408,8 +409,25 @@ export async function PUT(
 
     try {
       await sql`DELETE FROM google_data_cache WHERE user_id = ${targetUserId}::uuid`;
+      if (rows[0].role === 'BENUTZER') {
+        await Promise.all([
+          enqueueProjectSyncJob({
+            userId: targetUserId,
+            jobType: 'dashboard',
+            dateRange: '30d',
+            payload: { dateRange: '30d', reason: 'project-settings-updated' },
+            priority: 100,
+          }),
+          enqueueProjectSyncJob({
+            userId: targetUserId,
+            jobType: 'indexing',
+            payload: { force: true, reason: 'project-settings-updated' },
+            priority: 80,
+          }),
+        ]);
+      }
     } catch (cacheError) {
-      console.warn(`[PUT /api/users/${targetUserId}] Cache konnte nicht invalidiert werden:`, cacheError);
+      console.warn(`[PUT /api/users/${targetUserId}] Cache/Sync-Auftrag konnte nicht aktualisiert werden:`, cacheError);
     }
 
     console.log(`✅ [PUT /api/users/${targetUserId}] Benutzer erfolgreich aktualisiert:`, rows[0].email);

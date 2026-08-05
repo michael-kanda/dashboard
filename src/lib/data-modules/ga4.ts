@@ -10,6 +10,7 @@ import {
   finiteNumber,
   isTransientDataError,
   resolveDataStatus,
+  selectMetricMetadata,
   type DataModuleResult,
 } from './contracts.ts';
 
@@ -84,7 +85,7 @@ export function createGa4DataModule(
       status: resolveDataStatus({ hasData, issues }),
       configured: true,
       fromCache: input.fromCache === true,
-      lastUpdatedAt: null,
+      lastUpdatedAt: input.metricMetadata?.['ga4.sessions']?.updatedAt ?? null,
       issues,
     },
     data: {
@@ -101,5 +102,6 @@ export function createGa4DataModule(
       },
       displayError: isTransientDataError(error) ? null : error,
     },
+    metrics: selectMetricMetadata(input.metricMetadata, ['ga4.']),
   };
 }

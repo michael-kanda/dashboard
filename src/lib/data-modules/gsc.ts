@@ -11,6 +11,7 @@ import {
   createDataIssue,
   finiteNumber,
   resolveDataStatus,
+  selectMetricMetadata,
   type DataModuleResult,
 } from './contracts.ts';
 
@@ -56,7 +57,7 @@ export function createGscDataModule(
       status: resolveDataStatus({ hasData, issues }),
       configured: true,
       fromCache: input.fromCache === true,
-      lastUpdatedAt: null,
+      lastUpdatedAt: input.metricMetadata?.['gsc.clicks']?.updatedAt ?? null,
       issues,
     },
     data: {
@@ -72,5 +73,6 @@ export function createGscDataModule(
         : null,
       displayError: error,
     },
+    metrics: selectMetricMetadata(input.metricMetadata, ['gsc.']),
   };
 }

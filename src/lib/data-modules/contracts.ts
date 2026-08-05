@@ -1,3 +1,5 @@
+import type { MetricMetadata } from '../metric-metadata';
+
 export type DashboardDataSource = 'gsc' | 'ga4' | 'google-ads' | 'local-seo' | 'indexing';
 
 export type DataModuleStatus =
@@ -28,6 +30,18 @@ export interface DataModuleMeta {
 export interface DataModuleResult<T> {
   meta: DataModuleMeta;
   data: T;
+  metrics: Record<string, MetricMetadata>;
+}
+
+export function selectMetricMetadata(
+  metadata: Record<string, MetricMetadata> | undefined,
+  prefixes: string[],
+) {
+  return Object.fromEntries(
+    Object.entries(metadata ?? {}).filter(([key]) => (
+      prefixes.some((prefix) => key.startsWith(prefix))
+    )),
+  );
 }
 
 export function isTransientDataError(message?: string | null) {

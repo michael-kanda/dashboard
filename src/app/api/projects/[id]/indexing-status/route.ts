@@ -3,12 +3,15 @@ import { auth } from '@/lib/auth';
 import {
   getProjectIndexingProgress,
   getProjectIndexingStatus,
-  syncProjectIndexingStatus,
 } from '@/lib/indexing-status';
+import {
+  enqueueProjectSyncJob,
+  getProjectSyncJob,
+} from '@/lib/sync/job-queue';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-export const maxDuration = 300;
+export const maxDuration = 30;
 
 async function authorize(projectId: string, write = false) {
   const session = await auth();
@@ -33,7 +36,16 @@ export async function GET(
   }
   if (request.nextUrl.searchParams.get('progress') === '1') {
     try {
-      return NextResponse.json(await getProjectIndexingProgress(id), {
+      const [progress, queuedJob] = await Promise.all([
+        getProjectIndexingProgress(id),
+        getProjectSyncJob(id, 'indexing'),
+      ]);
+      const queued = queuedJob?.status === 'pending' || queuedJob?.status === 'running';
+      return NextResponse.json(queued ? {
+        ...progress,
+        status: 'running',
+        progressStage: queuedJob?.status === 'pending' ? 'idle' : progress.progressStage,
+      } : progress, {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate',
         },
@@ -56,14 +68,20 @@ export async function POST(
   }
 
   try {
-    const result = await syncProjectIndexingStatus(id, {
-      force: true,
-      maxInspections: 120,
-      deadlineAt: Date.now() + 240_000,
+    await enqueueProjectSyncJob({
+      userId: id,
+      jobType: 'indexing',
+      priority: 100,
+      payload: { force: true },
     });
-    return NextResponse.json(result);
+    const current = await getProjectIndexingStatus(id);
+    return NextResponse.json({
+      ...current,
+      status: 'running',
+      progressStage: 'idle',
+    }, { status: 202 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Indexierungsabgleich fehlgeschlagen';
+    const message = error instanceof Error ? error.message : 'Indexierungsabgleich konnte nicht eingereiht werden';
     return NextResponse.json({ message }, { status: 502 });
   }
 }

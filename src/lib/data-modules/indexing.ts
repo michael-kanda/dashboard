@@ -1,4 +1,5 @@
 import type { ProjectIndexingStatus } from '../indexing-status';
+import { createMetricMetadata } from '../metric-metadata.ts';
 import {
   createDataIssue,
   nonNegativeInteger,
@@ -30,6 +31,13 @@ export function createIndexingDataModule(
   const actionRequired = Math.min(total, nonNegativeInteger(report?.issueUrls));
   const issues = createDataIssue('indexing_sync_failed', report?.errorMessage);
   const hasData = total > 0 || (report?.rows.length ?? 0) > 0;
+  const updatedAt = report?.lastSyncedAt ?? new Date(0).toISOString();
+  const metrics = report ? Object.fromEntries(
+    ['indexing.total', 'indexing.indexed', 'indexing.notIndexed', 'indexing.actionRequired']
+      .map((key) => [key, createMetricMetadata(key, 'snapshot', updatedAt, {
+        status: pending > 0 ? 'partial' : 'complete',
+      })]),
+  ) : {};
 
   return {
     meta: {
@@ -46,5 +54,6 @@ export function createIndexingDataModule(
       isRunning: report?.status === 'running',
       hasCompletedSync: Boolean(report?.lastSyncedAt),
     },
+    metrics,
   };
 }

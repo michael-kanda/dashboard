@@ -11,6 +11,7 @@ import type {
 import type { AiTrafficData } from '@/types/ai-traffic';
 import type { DailyWeather } from '@/lib/weather';
 import type { QuestionType } from '@/lib/prompt-tracking/query-classifier';
+import type { MetricMetadata } from '@/lib/metric-metadata';
 
 export type { KpiDatum, ChartPoint, TopQueryData, AiTrafficData };
 
@@ -233,6 +234,8 @@ export interface ProjectDashboardData {
   channelData?: ChartEntry[];
   deviceData?: ChartEntry[];
   apiErrors?: ApiErrorStatus;
+  snapshotVersion?: number;
+  metricMetadata?: Record<string, MetricMetadata>;
   fromCache?: boolean;
 }
 

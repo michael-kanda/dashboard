@@ -2,16 +2,8 @@
   "buildCommand": "npm run db:migrate && npm run build",
   "crons": [
     {
-      "path": "/api/cron/refresh-all-gsc",
-      "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/refresh-dashboard-cache",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/refresh-indexing-status",
-      "schedule": "0 4 * * *"
+      "path": "/api/cron/sync-project-data",
+      "schedule": "*/10 * * * *"
     }
   ]
 }

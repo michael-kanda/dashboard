@@ -1,6 +1,6 @@
 import { sql } from '@vercel/postgres';
 
-export type DataSyncSource = 'gsc-daily' | 'dashboard-30d';
+export type DataSyncSource = 'gsc-daily';
 
 export async function markDataSyncStarted(
   userId: string,

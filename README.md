@@ -73,7 +73,10 @@ Für lokale Projekte kann DataPeak mehrere Standorte abbilden, z.B. Kanzlei Wien
 
 - Datenbankänderungen liegen versioniert unter `migrations/` und werden vor dem Deployment mit `npm run db:migrate` angewendet.
 - Seiten, API-Routen und Cronjobs führen keine Schemaänderungen während eines Requests aus.
-- GSC-, GA4-, Dashboard- und Indexierungsdaten werden inkrementell aktualisiert und zwischengespeichert, damit unveränderte Daten nicht bei jedem Projektaufruf neu geladen werden.
+- Normale Projekt- und API-Aufrufe lesen ausschließlich gespeicherte Snapshots. Fehlende oder veraltete Zeiträume werden in Neon eingereiht und vom zentralen Dispatcher `/api/cron/sync-project-data` verarbeitet.
+- Eine zentrale Snapshot-Version sorgt dafür, dass der Dispatcher veraltete Datenformate erneuert, ohne beim Seitenaufruf externe APIs anzustoßen.
+- Ein wiederverwendbarer Sync-Auftrag pro Projekt, Jobtyp und Zeitraum verhindert doppelte Jobs und unbegrenztes Tabellenwachstum. GSC, GA4, Google Ads und Local SEO werden als Dashboard-Snapshot synchronisiert; GSC-Historie und Indexierung laufen als getrennte Jobtypen im selben Dispatcher.
+- Jede zentrale Kennzahl speichert Quelle, Aktualisierungszeit, Zeitraum, Abdeckungsstatus, Berechnungsmethode und Berechnungsversion in `project_metric_snapshots` und im Dashboard-Snapshot.
 - Der Indexierungsstatus wird automatisch im 48-Stunden-Zyklus fortgesetzt. Geänderte und noch offene URLs werden priorisiert; Laufzeit- und API-Budgets verhindern lange Serverless-Aufrufe.
 - Temporäre Neon-Verbindungsfehler werden in Cronjobs kontrolliert wiederholt und als vorübergehend gemeldet, statt einen unkontrollierten Prozessabbruch auszulösen.
 - `npm run audit:code` prüft auf Runtime-DDL, exakte TypeScript-Duplikate, verwaiste Module und ungewollte Server-zu-UI-Abhängigkeiten.
@@ -190,7 +193,10 @@ For local projects, DataPeak can represent multiple locations such as a main off
 - `ProjectDashboard` only orchestrates widget sections. Source normalization and rendering policy live outside the page component so UI changes do not alter measurement logic.
 - GSC, GA4, Google Ads, local SEO, and indexing expose independent dashboard data modules with shared availability/error contracts. Run their contract tests with `npm run test:data-modules`.
 - Pages, API routes, and cron jobs do not modify the schema during requests.
-- GSC, GA4, dashboard, and indexing data are refreshed incrementally and cached so unchanged data is not fetched again on every project view.
+- Normal project and API requests read stored snapshots only. Missing or stale ranges are queued in Neon and processed by the central `/api/cron/sync-project-data` dispatcher.
+- A central snapshot version lets the dispatcher refresh outdated payload formats without starting external API calls during page requests.
+- One reusable job per project, job type, and range prevents duplicate work and unbounded queue growth. Dashboard data, GSC history, and indexing share this dispatcher while retaining separate execution contracts.
+- Every central metric stores its source, refresh time, period, coverage, calculation method, and method version in `project_metric_snapshots` and the dashboard snapshot.
 - Indexing checks continue automatically on a 48-hour cycle. Changed and pending URLs are prioritized, while runtime and API budgets keep serverless executions bounded.
 - Cron jobs retry transient Neon connection failures and return a controlled temporary status instead of failing through an unhandled process error.
 - `npm run audit:code` checks for runtime DDL, exact TypeScript duplicates, orphaned modules, and unintended server-to-UI dependencies.
