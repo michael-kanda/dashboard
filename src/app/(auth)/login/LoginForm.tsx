@@ -15,6 +15,16 @@ import {
 } from 'react-bootstrap-icons';
 import { motion } from 'framer-motion';
 
+function MiniTrend({ color }: { color: string }) {
+  return (
+    <div className="relative mt-2 h-[18px] w-[70px] overflow-hidden" aria-hidden="true">
+      <span className="absolute bottom-[3px] left-0 h-[2px] w-[25px] origin-left -rotate-[8deg] rounded-full" style={{ backgroundColor: color }} />
+      <span className="absolute bottom-[6px] left-[23px] h-[2px] w-[25px] origin-left rotate-[5deg] rounded-full" style={{ backgroundColor: color }} />
+      <span className="absolute bottom-[4px] left-[46px] h-[2px] w-[24px] origin-left -rotate-[14deg] rounded-full" style={{ backgroundColor: color }} />
+    </div>
+  );
+}
+
 function LoginVisualCard() {
   return (
     <aside className="hidden h-full w-full bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
@@ -26,26 +36,10 @@ function LoginVisualCard() {
           backgroundSize: '42px 42px',
         }}
       >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 900 1000"
-          preserveAspectRatio="none"
-          className="pointer-events-none absolute inset-0 h-full w-full opacity-30"
-        >
-          <path
-            d="M-80 770 C 150 690, 255 790, 440 640 S 760 520, 980 315"
-            fill="none"
-            stroke="rgba(255,255,255,0.42)"
-            strokeWidth="3"
-          />
-          <path
-            d="M-40 825 C 160 760, 315 815, 475 690 S 750 615, 950 470"
-            fill="none"
-            stroke="rgba(255,255,255,0.3)"
-            strokeWidth="2"
-            strokeDasharray="10 13"
-          />
-        </svg>
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30" aria-hidden="true">
+          <span className="absolute bottom-[27%] left-[-8%] h-[34%] w-[116%] -rotate-[11deg] rounded-[50%] border-t-2 border-white/45" />
+          <span className="absolute bottom-[20%] left-[-6%] h-[29%] w-[112%] -rotate-[8deg] rounded-[50%] border-t border-dashed border-white/35" />
+        </div>
 
         <div className="absolute left-[7%] top-[7%] z-10 text-white">
           <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-white/75">
@@ -54,12 +48,12 @@ function LoginVisualCard() {
           <h2 className="text-[clamp(16px,1.25vw,22px)] font-bold leading-tight">
             Aus Daten werden Entscheidungen.
           </h2>
-          <svg aria-hidden="true" viewBox="0 0 180 7" className="mt-3 h-[7px] w-[150px]">
-            <path d="M1 3.5H44" stroke="#FFFFFF" strokeWidth="5" />
-            <path d="M44 3.5H87" stroke="#FBBC04" strokeWidth="5" />
-            <path d="M87 3.5H130" stroke="#34A853" strokeWidth="5" />
-            <path d="M130 3.5H179" stroke="#8B5CF6" strokeWidth="5" />
-          </svg>
+          <div className="mt-3 flex h-[5px] w-[150px] overflow-hidden rounded-full" aria-hidden="true">
+            <span className="w-1/4 bg-white" />
+            <span className="w-1/4 bg-[#fbbc04]" />
+            <span className="w-1/4 bg-[#34a853]" />
+            <span className="w-1/4 bg-[#8b5cf6]" />
+          </div>
         </div>
 
         <div className="absolute inset-x-[10%] bottom-[4%] top-[17%]">
@@ -77,18 +71,14 @@ function LoginVisualCard() {
               <p className="text-[11px] font-medium text-[#667085]">Conversions</p>
               <p className="mt-0.5 text-[18px] font-bold leading-none">184</p>
               <p className="mt-1.5 text-[12px] font-semibold text-[#16a05d]">+18,9 %</p>
-              <svg aria-hidden="true" viewBox="0 0 70 18" className="mt-2 h-[18px] w-[70px]">
-                <path d="M1 15 L12 12 L22 13 L34 7 L45 9 L57 4 L69 2" fill="none" stroke="#16a05d" strokeWidth="2" />
-              </svg>
+              <MiniTrend color="#16a05d" />
             </div>
 
             <div className="absolute right-[-6%] top-[17%] w-[118px] rounded-lg border border-white/60 bg-white/95 p-3 text-[#344054] shadow-[0_10px_28px_rgba(15,23,42,0.2)] xl:w-[132px]">
               <p className="text-[11px] font-medium text-[#667085]">KI-Traffic</p>
               <p className="mt-0.5 text-[15px] font-bold leading-tight">84 Sitzungen</p>
               <p className="mt-1.5 text-[12px] font-semibold text-[#16a05d]">+22,4 %</p>
-              <svg aria-hidden="true" viewBox="0 0 70 18" className="mt-2 h-[18px] w-[70px]">
-                <path d="M1 15 L11 13 L21 9 L31 11 L42 6 L54 5 L69 1" fill="none" stroke="#8b5cf6" strokeWidth="2" />
-              </svg>
+              <MiniTrend color="#8b5cf6" />
             </div>
 
             <div className="absolute bottom-[5%] right-[-6%] w-[clamp(216px,19vw,250px)] rounded-lg border border-white/70 bg-white/95 p-4 text-[#344054] shadow-[0_12px_30px_rgba(15,23,42,0.2)]">
@@ -97,27 +87,17 @@ function LoginVisualCard() {
                 <span className="whitespace-nowrap text-[11px] text-[#667085]">Heute geprüft</span>
               </div>
               <div className="mt-2.5 flex items-center gap-3.5">
-                <svg
+                <div
                   role="img"
                   aria-label="61 Prozent der Sitemap-URLs sind indexiert"
-                  viewBox="0 0 64 64"
-                  className="h-16 w-16 shrink-0"
+                  className="relative h-16 w-16 shrink-0 rounded-full"
+                  style={{ background: 'conic-gradient(#34a853 0 61%, #fee2e2 61% 100%)' }}
                 >
-                  <circle cx="32" cy="32" r="24" fill="none" stroke="#fee2e2" strokeWidth="7" />
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r="24"
-                    fill="none"
-                    stroke="#34a853"
-                    strokeWidth="7"
-                    strokeLinecap="round"
-                    strokeDasharray="92 151"
-                    transform="rotate(-90 32 32)"
-                  />
-                  <text x="32" y="30" textAnchor="middle" className="fill-[#344054] text-[12px] font-bold">61 %</text>
-                  <text x="32" y="41" textAnchor="middle" className="fill-[#667085] text-[6px] font-bold">INDEXIERT</text>
-                </svg>
+                  <div className="absolute inset-[7px] flex flex-col items-center justify-center rounded-full bg-white">
+                    <strong className="text-[12px] leading-none">61 %</strong>
+                    <span className="mt-1 text-[6px] font-bold text-[#667085]">INDEXIERT</span>
+                  </div>
+                </div>
                 <div className="min-w-0 flex-1 space-y-2 text-[11px]">
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-[#34a853]" />Indexiert</span>
