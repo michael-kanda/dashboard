@@ -3,7 +3,7 @@
 
 import Image from 'next/image';
 import { getSession, signIn } from 'next-auth/react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
   BoxArrowInRight,
@@ -116,9 +116,11 @@ function LoginVisualCard() {
   );
 }
 
-export default function LoginForm() {
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/';
+interface LoginFormProps {
+  callbackUrl?: string;
+}
+
+export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
