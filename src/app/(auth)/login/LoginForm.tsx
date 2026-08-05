@@ -13,7 +13,6 @@ import {
   Envelope,
   Lock,
 } from 'react-bootstrap-icons';
-import { motion } from 'framer-motion';
 
 function MiniTrend({ color }: { color: string }) {
   return (
@@ -129,7 +128,6 @@ export default function LoginForm() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [successAnsprache, setSuccessAnsprache] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [shake, setShake] = useState(0);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (error) setError('');
@@ -156,7 +154,6 @@ export default function LoginForm() {
     if (result?.error) {
       setIsLoading(false);
       setError('E-Mail oder Passwort ist falsch.');
-      setShake((prev) => prev + 1);
     } else {
       const session = await getSession();
       setSuccessAnsprache(session?.user?.ansprache?.trim() || '');
@@ -195,12 +192,7 @@ export default function LoginForm() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-                <motion.div
-                  className="space-y-4"
-                  animate={{ x: shake % 2 === 1 ? [0, -10, 10, -8, 8, 0] : 0 }}
-                  transition={{ duration: 0.36 }}
-                  key={shake}
-                >
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="block text-[14px] font-semibold text-[#344054]">
                       E-Mail Adresse
@@ -249,17 +241,13 @@ export default function LoginForm() {
                       </button>
                     </div>
                   </div>
-                </motion.div>
+                </div>
 
                 {error && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-700"
-                  >
+                  <div className="flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-700">
                     <ExclamationTriangleFill size={16} className="mt-0.5 shrink-0" />
                     <span>{error}</span>
-                  </motion.div>
+                  </div>
                 )}
 
                 <button
@@ -287,11 +275,7 @@ export default function LoginForm() {
             </>
           ) : (
             <div className="flex min-h-[430px] flex-col items-center justify-center text-center">
-              <motion.div
-                className="relative mb-12 h-[145px] w-[210px]"
-                animate={{ y: [0, -4, 0] }}
-                transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
-              >
+              <div className="relative mb-12 h-[145px] w-[210px]">
                 <Image
                   src="/data-max.webp"
                   alt="DataMax"
@@ -299,7 +283,7 @@ export default function LoginForm() {
                   className="object-contain"
                   priority
                 />
-              </motion.div>
+              </div>
 
               <div className="space-y-3">
                 <h3 className="flex items-center justify-center gap-2 text-[21px] font-bold text-[#111827]">
