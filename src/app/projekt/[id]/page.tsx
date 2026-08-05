@@ -119,44 +119,43 @@ export default async function ProjectPage({
   }
 
   const { projectUser, dashboardData, indexingStatus } = data;
-
-  if (!dashboardData) {
-    return (
-      <DashboardSyncPending
-        domain={projectUser.domain}
-        dateRange={dateRange}
-      />
-    );
-  }
-
   const supportEmail = projectUser.assigned_admins || projectUser.creator_email || '';
   const timelineActive = projectUser.project_timeline_active === true;
   const isDataMaxEnabled = projectUser.data_max_enabled !== false;
+  const effectiveDashboardData = dashboardData ?? {};
 
   return (
-    <ProjectDashboardClient
-      data={dashboardData}
-      isLoading={false}
-      dateRange={dateRange}
-      projectId={projectUser.id}
-      domain={projectUser.domain || ''}
-      faviconUrl={projectUser.favicon_url || undefined}
-      semrushTrackingId={projectUser.semrush_tracking_id || undefined}
-      semrushTrackingId02={projectUser.semrush_tracking_id_02 || undefined}
-      projectTimelineActive={timelineActive}
-      countryData={dashboardData.countryData}
-      channelData={dashboardData.channelData}
-      deviceData={dashboardData.deviceData}
-      userRole={session.user.role}
-      userEmail={supportEmail}
-      userAnsprache={session.user.ansprache || null}
-      showLandingPages={projectUser.settings_show_landingpages !== false}
-      showGoogleAds={projectUser.settings_show_google_ads === true}
-      showPromptTracking={projectUser.settings_show_prompt_tracking === true}
-      widgetVisibility={projectUser.dashboard_widget_visibility}
-      dashboardInfoText={projectUser.dashboard_info_text || null}
-      dataMaxEnabled={isDataMaxEnabled}
-      indexingStatus={indexingStatus}
-    />
+    <>
+      <ProjectDashboardClient
+        data={effectiveDashboardData}
+        isLoading={!dashboardData}
+        dateRange={dateRange}
+        projectId={projectUser.id}
+        domain={projectUser.domain || ''}
+        faviconUrl={projectUser.favicon_url || undefined}
+        semrushTrackingId={projectUser.semrush_tracking_id || undefined}
+        semrushTrackingId02={projectUser.semrush_tracking_id_02 || undefined}
+        projectTimelineActive={timelineActive}
+        countryData={effectiveDashboardData.countryData}
+        channelData={effectiveDashboardData.channelData}
+        deviceData={effectiveDashboardData.deviceData}
+        userRole={session.user.role}
+        userEmail={supportEmail}
+        userAnsprache={session.user.ansprache || null}
+        showLandingPages={projectUser.settings_show_landingpages !== false}
+        showGoogleAds={projectUser.settings_show_google_ads === true}
+        showPromptTracking={projectUser.settings_show_prompt_tracking === true}
+        widgetVisibility={projectUser.dashboard_widget_visibility}
+        dashboardInfoText={projectUser.dashboard_info_text || null}
+        dataMaxEnabled={isDataMaxEnabled}
+        indexingStatus={indexingStatus}
+      />
+      {!dashboardData && (
+        <DashboardSyncPending
+          domain={projectUser.domain}
+          dateRange={dateRange}
+        />
+      )}
+    </>
   );
 }

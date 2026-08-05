@@ -2,7 +2,13 @@
 
 import Image from 'next/image';
 
-export default function DashboardLoadingOverlay() {
+export default function DashboardLoadingOverlay({
+  title = 'Daten werden aktualisiert',
+  description = 'Rufe aktuelle Metriken von Google & Semrush ab...',
+}: {
+  title?: string;
+  description?: string;
+}) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-surface/70 backdrop-blur-md transition-all animate-in fade-in duration-300">
       <div className="bg-surface p-8 rounded-3xl shadow-2xl border border-theme-border-subtle flex flex-col items-center gap-6 max-w-md w-full text-center transform scale-100 animate-in zoom-in-95 duration-300">
@@ -17,9 +23,9 @@ export default function DashboardLoadingOverlay() {
           />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-strong mb-1">Daten werden aktualisiert</h3>
+          <h3 className="text-xl font-bold text-strong mb-1">{title}</h3>
           <p className="text-muted text-sm leading-relaxed">
-            Rufe aktuelle Metriken von Google & Semrush ab...
+            {description}
           </p>
         </div>
         <div className="w-full h-1.5 bg-surface-tertiary rounded-full overflow-hidden">

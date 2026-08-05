@@ -1,8 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { RefreshCw } from 'lucide-react';
+import DashboardLoadingOverlay from '@/components/dashboard/DashboardLoadingOverlay';
+
+const RANGE_LABELS: Record<string, string> = {
+  '7d': 'die letzten 7 Tage',
+  '30d': 'die letzten 30 Tage',
+  '3m': 'die letzten 3 Monate',
+  '6m': 'die letzten 6 Monate',
+  '12m': 'die letzten 12 Monate',
+  '18m': 'die letzten 18 Monate',
+  '24m': 'die letzten 24 Monate',
+};
 
 export default function DashboardSyncPending({
   domain,
@@ -12,35 +22,19 @@ export default function DashboardSyncPending({
   dateRange: string;
 }) {
   const router = useRouter();
-  const [checks, setChecks] = useState(0);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setChecks((current) => current + 1);
       router.refresh();
     }, 15_000);
     return () => window.clearInterval(interval);
   }, [router]);
 
+  const rangeLabel = RANGE_LABELS[dateRange] ?? `den Zeitraum ${dateRange}`;
   return (
-    <div className="min-h-screen dashboard-gradient px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-3xl">
-        <div className="dashboard-widget-surface rounded-lg p-6 sm:p-8">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-300">
-              <RefreshCw className="h-5 w-5 animate-spin" aria-hidden="true" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-heading">Daten werden vorbereitet</h1>
-              <p className="mt-1 text-sm leading-relaxed text-muted">
-                Der Zeitraum {dateRange} für {domain || 'dieses Projekt'} wurde zur Synchronisierung eingereiht.
-                Das Dashboard aktualisiert sich automatisch, sobald der Snapshot bereitsteht.
-              </p>
-              <p className="mt-3 text-xs text-muted">Statusprüfungen: {checks}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <DashboardLoadingOverlay
+      title="Dashboard wird aktualisiert"
+      description={`Die Daten für ${rangeLabel}${domain ? ` von ${domain}` : ''} werden im Hintergrund synchronisiert. Das Dashboard öffnet sich automatisch.`}
+    />
   );
 }
