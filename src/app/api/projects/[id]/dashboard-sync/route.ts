@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
-import { syncDashboardProjectSnapshot } from '@/lib/sync/dashboard';
-import {
-  claimProjectSyncJob,
-  enqueueProjectSyncJob,
-  finishProjectSyncJob,
-  getProjectSyncJob,
-} from '@/lib/sync/job-queue';
+import { trySyncDashboardProjectSnapshot } from '@/lib/sync/dashboard';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const maxDuration = 300;
 
-const DATE_RANGES = new Set(['30d', '3m', '6m', '12m', '18m', '24m']);
+const DATE_RANGES = new Set(['7d', '30d', '3m', '6m', '12m', '18m', '24m']);
 
 export async function POST(
   request: NextRequest,
@@ -34,33 +29,42 @@ export async function POST(
     return NextResponse.json({ message: 'Ungültiger Zeitraum' }, { status: 400 });
   }
 
-  await enqueueProjectSyncJob({
-    userId: id,
-    jobType: 'dashboard',
-    dateRange,
-    payload: { dateRange, reason: 'interactive-dashboard-request' },
-    priority: 200,
-  });
-
-  const job = await claimProjectSyncJob(id, 'dashboard', dateRange);
-  if (!job) {
-    const existing = await getProjectSyncJob(id, 'dashboard', dateRange);
+  const { rows: cacheRows } = await sql`
+    SELECT 1
+    FROM google_data_cache
+    WHERE user_id = ${id}::uuid
+      AND date_range = ${dateRange}
+      AND data IS NOT NULL
+      AND data <> 'null'::jsonb
+    LIMIT 1
+  `;
+  if (cacheRows.length > 0) {
     return NextResponse.json({
-      success: false,
-      pending: true,
-      status: existing?.status ?? 'pending',
-    }, { status: 202 });
+      success: true,
+      pending: false,
+      fromCache: true,
+    }, {
+      headers: { 'Cache-Control': 'no-store' },
+    });
   }
 
   try {
-    await syncDashboardProjectSnapshot(id, dateRange);
-    await finishProjectSyncJob(job, { success: true });
+    const result = await trySyncDashboardProjectSnapshot(id, dateRange);
+    if (!result.acquired) {
+      return NextResponse.json({
+        success: false,
+        pending: true,
+        status: 'busy',
+      }, {
+        status: 202,
+        headers: { 'Retry-After': '4', 'Cache-Control': 'no-store' },
+      });
+    }
     return NextResponse.json({ success: true, pending: false }, {
       headers: { 'Cache-Control': 'no-store' },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await finishProjectSyncJob(job, { success: false, error: message });
     return NextResponse.json({ success: false, pending: true, message }, { status: 502 });
   }
 }

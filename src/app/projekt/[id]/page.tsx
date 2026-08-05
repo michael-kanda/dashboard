@@ -77,7 +77,7 @@ async function loadData(projectId: string, dateRange: string) {
     const projectUser = rows[0] as ExtendedUser;
     
     const [dashboardData, indexingStatus] = await Promise.all([
-      getOrFetchGoogleData(projectUser, dateRange),
+      getOrFetchGoogleData(projectUser, dateRange, false, { enqueueIfMissing: false }),
       getProjectIndexingStatus(projectId),
     ]);
 
@@ -153,7 +153,6 @@ export default async function ProjectPage({
       {!dashboardData && (
         <DashboardSyncPending
           projectId={projectUser.id}
-          domain={projectUser.domain}
           dateRange={dateRange}
         />
       )}

@@ -73,10 +73,11 @@ Für lokale Projekte kann DataPeak mehrere Standorte abbilden, z.B. Kanzlei Wien
 
 - Datenbankänderungen liegen versioniert unter `migrations/` und werden vor dem Deployment mit `npm run db:migrate` angewendet.
 - Seiten, API-Routen und Cronjobs führen keine Schemaänderungen während eines Requests aus.
-- Normale Projekt- und API-Aufrufe lesen ausschließlich gespeicherte Snapshots. Fehlende oder veraltete Zeiträume werden in Neon eingereiht und vom zentralen Dispatcher `/api/cron/sync-project-data` verarbeitet.
-- Wählt ein Benutzer interaktiv einen noch fehlenden Zeitraum, startet die Lade-Lightbox sofort einen dedizierten Queue-Worker. Dadurch wartet die Oberfläche nicht auf den nächsten Cron-Lauf; der Seiten-Render selbst bleibt frei von externen API-Aufrufen.
-- Eine zentrale Snapshot-Version sorgt dafür, dass der Dispatcher veraltete Datenformate erneuert, ohne beim Seitenaufruf externe APIs anzustoßen.
-- Ein wiederverwendbarer Sync-Auftrag pro Projekt, Jobtyp und Zeitraum verhindert doppelte Jobs und unbegrenztes Tabellenwachstum. GSC, GA4, Google Ads und Local SEO werden als Dashboard-Snapshot synchronisiert; GSC-Historie und Indexierung laufen als getrennte Jobtypen im selben Dispatcher.
+- Projekt- und API-Aufrufe arbeiten nach dem Cache-first-/Stale-While-Revalidate-Prinzip: Ein vorhandener Snapshot wird sofort angezeigt, auch wenn seine Hintergrundaktualisierung bereits fällig ist.
+- Der Dispatcher `/api/cron/sync-project-data` aktualisiert automatisch nur den aktiven Standardzeitraum `30d`. Andere Zeiträume werden nur nach tatsächlicher Nutzung und mit längeren TTLs aktualisiert (`3m`: 48 h, `6m`: 72 h, `12m` bis `24m`: 7 Tage).
+- Ein erstmalig fehlender Zeitraum wird direkt synchronisiert. Eine projektweite, per Heartbeat verlängerte Datenquellen-Lease verhindert dabei parallele Google-Aufrufe; nach einem Prozessabbruch heilt die Sperre spätestens nach 90 Sekunden selbst.
+- Interne Snapshot- oder Metadatenversionen erzwingen keinen erneuten Google-Abruf. Metadaten werden beim Lesen ergänzt und beim nächsten regulären Datenlauf persistiert.
+- Wiederverwendbare Sync-Aufträge verhindern unbegrenztes Tabellenwachstum. GSC-Historie und Indexierung bleiben getrennte Jobtypen im zentralen Dispatcher.
 - Jede zentrale Kennzahl speichert Quelle, Aktualisierungszeit, Zeitraum, Abdeckungsstatus, Berechnungsmethode und Berechnungsversion in `project_metric_snapshots` und im Dashboard-Snapshot.
 - Der Indexierungsstatus wird automatisch im 48-Stunden-Zyklus fortgesetzt. Geänderte und noch offene URLs werden priorisiert; Laufzeit- und API-Budgets verhindern lange Serverless-Aufrufe.
 - Temporäre Neon-Verbindungsfehler werden in Cronjobs kontrolliert wiederholt und als vorübergehend gemeldet, statt einen unkontrollierten Prozessabbruch auszulösen.

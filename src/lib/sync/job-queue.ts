@@ -1,5 +1,4 @@
 import { sql } from '@vercel/postgres';
-import { DASHBOARD_SNAPSHOT_VERSION } from '../metric-metadata';
 
 export type ProjectSyncJobType = 'dashboard' | 'gsc-history' | 'indexing';
 export type ProjectSyncJobStatus = 'pending' | 'running' | 'completed' | 'failed';
@@ -38,6 +37,7 @@ export async function enqueueProjectSyncJob({
   priority = 0,
   runAfter = new Date(),
   restartFailed = true,
+  preservePending = false,
 }: {
   userId: string;
   jobType: ProjectSyncJobType;
@@ -46,6 +46,7 @@ export async function enqueueProjectSyncJob({
   priority?: number;
   runAfter?: Date;
   restartFailed?: boolean;
+  preservePending?: boolean;
 }) {
   await sql`
     INSERT INTO project_sync_jobs (
@@ -60,12 +61,18 @@ export async function enqueueProjectSyncJob({
     DO UPDATE SET
       payload = EXCLUDED.payload,
       priority = GREATEST(project_sync_jobs.priority, EXCLUDED.priority),
-      run_after = LEAST(project_sync_jobs.run_after, EXCLUDED.run_after),
+      run_after = CASE
+        WHEN project_sync_jobs.status = 'pending' AND ${preservePending}
+        THEN project_sync_jobs.run_after
+        ELSE LEAST(project_sync_jobs.run_after, EXCLUDED.run_after)
+      END,
       status = CASE
         WHEN project_sync_jobs.status = 'running'
           AND project_sync_jobs.lease_until > NOW()
         THEN project_sync_jobs.status
         WHEN project_sync_jobs.status = 'failed' AND ${restartFailed} = FALSE
+        THEN project_sync_jobs.status
+        WHEN project_sync_jobs.status = 'pending' AND ${preservePending}
         THEN project_sync_jobs.status
         ELSE 'pending'
       END,
@@ -74,6 +81,8 @@ export async function enqueueProjectSyncJob({
           AND project_sync_jobs.lease_until > NOW()
         THEN project_sync_jobs.attempts
         WHEN project_sync_jobs.status = 'failed' AND ${restartFailed} = FALSE
+        THEN project_sync_jobs.attempts
+        WHEN project_sync_jobs.status = 'pending' AND ${preservePending}
         THEN project_sync_jobs.attempts
         ELSE 0
       END,
@@ -105,39 +114,26 @@ export async function seedDueProjectSyncJobs() {
   `;
 
   const dashboard = await sql`
-    WITH desired AS (
-      SELECT u.id AS user_id, '30d'::varchar AS date_range, cache.last_fetched, cache.data
-      FROM users u
-      LEFT JOIN google_data_cache cache
-        ON cache.user_id = u.id AND cache.date_range = '30d'
-      WHERE u.role = 'BENUTZER'
-        AND (
-          u.gsc_site_url IS NOT NULL
-          OR u.ga4_property_id IS NOT NULL
-          OR u.google_ads_sheet_id IS NOT NULL
-        )
-      UNION
-      SELECT u.id AS user_id, cache.date_range, cache.last_fetched, cache.data
-      FROM users u
-      JOIN google_data_cache cache ON cache.user_id = u.id
-      WHERE u.role = 'BENUTZER'
-        AND (
-          u.gsc_site_url IS NOT NULL
-          OR u.ga4_property_id IS NOT NULL
-          OR u.google_ads_sheet_id IS NOT NULL
-        )
-    )
     INSERT INTO project_sync_jobs (
       user_id, job_type, date_range, payload, status, priority, run_after, updated_at
     )
     SELECT
-      desired.user_id, 'dashboard', desired.date_range,
-      jsonb_build_object('dateRange', desired.date_range),
+      u.id, 'dashboard', '30d',
+      jsonb_build_object('dateRange', '30d'),
       'pending', 10, NOW(), NOW()
-    FROM desired
-    WHERE desired.last_fetched IS NULL
-      OR desired.last_fetched < NOW() - INTERVAL '20 hours'
-      OR COALESCE((desired.data->>'snapshotVersion')::integer, 0) < ${DASHBOARD_SNAPSHOT_VERSION}
+    FROM users u
+    LEFT JOIN google_data_cache cache
+      ON cache.user_id = u.id AND cache.date_range = '30d'
+    WHERE u.role = 'BENUTZER'
+      AND (
+        u.gsc_site_url IS NOT NULL
+        OR u.ga4_property_id IS NOT NULL
+        OR u.google_ads_sheet_id IS NOT NULL
+      )
+      AND (
+        cache.last_fetched IS NULL
+        OR cache.last_fetched < NOW() - INTERVAL '20 hours'
+      )
     ON CONFLICT (user_id, job_type, date_range)
     DO UPDATE SET
       status = 'pending', attempts = 0, run_after = NOW(),
@@ -332,6 +328,20 @@ export async function finishProjectSyncJob(
       run_after = NOW() + (${retryDelayMinutes} * INTERVAL '1 minute'),
       lease_until = NULL,
       last_error = ${result.error ?? 'Unbekannter Synchronisierungsfehler'},
+      updated_at = NOW()
+    WHERE id = ${job.id}::bigint
+  `;
+}
+
+export async function deferProjectSyncJob(job: ProjectSyncJob, delaySeconds = 30) {
+  await sql`
+    UPDATE project_sync_jobs
+    SET
+      status = 'pending',
+      attempts = GREATEST(attempts - 1, 0),
+      run_after = NOW() + (${delaySeconds} * INTERVAL '1 second'),
+      lease_until = NULL,
+      last_error = NULL,
       updated_at = NOW()
     WHERE id = ${job.id}::bigint
   `;

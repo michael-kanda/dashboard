@@ -379,7 +379,8 @@ async function getBrandKeywordsForUser(
 export async function getOrFetchGoogleData(
   user: User,
   dateRange: string,
-  forceRefresh = false
+  forceRefresh = false,
+  options: { enqueueIfMissing?: boolean } = {},
 ): Promise<ProjectDashboardData | null> {
   if (!user.id) return null;
   const userId = user.id;
@@ -397,6 +398,7 @@ export async function getOrFetchGoogleData(
   if (!forceRefresh) {
     const snapshot = await readDashboardSnapshot(user, dateRange, {
       enqueueIfStale: true,
+      enqueueIfMissing: options.enqueueIfMissing,
       priority: 50,
     });
     console.log(`[Google Cache] ${snapshot.data ? '✅ SNAPSHOT' : '⏳ AUSSTEHEND'} für ${user.email}`);

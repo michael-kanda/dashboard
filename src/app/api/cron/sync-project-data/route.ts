@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { syncProjectIndexingStatus } from '@/lib/indexing-status';
-import { syncDashboardProjectSnapshot } from '@/lib/sync/dashboard';
+import { trySyncDashboardProjectSnapshot } from '@/lib/sync/dashboard';
 import { syncGscHistoryForProject } from '@/lib/sync/gsc-history';
 import {
   claimNextProjectSyncJob,
+  deferProjectSyncJob,
   finishProjectSyncJob,
   seedDueProjectSyncJobs,
   type ProjectSyncJob,
@@ -50,11 +51,12 @@ async function persistIndexingMetrics(userId: string, status: Awaited<ReturnType
   await persistMetricSnapshots(userId, 'indexing', values, metadata);
 }
 
-async function executeJob(job: ProjectSyncJob, deadlineAt: number) {
+async function executeJob(job: ProjectSyncJob, deadlineAt: number): Promise<string | null> {
   switch (job.jobType) {
     case 'dashboard': {
       const dateRange = job.dateRange || String(job.payload.dateRange ?? '30d');
-      await syncDashboardProjectSnapshot(job.userId, dateRange);
+      const result = await trySyncDashboardProjectSnapshot(job.userId, dateRange);
+      if (!result.acquired) return null;
       return `Dashboard ${dateRange} aktualisiert`;
     }
     case 'gsc-history': {
@@ -104,6 +106,17 @@ export async function GET(request: NextRequest) {
       if (!job) break;
       try {
         const message = await executeJob(job, deadlineAt);
+        if (message === null) {
+          await deferProjectSyncJob(job);
+          results.push({
+            jobId: job.id,
+            type: job.jobType,
+            projectId: job.userId,
+            success: true,
+            message: 'Wegen laufender Projektsynchronisierung kurz verschoben',
+          });
+          continue;
+        }
         await finishProjectSyncJob(job, { success: true });
         results.push({
           jobId: job.id,

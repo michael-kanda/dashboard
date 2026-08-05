@@ -1,54 +1,55 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLoadingOverlay from '@/components/dashboard/DashboardLoadingOverlay';
 
-const RANGE_LABELS: Record<string, string> = {
-  '7d': 'die letzten 7 Tage',
-  '30d': 'die letzten 30 Tage',
-  '3m': 'die letzten 3 Monate',
-  '6m': 'die letzten 6 Monate',
-  '12m': 'die letzten 12 Monate',
-  '18m': 'die letzten 18 Monate',
-  '24m': 'die letzten 24 Monate',
-};
-
 export default function DashboardSyncPending({
   projectId,
-  domain,
   dateRange,
 }: {
   projectId: string;
-  domain?: string | null;
   dateRange: string;
 }) {
   const router = useRouter();
-  const startedRef = useRef(false);
 
   useEffect(() => {
-    if (!startedRef.current) {
-      startedRef.current = true;
-      void fetch(`/api/projects/${projectId}/dashboard-sync`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dateRange }),
-      }).finally(() => {
-        router.refresh();
-      });
-    }
+    let cancelled = false;
+    let retryTimer: number | undefined;
+    let errorRetryMs = 8_000;
 
-    const interval = window.setInterval(() => {
-      router.refresh();
-    }, 10_000);
-    return () => window.clearInterval(interval);
+    const synchronize = async () => {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/dashboard-sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dateRange }),
+        });
+        if (cancelled) return;
+        if (response.status === 202) {
+          retryTimer = window.setTimeout(synchronize, 4_000);
+          return;
+        }
+        if (response.ok) {
+          router.refresh();
+          return;
+        }
+        retryTimer = window.setTimeout(synchronize, errorRetryMs);
+        errorRetryMs = Math.min(errorRetryMs * 2, 60_000);
+      } catch {
+        if (!cancelled) {
+          retryTimer = window.setTimeout(synchronize, errorRetryMs);
+          errorRetryMs = Math.min(errorRetryMs * 2, 60_000);
+        }
+      }
+    };
+
+    void synchronize();
+    return () => {
+      cancelled = true;
+      if (retryTimer) window.clearTimeout(retryTimer);
+    };
   }, [dateRange, projectId, router]);
 
-  const rangeLabel = RANGE_LABELS[dateRange] ?? `den Zeitraum ${dateRange}`;
-  return (
-    <DashboardLoadingOverlay
-      title="Dashboard wird aktualisiert"
-      description={`Die Daten für ${rangeLabel}${domain ? ` von ${domain}` : ''} werden im Hintergrund synchronisiert. Das Dashboard öffnet sich automatisch.`}
-    />
-  );
+  return <DashboardLoadingOverlay />;
 }

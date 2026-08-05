@@ -4,9 +4,9 @@ import type { ProjectDashboardData } from '../dashboard-shared';
 import { getDemoAnalyticsData } from '../demo-data';
 import {
   attachDashboardMetricMetadata,
-  DASHBOARD_SNAPSHOT_VERSION,
 } from '../metric-metadata';
 import { enqueueProjectSyncJob } from './job-queue';
+import { isDashboardSnapshotStale } from './cache-policy';
 
 export interface DashboardSnapshotResult {
   data: ProjectDashboardData | null;
@@ -15,11 +15,7 @@ export interface DashboardSnapshotResult {
   queued: boolean;
 }
 
-export function getDashboardCacheDurationHours(dateRange: string) {
-  if (dateRange === '18m' || dateRange === '24m') return 72;
-  if (dateRange === '12m') return 48;
-  return 24;
-}
+export { getDashboardCacheDurationHours } from './cache-policy';
 
 function isDemoProject(user: Pick<User, 'email' | 'domain'>) {
   return user.email?.includes('demo') || user.domain?.includes('demo-shop');
@@ -28,7 +24,11 @@ function isDemoProject(user: Pick<User, 'email' | 'domain'>) {
 export async function readDashboardSnapshot(
   user: Pick<User, 'id' | 'email' | 'domain'>,
   dateRange: string,
-  options: { enqueueIfStale?: boolean; priority?: number } = {},
+  options: {
+    enqueueIfStale?: boolean;
+    enqueueIfMissing?: boolean;
+    priority?: number;
+  } = {},
 ): Promise<DashboardSnapshotResult> {
   if (!user.id) return { data: null, lastFetchedAt: null, stale: true, queued: false };
   if (isDemoProject(user)) {
@@ -51,14 +51,14 @@ export async function readDashboardSnapshot(
   const lastFetchedAt = row?.last_fetched
     ? new Date(String(row.last_fetched)).toISOString()
     : null;
-  const maxAgeMs = getDashboardCacheDurationHours(dateRange) * 60 * 60 * 1000;
   const cachedData = row?.data as ProjectDashboardData | undefined;
-  const stale = !lastFetchedAt
-    || Date.now() - new Date(lastFetchedAt).getTime() >= maxAgeMs
-    || cachedData?.snapshotVersion !== DASHBOARD_SNAPSHOT_VERSION;
+  const stale = isDashboardSnapshotStale(dateRange, lastFetchedAt);
   let queued = false;
 
-  if (stale && options.enqueueIfStale !== false) {
+  const shouldEnqueue = stale
+    && options.enqueueIfStale !== false
+    && (Boolean(cachedData) || options.enqueueIfMissing !== false);
+  if (shouldEnqueue) {
     try {
       await enqueueProjectSyncJob({
         userId: user.id,
@@ -67,6 +67,7 @@ export async function readDashboardSnapshot(
         payload: { dateRange },
         priority: options.priority ?? (row ? 20 : 100),
         restartFailed: false,
+        preservePending: true,
       });
       queued = true;
     } catch (error) {

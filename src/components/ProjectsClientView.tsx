@@ -2,59 +2,26 @@
 'use client';
 
 import { useState } from 'react';
-// NEU: useRouter für die Navigation nach dem Timeout
-import { useRouter } from 'next/navigation'; 
-// Link wird nur noch für nicht-interaktive Elemente verwendet oder entfernt, wo es ersetzt wird
-// import Link from 'next/link'; 
+import { useRouter } from 'next/navigation';
 import {
   Search, CheckCircleFill, XCircleFill, FileEarmarkText,
   ShieldLock, BoxArrowInRight, Globe, CalendarRange,
   ArrowUp, ArrowDown, ArrowRight
 } from 'react-bootstrap-icons';
 import { addMonths, format } from 'date-fns';
-// ✅ WICHTIG: Importiere ProjectStats aus schemas
 import type { ProjectStats } from '@/lib/schemas';
-// NEU: Import der Lightbox-Komponente
-import TransitioningLightbox from '@/components/ui/TransitioningLightbox'; 
 
 interface Props {
   initialProjects: ProjectStats[];
 }
 
-// Zeit in Millisekunden, die die Lightbox angezeigt wird, bevor die Navigation startet.
-const LIGHTBOX_DELAY_MS = 500; 
-
 export default function ProjectsClientView({ initialProjects }: Props) {
-  const router = useRouter(); // Initialisiere den Router für die Navigation
+  const router = useRouter();
   
   const [searchTerm, setSearchTerm] = useState('');
-  // NEUE STATES FÜR DIE LIGHTBOX UND NACHRICHT
-  const [isNavigating, setIsNavigating] = useState(false);
-  const [lightboxMessage, setLightboxMessage] = useState('');
-
-  /**
-   * Zeigt die Lightbox an und leitet dann nach einer kurzen Verzögerung um.
-   * @param path Der Zielpfad (href).
-   * @param message Die in der Lightbox anzuzeigende Nachricht.
-   */
-  const handleNavigationWithLightbox = (path: string, message: string) => {
-    // 1. Lightbox-Status setzen
-    setLightboxMessage(message);
-    setIsNavigating(true);
-
-    // 2. Verzögerte Navigation starten
-    setTimeout(() => {
-      router.push(path);
-      // Beim Routenwechsel wird die Komponente sowieso unmounted,
-      // aber es ist sauberer, den State nach der Navigation zurückzusetzen,
-      // falls das Routing fehlschlägt oder ähnliches.
-      // In Next.js ist das Zurücksetzen oft nicht nötig, aber eine Option.
-      // setIsNavigating(false); 
-    }, LIGHTBOX_DELAY_MS); 
-  };
+  const navigate = (path: string) => router.push(path);
 
 
-  // Filtern passiert jetzt client-seitig auf den bereits geladenen Daten
   const filteredProjects = initialProjects.filter(user => 
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (user.domain && user.domain.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -86,11 +53,6 @@ export default function ProjectsClientView({ initialProjects }: Props) {
       </span>
     );
   };
-
-  // WICHTIG: Wenn die Navigation aktiv ist, nur die Lightbox rendern
-  if (isNavigating) {
-    return <TransitioningLightbox message={lightboxMessage} />;
-  }
 
   return (
     <div className="min-h-screen bg-surface-secondary px-4 py-6 sm:px-6 lg:px-8">
@@ -152,10 +114,7 @@ export default function ProjectsClientView({ initialProjects }: Props) {
                   
                   <button
                     type="button"
-                    onClick={() => handleNavigationWithLightbox(
-                        `/projekt/${user.id}`, 
-                        `Lade Dashboard für ${user.domain || 'das Projekt'}...`
-                    )}
+                    onClick={() => navigate(`/projekt/${user.id}`)}
                     className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700"
                   >
                     Öffnen <BoxArrowInRight size={14}/>
@@ -190,10 +149,7 @@ export default function ProjectsClientView({ initialProjects }: Props) {
                     {hasRedaktionsplan ? (
                       // BUTTON 2: REDAKTIONSPLAN (Link durch span mit onClick ersetzt)
                       <span 
-                        onClick={() => handleNavigationWithLightbox(
-                            `/admin/redaktionsplan?id=${user.id}`, 
-                            `Weiterleitung zum Redaktionsplan...`
-                        )}
+                        onClick={() => navigate(`/admin/redaktionsplan?id=${user.id}`)}
                         className="inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-950/30 dark:text-blue-300"
                         role="button"
                         tabIndex={0}

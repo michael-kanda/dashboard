@@ -82,7 +82,7 @@ export default function ProjectDashboard({
 
   return (
     <div className="min-h-screen flex flex-col dashboard-gradient relative">
-      {isUpdating && <DashboardLoadingOverlay />}
+      {isUpdating && !isLoading && <DashboardLoadingOverlay />}
 
       <div className="flex-grow w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <GlobalHeader

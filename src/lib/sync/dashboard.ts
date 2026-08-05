@@ -1,6 +1,7 @@
 import { sql } from '@vercel/postgres';
 import type { User } from '@/lib/schemas';
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
+import { runWithSourceLease } from '@/lib/sync/source-lease';
 
 export async function syncDashboardProjectSnapshot(userId: string, dateRange: string) {
   const { rows } = await sql`
@@ -18,4 +19,12 @@ export async function syncDashboardProjectSnapshot(userId: string, dateRange: st
   if (criticalError) throw new Error(String(criticalError));
 
   return data;
+}
+
+export async function trySyncDashboardProjectSnapshot(userId: string, dateRange: string) {
+  return runWithSourceLease(
+    userId,
+    'dashboard',
+    () => syncDashboardProjectSnapshot(userId, dateRange),
+  );
 }
