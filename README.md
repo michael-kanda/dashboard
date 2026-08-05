@@ -187,6 +187,8 @@ For local projects, DataPeak can represent multiple locations such as a main off
 ### Operations and Database
 
 - Database changes are versioned in `migrations/` and applied before deployment with `npm run db:migrate`.
+- `ProjectDashboard` only orchestrates widget sections. Source normalization and rendering policy live outside the page component so UI changes do not alter measurement logic.
+- GSC, GA4, Google Ads, local SEO, and indexing expose independent dashboard data modules with shared availability/error contracts. Run their contract tests with `npm run test:data-modules`.
 - Pages, API routes, and cron jobs do not modify the schema during requests.
 - GSC, GA4, dashboard, and indexing data are refreshed incrementally and cached so unchanged data is not fetched again on every project view.
 - Indexing checks continue automatically on a 48-hour cycle. Changed and pending URLs are prioritized, while runtime and API budgets keep serverless executions bounded.

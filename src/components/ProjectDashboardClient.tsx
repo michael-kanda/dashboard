@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import type { ProjectDashboardProps } from '@/components/ProjectDashboard';
+import type { ProjectDashboardProps } from '@/components/dashboard/types';
 
 function DashboardClientLoading() {
   return (

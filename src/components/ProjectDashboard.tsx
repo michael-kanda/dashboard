@@ -1,191 +1,21 @@
 // src/components/ProjectDashboard.tsx
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
-import dynamic from 'next/dynamic';
-import Image from 'next/image';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Check2, PencilSquare, X } from 'react-bootstrap-icons';
-import {
-  ProjectDashboardData,
-  ActiveKpi,
-  ChartEntry,
-  KpiDatum
-} from '@/lib/dashboard-shared';
-
-import AiTrafficDetailWidgetV2 from '@/components/AiTrafficDetailWidgetV2';
-import { type DateRangeOption } from '@/components/DateRangeSelector';
-import TopQueriesList from '@/components/TopQueriesList';
-import SemrushTopKeywords from '@/components/SemrushTopKeywords';
-import SemrushTopKeywords02 from '@/components/SemrushTopKeywords02';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import type { ActiveKpi } from '@/lib/dashboard-shared';
 import GlobalHeader from '@/components/GlobalHeader';
-import ProjectTimelineWidget from '@/components/ProjectTimelineWidget';
-import AiAnalysisWidget from '@/components/AiAnalysisWidget';
-import { aggregateLandingPages } from '@/lib/utils';
 import { DataMaxChat } from '@/components/datamax';
-import GoogleAdsWidget from '@/components/GoogleAdsWidget';
-import LocalSeoMapWidget from '@/components/LocalSeoMapWidget';
-import IndexingStatusWidget from '@/components/IndexingStatusWidget';
-import type { ProjectIndexingStatus } from '@/lib/indexing-status';
-import {
-  normalizeDashboardWidgetVisibility,
-  type DashboardWidgetKey,
-  type DashboardWidgetVisibility,
-} from '@/lib/dashboard-widget-visibility';
+import DashboardAcquisitionWidgets from '@/components/dashboard/DashboardAcquisitionWidgets';
+import DashboardAiWidgets from '@/components/dashboard/DashboardAiWidgets';
+import DashboardInfoWidget from '@/components/dashboard/DashboardInfoWidget';
+import DashboardLoadingOverlay from '@/components/dashboard/DashboardLoadingOverlay';
+import DashboardOverviewWidgets from '@/components/dashboard/DashboardOverviewWidgets';
+import DashboardSearchWidgets from '@/components/dashboard/DashboardSearchWidgets';
+import { buildDashboardViewModel } from '@/components/dashboard/view-model';
+import type { ProjectDashboardProps } from '@/components/dashboard/types';
 
-// PromptTrackingCard dynamisch nur Client-Side laden – verhindert
-// Hydration-Mismatches bei den Number-Formatierungen / shareTrend-Visuals.
-const PromptTrackingCard = dynamic(
-  () => import('@/components/PromptTrackingCard'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="dashboard-widget-surface rounded-lg p-6">
-        <div className="animate-pulse text-muted text-sm">Prompt-Tracking lädt…</div>
-      </div>
-    ),
-  }
-);
-
-const TableauKpiGrid = dynamic(
-  () => import('@/components/TableauKpiGrid'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="space-y-8">
-        <div className="dashboard-widget-surface rounded-xl p-5">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 w-48 rounded bg-surface-tertiary" />
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="h-40 rounded-lg bg-surface-tertiary" />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    ),
-  }
-);
-
-const AiTrafficCard = dynamic(
-  () => import('@/components/AiTrafficCard'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="dashboard-widget-surface rounded-lg p-6">
-        <div className="animate-pulse text-muted text-sm">KI-Traffic lädt…</div>
-      </div>
-    ),
-  }
-);
-
-const GoogleGenAiVisibilityCard = dynamic(
-  () => import('@/components/GoogleGenAiVisibilityCard'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="dashboard-widget-surface rounded-lg p-6">
-        <div className="animate-pulse text-muted text-sm">Google GenAI Sichtbarkeit lädt…</div>
-      </div>
-    ),
-  }
-);
-
-const KpiTrendChart = dynamic(
-  () => import('@/components/charts/KpiTrendChart'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="dashboard-widget-surface rounded-lg p-6 h-[400px]">
-        <div className="animate-pulse text-muted text-sm">Verlauf lädt…</div>
-      </div>
-    ),
-  }
-);
-
-const LandingPageChart = dynamic(
-  () => import('@/components/charts/LandingPageChart'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="dashboard-widget-surface rounded-lg p-6 h-[500px]">
-        <div className="animate-pulse text-muted text-sm">Landingpages laden…</div>
-      </div>
-    ),
-  }
-);
-
-const TableauPieChart = dynamic(
-  () => import('@/components/charts/TableauPieChart'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="dashboard-widget-surface rounded-lg p-6 h-80">
-        <div className="animate-pulse text-muted text-sm">Diagramm lädt…</div>
-      </div>
-    ),
-  }
-);
-
-export interface ProjectDashboardProps {
-  data: ProjectDashboardData;
-  isLoading: boolean;
-  dateRange: DateRangeOption;
-  onDateRangeChange?: (range: DateRangeOption) => void;
-  projectId?: string;
-  domain?: string;
-  faviconUrl?: string | null;
-  semrushTrackingId?: string | null;
-  semrushTrackingId02?: string | null;
-  projectTimelineActive?: boolean;
-  countryData?: ChartEntry[];
-  channelData?: ChartEntry[];
-  deviceData?: ChartEntry[];
-  bingData?: any[];
-  userRole?: string;
-  userEmail?: string;
-  userAnsprache?: string | null;
-  showLandingPages?: boolean;
-  showGoogleAds?: boolean;
-  showPromptTracking?: boolean;
-  widgetVisibility?: Partial<DashboardWidgetVisibility> | null;
-  dashboardInfoText?: string | null;
-  dataMaxEnabled?: boolean;
-  indexingStatus?: ProjectIndexingStatus;
-}
-
-const LOCAL_VISIBILITY_INFO_TEXT = '• Lokale Sichtbarkeit: GA4 und GSC verwenden unterschiedliche Zuordnungen. Sind Standort-Landingpages hinterlegt, stammen neue Besucher, Sessions und Conversions aus diesen Seiten; ohne hinterlegte Standort-Landingpage nutzt das Widget die von GA4 erkannte Stadt des Besuchers. GSC-Klicks und -Impressionen werden separat über konfigurierte Standort-Landingpages sowie lokale Keywords/Aliase zugeordnet. Deshalb können für einen Standort GA4-Besucher vorhanden sein, obwohl GSC dort 0 Klicks oder Impressionen ausweist.';
-
-const DEFAULT_DASHBOARD_INFO_TEXT = `• GSC & Google Ads (SERP-Daten): Messen Impressionen und Klicks direkt auf der Google-Suchseite. Diese Daten sind cookie-unabhängig und werden auch bei Cookie-Ablehnung oder im Inkognito-Modus erfasst. GSC filtert dabei seltene Suchanfragen aus Datenschutzgründen heraus (im Schnitt ca. 47 % der Queries). Hinweis: Conversion-Tracking auf der Website ist hingegen consent-pflichtig.
-• Google GenAI-Sichtbarkeit: Misst offizielle Search-Console-Impressions in generativen Google-Sucherlebnissen wie AI Overviews und AI Mode, sofern die Property bereits im Rollout ist und genug Daten vorhanden sind. Diese Werte zeigen Sichtbarkeit in Google-GenAI, nicht Website-Besuche.
-• Google Analytics (GA4): Misst das Nutzerverhalten direkt auf der Website. Erfassung ist cookie-abhängig und erfordert in der EU eine Einwilligung (DSGVO/TTDSG). Mit Consent Mode v2 sind teilweise modellierte Daten verfügbar.
-${LOCAL_VISIBILITY_INFO_TEXT}
-• KI-Traffic (GA4): Misst Website-Besuche über das offizielle GA4-Medium „ai-assistant“ und ergänzt erkannte KI-Referrer wie ChatGPT, Perplexity, Gemini, Copilot, Claude, DeepSeek oder Grok. Google AI Overviews und AI Mode zählen in GA4 weiterhin zu Organic Search.
-• Prompt Tracking / Prompt Research: Nutzt GSC-Queries und KI-generierte Decision-Prompts als Research- und Optimierungsinstrument. Es ist ein AI-Mode-Proxy bzw. Testverfahren, aber kein offizieller Sichtbarkeitswert von Google.`;
-
-function resolveDashboardInfoText(value?: string | null) {
-  const text = value?.trim() || DEFAULT_DASHBOARD_INFO_TEXT;
-  return text.includes('• Lokale Sichtbarkeit:')
-    ? text
-    : `${text}\n${LOCAL_VISIBILITY_INFO_TEXT}`;
-}
-
-function safeKpi(kpi?: KpiDatum) {
-  return kpi || { value: 0, change: 0 };
-}
-
-function isTransientGa4Message(message?: string | null) {
-  if (!message) return false;
-  const lower = message.toLowerCase();
-  return (
-    lower.includes('aborted') ||
-    lower.includes('timeout') ||
-    lower.includes('econnreset') ||
-    lower.includes('socket hang up') ||
-    lower.includes('fetch failed')
-  );
-}
+export type { ProjectDashboardProps } from '@/components/dashboard/types';
 
 export default function ProjectDashboard({
   data,
@@ -194,7 +24,6 @@ export default function ProjectDashboard({
   onDateRangeChange,
   projectId,
   domain,
-  faviconUrl,
   semrushTrackingId,
   semrushTrackingId02,
   projectTimelineActive = false,
@@ -209,208 +38,51 @@ export default function ProjectDashboard({
   dataMaxEnabled = true,
   indexingStatus,
 }: ProjectDashboardProps) {
-
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-
+  const chartRef = useRef<HTMLDivElement>(null);
   const [activeKpi, setActiveKpi] = useState<ActiveKpi>('clicks');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [showAiTrafficDetail, setShowAiTrafficDetail] = useState(false);
-  const [showPromptTrackingDetail, setShowPromptTrackingDetail] = useState(false);
-  const [infoText, setInfoText] = useState(resolveDashboardInfoText(dashboardInfoText));
-  const [draftInfoText, setDraftInfoText] = useState(resolveDashboardInfoText(dashboardInfoText));
-  const [isEditingInfo, setIsEditingInfo] = useState(false);
-  const [isSavingInfo, setIsSavingInfo] = useState(false);
-  const [infoSaveError, setInfoSaveError] = useState('');
-  const chartRef = useRef<HTMLDivElement>(null);
+
+  const model = useMemo(() => buildDashboardViewModel({
+    data,
+    indexingStatus,
+    userRole,
+    showLandingPages,
+    showGoogleAds,
+    showPromptTracking,
+    widgetVisibility,
+    semrushTrackingId,
+    semrushTrackingId02,
+  }), [
+    data,
+    indexingStatus,
+    userRole,
+    showLandingPages,
+    showGoogleAds,
+    showPromptTracking,
+    widgetVisibility,
+    semrushTrackingId,
+    semrushTrackingId02,
+  ]);
 
   useEffect(() => {
     setIsUpdating(false);
   }, [dateRange, data, isLoading]);
 
-  useEffect(() => {
-    const nextText = resolveDashboardInfoText(dashboardInfoText);
-    setInfoText(nextText);
-    setDraftInfoText(nextText);
-    setIsEditingInfo(false);
-    setInfoSaveError('');
-  }, [dashboardInfoText, projectId]);
-
-  const apiErrors = data.apiErrors;
-  const kpis = data.kpis;
-
-  const extendedKpis = kpis ? {
-    clicks: safeKpi(kpis.clicks),
-    impressions: safeKpi(kpis.impressions),
-    sessions: safeKpi(kpis.sessions),
-    totalUsers: safeKpi(kpis.totalUsers),
-    conversions: safeKpi(kpis.conversions),
-    engagementRate: safeKpi(kpis.engagementRate),
-    bounceRate: safeKpi(kpis.bounceRate),
-    newUsers: safeKpi(kpis.newUsers),
-    avgEngagementTime: safeKpi(kpis.avgEngagementTime),
-    genAiImpressions: safeKpi(kpis.genAiImpressions),
-  } : undefined;
-
-  const allChartData = {
-    ...(data.charts || {}),
-    genAiImpressions: (data.googleGenAi?.trend ?? []).map(item => ({
-      date: item.date,
-      value: item.impressions
-    })),
-    aiTraffic: (data.aiTraffic?.trend ?? []).map(item => ({
-      date: item.date,
-      value: (item as any).value ?? (item as any).sessions ?? 0
-    }))
-  };
-
-  const cleanLandingPages = useMemo(() => {
-    return aggregateLandingPages(data.topConvertingPages || []);
-  }, [data.topConvertingPages]);
-
-  const exportKpis = useMemo(() => {
-    if (!extendedKpis) return [];
-
-    return [
-      { label: 'Impressionen', value: extendedKpis.impressions.value.toLocaleString('de-DE'), change: extendedKpis.impressions.change },
-      { label: 'Klicks', value: extendedKpis.clicks.value.toLocaleString('de-DE'), change: extendedKpis.clicks.change },
-      { label: 'Nutzer', value: extendedKpis.totalUsers.value.toLocaleString('de-DE'), change: extendedKpis.totalUsers.change },
-      { label: 'Sitzungen', value: extendedKpis.sessions.value.toLocaleString('de-DE'), change: extendedKpis.sessions.change },
-      { label: 'Engagement', value: extendedKpis.engagementRate.value.toFixed(1), change: extendedKpis.engagementRate.change, unit: '%' },
-      { label: 'Conversions', value: extendedKpis.conversions.value.toLocaleString('de-DE'), change: extendedKpis.conversions.change },
-      { label: 'KI-Traffic', value: (data.aiTraffic?.totalUsers || 0).toLocaleString('de-DE'), change: data.aiTraffic?.totalUsersChange || 0 },
-      { label: 'Google GenAI', value: (data.googleGenAi?.totalImpressions || 0).toLocaleString('de-DE'), change: data.googleGenAi?.impressionsChange || 0 },
-      { label: 'Ø Zeit', value: extendedKpis.avgEngagementTime.value.toLocaleString('de-DE'), change: extendedKpis.avgEngagementTime.change },
-    ];
-  }, [extendedKpis, data.aiTraffic, data.googleGenAi]);
-
-  const handleDateRangeChange = (range: DateRangeOption) => {
+  const handleDateRangeChange = (range: ProjectDashboardProps['dateRange']) => {
     if (range === dateRange) return;
     setIsUpdating(true);
     const params = new URLSearchParams(searchParams.toString());
     params.set('range', range);
     router.push(`${pathname}?${params.toString()}`);
-    if (onDateRangeChange) onDateRangeChange(range);
+    onDateRangeChange?.(range);
   };
-
-  const handlePromptTrackingClick = () => {
-    setShowPromptTrackingDetail((current) => {
-      const next = !current;
-      if (next) {
-        window.setTimeout(() => {
-          document.getElementById('section-prompt-tracking')?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-          });
-        }, 0);
-      }
-      return next;
-    });
-  };
-
-  const handleSaveInfoText = async () => {
-    if (!projectId) return;
-
-    setIsSavingInfo(true);
-    setInfoSaveError('');
-
-    try {
-      const response = await fetch(`/api/projects/${projectId}/info-box`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: draftInfoText }),
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        throw new Error(payload?.message || 'Speichern fehlgeschlagen');
-      }
-
-      const payload = await response.json();
-      const nextText = resolveDashboardInfoText(payload.text);
-      setInfoText(nextText);
-      setDraftInfoText(nextText);
-      setIsEditingInfo(false);
-    } catch (error: any) {
-      setInfoSaveError(error?.message || 'Speichern fehlgeschlagen');
-    } finally {
-      setIsSavingInfo(false);
-    }
-  };
-
-  const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
-  const resolvedWidgetVisibility = useMemo(
-    () => normalizeDashboardWidgetVisibility(widgetVisibility, {
-      landingPages: showLandingPages,
-      googleAds: showGoogleAds,
-      promptTracking: showPromptTracking,
-    }),
-    [widgetVisibility, showLandingPages, showGoogleAds, showPromptTracking]
-  );
-  const canShowWidget = (key: DashboardWidgetKey) => isAdmin || resolvedWidgetVisibility[key];
-  const shouldRenderTopQueries = canShowWidget('topQueries');
-  const shouldRenderChart = canShowWidget('landingPages');
-  const hasKampagne1Config = !!semrushTrackingId;
-  const hasKampagne2Config = !!semrushTrackingId02;
-  const shouldRenderSemrushPrimary = hasKampagne1Config && canShowWidget('semrushPrimary');
-  const shouldRenderSemrushSecondary = hasKampagne2Config && canShowWidget('semrushSecondary');
-  const shouldRenderSemrush = shouldRenderSemrushPrimary || shouldRenderSemrushSecondary;
-  const visibleTrafficBreakdownCount = [
-    canShowWidget('channelTraffic'),
-    canShowWidget('countryTraffic'),
-    canShowWidget('deviceTraffic'),
-  ].filter(Boolean).length;
-  const safeApiErrors = { ...((apiErrors as any) || {}) };
-  if (isTransientGa4Message(safeApiErrors.ga4)) {
-    delete safeApiErrors.ga4;
-  }
-
-  const hasAiTraffic = (data.aiTraffic?.totalSessions ?? 0) > 0;
-
-  // ✅ Google Ads Prüfung (GA4-Rows ODER Sheet-Rows)
-  const hasGoogleAdsData = !!data.googleAdsData && (
-    data.googleAdsData.source === 'sheet'
-    || (data.googleAdsData.rows?.length ?? 0) > 0
-    || (data.googleAdsData.campaignRows?.length ?? 0) > 0
-  );
-  const shouldRenderGoogleAds = hasGoogleAdsData && canShowWidget('googleAds');
-
-  // ✅ Prompt Tracking Prüfung (nur rendern wenn GSC-Daten vorhanden)
-  const hasPromptTracking = !!data.promptTracking;
-  const shouldRenderPromptTracking = hasPromptTracking
-    && canShowWidget('aiTraffic')
-    && canShowWidget('promptTracking');
 
   return (
     <div className="min-h-screen flex flex-col dashboard-gradient relative">
-
-      {/* Lightbox Spinner */}
-      {isUpdating && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-surface/70 backdrop-blur-md transition-all animate-in fade-in duration-300">
-           <div className="bg-surface p-8 rounded-3xl shadow-2xl border border-theme-border-subtle flex flex-col items-center gap-6 max-w-md w-full text-center transform scale-100 animate-in zoom-in-95 duration-300">
-              <div className="relative w-full flex justify-center">
-                 <Image
-                   src="/data-max-arbeitet.webp"
-                   alt="Data Max arbeitet"
-                   width={400}
-                   height={400}
-                   className="h-[200px] w-auto object-contain"
-                   priority
-                 />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-strong mb-1">Daten werden aktualisiert</h3>
-                <p className="text-muted text-sm leading-relaxed">
-                  Rufe aktuelle Metriken von Google & Semrush ab...
-                </p>
-              </div>
-              <div className="w-full h-1.5 bg-surface-tertiary rounded-full overflow-hidden">
-                <div className="h-full bg-indigo-500 w-1/3 rounded-full animate-indeterminate-bar"></div>
-              </div>
-           </div>
-        </div>
-      )}
+      {isUpdating && <DashboardLoadingOverlay />}
 
       <div className="flex-grow w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <GlobalHeader
@@ -423,309 +95,57 @@ export default function ProjectDashboard({
           userAnsprache={userAnsprache}
         />
 
-        {projectId && projectTimelineActive && canShowWidget('projectTimeline') && (
-          <div className="mb-6 print-timeline">
-            <ProjectTimelineWidget projectId={projectId} />
-          </div>
+        <DashboardOverviewWidgets
+          data={data}
+          model={model}
+          isLoading={isLoading}
+          dateRange={dateRange}
+          projectId={projectId}
+          domain={domain}
+          userRole={userRole}
+          projectTimelineActive={projectTimelineActive}
+          activeKpi={activeKpi}
+          onActiveKpiChange={setActiveKpi}
+          chartRef={chartRef}
+        />
+
+        <DashboardAiWidgets
+          data={data}
+          model={model}
+          isLoading={isLoading}
+          dateRange={dateRange}
+          projectId={projectId}
+          domain={domain}
+        />
+
+        <DashboardSearchWidgets
+          model={model}
+          isLoading={isLoading}
+          dateRange={dateRange}
+          projectId={projectId}
+          userRole={userRole}
+        />
+
+        <DashboardAcquisitionWidgets
+          model={model}
+          isLoading={isLoading}
+          dateRange={dateRange}
+          projectId={projectId}
+        />
+
+        {model.canShow('dataInfo') && (
+          <DashboardInfoWidget
+            projectId={projectId}
+            initialText={dashboardInfoText}
+            isAdmin={model.isAdmin}
+          />
         )}
-
-        {/* AI WIDGET */}
-        {projectId && canShowWidget('aiAnalysis') && (
-          <div id="section-ai-analyse" className="mt-8 scroll-mt-20 print:hidden">
-            <AiAnalysisWidget
-              projectId={projectId}
-              domain={domain}
-              dateRange={dateRange}
-              chartRef={chartRef}
-              kpis={exportKpis}
-              googleAdsData={data.googleAdsData}
-            />
-          </div>
-        )}
-
-        {/* KPI GRID */}
-        {canShowWidget('kpis') && (
-          <div id="section-kpis" className="mt-8 scroll-mt-20 print-kpi-grid">
-            {extendedKpis && (
-              <TableauKpiGrid
-                kpis={extendedKpis}
-                isLoading={isLoading}
-                allChartData={data.charts as any}
-                apiErrors={safeApiErrors}
-                dateRange={dateRange}
-              />
-            )}
-          </div>
-        )}
-
-        {canShowWidget('trend') && (
-          <div id="section-verlauf" className="mt-8 scroll-mt-20 print-trend-chart" ref={chartRef}>
-            <KpiTrendChart
-              activeKpi={activeKpi}
-              onKpiChange={(kpi) => setActiveKpi(kpi as ActiveKpi)}
-              allChartData={allChartData}
-              weatherData={data.weatherData}
-            />
-          </div>
-        )}
-
-        {data.localSeo?.locations?.length && canShowWidget('localSeo') ? (
-          <div id="section-local-seo" className="mt-8 scroll-mt-20 print:hidden">
-            <LocalSeoMapWidget data={data.localSeo} projectId={projectId} userRole={userRole} />
-          </div>
-        ) : null}
-
-        {canShowWidget('googleGenAi') && (
-          <div id="section-google-genai" className="mt-8 scroll-mt-20 print:hidden">
-            <GoogleGenAiVisibilityCard data={data.googleGenAi} projectId={projectId} userRole={userRole} />
-          </div>
-        )}
-
-        {/* KI-Traffic Sektion mit Toggle für Detail-Ansicht */}
-        {canShowWidget('aiTraffic') && (
-          <div id="section-ki-traffic" className="grid grid-cols-1 gap-6 mt-8 scroll-mt-20 print-traffic-grid">
-            <div className="print-ai-card">
-              <AiTrafficCard
-                projectId={projectId}
-                totalSessions={data.aiTraffic?.totalSessions ?? 0}
-                totalUsers={data.aiTraffic?.totalUsers ?? 0}
-                percentage={data.kpis?.sessions?.value ? ((data.aiTraffic?.totalSessions ?? 0) / data.kpis.sessions.value * 100) : 0}
-                totalSessionsChange={data.aiTraffic?.totalSessionsChange}
-                totalUsersChange={data.aiTraffic?.totalUsersChange}
-                trend={(data.aiTraffic?.trend ?? []).map(item => ({
-                  date: item.date,
-                  value: (item as any).value ?? (item as any).sessions ?? 0
-                }))}
-                topAiSources={data.aiTraffic?.topAiSources ?? []}
-                className="h-full"
-                isLoading={isLoading}
-                dateRange={dateRange}
-                error={safeApiErrors?.ga4}
-                onDetailClick={projectId ? () => setShowAiTrafficDetail(!showAiTrafficDetail) : undefined}
-                onPromptTrackingClick={shouldRenderPromptTracking ? handlePromptTrackingClick : undefined}
-                detailOpen={showAiTrafficDetail}
-                promptTrackingOpen={showPromptTrackingDetail}
-                promptTracking={data.promptTracking}
-                promptTrackingEnabled={shouldRenderPromptTracking}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* KI-Traffic Detail-Ansicht (ausklappbar) */}
-        {canShowWidget('aiTraffic') && showAiTrafficDetail && hasAiTraffic && projectId && (
-          <div className="mt-8 animate-in slide-in-from-top-4 duration-300 print:hidden">
-            <AiTrafficDetailWidgetV2
-              projectId={projectId}
-              dateRange={dateRange}
-            />
-          </div>
-        )}
-
-        {/* PROMPT TRACKING Detail-Ansicht (ausklappbar) */}
-        {showPromptTrackingDetail && shouldRenderPromptTracking && (
-          <div
-            id="section-prompt-tracking"
-            className="mt-8 scroll-mt-20 transition-all duration-300 print-prompt-tracking"
-          >
-            <PromptTrackingCard
-              data={data.promptTracking}
-              dashboardData={data}
-              domain={domain}
-              dateRange={dateRange}
-              isAdmin={isAdmin}
-            />
-          </div>
-        )}
-
-        {/* Top Suchanfragen + Top Landingpages — auf Desktop nebeneinander
-            (je 50% Breite), auf Mobile gestapelt. Wenn Landingpages für
-            Kunden ausgeblendet sind und nicht-Admin, fällt TopQueries
-            automatisch auf volle Breite zurück. */}
-        {(shouldRenderTopQueries || shouldRenderChart) && (
-          <div className={`grid grid-cols-1 ${shouldRenderTopQueries && shouldRenderChart ? 'lg:grid-cols-2' : ''} gap-6 mt-8 lg:items-stretch`}>
-            {shouldRenderTopQueries && (
-              <div id="section-top-queries" className="scroll-mt-20 print-queries-list lg:h-[816px]">
-                <TopQueriesList
-                  queries={data.topQueries ?? []}
-                  isLoading={isLoading}
-                  className="h-full"
-                  dateRange={dateRange}
-                  error={safeApiErrors?.gsc}
-                />
-              </div>
-            )}
-
-            {shouldRenderChart && (
-              <div id="section-landingpages" className="scroll-mt-20 transition-all duration-300 lg:h-[816px]">
-                <div className="print-landing-chart h-full">
-                  <LandingPageChart
-                    data={cleanLandingPages}
-                    isLoading={isLoading}
-                    title="Top Landingpages"
-                    dateRange={dateRange}
-                    queryData={data.landingPageQueries}
-                    projectId={projectId}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {indexingStatus && projectId && canShowWidget('indexingStatus') && (
-          <div id="section-indexing-status" className="mt-8 scroll-mt-20 print:hidden">
-            <IndexingStatusWidget
-              initialData={indexingStatus}
-              projectId={projectId}
-              userRole={userRole}
-            />
-          </div>
-        )}
-
-        {/* PIE CHARTS */}
-        {visibleTrafficBreakdownCount > 0 && (
-          <div
-            id="section-zugriffe"
-            className={`grid grid-cols-1 gap-6 mt-8 scroll-mt-20 print-pie-grid ${
-              visibleTrafficBreakdownCount === 2 ? 'lg:grid-cols-2' : visibleTrafficBreakdownCount === 3 ? 'lg:grid-cols-3' : ''
-            }`}
-          >
-            {canShowWidget('channelTraffic') && (
-              <TableauPieChart
-                data={data.channelData}
-                title="Zugriffe nach Channel"
-                isLoading={isLoading}
-                error={safeApiErrors?.ga4}
-                dateRange={dateRange}
-              />
-            )}
-            {canShowWidget('countryTraffic') && (
-              <TableauPieChart
-                data={data.countryData}
-                title="Zugriffe nach Land"
-                isLoading={isLoading}
-                error={safeApiErrors?.ga4}
-                dateRange={dateRange}
-              />
-            )}
-            {canShowWidget('deviceTraffic') && (
-              <TableauPieChart
-                data={data.deviceData}
-                title="Zugriffe nach Endgerät"
-                isLoading={isLoading}
-                error={safeApiErrors?.ga4}
-                dateRange={dateRange}
-              />
-            )}
-          </div>
-        )}
-
-        {/* GOOGLE ADS SEKTION */}
-        {shouldRenderGoogleAds && (
-          <div id="section-google-ads" className="mt-8 scroll-mt-20 transition-all duration-300">
-            <GoogleAdsWidget
-              data={data.googleAdsData!}
-              isLoading={isLoading}
-              dateRange={dateRange}
-            />
-          </div>
-        )}
-
-        {shouldRenderSemrush && (
-          <div
-            id="section-semrush"
-            className={`grid grid-cols-1 gap-6 mt-8 scroll-mt-20 print-semrush-grid ${
-              shouldRenderSemrushPrimary && shouldRenderSemrushSecondary ? 'lg:grid-cols-2' : ''
-            }`}
-          >
-            {shouldRenderSemrushPrimary && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords projectId={projectId} /></div>}
-            {shouldRenderSemrushSecondary && <div className="dashboard-widget-surface rounded-lg p-4 sm:p-6"><SemrushTopKeywords02 projectId={projectId} /></div>}
-          </div>
-        )}
-
-        {canShowWidget('dataInfo') && (
-          <div id="section-data-info" className="mt-8 scroll-mt-20 print:hidden">
-            <div className="dashboard-widget-surface rounded-lg p-4 sm:p-5">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-heading">Hinweis zur Datenbasis</h3>
-                  <p className="text-xs text-muted mt-0.5">Methodik, Datenschutz und Messlogik.</p>
-                </div>
-                {isAdmin && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    {isEditingInfo ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={handleSaveInfoText}
-                          disabled={isSavingInfo}
-                          className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
-                        >
-                          <Check2 size={14} />
-                          {isSavingInfo ? 'Speichert...' : 'Speichern'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDraftInfoText(infoText);
-                            setIsEditingInfo(false);
-                            setInfoSaveError('');
-                          }}
-                          disabled={isSavingInfo}
-                          className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-body transition-colors hover:bg-surface-secondary disabled:opacity-50"
-                        >
-                          <X size={14} />
-                          Abbrechen
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setIsEditingInfo(true)}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-body transition-colors hover:bg-surface-secondary"
-                      >
-                        <PencilSquare size={14} />
-                        Bearbeiten
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {isEditingInfo ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={draftInfoText}
-                    onChange={(event) => setDraftInfoText(event.target.value)}
-                    rows={8}
-                    maxLength={5000}
-                    className="w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-[11.2px] leading-relaxed text-body outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
-                  />
-                  <div className="flex items-center justify-between text-[11px] text-muted">
-                    <span>Leer speichern setzt wieder den Standardtext.</span>
-                    <span>{draftInfoText.length}/5000</span>
-                  </div>
-                  {infoSaveError && <p className="text-xs text-red-500">{infoSaveError}</p>}
-                </div>
-              ) : (
-                <div className="whitespace-pre-line text-[9.6px] sm:text-[11.2px] leading-relaxed text-muted">
-                  {infoText}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
       </div>
 
-      {/* DataMax Chat - Floating Button unten rechts (Conditional) */}
-      {dataMaxEnabled && canShowWidget('dataMaxChat') && (
+      {dataMaxEnabled && model.canShow('dataMaxChat') && (
         <DataMaxChat projectId={projectId} dateRange={dateRange} ansprache={userAnsprache} />
       )}
 
-
-      {/* Animation Styles */}
       <style jsx global>{`
         @keyframes indeterminate-bar {
           0% { transform: translateX(-100%); }
