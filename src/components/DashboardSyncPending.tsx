@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLoadingOverlay from '@/components/dashboard/DashboardLoadingOverlay';
 
@@ -15,20 +15,34 @@ const RANGE_LABELS: Record<string, string> = {
 };
 
 export default function DashboardSyncPending({
+  projectId,
   domain,
   dateRange,
 }: {
+  projectId: string;
   domain?: string | null;
   dateRange: string;
 }) {
   const router = useRouter();
+  const startedRef = useRef(false);
 
   useEffect(() => {
+    if (!startedRef.current) {
+      startedRef.current = true;
+      void fetch(`/api/projects/${projectId}/dashboard-sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dateRange }),
+      }).finally(() => {
+        router.refresh();
+      });
+    }
+
     const interval = window.setInterval(() => {
       router.refresh();
-    }, 15_000);
+    }, 10_000);
     return () => window.clearInterval(interval);
-  }, [router]);
+  }, [dateRange, projectId, router]);
 
   const rangeLabel = RANGE_LABELS[dateRange] ?? `den Zeitraum ${dateRange}`;
   return (

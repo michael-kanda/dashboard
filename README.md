@@ -74,6 +74,7 @@ Für lokale Projekte kann DataPeak mehrere Standorte abbilden, z.B. Kanzlei Wien
 - Datenbankänderungen liegen versioniert unter `migrations/` und werden vor dem Deployment mit `npm run db:migrate` angewendet.
 - Seiten, API-Routen und Cronjobs führen keine Schemaänderungen während eines Requests aus.
 - Normale Projekt- und API-Aufrufe lesen ausschließlich gespeicherte Snapshots. Fehlende oder veraltete Zeiträume werden in Neon eingereiht und vom zentralen Dispatcher `/api/cron/sync-project-data` verarbeitet.
+- Wählt ein Benutzer interaktiv einen noch fehlenden Zeitraum, startet die Lade-Lightbox sofort einen dedizierten Queue-Worker. Dadurch wartet die Oberfläche nicht auf den nächsten Cron-Lauf; der Seiten-Render selbst bleibt frei von externen API-Aufrufen.
 - Eine zentrale Snapshot-Version sorgt dafür, dass der Dispatcher veraltete Datenformate erneuert, ohne beim Seitenaufruf externe APIs anzustoßen.
 - Ein wiederverwendbarer Sync-Auftrag pro Projekt, Jobtyp und Zeitraum verhindert doppelte Jobs und unbegrenztes Tabellenwachstum. GSC, GA4, Google Ads und Local SEO werden als Dashboard-Snapshot synchronisiert; GSC-Historie und Indexierung laufen als getrennte Jobtypen im selben Dispatcher.
 - Jede zentrale Kennzahl speichert Quelle, Aktualisierungszeit, Zeitraum, Abdeckungsstatus, Berechnungsmethode und Berechnungsversion in `project_metric_snapshots` und im Dashboard-Snapshot.
@@ -194,6 +195,7 @@ For local projects, DataPeak can represent multiple locations such as a main off
 - GSC, GA4, Google Ads, local SEO, and indexing expose independent dashboard data modules with shared availability/error contracts. Run their contract tests with `npm run test:data-modules`.
 - Pages, API routes, and cron jobs do not modify the schema during requests.
 - Normal project and API requests read stored snapshots only. Missing or stale ranges are queued in Neon and processed by the central `/api/cron/sync-project-data` dispatcher.
+- When a user selects a range without a snapshot, the loading overlay immediately starts a dedicated queue worker. The UI therefore does not wait for the next cron run, while page rendering remains free of external API calls.
 - A central snapshot version lets the dispatcher refresh outdated payload formats without starting external API calls during page requests.
 - One reusable job per project, job type, and range prevents duplicate work and unbounded queue growth. Dashboard data, GSC history, and indexing share this dispatcher while retaining separate execution contracts.
 - Every central metric stores its source, refresh time, period, coverage, calculation method, and method version in `project_metric_snapshots` and the dashboard snapshot.

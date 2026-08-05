@@ -152,6 +152,7 @@ export default async function ProjectPage({
       />
       {!dashboardData && (
         <DashboardSyncPending
+          projectId={projectUser.id}
           domain={projectUser.domain}
           dateRange={dateRange}
         />

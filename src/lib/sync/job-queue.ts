@@ -258,6 +258,40 @@ export async function claimNextProjectSyncJob(
   return rows[0] ? mapJob(rows[0]) : null;
 }
 
+export async function claimProjectSyncJob(
+  userId: string,
+  jobType: ProjectSyncJobType,
+  dateRange = '',
+): Promise<ProjectSyncJob | null> {
+  const { rows } = await sql`
+    WITH candidate AS (
+      SELECT id
+      FROM project_sync_jobs
+      WHERE user_id = ${userId}::uuid
+        AND job_type = ${jobType}
+        AND date_range = ${dateRange}
+        AND attempts < max_attempts
+        AND (
+          (status = 'pending' AND run_after <= NOW())
+          OR (status = 'running' AND lease_until <= NOW())
+        )
+      FOR UPDATE SKIP LOCKED
+      LIMIT 1
+    )
+    UPDATE project_sync_jobs job
+    SET
+      status = 'running',
+      attempts = job.attempts + 1,
+      started_at = NOW(),
+      lease_until = NOW() + INTERVAL '240 seconds',
+      updated_at = NOW()
+    FROM candidate
+    WHERE job.id = candidate.id
+    RETURNING job.*
+  `;
+  return rows[0] ? mapJob(rows[0]) : null;
+}
+
 export async function getProjectSyncJob(
   userId: string,
   jobType: ProjectSyncJobType,

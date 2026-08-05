@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
-import type { User } from '@/lib/schemas';
-import { getOrFetchGoogleData } from '@/lib/google-data-loader';
 import { syncProjectIndexingStatus } from '@/lib/indexing-status';
+import { syncDashboardProjectSnapshot } from '@/lib/sync/dashboard';
 import { syncGscHistoryForProject } from '@/lib/sync/gsc-history';
 import {
   claimNextProjectSyncJob,
@@ -38,13 +36,6 @@ function isRetryableInfrastructureError(error: unknown) {
   ].some((fragment) => message.includes(fragment));
 }
 
-async function loadProject(userId: string) {
-  const { rows } = await sql`
-    SELECT * FROM users WHERE id = ${userId}::uuid LIMIT 1
-  `;
-  return rows[0] as User | undefined;
-}
-
 async function persistIndexingMetrics(userId: string, status: Awaited<ReturnType<typeof syncProjectIndexingStatus>>) {
   const updatedAt = status.lastSyncedAt ?? new Date().toISOString();
   const values = extractIndexingMetricValues(status);
@@ -62,13 +53,8 @@ async function persistIndexingMetrics(userId: string, status: Awaited<ReturnType
 async function executeJob(job: ProjectSyncJob, deadlineAt: number) {
   switch (job.jobType) {
     case 'dashboard': {
-      const project = await loadProject(job.userId);
-      if (!project) throw new Error('Projekt nicht gefunden');
       const dateRange = job.dateRange || String(job.payload.dateRange ?? '30d');
-      const data = await getOrFetchGoogleData(project, dateRange, true);
-      if (!data) throw new Error('Keine Dashboard-Daten erzeugt');
-      const criticalError = data.apiErrors?.ga4 || data.apiErrors?.gsc;
-      if (criticalError) throw new Error(String(criticalError));
+      await syncDashboardProjectSnapshot(job.userId, dateRange);
       return `Dashboard ${dateRange} aktualisiert`;
     }
     case 'gsc-history': {
