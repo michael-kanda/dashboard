@@ -55,7 +55,7 @@ function LoginVisualCard() {
           </div>
         </div>
 
-        <div className="absolute inset-x-[10%] bottom-[4%] top-[17%]">
+        <div className="absolute inset-x-[10%] bottom-[12%] top-[9%]">
           <div className="relative h-full w-full">
             <Image
               src="/login-image.webp"
