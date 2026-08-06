@@ -195,10 +195,11 @@ For local projects, DataPeak can represent multiple locations such as a main off
 - `ProjectDashboard` only orchestrates widget sections. Source normalization and rendering policy live outside the page component so UI changes do not alter measurement logic.
 - GSC, GA4, Google Ads, local SEO, and indexing expose independent dashboard data modules with shared availability/error contracts. Run their contract tests with `npm run test:data-modules`.
 - Pages, API routes, and cron jobs do not modify the schema during requests.
-- Normal project and API requests read stored snapshots only. Missing or stale ranges are queued in Neon and processed by the central `/api/cron/sync-project-data` dispatcher.
-- When a user selects a range without a snapshot, the loading overlay immediately starts a dedicated queue worker. The UI therefore does not wait for the next cron run, while page rendering remains free of external API calls.
-- A central snapshot version lets the dispatcher refresh outdated payload formats without starting external API calls during page requests.
-- One reusable job per project, job type, and range prevents duplicate work and unbounded queue growth. Dashboard data, GSC history, and indexing share this dispatcher while retaining separate execution contracts.
+- Project and API requests use a cache-first, stale-while-revalidate strategy: an existing snapshot is rendered immediately, even when a background refresh is already due.
+- The `/api/cron/sync-project-data` dispatcher automatically refreshes only the active default range `30d`. Other ranges refresh only after actual use and follow longer TTLs (`3m`: 48 hours, `6m`: 72 hours, `12m` through `24m`: 7 days).
+- A range without any snapshot is synchronized directly. A project-wide source lease, extended by heartbeat, prevents concurrent Google requests and self-recovers no later than 90 seconds after an interrupted process.
+- Internal snapshot or metadata versions do not force another Google API request. Metadata is attached when a snapshot is read and persisted during the next regular data refresh.
+- Reusable sync jobs prevent unbounded queue growth. GSC history and indexing remain separate job types in the central dispatcher.
 - Every central metric stores its source, refresh time, period, coverage, calculation method, and method version in `project_metric_snapshots` and the dashboard snapshot.
 - Indexing checks continue automatically on a 48-hour cycle. Changed and pending URLs are prioritized, while runtime and API budgets keep serverless executions bounded.
 - Cron jobs retry transient Neon connection failures and return a controlled temporary status instead of failing through an unhandled process error.
