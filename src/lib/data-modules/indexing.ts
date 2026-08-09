@@ -32,7 +32,7 @@ export interface IndexingDashboardData {
   };
   isRunning: boolean;
   hasCompletedSync: boolean;
-  /** Alter der ältesten URL-Prüfung in Tagen. Kennzeichnet, wie weit der Stand zurückliegen kann. */
+  /** Alter der ältesten URL-Prüfung in Tagen. */
   maxInspectionAgeDays: number | null;
 }
 
