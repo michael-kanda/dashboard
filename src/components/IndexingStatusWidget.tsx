@@ -7,6 +7,7 @@ import {
   Clock3,
   Download,
   ExternalLink,
+  Info,
   MinusCircle,
   RefreshCw,
   Search,
@@ -155,6 +156,7 @@ export default function IndexingStatusWidget({
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
   const [showExcludedUrls, setShowExcludedUrls] = useState(false);
+  const [showDataInfo, setShowDataInfo] = useState(false);
   const canSync = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
   const indexShare = data.verifiedUrls > 0
     ? Math.round((data.indexedUrls / data.verifiedUrls) * 100)
@@ -353,24 +355,44 @@ export default function IndexingStatusWidget({
           <div>
             <h2 className="text-lg font-semibold text-heading">Indexierungsstatus</h2>
             <GoogleUnderline />
-            <p className="mt-2 text-sm text-body">
-              Sitemap und Google-Index im direkten Abgleich.
-            </p>
-            <p className="mt-1 text-xs text-muted">
-              Basis: XML-Sitemap, geprüft über die Google URL-Inspection-API. Der GSC-Bericht
-              „Seitenindexierung“ zählt zusätzlich alle Google bekannten URLs außerhalb der Sitemap
-              und aktualisiert mit mehreren Tagen Verzögerung – beide Werte weichen daher bewusst ab.
-            </p>
-            <p className="mt-1 text-xs text-muted">
-              Sitemap alle 48 Stunden · Änderungen priorisiert · stabile URLs alle {INDEXED_RECHECK_DAYS} Tage · GSC-Leistung: {data.performanceRange}
-            </p>
+            <div className="mt-2 flex items-center gap-1.5">
+              <p className="text-sm text-body">Sitemap und Google-Index im direkten Abgleich.</p>
+              <button
+                type="button"
+                onClick={() => setShowDataInfo((current) => !current)}
+                aria-expanded={showDataInfo}
+                aria-label="Datenbasis und Abweichung zur Search Console"
+                className="text-muted transition-colors hover:text-heading"
+              >
+                <Info size={14} />
+              </button>
+            </div>
             {data.lastSyncedAt && (
               <p className="mt-1 text-[11px] text-muted">
-                Zuletzt aktualisiert am {formatDate(data.lastSyncedAt, true)} Uhr
-                {data.maxInspectionAgeDays !== null && (
-                  <> · älteste URL-Prüfung: {data.maxInspectionAgeDays} Tage alt</>
-                )}
+                Stand: {formatDate(data.lastSyncedAt, true)} Uhr
               </p>
+            )}
+            {showDataInfo && (
+              <div className="mt-3 max-w-xl rounded-md border border-border-subtle bg-surface-secondary px-3 py-2.5 text-[11px] leading-5 text-body">
+                <p>
+                  <span className="font-semibold">Datenbasis:</span> alle URLs der XML-Sitemap,
+                  einzeln geprüft über die Google URL-Inspection-API.
+                </p>
+                <p className="mt-1.5">
+                  <span className="font-semibold">Abweichung zur Search Console:</span> Der Bericht
+                  „Seitenindexierung“ zählt unter „Alle bekannten Seiten“ auch URLs außerhalb der
+                  Sitemap und aktualisiert mit einigen Tagen Verzögerung. Für einen direkten
+                  Vergleich dort auf „Alle eingereichten Seiten“ umstellen.
+                </p>
+                <p className="mt-1.5">
+                  <span className="font-semibold">Aktualisierung:</span> Sitemap alle 48 Stunden,
+                  geänderte URLs vorrangig, stabile URLs alle {INDEXED_RECHECK_DAYS} Tage.
+                  {data.maxInspectionAgeDays !== null && (
+                    <> Älteste Einzelprüfung: {data.maxInspectionAgeDays} Tage.</>
+                  )}
+                </p>
+                <p className="mt-1.5 text-muted">GSC-Leistungsdaten: {data.performanceRange}.</p>
+              </div>
             )}
           </div>
           {data.configured && (
