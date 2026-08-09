@@ -7,10 +7,12 @@ import {
   Clock3,
   Download,
   ExternalLink,
+  MinusCircle,
   RefreshCw,
   Search,
   XCircle,
 } from 'lucide-react';
+import { CATEGORY_LABELS, INDEXED_RECHECK_DAYS } from '@/lib/indexing-status-constants';
 import type {
   IndexingStatusRow,
   IndexingUrlStatus,
@@ -18,7 +20,7 @@ import type {
   ProjectIndexingStatus,
 } from '@/lib/indexing-status';
 
-type FilterValue = 'all' | IndexingUrlStatus | 'canonical';
+type FilterValue = 'all' | IndexingUrlStatus | 'canonical' | 'action' | 'intentional' | 'stale';
 
 interface IndexingStatusWidgetProps {
   initialData: ProjectIndexingStatus;
@@ -68,13 +70,6 @@ function StatusBadge({ row }: { row: IndexingStatusRow }) {
       </span>
     );
   }
-  if (row.hasCanonicalIssue) {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-300">
-        <AlertCircle size={14} /> Canonical prüfen
-      </span>
-    );
-  }
   if (row.status === 'pending') {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 dark:text-sky-300">
@@ -82,31 +77,47 @@ function StatusBadge({ row }: { row: IndexingStatusRow }) {
       </span>
     );
   }
+  if (row.isIntentional) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <MinusCircle size={14} /> {CATEGORY_LABELS[row.category]}
+      </span>
+    );
+  }
+  if (row.hasCanonicalIssue) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-300">
+        <AlertCircle size={14} /> Canonical prüfen
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-300">
-      <XCircle size={14} /> {row.status === 'error' ? 'Prüffehler' : 'Nicht indexiert'}
+      <XCircle size={14} /> {CATEGORY_LABELS[row.category]}
     </span>
   );
 }
 
 function getHint(row: IndexingStatusRow) {
   if (row.inspectionError) return row.inspectionError;
-  if (row.hasCanonicalIssue) return 'Google verwendet eine andere kanonische URL.';
   if (row.status === 'pending') {
     return 'Noch nicht geprüft. Die URL wurde erkannt und ist für die automatische Google-Indexprüfung vorgemerkt.';
   }
-  const statusHint = row.coverageState || (row.status === 'indexed'
-    ? 'URL ist im Google-Index.'
-    : 'Indexierungsstatus prüfen.');
-  return row.inspectionPending ? `${statusHint} Erneute Prüfung vorgemerkt.` : statusHint;
+  const base = row.actionHint
+    || row.coverageState
+    || (row.status === 'indexed' ? 'URL ist im Google-Index.' : 'Indexierungsstatus prüfen.');
+  const parts = [base];
+  if (row.isStale && row.inspectionAgeDays !== null) {
+    parts.push(`Letzte Prüfung vor ${row.inspectionAgeDays} Tagen.`);
+  } else if (row.inspectionPending) {
+    parts.push('Erneute Prüfung vorgemerkt.');
+  }
+  return parts.join(' ');
 }
 
 function getStatusLabel(row: IndexingStatusRow) {
-  if (row.hasCanonicalIssue) return 'Canonical prüfen';
-  if (row.status === 'indexed') return 'Indexiert';
   if (row.status === 'pending') return 'Ausstehend';
-  if (row.status === 'error') return 'Prüffehler';
-  return 'Nicht indexiert';
+  return CATEGORY_LABELS[row.category];
 }
 
 function escapeCsv(value: string | number | null | undefined) {
@@ -196,7 +207,11 @@ export default function IndexingStatusWidget({
     return data.rows.filter((row) => {
       const filterMatches =
         filter === 'all' ||
-        (filter === 'canonical' ? row.hasCanonicalIssue : row.status === filter);
+        (filter === 'canonical' && row.hasCanonicalIssue) ||
+        (filter === 'action' && row.needsAction) ||
+        (filter === 'intentional' && row.isIntentional) ||
+        (filter === 'stale' && row.isStale) ||
+        row.status === filter;
       return filterMatches && (!needle || row.url.toLocaleLowerCase('de-DE').includes(needle));
     });
   }, [data.rows, filter, search]);
@@ -235,6 +250,9 @@ export default function IndexingStatusWidget({
       'Status',
       'Prüfstatus',
       'Hinweis',
+      'Kategorie',
+      'Handlungsbedarf',
+      'Prüfalter (Tage)',
       'GSC-Abdeckung',
       'Letzter Crawl',
       'Google Canonical',
@@ -252,6 +270,9 @@ export default function IndexingStatusWidget({
         ? 'Erstprüfung vorgemerkt'
         : row.inspectionPending ? 'Erneute Prüfung vorgemerkt' : 'Aktuell',
       getHint(row),
+      CATEGORY_LABELS[row.category],
+      row.needsAction ? 'ja' : 'nein',
+      row.inspectionAgeDays ?? '',
       row.coverageState,
       row.lastCrawlTime ? formatDate(row.lastCrawlTime, true) : '',
       row.googleCanonical,
@@ -280,6 +301,9 @@ export default function IndexingStatusWidget({
     { value: 'indexed', label: 'Indexiert', count: data.indexedUrls },
     { value: 'pending', label: 'Ausstehend', count: data.pendingUrls },
     { value: 'not_indexed', label: 'Nicht indexiert', count: data.notIndexedUrls },
+    { value: 'action', label: 'Handlungsbedarf', count: data.issueUrls },
+    { value: 'intentional', label: 'Beabsichtigt', count: data.intentionalUrls },
+    { value: 'stale', label: 'Prüfung veraltet', count: data.staleUrls },
     { value: 'error', label: 'Fehler', count: data.rows.filter((row) => row.status === 'error').length },
     { value: 'canonical', label: 'Canonical', count: data.rows.filter((row) => row.hasCanonicalIssue).length },
   ];
@@ -308,12 +332,17 @@ export default function IndexingStatusWidget({
     {
       label: 'Nicht indexiert',
       value: data.notIndexedUrls,
-      description: 'Nicht im Google-Index; kann beabsichtigt sein.',
+      description: 'Nicht im Google-Index, unabhängig von der Ursache.',
+    },
+    {
+      label: 'Beabsichtigt',
+      value: data.intentionalUrls,
+      description: 'noindex, Weiterleitung oder alternative Seite mit Canonical.',
     },
     {
       label: 'Handlungsbedarf',
       value: data.issueUrls,
-      description: 'Nicht indexiert, Prüffehler oder Canonical-Abweichung.',
+      description: 'Nur ungewollte Ausschlüsse, Prüffehler und Canonical-Konflikte.',
     },
   ];
 
@@ -328,11 +357,19 @@ export default function IndexingStatusWidget({
               Sitemap und Google-Index im direkten Abgleich.
             </p>
             <p className="mt-1 text-xs text-muted">
-              Sitemap alle 48 Stunden · Änderungen priorisiert · stabile URLs zyklisch · GSC-Leistung: {data.performanceRange}
+              Basis: XML-Sitemap, geprüft über die Google URL-Inspection-API. Der GSC-Bericht
+              „Seitenindexierung“ zählt zusätzlich alle Google bekannten URLs außerhalb der Sitemap
+              und aktualisiert mit mehreren Tagen Verzögerung – beide Werte weichen daher bewusst ab.
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              Sitemap alle 48 Stunden · Änderungen priorisiert · stabile URLs alle {INDEXED_RECHECK_DAYS} Tage · GSC-Leistung: {data.performanceRange}
             </p>
             {data.lastSyncedAt && (
               <p className="mt-1 text-[11px] text-muted">
                 Zuletzt aktualisiert am {formatDate(data.lastSyncedAt, true)} Uhr
+                {data.maxInspectionAgeDays !== null && (
+                  <> · älteste URL-Prüfung: {data.maxInspectionAgeDays} Tage alt</>
+                )}
               </p>
             )}
           </div>
@@ -425,6 +462,20 @@ export default function IndexingStatusWidget({
               <p className="mt-4 text-xs text-muted">
                 Vollständiger Datenstand. {data.recheckPendingUrls} URLs werden turnusmäßig erneut geprüft; bis dahin bleibt ihr letzter gültiger Google-Status sichtbar.
               </p>
+            )}
+
+            {data.staleUrls > 0 && (
+              <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                Bei {data.staleUrls} URLs liegt die letzte Google-Prüfung länger zurück als das Re-Check-Intervall.
+                Ihr Status kann inzwischen veraltet sein und die Summen entsprechend vom aktuellen Google-Index abweichen.
+                <button
+                  type="button"
+                  onClick={() => setFilter('stale')}
+                  className="ml-1 font-semibold underline underline-offset-2"
+                >
+                  Betroffene URLs anzeigen
+                </button>
+              </div>
             )}
 
             {(data.sitemapEntryCount > 0 || data.totalUrls > 0) && (
