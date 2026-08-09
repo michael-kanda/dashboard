@@ -16,8 +16,13 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const maxDuration = 60;
 
-const MANUAL_SYNC_DEADLINE_MS = 45_000;
-const MANUAL_MAX_INSPECTIONS = 24;
+// Vercel bricht die Funktion nach 60 s ab; 50 s Deadline lassen Puffer für die Antwort.
+const MANUAL_SYNC_DEADLINE_MS = 50_000;
+// Zeitpuffer, der am Ende für das Abschluss-Update reserviert bleibt.
+const MANUAL_INSPECTION_RESERVE_MS = 8_000;
+// Bei 6 parallelen Abfragen und ~1,5 s pro Abfrage sind ~120 URLs in einem Lauf realistisch.
+const MANUAL_MAX_INSPECTIONS = 120;
+const MANUAL_INSPECTION_CONCURRENCY = 6;
 
 async function authorize(projectId: string, write = false) {
   const session = await auth();
@@ -95,6 +100,8 @@ export async function POST(
       const result = await syncIndexingProjectSnapshot(id, {
         force: true,
         maxInspections: MANUAL_MAX_INSPECTIONS,
+        inspectionConcurrency: MANUAL_INSPECTION_CONCURRENCY,
+        inspectionReserveMs: MANUAL_INSPECTION_RESERVE_MS,
         deadlineAt: Date.now() + MANUAL_SYNC_DEADLINE_MS,
       });
       await finishProjectSyncJob(job, { success: true });
