@@ -37,11 +37,16 @@ export interface ProjectIndexingStatus {
   excludedUrlCount: number;
   excludedUrls: ExcludedSitemapUrl[];
   warningMessage: string | null;
-  progressStage: 'idle' | 'sitemap' | 'gsc' | 'inspection' | 'paused' | 'completed' | 'error';
+  progressStage: 'idle' | 'sitemap' | 'gsc' | 'inspection' | 'queued' | 'paused' | 'completed' | 'error';
   progressTotal: number;
   progressCompleted: number;
   progressDueTotal: number;
   totalUrls: number;
+  verifiedUrls: number;
+  unverifiedUrls: number;
+  verificationCoverage: number;
+  isVerificationComplete: boolean;
+  recheckPendingUrls: number;
   indexedUrls: number;
   notIndexedUrls: number;
   pendingUrls: number;
@@ -84,6 +89,11 @@ const EMPTY_STATUS: ProjectIndexingStatus = {
   progressCompleted: 0,
   progressDueTotal: 0,
   totalUrls: 0,
+  verifiedUrls: 0,
+  unverifiedUrls: 0,
+  verificationCoverage: 0,
+  isVerificationComplete: false,
+  recheckPendingUrls: 0,
   indexedUrls: 0,
   notIndexedUrls: 0,
   pendingUrls: 0,
@@ -388,8 +398,15 @@ export async function syncProjectIndexingStatus(
   let sitemapUrl = defaultSitemapUrl(config);
   if (!sitemapUrl) throw new Error('Für das Projekt konnte keine Sitemap-URL ermittelt werden.');
 
-  const { rows: syncRows } = await sql<{ next_sync_at: string | null; lock_until: string | null }>`
-    SELECT next_sync_at, lock_until FROM project_indexing_sync WHERE user_id = ${projectId}::uuid
+  const { rows: syncRows } = await sql<{
+    status: ProjectIndexingStatus['status'];
+    next_sync_at: string | null;
+    lock_until: string | null;
+    sitemap_checked_at: string | null;
+  }>`
+    SELECT status, next_sync_at, lock_until, sitemap_checked_at
+    FROM project_indexing_sync
+    WHERE user_id = ${projectId}::uuid
   `;
   if (!options.force && syncRows[0]?.next_sync_at && new Date(syncRows[0].next_sync_at) > new Date()) {
     return getProjectIndexingStatus(projectId);
@@ -397,6 +414,12 @@ export async function syncProjectIndexingStatus(
   if (syncRows[0]?.lock_until && new Date(syncRows[0].lock_until) > new Date()) {
     return getProjectIndexingStatus(projectId);
   }
+  const sitemapCheckedAt = syncRows[0]?.sitemap_checked_at
+    ? new Date(syncRows[0].sitemap_checked_at).getTime()
+    : 0;
+  const continueStoredInspectionQueue = !options.force
+    && syncRows[0]?.status === 'partial'
+    && sitemapCheckedAt > Date.now() - 6 * 60 * 60 * 1000;
 
   const { rows: lockRows } = await sql<{ user_id: string }>`
     INSERT INTO project_indexing_sync (
@@ -406,14 +429,14 @@ export async function syncProjectIndexingStatus(
     )
     VALUES (
       ${projectId}::uuid, ${sitemapUrl}, 'running', NOW(), NOW(), NOW() + INTERVAL '8 minutes',
-      'sitemap', 0, 0, 0, NULL, NOW()
+      ${continueStoredInspectionQueue ? 'inspection' : 'sitemap'}, 0, 0, 0, NULL, NOW()
     )
     ON CONFLICT (user_id) DO UPDATE SET
       sitemap_url = EXCLUDED.sitemap_url,
       status = 'running',
       started_at = NOW(),
       lock_until = NOW() + INTERVAL '8 minutes',
-      progress_stage = 'sitemap',
+      progress_stage = ${continueStoredInspectionQueue ? 'inspection' : 'sitemap'},
       progress_total = 0,
       progress_completed = 0,
       progress_due_total = 0,
@@ -425,6 +448,7 @@ export async function syncProjectIndexingStatus(
   if (!lockRows.length) return getProjectIndexingStatus(projectId);
 
   try {
+    const sourceSnapshot = continueStoredInspectionQueue ? null : await (async () => {
     const sitemapCandidates = await getSitemapCandidates(config, deadlineAt);
     let selected: {
       sitemapUrl: string;
@@ -586,7 +610,7 @@ export async function syncProjectIndexingStatus(
           change_detected_at = inspected_at
       WHERE user_id = ${projectId}::uuid
         AND is_in_sitemap = TRUE
-        AND status = 'pending'
+        AND status IN ('pending', 'error')
         AND inspected_at IS NOT NULL
         AND verdict IN ('PASS', 'FAIL', 'NEUTRAL')
     `;
@@ -601,6 +625,14 @@ export async function syncProjectIndexingStatus(
           WHERE incoming.url = stored.url
         )
     `;
+    return {
+      sitemapFingerprint,
+      sitemapEntryCount: propertyEntries.length,
+      excludedUrlCount,
+      excludedUrls,
+      warningMessage,
+    };
+    })();
 
     const maxInspections = options.maxInspections ?? 120;
     const { rows: candidates } = await sql<{ url: string; due_total: number }>`
@@ -680,8 +712,14 @@ export async function syncProjectIndexingStatus(
           const message = error instanceof Error ? error.message : 'URL Inspection fehlgeschlagen';
           await sql`
             UPDATE project_indexing_urls
-            SET status = 'error',
-                inspected_at = NOW(),
+            SET status = CASE
+                  WHEN verdict IN ('PASS', 'FAIL', 'NEUTRAL') THEN status
+                  ELSE 'error'
+                END,
+                inspected_at = CASE
+                  WHEN verdict IN ('PASS', 'FAIL', 'NEUTRAL') THEN inspected_at
+                  ELSE NOW()
+                END,
                 inspection_attempts = inspection_attempts + 1,
                 next_inspection_at = NOW() + CASE
                   WHEN inspection_attempts = 0 THEN INTERVAL '2 hours'
@@ -706,34 +744,72 @@ export async function syncProjectIndexingStatus(
       },
     );
 
-    const { rows: pendingRows } = await sql<{ count: number }>`
-      SELECT COUNT(*)::int AS count
+    const { rows: remainingRows } = await sql<{
+      due_count: number;
+      unresolved_count: number;
+      next_unresolved_at: string | null;
+    }>`
+      SELECT
+        COUNT(*) FILTER (
+          WHERE inspected_at IS NULL
+            OR next_inspection_at IS NULL
+            OR next_inspection_at <= NOW()
+            OR status = 'pending'
+        )::int AS due_count,
+        COUNT(*) FILTER (
+          WHERE verdict IS NULL OR verdict NOT IN ('PASS', 'FAIL', 'NEUTRAL')
+        )::int AS unresolved_count,
+        MIN(next_inspection_at) FILTER (
+          WHERE verdict IS NULL OR verdict NOT IN ('PASS', 'FAIL', 'NEUTRAL')
+        ) AS next_unresolved_at
       FROM project_indexing_urls
       WHERE user_id = ${projectId}::uuid AND is_in_sitemap = TRUE
-        AND (
-          inspected_at IS NULL
-          OR next_inspection_at IS NULL
-          OR next_inspection_at <= NOW()
-          OR status = 'pending'
-        )
     `;
-    const partial = (pendingRows[0]?.count ?? 0) > 0;
+    const dueCount = Number(remainingRows[0]?.due_count ?? 0);
+    const unresolvedCount = Number(remainingRows[0]?.unresolved_count ?? 0);
+    const nextUnresolvedAt = remainingRows[0]?.next_unresolved_at ?? null;
+    const partial = dueCount > 0 || unresolvedCount > 0;
     await sql`
       UPDATE project_indexing_sync
       SET status = ${partial ? 'partial' : 'completed'},
-          progress_stage = ${partial ? 'paused' : 'completed'},
+          progress_stage = ${partial ? 'queued' : 'completed'},
           completed_at = NOW(),
           next_sync_at = CASE
-            WHEN ${partial} THEN NOW() + INTERVAL '24 hours'
+            WHEN ${dueCount} > 0 THEN NOW() + INTERVAL '5 minutes'
+            WHEN ${unresolvedCount} > 0 AND ${nextUnresolvedAt}::timestamptz IS NOT NULL
+              THEN GREATEST(${nextUnresolvedAt}::timestamptz, NOW() + INTERVAL '5 minutes')
+            WHEN ${unresolvedCount} > 0 THEN NOW() + INTERVAL '2 hours'
             ELSE NOW() + INTERVAL '48 hours'
           END,
-          sitemap_fingerprint = ${sitemapFingerprint},
-          sitemap_checked_at = NOW(),
-          sitemap_url = ${sitemapUrl},
-          sitemap_entry_count = ${propertyEntries.length},
-          excluded_url_count = ${excludedUrlCount},
-          excluded_urls = ${JSON.stringify(excludedUrls.slice(0, 500))}::jsonb,
-          sync_warning = ${warningMessage},
+          sitemap_fingerprint = CASE
+            WHEN ${sourceSnapshot !== null} THEN ${sourceSnapshot?.sitemapFingerprint ?? null}
+            ELSE sitemap_fingerprint
+          END,
+          sitemap_checked_at = CASE
+            WHEN ${sourceSnapshot !== null} THEN NOW()
+            ELSE sitemap_checked_at
+          END,
+          sitemap_url = CASE
+            WHEN ${sourceSnapshot !== null} THEN ${sitemapUrl}
+            ELSE sitemap_url
+          END,
+          sitemap_entry_count = CASE
+            WHEN ${sourceSnapshot !== null} THEN ${sourceSnapshot?.sitemapEntryCount ?? 0}
+            ELSE sitemap_entry_count
+          END,
+          excluded_url_count = CASE
+            WHEN ${sourceSnapshot !== null} THEN ${sourceSnapshot?.excludedUrlCount ?? 0}
+            ELSE excluded_url_count
+          END,
+          excluded_urls = CASE
+            WHEN ${sourceSnapshot !== null}
+              THEN ${JSON.stringify(sourceSnapshot?.excludedUrls.slice(0, 500) ?? [])}::jsonb
+            ELSE excluded_urls
+          END,
+          sync_warning = CASE
+            WHEN ${sourceSnapshot !== null} THEN ${sourceSnapshot?.warningMessage ?? null}
+            ELSE sync_warning
+          END,
           lock_until = NULL,
           error_message = NULL,
           updated_at = NOW()
@@ -852,6 +928,16 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
     const resolvedSitemapUrl = sync?.sitemap_url || sitemapUrl;
     const storedSitemapEntryCount = Number(sync?.sitemap_entry_count ?? 0);
     const excludedUrlCount = Number(sync?.excluded_url_count ?? 0);
+    const verifiedUrls = mapped.filter(
+      (row) => row.status === 'indexed' || row.status === 'not_indexed',
+    ).length;
+    const unverifiedUrls = Math.max(0, mapped.length - verifiedUrls);
+    const verificationCoverage = mapped.length > 0
+      ? Math.round((verifiedUrls / mapped.length) * 100)
+      : 0;
+    const recheckPendingUrls = mapped.filter(
+      (row) => (row.status === 'indexed' || row.status === 'not_indexed') && row.inspectionPending,
+    ).length;
     return {
       configured: Boolean(resolvedSitemapUrl && config.gsc_site_url),
       sitemapUrl: resolvedSitemapUrl,
@@ -867,6 +953,11 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
       progressCompleted: Number(sync?.progress_completed ?? 0),
       progressDueTotal: Number(sync?.progress_due_total ?? 0),
       totalUrls: mapped.length,
+      verifiedUrls,
+      unverifiedUrls,
+      verificationCoverage,
+      isVerificationComplete: mapped.length > 0 && unverifiedUrls === 0,
+      recheckPendingUrls,
       indexedUrls: mapped.filter((row) => row.status === 'indexed').length,
       notIndexedUrls: mapped.filter((row) => row.status === 'not_indexed').length,
       pendingUrls: mapped.filter((row) => row.status === 'pending').length,

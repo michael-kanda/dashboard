@@ -17,7 +17,7 @@ export async function syncIndexingProjectSnapshot(
     Object.keys(values).map((key) => [
       key,
       createMetricMetadata(key, 'snapshot', updatedAt, {
-        status: status.pendingUrls > 0 ? 'partial' : 'complete',
+        status: key === 'indexing.total' || status.isVerificationComplete ? 'complete' : 'partial',
       }),
     ]),
   ) as Record<string, MetricMetadata>;

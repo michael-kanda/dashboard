@@ -119,12 +119,15 @@ function getSyncProgressLabel(data: ProjectIndexingStatus) {
   if (data.progressStage === 'gsc') return 'GSC-Daten werden geladen …';
   if (data.progressStage === 'inspection') {
     if (data.progressTotal === 0) return 'Keine fälligen URLs gefunden.';
-    const deferred = Math.max(0, data.progressDueTotal - data.progressTotal);
-    return `${data.progressCompleted} von ${data.progressTotal} URLs in diesem Lauf geprüft${
-      deferred > 0 ? ` · ${deferred} weitere vorgemerkt` : ''
+    const totalDue = Math.max(data.progressTotal, data.progressDueTotal);
+    const remaining = Math.max(0, totalDue - data.progressCompleted);
+    return `${data.progressCompleted} von ${totalDue} fälligen URLs geprüft${
+      remaining > 0 ? ` · ${remaining} werden automatisch fortgesetzt` : ''
     }`;
   }
-  if (data.progressStage === 'paused') return 'Lauf abgeschlossen · weitere URLs sind vorgemerkt.';
+  if (data.progressStage === 'queued' || data.progressStage === 'paused') {
+    return 'Nächste Prüfcharge ist automatisch eingeplant.';
+  }
   if (data.progressStage === 'completed') return 'Prüfung abgeschlossen.';
   if (data.progressStage === 'error') return 'Prüfung mit Fehler beendet.';
   return 'Prüfung wird vorbereitet …';
@@ -142,10 +145,13 @@ export default function IndexingStatusWidget({
   const [syncError, setSyncError] = useState('');
   const [showExcludedUrls, setShowExcludedUrls] = useState(false);
   const canSync = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
-  const progress = data.totalUrls > 0 ? Math.round((data.indexedUrls / data.totalUrls) * 100) : 0;
+  const indexShare = data.verifiedUrls > 0
+    ? Math.round((data.indexedUrls / data.verifiedUrls) * 100)
+    : 0;
   const showSyncProgress = isSyncing || data.status === 'running';
-  const runProgress = data.progressTotal > 0
-    ? Math.round((data.progressCompleted / data.progressTotal) * 100)
+  const runProgressTotal = Math.max(data.progressTotal, data.progressDueTotal);
+  const runProgress = runProgressTotal > 0
+    ? Math.round((data.progressCompleted / runProgressTotal) * 100)
     : 0;
   const syncButtonLabel =
     showSyncProgress && data.progressStage === 'inspection' && data.progressTotal > 0
@@ -394,6 +400,33 @@ export default function IndexingStatusWidget({
               </div>
             )}
 
+            {data.totalUrls > 0 && !data.isVerificationComplete && (
+              <div className="mt-5 rounded-md border border-[#4285F4]/30 bg-[#4285F4]/5 px-4 py-3">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm font-semibold text-heading">Vorläufiger Datenstand</p>
+                  <p className="text-xs font-semibold tabular-nums text-[#4285F4]">
+                    {data.verifiedUrls} von {data.totalUrls} URLs klassifiziert
+                  </p>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-body">
+                  {data.unverifiedUrls} URLs haben noch kein erfolgreiches Ergebnis aus der Google URL Inspection API.
+                  Die Prüfung läuft automatisch in kleinen Chargen weiter; bis zur vollständigen Erstabdeckung sind die Summen für „Indexiert“ und „Nicht indexiert“ vorläufig.
+                </p>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-tertiary">
+                  <div
+                    className="h-full rounded-full bg-[#4285F4] transition-[width]"
+                    style={{ width: `${data.verificationCoverage}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {data.isVerificationComplete && data.recheckPendingUrls > 0 && (
+              <p className="mt-4 text-xs text-muted">
+                Vollständiger Datenstand. {data.recheckPendingUrls} URLs werden turnusmäßig erneut geprüft; bis dahin bleibt ihr letzter gültiger Google-Status sichtbar.
+              </p>
+            )}
+
             {(data.sitemapEntryCount > 0 || data.totalUrls > 0) && (
               <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border-subtle bg-border-subtle lg:grid-cols-3 2xl:grid-cols-6">
                 {summaryItems.map((item) => item.showsDetails ? (
@@ -466,11 +499,15 @@ export default function IndexingStatusWidget({
             {data.totalUrls > 0 && (
               <div className="mt-5">
                 <div className="mb-2 flex items-center justify-between gap-3 text-xs">
-                  <span className="font-medium text-body">{data.indexedUrls} von {data.totalUrls} URLs indexiert</span>
-                  <span className="font-semibold tabular-nums text-heading">{progress}%</span>
+                  <span className="font-medium text-body">
+                    {data.isVerificationComplete
+                      ? `${data.indexedUrls} von ${data.totalUrls} URLs indexiert`
+                      : `${data.indexedUrls} von ${data.verifiedUrls} erfolgreich geprüften URLs indexiert`}
+                  </span>
+                  <span className="font-semibold tabular-nums text-heading">{indexShare}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-surface-tertiary">
-                  <div className="h-full rounded-full bg-[#34A853] transition-[width]" style={{ width: `${progress}%` }} />
+                  <div className="h-full rounded-full bg-[#34A853] transition-[width]" style={{ width: `${indexShare}%` }} />
                 </div>
               </div>
             )}

@@ -205,7 +205,7 @@ For local projects, DataPeak can represent multiple locations such as a main off
 - Internal snapshot or metadata versions do not force another Google API request. Metadata is attached when a snapshot is read and persisted during the next regular data refresh.
 - Reusable sync jobs prevent unbounded queue growth. GSC history and indexing remain separate job types in the central dispatcher.
 - Every central metric stores its source, refresh time, period, coverage, calculation method, and method version in `project_metric_snapshots` and the dashboard snapshot.
-- A completed indexing run is scheduled again after 48 hours, while unfinished work continues after 24 hours. Individual URLs are reinspected after 24 hours, 7 days, or 30 days depending on status and GSC performance.
+- A completed indexing run is scheduled again after 48 hours. Unfinished batches become eligible again after about five minutes and continue on the next 10-minute dispatcher cycle; temporary inspection errors resume at their URL-specific retry time. Individual URLs are otherwise reinspected after 24 hours, 7 days, or 30 days depending on status and GSC performance.
 - Queue operations retry short-lived Neon connection failures up to three times. Persistent infrastructure failures return HTTP 503; failed data jobs remain queued with backoff and make the cron run visibly fail.
 - `npm run audit:code` checks for runtime DDL, exact TypeScript duplicates, orphaned modules, and unintended server-to-UI dependencies.
 - `npm run build` remains the final production verification.
@@ -237,7 +237,7 @@ DataPeak separates local data by source:
 - **Sitemap discovery:** DataPeak recognizes sitemap index files, recursively loads their child sitemaps, and removes technical URLs such as feeds, comment endpoints, and irrelevant system paths.
 - **Persistent comparison:** Results are stored in Neon Postgres. New and changed URLs are checked first; stable URLs are revisited cyclically instead of being fetched on every run.
 - **Google URL Inspection:** The official inspection response supplies indexing, coverage, canonical, and crawl information. Pending URLs continue in later automatic runs within the available API and runtime budget.
-- **Transparency:** The widget provides live progress, status explanations, actionable issues, and CSV export. “Action required” means a URL has a concrete indexing problem; it does not include every URL that is still pending inspection.
+- **Transparency:** The widget separates first-pass verification coverage from later rechecks. Aggregate indexed/not-indexed values remain explicitly provisional until every relevant sitemap URL has a successful Inspection classification. It also provides live progress, status explanations, actionable issues, and CSV export. “Action required” means a URL has a concrete indexing problem; it does not include every URL that is still pending inspection.
 
 ### Methodology: AI Content Studio
 

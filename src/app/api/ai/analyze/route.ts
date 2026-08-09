@@ -312,8 +312,8 @@ export async function POST(req: NextRequest) {
 
     let indexingSection = '';
     if (indexingStatus.configured) {
-      const indexedShare = indexingStatus.totalUrls > 0
-        ? (indexingStatus.indexedUrls / indexingStatus.totalUrls * 100).toFixed(1)
+      const indexedShare = indexingStatus.verifiedUrls > 0
+        ? (indexingStatus.indexedUrls / indexingStatus.verifiedUrls * 100).toFixed(1)
         : '0.0';
       const priorityUrls = indexingStatus.rows
         .filter((row) => row.status !== 'indexed' || row.hasCanonicalIssue)
@@ -334,9 +334,12 @@ export async function POST(req: NextRequest) {
       Sitemap: ${indexingStatus.sitemapUrl || 'nicht angegeben'}
       Synchronisationsstatus: ${indexingStatus.status}
       Sitemap-URLs: ${fmt(indexingStatus.totalUrls)}
-      Indexiert: ${fmt(indexingStatus.indexedUrls)} (${indexedShare}%)
+      Erfolgreich klassifiziert: ${fmt(indexingStatus.verifiedUrls)} von ${fmt(indexingStatus.totalUrls)} (${fmt(indexingStatus.verificationCoverage)}% Prüfabdeckung)
+      Datenstand: ${indexingStatus.isVerificationComplete ? 'vollständig' : 'vorläufig; keine vollständige Bestandsaussage treffen'}
+      Indexiert: ${fmt(indexingStatus.indexedUrls)} (${indexedShare}% der erfolgreich klassifizierten URLs)
       Nicht indexiert: ${fmt(indexingStatus.notIndexedUrls)}
-      Noch nicht geprüft: ${fmt(indexingStatus.pendingUrls)}
+      Noch nicht erfolgreich klassifiziert: ${fmt(indexingStatus.unverifiedUrls)}
+      Turnusmäßige Nachprüfungen ausstehend: ${fmt(indexingStatus.recheckPendingUrls)}
       Handlungsbedarf: ${fmt(indexingStatus.issueUrls)}
       Letzte Synchronisierung: ${indexingStatus.lastSyncedAt || 'noch nicht synchronisiert'}
 

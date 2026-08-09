@@ -154,7 +154,12 @@ Der letzte bekannte Google-Indexierungsstatus bleibt erhalten, während eine neu
 
 ### Automatische Prüfung
 
-Der Dispatcher prüft pro Indexierungsauftrag maximal 80 Kandidaten mit einem Laufzeitbudget von etwa 75 Sekunden und geringer Parallelität. Offene URLs werden in späteren Läufen automatisch fortgesetzt; der Benutzer muss nicht wiederholt auf **Jetzt prüfen** klicken.
+Der Dispatcher prüft pro Indexierungsauftrag maximal 80 Kandidaten mit einem Laufzeitbudget von etwa 75 Sekunden und geringer Parallelität. Reicht eine Charge nicht aus, wird die Restmenge nach etwa fünf Minuten wieder fällig und beim nächsten 10-Minuten-Dispatcherlauf automatisch fortgesetzt. Der Benutzer muss nicht wiederholt auf **Jetzt prüfen** klicken.
+
+Das Widget unterscheidet dabei zwei Zustände:
+
+- **Vorläufiger Datenstand:** Mindestens eine relevante Sitemap-URL hat noch kein erfolgreich klassifizierbares Inspection-Ergebnis. Indexiert-/Nicht-indexiert-Summen werden ausdrücklich als vorläufig ausgewiesen und die Erstabdeckung wird separat angezeigt.
+- **Vollständiger Datenstand:** Jede relevante Sitemap-URL wurde mindestens einmal erfolgreich als indexiert oder nicht indexiert klassifiziert. Spätere zyklische Nachprüfungen ändern daran nichts; bis zum neuen Ergebnis bleibt der letzte gültige Status sichtbar.
 
 Die ungefähren Wiederholungsintervalle sind:
 
@@ -166,11 +171,11 @@ Die ungefähren Wiederholungsintervalle sind:
 | Noch nicht eindeutig geprüft | nach 24 Stunden |
 | Fehler | abgestuft nach ca. 2, 12 oder 48 Stunden |
 
-Ein vollständig abgeschlossener Projektlauf wird normalerweise nach 48 Stunden wieder fällig. Gibt es offene Arbeit, wird bereits nach etwa 24 Stunden fortgesetzt.
+Ein vollständig abgeschlossener Projektlauf wird normalerweise nach 48 Stunden wieder fällig. Sofort fällige Restarbeit wird innerhalb des nächsten Dispatcher-Zyklus fortgesetzt. Liefert Google für eine URL einen temporären Fehler, wird diese URL zu ihrem abgestuften Retry-Termin erneut eingeplant, ohne den übrigen Bestand als vollständig auszugeben.
 
 ### Manuelle Prüfung
 
-**Jetzt prüfen** startet sofort einen begrenzten Lauf mit maximal 24 aktuell fälligen URL-Inspections und einem kürzeren Laufzeitbudget. Der sichtbare Zähler zeigt den gespeicherten Fortschritt. Verbleibende URLs werden anschließend automatisch vom Dispatcher weiterbearbeitet. Der Button setzt bewusst nicht alle bereits aktuell geprüften URLs wieder auf fällig.
+**Jetzt prüfen** startet sofort einen begrenzten Lauf mit maximal 24 aktuell fälligen URL-Inspections und einem kürzeren Laufzeitbudget. Der sichtbare Zähler bezieht sich auf die gesamte zu Beginn fällige Menge, nicht nur auf die aktuelle Charge. Verbleibende URLs werden anschließend automatisch vom Dispatcher weiterbearbeitet. Der Button setzt bewusst nicht alle bereits aktuell geprüften URLs wieder auf fällig.
 
 ### Warum können DataPeak und der GSC-Bericht abweichen?
 

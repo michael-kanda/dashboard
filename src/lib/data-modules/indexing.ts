@@ -32,17 +32,21 @@ export function createIndexingDataModule(
   const issues = createDataIssue('indexing_sync_failed', report?.errorMessage);
   const hasData = total > 0 || (report?.rows.length ?? 0) > 0;
   const updatedAt = report?.lastSyncedAt ?? new Date(0).toISOString();
+  const resolvedStatus = resolveDataStatus({ configured, hasData, issues });
+  const moduleStatus = hasData && report && !report.isVerificationComplete
+    ? 'partial'
+    : resolvedStatus;
   const metrics = report ? Object.fromEntries(
     ['indexing.total', 'indexing.indexed', 'indexing.notIndexed', 'indexing.actionRequired']
       .map((key) => [key, createMetricMetadata(key, 'snapshot', updatedAt, {
-        status: pending > 0 ? 'partial' : 'complete',
+        status: key === 'indexing.total' || report.isVerificationComplete ? 'complete' : 'partial',
       })]),
   ) : {};
 
   return {
     meta: {
       source: 'indexing',
-      status: resolveDataStatus({ configured, hasData, issues }),
+      status: moduleStatus,
       configured,
       fromCache: false,
       lastUpdatedAt: report?.lastSyncedAt ?? null,
