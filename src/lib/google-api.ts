@@ -71,6 +71,7 @@ import {
   releaseGa4RequestLock,
   tryAcquireGa4RequestLock,
 } from '@/lib/ga4-request-lock';
+import { GA4_KEY_EVENTS_METRIC, parseGa4Metric } from '@/lib/ga4-metrics';
 
 // ── Postgres-Result-Cache für schwere GA4-Dashboard-Reports ──────────────
 // Property 337078709 (und vermutlich weitere große Properties) braucht für
@@ -726,14 +727,15 @@ export async function getTopQueries(
 // --- Google Analytics (GA4) ---
 
 // Gecachter Einstiegspunkt — die eigentliche GA4-Logik liegt unverändert in
-// getAnalyticsDataUncached. Cache-Key-Präfix 'gad:'.
+// getAnalyticsDataUncached. Cache-Key-Präfix 'gadv2:' trennt die aktuelle
+// Key-Event-Auswertung von älteren, möglicherweise genullten Conversion-Caches.
 export async function getAnalyticsData(
   propertyId: string,
   startDate: string,
   endDate: string
 ): Promise<Ga4ExtendedData> {
   return withGa4ResultCache(
-    `gad:${propertyId}:${startDate}:${endDate}`,
+    `gadv2:${propertyId}:${startDate}:${endDate}`,
     () => getAnalyticsDataUncached(propertyId, startDate, endDate)
   );
 }
@@ -772,11 +774,12 @@ async function getAnalyticsDataUncached(
           { name: 'sessions' },
           { name: 'totalUsers' },
           { name: 'newUsers' },
-          { name: 'conversions' },
+          { name: GA4_KEY_EVENTS_METRIC },
           { name: 'bounceRate' },
           { name: 'engagementRate' },
           { name: 'averageSessionDuration' },
         ],
+        metricAggregations: ['TOTAL'],
         orderBys: [{ dimension: { dimensionName: 'date' } }],
       },
     });
@@ -799,7 +802,7 @@ async function getAnalyticsDataUncached(
       const sessions = parseInt(row.metricValues?.[0]?.value || '0', 10);
       const users = parseInt(row.metricValues?.[1]?.value || '0', 10);
       const newUsers = parseInt(row.metricValues?.[2]?.value || '0', 10);
-      const conversions = parseInt(row.metricValues?.[3]?.value || '0', 10);
+      const conversions = parseGa4Metric(row.metricValues?.[3]?.value);
       const bounceRate = parseFloat(row.metricValues?.[4]?.value || '0');
       const engagementRate = parseFloat(row.metricValues?.[5]?.value || '0');
       const avgEngagementTime = parseFloat(row.metricValues?.[6]?.value || '0');
@@ -822,51 +825,20 @@ async function getAnalyticsDataUncached(
       count++;
     }
 
-    result.sessions.total = sessionsTotal;
-    result.totalUsers.total = totalUsersTotal;
-    result.newUsers.total = newUsersTotal;
-    result.conversions.total = conversionsTotal;
-    result.bounceRate.total = count > 0 ? bounceRateSum / count : 0;
-    result.engagementRate.total = count > 0 ? engagementRateSum / count : 0;
-    result.avgEngagementTime.total = count > 0 ? avgEngagementTimeSum / count : 0;
-
-    // Paid Search Daten separat laden
-    try {
-      const paidResponse = await ga4RunReport(analytics, {
-        property: formattedPropertyId,
-        requestBody: {
-          dateRanges: [{ startDate, endDate }],
-          dimensions: [{ name: 'date' }],
-          metrics: [{ name: 'sessions' }],
-          dimensionFilter: {
-            filter: {
-              fieldName: 'sessionDefaultChannelGroup',
-              stringFilter: {
-                matchType: 'EXACT',
-                value: 'Paid Search',
-              },
-            },
-          },
-          orderBys: [{ dimension: { dimensionName: 'date' } }],
-        },
-      });
-
-      const paidRows = paidResponse.data.rows || [];
-      let paidTotal = 0;
-
-      for (const row of paidRows) {
-        const dateStr = row.dimensionValues?.[0]?.value || '';
-        const dateTs = parseGa4Date(dateStr);
-        const sessions = parseInt(row.metricValues?.[0]?.value || '0', 10);
-
-        result.paidSearch.daily.push({ date: dateTs, value: sessions });
-        paidTotal += sessions;
-      }
-
-      result.paidSearch.total = paidTotal;
-    } catch (paidError) {
-      console.warn('[GA4] Paid Search Daten nicht verfügbar:', paidError);
-    }
+    const totals = response.data.totals?.[0]?.metricValues;
+    result.sessions.total = totals ? parseGa4Metric(totals[0]?.value) : sessionsTotal;
+    result.totalUsers.total = totals ? parseGa4Metric(totals[1]?.value) : totalUsersTotal;
+    result.newUsers.total = totals ? parseGa4Metric(totals[2]?.value) : newUsersTotal;
+    result.conversions.total = totals ? parseGa4Metric(totals[3]?.value) : conversionsTotal;
+    result.bounceRate.total = totals
+      ? parseGa4Metric(totals[4]?.value)
+      : (count > 0 ? bounceRateSum / count : 0);
+    result.engagementRate.total = totals
+      ? parseGa4Metric(totals[5]?.value)
+      : (count > 0 ? engagementRateSum / count : 0);
+    result.avgEngagementTime.total = totals
+      ? parseGa4Metric(totals[6]?.value)
+      : (count > 0 ? avgEngagementTimeSum / count : 0);
 
     return result;
   } catch (error) {
@@ -878,6 +850,58 @@ async function getAnalyticsDataUncached(
     }
     throw error;
   }
+}
+
+export async function getPaidSearchData(
+  propertyId: string,
+  startDate: string,
+  endDate: string,
+): Promise<DateRangeData> {
+  return withGa4ResultCache(
+    `paidv2:${propertyId}:${startDate}:${endDate}`,
+    () => getPaidSearchDataUncached(propertyId, startDate, endDate),
+  );
+}
+
+async function getPaidSearchDataUncached(
+  propertyId: string,
+  startDate: string,
+  endDate: string,
+): Promise<DateRangeData> {
+  const formattedPropertyId = propertyId.startsWith('properties/')
+    ? propertyId
+    : `properties/${propertyId}`;
+  const auth = createAuth();
+  const analytics = google.analyticsdata({ version: 'v1beta', auth });
+  const response = await ga4RunReport(analytics, {
+    property: formattedPropertyId,
+    requestBody: {
+      dateRanges: [{ startDate, endDate }],
+      dimensions: [{ name: 'date' }],
+      metrics: [{ name: 'sessions' }],
+      metricAggregations: ['TOTAL'],
+      dimensionFilter: {
+        filter: {
+          fieldName: 'sessionDefaultChannelGroup',
+          stringFilter: { matchType: 'EXACT', value: 'Paid Search' },
+        },
+      },
+      orderBys: [{ dimension: { dimensionName: 'date' } }],
+    },
+  });
+
+  const daily = (response.data.rows || []).map((row) => ({
+    date: parseGa4Date(row.dimensionValues?.[0]?.value || ''),
+    value: parseGa4Metric(row.metricValues?.[0]?.value),
+  }));
+
+  const aggregatedTotal = parseGa4Metric(
+    response.data.totals?.[0]?.metricValues?.[0]?.value,
+  );
+  return {
+    total: aggregatedTotal || daily.reduce((sum, point) => sum + point.value, 0),
+    daily,
+  };
 }
 
 // Gecachter Einstiegspunkt — die eigentliche GA4-Logik liegt unverändert in
@@ -996,7 +1020,7 @@ export async function getGa4DimensionReport(
   dimensionName: string
 ): Promise<ChartEntry[]> {
   return withGa4ResultCache(
-    `dimv2:${propertyId}:${startDate}:${endDate}:${dimensionName}`,
+    `dimv3:${propertyId}:${startDate}:${endDate}:${dimensionName}`,
     () => getGa4DimensionReportUncached(propertyId, startDate, endDate, dimensionName)
   );
 }
@@ -1022,7 +1046,7 @@ async function getGa4DimensionReportUncached(
         metrics: [
           { name: 'sessions' },
           { name: 'engagementRate' },
-          { name: 'conversions' },
+          { name: GA4_KEY_EVENTS_METRIC },
           { name: 'newUsers' },
         ],
         orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
@@ -1037,7 +1061,7 @@ async function getGa4DimensionReportUncached(
       const name = row.dimensionValues?.[0]?.value || 'Unknown';
       const sessions = parseInt(row.metricValues?.[0]?.value || '0', 10);
       const rate = parseFloat(row.metricValues?.[1]?.value || '0');
-      const conversions = parseInt(row.metricValues?.[2]?.value || '0', 10);
+      const conversions = parseGa4Metric(row.metricValues?.[2]?.value);
       const newUsers = parseInt(row.metricValues?.[3]?.value || '0', 10);
 
       results.push({
@@ -1096,7 +1120,7 @@ export async function getTopConvertingPages(
   endDate: string
 ): Promise<ConvertingPageData[]> {
   return withGa4ResultCache(
-    `tcp:${propertyId}:${startDate}:${endDate}`,
+    `tcpv2:${propertyId}:${startDate}:${endDate}`,
     () => getTopConvertingPagesUncached(propertyId, startDate, endDate)
   );
 }
@@ -1126,7 +1150,7 @@ export async function getLandingPageMetricsForPaths(
   if (normalizedPaths.length === 0) return [];
 
   return withGa4ResultCache(
-    `lpm:${propertyId}:${startDate}:${endDate}:${normalizedPaths.sort().join('|')}`,
+    `lpmv2:${propertyId}:${startDate}:${endDate}:${normalizedPaths.sort().join('|')}`,
     () => getLandingPageMetricsForPathsUncached(propertyId, startDate, endDate, normalizedPaths)
   );
 }
@@ -1150,7 +1174,7 @@ async function getLandingPageMetricsForPathsUncached(
         dateRanges: [{ startDate, endDate }],
         dimensions: [{ name: 'landingPagePlusQueryString' }],
         metrics: [
-          { name: 'conversions' },
+          { name: GA4_KEY_EVENTS_METRIC },
           { name: 'sessions' },
           { name: 'engagementRate' },
           { name: 'newUsers' },
@@ -1175,7 +1199,7 @@ async function getLandingPageMetricsForPathsUncached(
     } as any);
 
     return (response.data.rows || []).map((row) => {
-      const conversions = parseInt(row.metricValues?.[0]?.value || '0', 10);
+      const conversions = parseGa4Metric(row.metricValues?.[0]?.value);
       const sessions = parseInt(row.metricValues?.[1]?.value || '0', 10);
       const engagementRate = parseFloat(row.metricValues?.[2]?.value || '0');
       const newUsers = parseInt(row.metricValues?.[3]?.value || '0', 10);
@@ -1214,13 +1238,13 @@ async function getTopConvertingPagesUncached(
         dateRanges: [{ startDate, endDate }],
         dimensions: [{ name: 'landingPagePlusQueryString' }],
         metrics: [
-          { name: 'conversions' },
+          { name: GA4_KEY_EVENTS_METRIC },
           { name: 'sessions' },
           { name: 'engagementRate' },
           { name: 'newUsers' },
         ],
         orderBys: [
-          { metric: { metricName: 'conversions' }, desc: true },
+          { metric: { metricName: GA4_KEY_EVENTS_METRIC }, desc: true },
           { metric: { metricName: 'sessions' }, desc: true },
         ],
         limit: '100',
@@ -1231,7 +1255,7 @@ async function getTopConvertingPagesUncached(
 
     return rows
       .map((row) => {
-        const conversions = parseInt(row.metricValues?.[0]?.value || '0', 10);
+        const conversions = parseGa4Metric(row.metricValues?.[0]?.value);
         const sessions = parseInt(row.metricValues?.[1]?.value || '0', 10);
         const engagementRate = parseFloat(row.metricValues?.[2]?.value || '0');
         const newUsers = parseInt(row.metricValues?.[3]?.value || '0', 10);
@@ -1770,7 +1794,7 @@ export async function getGoogleAdsReport(
   endDate: string
 ): Promise<GoogleAdsData> {
   return withGa4ResultCache(
-    `ads:${propertyId}:${startDate}:${endDate}`,
+    `adsv2:${propertyId}:${startDate}:${endDate}`,
     () => getGoogleAdsReportUncached(propertyId, startDate, endDate)
   );
 }
@@ -1814,7 +1838,7 @@ async function getGoogleAdsReportUncached(
         { name: 'advertiserAdClicks' },
         { name: 'advertiserAdCostPerClick' },
         { name: 'returnOnAdSpend' },
-        { name: 'conversions' },
+        { name: GA4_KEY_EVENTS_METRIC },
         { name: 'sessions' },
         { name: 'engagedSessions' },
       ],
@@ -1852,7 +1876,7 @@ async function getGoogleAdsReportUncached(
         { name: 'advertiserAdClicks' },
         { name: 'advertiserAdCostPerClick' },
         { name: 'returnOnAdSpend' },
-        { name: 'conversions' },
+        { name: GA4_KEY_EVENTS_METRIC },
         { name: 'sessions' },
         { name: 'engagedSessions' },
       ],
@@ -1908,7 +1932,7 @@ async function getGoogleAdsReportUncached(
         requestBody: {
           dateRanges: [{ startDate, endDate }],
           dimensions: [{ name: 'sessionGoogleAdsCampaignName' }],
-          metrics: [{ name: 'conversions' }],
+          metrics: [{ name: GA4_KEY_EVENTS_METRIC }],
           dimensionFilter: adsFilter,
         },
       }),
@@ -1917,7 +1941,7 @@ async function getGoogleAdsReportUncached(
         requestBody: {
           dateRanges: [{ startDate, endDate }],
           dimensions: [{ name: 'sessionGoogleAdsAdGroupName' }],
-          metrics: [{ name: 'conversions' }],
+          metrics: [{ name: GA4_KEY_EVENTS_METRIC }],
           dimensionFilter: adsFilter,
         },
       }),
@@ -1926,7 +1950,7 @@ async function getGoogleAdsReportUncached(
         requestBody: {
           dateRanges: [{ startDate, endDate }],
           dimensions: [{ name: 'sessionGoogleAdsQuery' }],
-          metrics: [{ name: 'conversions' }],
+          metrics: [{ name: GA4_KEY_EVENTS_METRIC }],
           dimensionFilter: adsFilter,
         },
       }),
@@ -2029,7 +2053,7 @@ async function getGoogleAdsReportUncached(
           { name: 'advertiserAdCost' },
           { name: 'advertiserAdClicks' },
           { name: 'advertiserAdCostPerClick' },
-          { name: 'conversions' },
+          { name: GA4_KEY_EVENTS_METRIC },
           { name: 'sessions' },
           { name: 'engagedSessions' },
         ],
@@ -2081,7 +2105,7 @@ async function getGoogleAdsReportUncached(
           ],
           metrics: [
             { name: 'sessions' },
-            { name: 'conversions' },
+            { name: GA4_KEY_EVENTS_METRIC },
             { name: 'engagedSessions' },
           ],
           orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],

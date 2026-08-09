@@ -6,6 +6,7 @@ import {
   getSearchConsoleData,
   getGoogleGenAiPerformanceData,
   getAnalyticsData,
+  getPaidSearchData,
   getTopQueries,
   getAiTrafficData,
   getGa4DimensionReport,
@@ -46,6 +47,7 @@ import {
 } from '@/lib/metric-metadata';
 import { persistMetricSnapshotsWithClient } from '@/lib/metric-snapshot-store';
 import { readDashboardSnapshot } from '@/lib/sync/dashboard-snapshot';
+import { isPaidSearchChannel } from '@/lib/ga4-metrics';
 
 const TOP_QUERIES_DATA_VERSION = 1;
 
@@ -445,6 +447,7 @@ export async function getOrFetchGoogleData(
   let googleAdsData: GoogleAdsData | undefined;
   let googleGenAi: GoogleGenAiPerformanceData | undefined;
   let promptTracking: PromptTrackingResult | undefined;
+  let currentPaidSearchLoaded = false;
 
   if (user.gsc_site_url) {
     try {
@@ -568,8 +571,15 @@ export async function getOrFetchGoogleData(
         sessions: gaCurrent.sessions, totalUsers: gaCurrent.totalUsers,
         conversions: gaCurrent.conversions, engagementRate: gaCurrent.engagementRate,
         bounceRate: gaCurrent.bounceRate, newUsers: gaCurrent.newUsers,
-        avgEngagementTime: gaCurrent.avgEngagementTime, paidSearch: gaCurrent.paidSearch
+        avgEngagementTime: gaCurrent.avgEngagementTime
       };
+
+      try {
+        currentData.paidSearch = await getPaidSearchData(propertyId, startDateStr, endDateStr);
+        currentPaidSearchLoaded = true;
+      } catch (paidSearchError) {
+        console.warn('[GA4] Paid Search Trend nicht verfügbar:', getShortErrorMessage(paidSearchError));
+      }
 
       try {
         const gaPrevious = await getAnalyticsData(propertyId, prevStartStr, prevEndStr);
@@ -578,8 +588,13 @@ export async function getOrFetchGoogleData(
           sessions: gaPrevious.sessions, totalUsers: gaPrevious.totalUsers,
           conversions: gaPrevious.conversions, engagementRate: gaPrevious.engagementRate,
           bounceRate: gaPrevious.bounceRate, newUsers: gaPrevious.newUsers,
-          avgEngagementTime: gaPrevious.avgEngagementTime, paidSearch: gaPrevious.paidSearch
+          avgEngagementTime: gaPrevious.avgEngagementTime
         };
+        try {
+          prevData.paidSearch = await getPaidSearchData(propertyId, prevStartStr, prevEndStr);
+        } catch (paidSearchError) {
+          console.warn('[GA4] Paid Search Vorperiode nicht verfügbar:', getShortErrorMessage(paidSearchError));
+        }
       } catch (previousError) {
         console.warn(
           '[GA4] Vorperiode fehlgeschlagen (ignoriert, Veränderungen evtl. ungenau):',
@@ -631,6 +646,13 @@ export async function getOrFetchGoogleData(
         countryData = rawCountry.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
         cityData = rawCity.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
         channelData = rawChannel.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
+        const paidSearchChannel = rawChannel.find((item) => isPaidSearchChannel(item.name));
+        if (paidSearchChannel && (!currentPaidSearchLoaded || currentData.paidSearch.total === 0)) {
+          currentData.paidSearch = {
+            total: paidSearchChannel.value,
+            daily: currentData.paidSearch.daily,
+          };
+        }
         deviceData = rawDevice.map((item, index) => ({ ...item, fill: `hsl(var(--chart-${(index % 5) + 1}))` }));
       } catch (e) { console.warn('[GA4 Dimensions] Fehler (ignoriert):', getShortErrorMessage(e)); }
 
@@ -708,7 +730,8 @@ export async function getOrFetchGoogleData(
     localSeo: buildLocalSeoData((user as any).project_locations, topQueries, topConvertingPages, cityData),
     aiTraffic, countryData, channelData, deviceData,
     bingData, weatherData, googleAdsData, googleGenAi, promptTracking,
-    apiErrors: Object.keys(apiErrors).length > 0 ? apiErrors : undefined
+    apiErrors: Object.keys(apiErrors).length > 0 ? apiErrors : undefined,
+    snapshotVersion: 2,
   };
 
   // ════════════════════════════════════════════════════════════════════

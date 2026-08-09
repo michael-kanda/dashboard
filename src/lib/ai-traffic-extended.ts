@@ -5,6 +5,7 @@ import { google } from 'googleapis';
 import type { AiTrafficDetailData, AiLandingPageData, AiSourceData } from '@/types/ai-traffic-detail';
 import { normalizeSource, buildAiTrafficDimensionFilter } from './ai-sources';
 import { createGoogleAuth, GOOGLE_SCOPES } from './google-auth';
+import { GA4_KEY_EVENTS_METRIC, parseGa4Metric } from './ga4-metrics';
 
 // ============================================================================
 // AUTHENTIFIZIERUNG
@@ -81,7 +82,7 @@ export async function getAiTrafficWithLandingPages(
           { name: 'totalUsers' },
           { name: 'averageSessionDuration' },
           { name: 'bounceRate' },
-          { name: 'conversions' }
+          { name: GA4_KEY_EVENTS_METRIC }
         ],
         dimensionFilter: aiTrafficFilter,
         orderBys: [
@@ -126,7 +127,7 @@ export async function getAiTrafficWithLandingPages(
         metrics: [
           { name: 'sessions' },
           { name: 'totalUsers' },
-          { name: 'conversions' }
+          { name: GA4_KEY_EVENTS_METRIC }
         ],
         dimensionFilter: aiTrafficFilter,
         orderBys: [
@@ -155,7 +156,7 @@ export async function getAiTrafficWithLandingPages(
       const s = normalizeSource(row.dimensionValues?.[0]?.value || 'unknown');
       const sessions = parseInt(row.metricValues?.[0]?.value || '0', 10);
       const users = parseInt(row.metricValues?.[1]?.value || '0', 10);
-      const conversions = parseInt(row.metricValues?.[2]?.value || '0', 10);
+      const conversions = parseGa4Metric(row.metricValues?.[2]?.value);
       const prev = sourceTotals.get(s) || { sessions: 0, users: 0, conversions: 0 };
       sourceTotals.set(s, {
         sessions: prev.sessions + sessions,
@@ -202,7 +203,7 @@ export async function getAiTrafficWithLandingPages(
       const users = parseInt(row.metricValues?.[1]?.value || '0', 10);
       const avgEngTime = parseFloat(row.metricValues?.[2]?.value || '0');
       const bounceRate = parseFloat(row.metricValues?.[3]?.value || '0');
-      const conversions = parseInt(row.metricValues?.[4]?.value || '0', 10);
+      const conversions = parseGa4Metric(row.metricValues?.[4]?.value);
 
       // Totals
       totalSessions += sessions;

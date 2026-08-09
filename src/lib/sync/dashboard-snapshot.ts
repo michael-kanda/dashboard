@@ -15,6 +15,8 @@ export interface DashboardSnapshotResult {
   queued: boolean;
 }
 
+const DASHBOARD_SNAPSHOT_VERSION = 2;
+
 export { getDashboardCacheDurationHours } from './cache-policy';
 
 function isDemoProject(user: Pick<User, 'email' | 'domain'>) {
@@ -52,7 +54,9 @@ export async function readDashboardSnapshot(
     ? new Date(String(row.last_fetched)).toISOString()
     : null;
   const cachedData = row?.data as ProjectDashboardData | undefined;
-  const stale = isDashboardSnapshotStale(dateRange, lastFetchedAt);
+  const versionMismatch = cachedData?.snapshotVersion !== DASHBOARD_SNAPSHOT_VERSION;
+  const stale = versionMismatch
+    || isDashboardSnapshotStale(dateRange, lastFetchedAt);
   let queued = false;
 
   const shouldEnqueue = stale
@@ -66,7 +70,7 @@ export async function readDashboardSnapshot(
         dateRange,
         payload: { dateRange },
         priority: options.priority ?? (row ? 20 : 100),
-        restartFailed: false,
+        restartFailed: versionMismatch,
         preservePending: true,
       });
       queued = true;

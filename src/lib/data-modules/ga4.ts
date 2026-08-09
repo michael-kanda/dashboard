@@ -21,7 +21,8 @@ export type Ga4KpiKey =
   | 'engagementRate'
   | 'bounceRate'
   | 'newUsers'
-  | 'avgEngagementTime';
+  | 'avgEngagementTime'
+  | 'paidSearch';
 
 export interface Ga4DashboardData {
   kpis: Record<Ga4KpiKey, KpiDatum>;
@@ -44,6 +45,7 @@ const GA4_KPI_KEYS: Ga4KpiKey[] = [
   'bounceRate',
   'newUsers',
   'avgEngagementTime',
+  'paidSearch',
 ];
 
 function normalizeKpi(value?: KpiDatum): KpiDatum {

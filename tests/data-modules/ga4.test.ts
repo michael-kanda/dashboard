@@ -23,3 +23,13 @@ test('GA4 normalizes a missing AI traffic payload', () => {
   assert.equal(result.data.aiTraffic.totalSessions, 0);
   assert.deepEqual(result.data.aiTraffic.topAiSources, []);
 });
+
+test('GA4 exposes paid search KPI and trend through its stable contract', () => {
+  const result = createGa4DataModule({
+    kpis: { paidSearch: { value: 42, change: 12.5 } },
+    charts: { paidSearch: [{ date: 1_786_291_200_000, value: 3 }] },
+  });
+
+  assert.deepEqual(result.data.kpis.paidSearch, { value: 42, change: 12.5 });
+  assert.deepEqual(result.data.charts.paidSearch, [{ date: 1_786_291_200_000, value: 3 }]);
+});

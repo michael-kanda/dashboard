@@ -96,7 +96,7 @@ export function buildDashboardViewModel({
       value: item.impressions,
     })),
     aiTraffic: aiTrafficTrend,
-    paidSearch: data.charts?.paidSearch ?? [],
+    paidSearch: modules.ga4.data.charts.paidSearch ?? [],
   };
 
   const exportKpis: DashboardExportKpi[] = extendedKpis ? [
