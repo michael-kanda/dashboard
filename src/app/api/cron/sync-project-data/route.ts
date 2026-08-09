@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { syncProjectIndexingStatus } from '@/lib/indexing-status';
 import { trySyncDashboardProjectSnapshot } from '@/lib/sync/dashboard';
 import { syncGscHistoryForProject } from '@/lib/sync/gsc-history';
+import { syncIndexingProjectSnapshot } from '@/lib/sync/indexing';
 import {
   claimNextProjectSyncJob,
   deferProjectSyncJob,
@@ -9,12 +9,6 @@ import {
   seedDueProjectSyncJobs,
   type ProjectSyncJob,
 } from '@/lib/sync/job-queue';
-import {
-  createMetricMetadata,
-  extractIndexingMetricValues,
-  type MetricMetadata,
-} from '@/lib/metric-metadata';
-import { persistMetricSnapshots } from '@/lib/metric-snapshot-store';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -37,20 +31,6 @@ function isRetryableInfrastructureError(error: unknown) {
   ].some((fragment) => message.includes(fragment));
 }
 
-async function persistIndexingMetrics(userId: string, status: Awaited<ReturnType<typeof syncProjectIndexingStatus>>) {
-  const updatedAt = status.lastSyncedAt ?? new Date().toISOString();
-  const values = extractIndexingMetricValues(status);
-  const metadata = Object.fromEntries(
-    Object.keys(values).map((key) => [
-      key,
-      createMetricMetadata(key, 'snapshot', updatedAt, {
-        status: status.pendingUrls > 0 ? 'partial' : 'complete',
-      }),
-    ]),
-  ) as Record<string, MetricMetadata>;
-  await persistMetricSnapshots(userId, 'indexing', values, metadata);
-}
-
 async function executeJob(job: ProjectSyncJob, deadlineAt: number): Promise<string | null> {
   switch (job.jobType) {
     case 'dashboard': {
@@ -65,12 +45,11 @@ async function executeJob(job: ProjectSyncJob, deadlineAt: number): Promise<stri
     }
     case 'indexing': {
       const indexingDeadline = Math.min(deadlineAt, Date.now() + 75_000);
-      const status = await syncProjectIndexingStatus(job.userId, {
+      const status = await syncIndexingProjectSnapshot(job.userId, {
         force: job.payload.force === true,
         maxInspections: 80,
         deadlineAt: indexingDeadline,
       });
-      await persistIndexingMetrics(job.userId, status);
       return `${status.indexedUrls}/${status.totalUrls} URLs indexiert`;
     }
     default: {

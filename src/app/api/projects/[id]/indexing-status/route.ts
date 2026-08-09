@@ -5,13 +5,19 @@ import {
   getProjectIndexingStatus,
 } from '@/lib/indexing-status';
 import {
+  claimProjectSyncJob,
   enqueueProjectSyncJob,
+  finishProjectSyncJob,
   getProjectSyncJob,
 } from '@/lib/sync/job-queue';
+import { syncIndexingProjectSnapshot } from '@/lib/sync/indexing';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-export const maxDuration = 30;
+export const maxDuration = 60;
+
+const MANUAL_SYNC_DEADLINE_MS = 45_000;
+const MANUAL_MAX_INSPECTIONS = 24;
 
 async function authorize(projectId: string, write = false) {
   const session = await auth();
@@ -74,12 +80,30 @@ export async function POST(
       priority: 100,
       payload: { force: true },
     });
-    const current = await getProjectIndexingStatus(id);
-    return NextResponse.json({
-      ...current,
-      status: 'running',
-      progressStage: 'idle',
-    }, { status: 202 });
+
+    const job = await claimProjectSyncJob(id, 'indexing');
+    if (!job) {
+      const current = await getProjectIndexingStatus(id);
+      return NextResponse.json({
+        ...current,
+        status: 'running',
+        progressStage: current.progressStage === 'error' ? 'idle' : current.progressStage,
+      }, { status: 202 });
+    }
+
+    try {
+      const result = await syncIndexingProjectSnapshot(id, {
+        force: true,
+        maxInspections: MANUAL_MAX_INSPECTIONS,
+        deadlineAt: Date.now() + MANUAL_SYNC_DEADLINE_MS,
+      });
+      await finishProjectSyncJob(job, { success: true });
+      return NextResponse.json(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Indexierungsabgleich fehlgeschlagen';
+      await finishProjectSyncJob(job, { success: false, error: message });
+      return NextResponse.json({ message }, { status: 502 });
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Indexierungsabgleich konnte nicht eingereiht werden';
     return NextResponse.json({ message }, { status: 502 });
