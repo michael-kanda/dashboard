@@ -395,6 +395,7 @@ export async function syncProjectIndexingStatus(
   `;
   const config = rows[0];
   if (!config?.gsc_site_url) throw new Error('Für das Projekt ist keine GSC Site URL konfiguriert.');
+  const gscSiteUrl = config.gsc_site_url;
   let sitemapUrl = defaultSitemapUrl(config);
   if (!sitemapUrl) throw new Error('Für das Projekt konnte keine Sitemap-URL ermittelt werden.');
 
@@ -461,7 +462,7 @@ export async function syncProjectIndexingStatus(
     for (const candidate of sitemapCandidates) {
       try {
         const propertyEntries = (await readSitemapTree(candidate, deadlineAt))
-          .filter((entry) => propertyAllowsUrl(config.gsc_site_url!, entry.url));
+          .filter((entry) => propertyAllowsUrl(gscSiteUrl, entry.url));
         if (!propertyEntries.length) continue;
 
         const excludedUrls: ExcludedSitemapUrl[] = [];
@@ -501,7 +502,7 @@ export async function syncProjectIndexingStatus(
       WHERE user_id = ${projectId}::uuid
     `;
     const performance = entries.length
-      ? await loadPagePerformance(config.gsc_site_url, deadlineAt)
+      ? await loadPagePerformance(gscSiteUrl, deadlineAt)
       : new Map<string, { clicks: number; impressions: number; ctr: number; position: number }>();
     const { rows: storedSitemapRows } = await sql<{
       url: string;
@@ -680,7 +681,7 @@ export async function syncProjectIndexingStatus(
           const response = await searchconsole.urlInspection.index.inspect({
             requestBody: {
               inspectionUrl: url,
-              siteUrl: config.gsc_site_url!,
+              siteUrl: gscSiteUrl,
               languageCode: 'de-DE',
             },
           }, { timeout: getRequestTimeout(deadlineAt, 15_000, 8_000) });
