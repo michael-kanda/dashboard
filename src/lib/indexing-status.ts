@@ -4,13 +4,39 @@ import { createGoogleAuth, GOOGLE_SCOPES } from '@/lib/google-auth';
 import { google } from 'googleapis';
 import { sql } from '@vercel/postgres';
 import { isBroadSitemapLastmodRefresh } from '@/lib/indexing-status-policy';
+import {
+  classifyIndexingRow,
+  normalizeUrlForComparison,
+  INDEXED_HOT_RECHECK_DAYS,
+  INDEXED_RECHECK_DAYS,
+  NOT_INDEXED_RECHECK_DAYS,
+  STALE_AFTER_DAYS,
+  type IndexingExclusionCategory,
+  type IndexingUrlStatus,
+} from '@/lib/indexing-status-constants';
 
-export type IndexingUrlStatus = 'indexed' | 'not_indexed' | 'pending' | 'error';
+export {
+  classifyIndexingRow,
+  normalizeUrlForComparison,
+  CATEGORY_LABELS,
+  INDEXED_HOT_RECHECK_DAYS,
+  INDEXED_RECHECK_DAYS,
+  NOT_INDEXED_RECHECK_DAYS,
+  STALE_AFTER_DAYS,
+} from '@/lib/indexing-status-constants';
+export type {
+  IndexingExclusionCategory,
+  IndexingUrlStatus,
+  IndexingClassification,
+} from '@/lib/indexing-status-constants';
 
 export interface IndexingStatusRow {
   url: string;
   status: IndexingUrlStatus;
   coverageState: string | null;
+  robotsTxtState: string | null;
+  indexingState: string | null;
+  pageFetchState: string | null;
   lastCrawlTime: string | null;
   googleCanonical: string | null;
   userCanonical: string | null;
@@ -22,6 +48,12 @@ export interface IndexingStatusRow {
   inspectionPending: boolean;
   inspectionError: string | null;
   hasCanonicalIssue: boolean;
+  category: IndexingExclusionCategory;
+  isIntentional: boolean;
+  needsAction: boolean;
+  actionHint: string | null;
+  inspectionAgeDays: number | null;
+  isStale: boolean;
 }
 
 export interface ExcludedSitemapUrl {
@@ -51,6 +83,10 @@ export interface ProjectIndexingStatus {
   notIndexedUrls: number;
   pendingUrls: number;
   issueUrls: number;
+  intentionalUrls: number;
+  staleUrls: number;
+  oldestInspectionAt: string | null;
+  maxInspectionAgeDays: number | null;
   lastSyncedAt: string | null;
   nextSyncAt: string | null;
   errorMessage: string | null;
@@ -98,6 +134,10 @@ const EMPTY_STATUS: ProjectIndexingStatus = {
   notIndexedUrls: 0,
   pendingUrls: 0,
   issueUrls: 0,
+  intentionalUrls: 0,
+  staleUrls: 0,
+  oldestInspectionAt: null,
+  maxInspectionAgeDays: null,
   lastSyncedAt: null,
   nextSyncAt: null,
   errorMessage: null,
@@ -205,10 +245,17 @@ function assertSafeSitemapUrl(value: string, expectedHost?: string) {
   return parsed;
 }
 
+class InspectionBudgetExceededError extends Error {
+  constructor() {
+    super('Das Zeitbudget für diesen Indexierungsabgleich ist aufgebraucht.');
+    this.name = 'InspectionBudgetExceededError';
+  }
+}
+
 function getRequestTimeout(deadlineAt: number, maximumMs: number, reserveMs: number) {
   const remaining = deadlineAt - Date.now() - reserveMs;
   if (remaining < 1_000) {
-    throw new Error('Das Zeitbudget für diesen Indexierungsabgleich ist aufgebraucht.');
+    throw new InspectionBudgetExceededError();
   }
   return Math.min(maximumMs, remaining);
 }
@@ -368,6 +415,7 @@ function getIndexingStatus(verdict?: string | null): IndexingUrlStatus {
   return 'pending';
 }
 
+
 async function mapWithConcurrency<T>(
   values: T[],
   concurrency: number,
@@ -383,11 +431,23 @@ async function mapWithConcurrency<T>(
   }));
 }
 
+export interface IndexingSyncOptions {
+  force?: boolean;
+  maxInspections?: number;
+  deadlineAt?: number;
+  /** Zeitpuffer, der am Ende für das Abschluss-Update reserviert bleibt. */
+  inspectionReserveMs?: number;
+  /** Parallele URL-Inspection-Aufrufe. Google erlaubt 600 Abfragen pro Minute je Property. */
+  inspectionConcurrency?: number;
+}
+
 export async function syncProjectIndexingStatus(
   projectId: string,
-  options: { force?: boolean; maxInspections?: number; deadlineAt?: number } = {},
+  options: IndexingSyncOptions = {},
 ) {
   const deadlineAt = options.deadlineAt ?? Date.now() + 240_000;
+  const inspectionReserveMs = options.inspectionReserveMs ?? 12_000;
+  const inspectionConcurrency = Math.max(1, Math.min(10, options.inspectionConcurrency ?? 6));
   const { rows } = await sql<ProjectConfig>`
     SELECT id::text, domain, gsc_site_url, sitemap_url
     FROM users
@@ -603,9 +663,12 @@ export async function syncProjectIndexingStatus(
             ELSE status
           END,
           next_inspection_at = CASE
-            WHEN verdict = 'PASS' AND impressions >= 100 THEN inspected_at + INTERVAL '7 days'
-            WHEN verdict = 'PASS' THEN inspected_at + INTERVAL '30 days'
-            WHEN verdict IN ('FAIL', 'NEUTRAL') THEN inspected_at + INTERVAL '7 days'
+            WHEN verdict = 'PASS' AND impressions >= 100
+              THEN inspected_at + (${INDEXED_HOT_RECHECK_DAYS} * INTERVAL '1 day')
+            WHEN verdict = 'PASS'
+              THEN inspected_at + (${INDEXED_RECHECK_DAYS} * INTERVAL '1 day')
+            WHEN verdict IN ('FAIL', 'NEUTRAL')
+              THEN inspected_at + (${NOT_INDEXED_RECHECK_DAYS} * INTERVAL '1 day')
             ELSE next_inspection_at
           END,
           change_detected_at = inspected_at
@@ -674,9 +737,10 @@ export async function syncProjectIndexingStatus(
     const searchconsole = google.searchconsole({ version: 'v1', auth: createGscAuth() });
     await mapWithConcurrency(
       candidates,
-      2,
-      () => Date.now() + 25_000 < deadlineAt,
+      inspectionConcurrency,
+      () => Date.now() + inspectionReserveMs < deadlineAt,
       async ({ url }) => {
+        let skippedByBudget = false;
         try {
           const response = await searchconsole.urlInspection.index.inspect({
             requestBody: {
@@ -684,7 +748,7 @@ export async function syncProjectIndexingStatus(
               siteUrl: gscSiteUrl,
               languageCode: 'de-DE',
             },
-          }, { timeout: getRequestTimeout(deadlineAt, 15_000, 8_000) });
+          }, { timeout: getRequestTimeout(deadlineAt, 15_000, Math.max(4_000, inspectionReserveMs - 4_000)) });
           const result = response.data.inspectionResult?.indexStatusResult;
           const status = getIndexingStatus(result?.verdict);
           await sql`
@@ -700,9 +764,12 @@ export async function syncProjectIndexingStatus(
                 last_crawl_time = ${result?.lastCrawlTime ?? null},
                 inspected_at = NOW(),
                 next_inspection_at = CASE
-                  WHEN ${status} = 'indexed' AND impressions >= 100 THEN NOW() + INTERVAL '7 days'
-                  WHEN ${status} = 'indexed' THEN NOW() + INTERVAL '30 days'
-                  WHEN ${status} = 'not_indexed' THEN NOW() + INTERVAL '7 days'
+                  WHEN ${status} = 'indexed' AND impressions >= 100
+                    THEN NOW() + (${INDEXED_HOT_RECHECK_DAYS} * INTERVAL '1 day')
+                  WHEN ${status} = 'indexed'
+                    THEN NOW() + (${INDEXED_RECHECK_DAYS} * INTERVAL '1 day')
+                  WHEN ${status} = 'not_indexed'
+                    THEN NOW() + (${NOT_INDEXED_RECHECK_DAYS} * INTERVAL '1 day')
                   ELSE NOW() + INTERVAL '24 hours'
                 END,
                 inspection_attempts = 0,
@@ -710,6 +777,10 @@ export async function syncProjectIndexingStatus(
             WHERE user_id = ${projectId}::uuid AND url = ${url}
           `;
         } catch (error) {
+          if (error instanceof InspectionBudgetExceededError) {
+            skippedByBudget = true;
+            return;
+          }
           const message = error instanceof Error ? error.message : 'URL Inspection fehlgeschlagen';
           await sql`
             UPDATE project_indexing_urls
@@ -731,15 +802,17 @@ export async function syncProjectIndexingStatus(
             WHERE user_id = ${projectId}::uuid AND url = ${url}
           `;
         } finally {
-          try {
-            await sql`
-              UPDATE project_indexing_sync
-              SET progress_completed = LEAST(progress_completed + 1, progress_total),
-                  updated_at = NOW()
-              WHERE user_id = ${projectId}::uuid
-            `;
-          } catch (progressError) {
-            console.warn('[Indexing] Fortschritt konnte nicht aktualisiert werden:', progressError);
+          if (!skippedByBudget) {
+            try {
+              await sql`
+                UPDATE project_indexing_sync
+                SET progress_completed = LEAST(progress_completed + 1, progress_total),
+                    updated_at = NOW()
+                WHERE user_id = ${projectId}::uuid
+              `;
+            } catch (progressError) {
+              console.warn('[Indexing] Fortschritt konnte nicht aktualisiert werden:', progressError);
+            }
           }
         }
       },
@@ -821,8 +894,13 @@ export async function syncProjectIndexingStatus(
     const message = error instanceof Error ? error.message : 'Indexierungsabgleich fehlgeschlagen';
     await sql`
       UPDATE project_indexing_sync
-      SET status = 'error', completed_at = NOW(), next_sync_at = NOW() + INTERVAL '48 hours',
-          progress_stage = 'error', lock_until = NULL, error_message = ${message}, updated_at = NOW()
+      SET status = 'error',
+          completed_at = NOW(),
+          next_sync_at = NOW() + INTERVAL '2 hours',
+          progress_stage = 'error',
+          lock_until = NULL,
+          error_message = ${message},
+          updated_at = NOW()
       WHERE user_id = ${projectId}::uuid
     `;
     throw error;
@@ -871,7 +949,8 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
     }
     const { rows } = await sql<any>`
       SELECT
-        url, status, coverage_state, last_crawl_time, google_canonical, user_canonical,
+        url, status, coverage_state, robots_txt_state, indexing_state, page_fetch_state,
+        last_crawl_time, google_canonical, user_canonical,
         verdict, impressions, clicks, position, sitemap_lastmod, inspected_at,
         next_inspection_at, change_detected_at, inspection_error
       FROM project_indexing_urls
@@ -893,10 +972,29 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
       const changeDetectedAt = row.change_detected_at
         ? new Date(row.change_detected_at).getTime()
         : null;
+      const hasCanonicalIssue = Boolean(
+        row.google_canonical &&
+        normalizeUrlForComparison(row.google_canonical)
+          !== normalizeUrlForComparison(row.user_canonical || row.url),
+      );
+      const classification = classifyIndexingRow({
+        status: resolvedStatus,
+        coverageState: row.coverage_state,
+        robotsTxtState: row.robots_txt_state,
+        indexingState: row.indexing_state,
+        pageFetchState: row.page_fetch_state,
+        hasCanonicalIssue,
+      });
+      const inspectionAgeDays = inspectedAt
+        ? Math.floor((now - new Date(inspectedAt).getTime()) / 86_400_000)
+        : null;
       return {
         url: row.url,
         status: resolvedStatus,
         coverageState: row.coverage_state,
+        robotsTxtState: row.robots_txt_state,
+        indexingState: row.indexing_state,
+        pageFetchState: row.page_fetch_state,
         lastCrawlTime: row.last_crawl_time ? new Date(row.last_crawl_time).toISOString() : null,
         googleCanonical: row.google_canonical,
         userCanonical: row.user_canonical,
@@ -909,10 +1007,13 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
           changeDetectedAt !== null && changeDetectedAt > new Date(inspectedAt).getTime()
         ),
         inspectionError: row.inspection_error,
-        hasCanonicalIssue: Boolean(
-          row.google_canonical &&
-          row.google_canonical.replace(/\/$/, '') !== (row.user_canonical || row.url).replace(/\/$/, '')
-        ),
+        hasCanonicalIssue,
+        category: classification.category,
+        isIntentional: classification.isIntentional,
+        needsAction: classification.needsAction,
+        actionHint: classification.actionHint,
+        inspectionAgeDays,
+        isStale: inspectionAgeDays !== null && inspectionAgeDays > STALE_AFTER_DAYS,
       };
     });
     const sync = syncRows[0];
@@ -939,6 +1040,14 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
     const recheckPendingUrls = mapped.filter(
       (row) => (row.status === 'indexed' || row.status === 'not_indexed') && row.inspectionPending,
     ).length;
+    const inspectionTimestamps = mapped
+      .map((row) => row.inspectedAt)
+      .filter((value): value is string => Boolean(value))
+      .sort();
+    const oldestInspectionAt = inspectionTimestamps[0] ?? null;
+    const maxInspectionAgeDays = oldestInspectionAt
+      ? Math.floor((now - new Date(oldestInspectionAt).getTime()) / 86_400_000)
+      : null;
     return {
       configured: Boolean(resolvedSitemapUrl && config.gsc_site_url),
       sitemapUrl: resolvedSitemapUrl,
@@ -962,7 +1071,11 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
       indexedUrls: mapped.filter((row) => row.status === 'indexed').length,
       notIndexedUrls: mapped.filter((row) => row.status === 'not_indexed').length,
       pendingUrls: mapped.filter((row) => row.status === 'pending').length,
-      issueUrls: mapped.filter((row) => row.status === 'error' || row.status === 'not_indexed' || row.hasCanonicalIssue).length,
+      issueUrls: mapped.filter((row) => row.needsAction).length,
+      intentionalUrls: mapped.filter((row) => row.isIntentional).length,
+      staleUrls: mapped.filter((row) => row.isStale).length,
+      oldestInspectionAt,
+      maxInspectionAgeDays,
       lastSyncedAt: sync?.completed_at ? new Date(sync.completed_at).toISOString() : null,
       nextSyncAt: sync?.next_sync_at ? new Date(sync.next_sync_at).toISOString() : null,
       errorMessage: sync?.error_message ?? null,
