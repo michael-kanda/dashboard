@@ -23,6 +23,9 @@ type GooglePlacePreview = {
   openNow?: boolean | null;
   primaryType?: string | null;
   photoUrl?: string | null;
+  cacheState?: 'live' | 'fresh' | 'stale';
+  sourceUpdatedAt?: string;
+  warning?: string;
 };
 
 function formatNumber(value: number) {
@@ -375,6 +378,10 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
         if (!location.googlePlaceId && !location.googleBusinessProfileUrl) return [locationId, null] as const;
 
         const params = new URLSearchParams();
+        if (projectId) {
+          params.set('projectId', projectId);
+          params.set('locationId', locationId);
+        }
         const googlePlaceId = location.googlePlaceId?.trim();
         if (isUsablePlaceId(googlePlaceId)) {
           params.set('placeId', googlePlaceId);
@@ -412,7 +419,7 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
     }
 
     return () => controller.abort();
-  }, [placePreviewLookupKey]);
+  }, [placePreviewLookupKey, projectId]);
 
   const getSvgPointFromClient = (clientX: number, clientY: number) => {
     const rect = svgRef.current?.getBoundingClientRect();

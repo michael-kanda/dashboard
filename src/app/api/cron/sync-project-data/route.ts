@@ -9,6 +9,10 @@ import {
   seedDueProjectSyncJobs,
   type ProjectSyncJob,
 } from '@/lib/sync/job-queue';
+import {
+  isRetryableInfrastructureError,
+  withInfrastructureRetry,
+} from '@/lib/sync/retry';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -16,19 +20,12 @@ export const maxDuration = 300;
 const DISPATCH_DEADLINE_MS = 235_000;
 const MAX_JOBS_PER_RUN = 6;
 
-function isRetryableInfrastructureError(error: unknown) {
-  const candidate = error as { message?: string; code?: string; ['neon:retryable']?: boolean };
-  if (candidate?.['neon:retryable'] === true) return true;
-  const message = `${candidate?.message ?? ''} ${candidate?.code ?? ''}`.toLowerCase();
-  return [
-    'control plane request failed',
-    'connection terminated',
-    'connection reset',
-    'econnreset',
-    'fetch failed',
-    'temporarily unavailable',
-    'timeout',
-  ].some((fragment) => message.includes(fragment));
+function retryDatabaseOperation<T>(label: string, operation: () => Promise<T>) {
+  return withInfrastructureRetry(operation, {
+    onRetry: (_error, nextAttempt) => {
+      console.warn(`[Sync Dispatcher] ${label}: temporärer Datenbankfehler, Versuch ${nextAttempt}/3`);
+    },
+  });
 }
 
 async function executeJob(job: ProjectSyncJob, deadlineAt: number): Promise<string | null> {
@@ -67,7 +64,7 @@ export async function GET(request: NextRequest) {
   const startedAt = Date.now();
   const deadlineAt = startedAt + DISPATCH_DEADLINE_MS;
   try {
-    const seeded = await seedDueProjectSyncJobs();
+    const seeded = await retryDatabaseOperation('Jobs einplanen', seedDueProjectSyncJobs);
     const results: Array<{
       jobId: string;
       type: string;
@@ -80,13 +77,19 @@ export async function GET(request: NextRequest) {
 
     while (results.length < MAX_JOBS_PER_RUN && Date.now() + 20_000 < deadlineAt) {
       const preferredType = jobTypes[(rotationOffset + results.length) % jobTypes.length];
-      const job = await claimNextProjectSyncJob(preferredType)
-        ?? await claimNextProjectSyncJob();
+      const preferredJob = await retryDatabaseOperation(
+        `Job ${preferredType} reservieren`,
+        () => claimNextProjectSyncJob(preferredType),
+      );
+      const job = preferredJob ?? await retryDatabaseOperation(
+        'Nächsten Job reservieren',
+        () => claimNextProjectSyncJob(),
+      );
       if (!job) break;
       try {
         const message = await executeJob(job, deadlineAt);
         if (message === null) {
-          await deferProjectSyncJob(job);
+          await retryDatabaseOperation('Job verschieben', () => deferProjectSyncJob(job));
           results.push({
             jobId: job.id,
             type: job.jobType,
@@ -96,7 +99,10 @@ export async function GET(request: NextRequest) {
           });
           continue;
         }
-        await finishProjectSyncJob(job, { success: true });
+        await retryDatabaseOperation(
+          'Job abschließen',
+          () => finishProjectSyncJob(job, { success: true }),
+        );
         results.push({
           jobId: job.id,
           type: job.jobType,
@@ -106,7 +112,10 @@ export async function GET(request: NextRequest) {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        await finishProjectSyncJob(job, { success: false, error: message });
+        await retryDatabaseOperation(
+          'Fehlgeschlagenen Job speichern',
+          () => finishProjectSyncJob(job, { success: false, error: message }),
+        );
         results.push({
           jobId: job.id,
           type: job.jobType,
@@ -117,14 +126,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const failed = results.filter((result) => !result.success).length;
     return NextResponse.json({
-      success: true,
+      success: failed === 0,
       seeded,
       processed: results.length,
       successful: results.filter((result) => result.success).length,
-      failed: results.filter((result) => !result.success).length,
+      failed,
       durationSeconds: Math.round((Date.now() - startedAt) / 100) / 10,
       results,
+    }, {
+      status: failed > 0 ? 500 : 200,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

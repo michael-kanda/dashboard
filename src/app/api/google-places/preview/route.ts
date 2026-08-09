@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import {
+  markGooglePlacePreviewFailure,
+  readGooglePlacePreviewCache,
+  saveGooglePlacePreviewCache,
+  type CachedGooglePlacePreview,
+  type GooglePlacePreviewPayload,
+} from '@/lib/google-place-preview-cache';
+import {
+  createGooglePlaceLookupKey,
+  isGooglePlacePreviewFresh,
+} from '@/lib/google-place-preview-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,7 +70,11 @@ function normalizeTypeLabel(type?: string) {
     .join(' ');
 }
 
-function normalizePlace(place: GooglePlace | null) {
+const PREVIEW_CACHE_HEADERS = {
+  'Cache-Control': 'private, max-age=3600, stale-while-revalidate=86400',
+};
+
+function normalizePlace(place: GooglePlace | null): GooglePlacePreviewPayload | null {
   if (!place?.id) return null;
 
   const photoName = place.photos?.find((photo) => photo.name)?.name || null;
@@ -81,7 +96,7 @@ function normalizePlace(place: GooglePlace | null) {
   };
 }
 
-function normalizeLegacyPlace(place: LegacyPlace | null) {
+function normalizeLegacyPlace(place: LegacyPlace | null): GooglePlacePreviewPayload | null {
   if (!place?.place_id) return null;
 
   const photoReference = place.photos?.find((photo) => photo.photo_reference)?.photo_reference || null;
@@ -244,20 +259,56 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 });
   }
 
-  const apiKey = getPlacesApiKey();
-  if (!apiKey) {
-    return NextResponse.json(
-      { message: 'GOOGLE_PLACES_API_KEY oder GOOGLE_MAPS_API_KEY ist nicht konfiguriert.' },
-      { status: 503 }
-    );
-  }
-
   const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get('projectId')?.trim();
+  const locationKey = searchParams.get('locationId')?.trim();
   const placeId = searchParams.get('placeId')?.trim();
   const query = searchParams.get('query')?.trim();
 
   if (!placeId && !query) {
     return NextResponse.json({ message: 'placeId oder query ist erforderlich.' }, { status: 400 });
+  }
+  if ((projectId && !locationKey) || (!projectId && locationKey)) {
+    return NextResponse.json({ message: 'projectId und locationId müssen gemeinsam angegeben werden.' }, { status: 400 });
+  }
+  if (projectId && !/^[0-9a-f-]{36}$/i.test(projectId)) {
+    return NextResponse.json({ message: 'Ungültige projectId.' }, { status: 400 });
+  }
+  if (projectId && session.user.role === 'BENUTZER' && session.user.id !== projectId) {
+    return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
+  }
+
+  const lookupKey = createGooglePlaceLookupKey(placeId, query);
+  let cached: CachedGooglePlacePreview | null = null;
+  if (projectId && locationKey) {
+    try {
+      cached = await readGooglePlacePreviewCache(projectId, locationKey, lookupKey);
+      if (cached && isGooglePlacePreviewFresh(cached.sourceUpdatedAt)) {
+        return NextResponse.json({
+          ...cached.data,
+          cacheState: 'fresh',
+          sourceUpdatedAt: cached.sourceUpdatedAt,
+        }, { headers: PREVIEW_CACHE_HEADERS });
+      }
+    } catch (error) {
+      console.warn('[Google Places Preview] Cache konnte nicht gelesen werden:', error);
+    }
+  }
+
+  const apiKey = getPlacesApiKey();
+  if (!apiKey) {
+    if (cached) {
+      return NextResponse.json({
+        ...cached.data,
+        cacheState: 'stale',
+        sourceUpdatedAt: cached.sourceUpdatedAt,
+        warning: 'Google Places ist derzeit nicht konfiguriert. Letzter erfolgreicher Stand wird angezeigt.',
+      }, { headers: PREVIEW_CACHE_HEADERS });
+    }
+    return NextResponse.json(
+      { message: 'GOOGLE_PLACES_API_KEY oder GOOGLE_MAPS_API_KEY ist nicht konfiguriert.' },
+      { status: 503 },
+    );
   }
 
   try {
@@ -286,21 +337,39 @@ export async function GET(request: NextRequest) {
 
     const preview = normalizePlace(place) || normalizeLegacyPlace(legacyPlace);
     if (!preview) {
-      return NextResponse.json({
-        available: false,
-        message: 'Kein Google-Unternehmensprofil gefunden.',
-      });
+      throw new Error('Kein Google-Unternehmensprofil gefunden.');
     }
 
-    return NextResponse.json(preview, {
-      headers: {
-        'Cache-Control': 'private, max-age=3600, stale-while-revalidate=86400',
-      },
+    if (projectId && locationKey) {
+      try {
+        await saveGooglePlacePreviewCache(projectId, locationKey, lookupKey, preview);
+      } catch (error) {
+        console.warn('[Google Places Preview] Neuer Profilstand konnte nicht gespeichert werden:', error);
+      }
+    }
+
+    return NextResponse.json({
+      ...preview,
+      cacheState: 'live',
+      sourceUpdatedAt: new Date().toISOString(),
+    }, {
+      headers: PREVIEW_CACHE_HEADERS,
     });
   } catch (error) {
-    return NextResponse.json({
-      available: false,
-      message: error instanceof Error ? error.message : 'Google Places Vorschau konnte nicht geladen werden.',
-    });
+    const message = error instanceof Error ? error.message : 'Google Places Vorschau konnte nicht geladen werden.';
+    if (projectId && locationKey) {
+      await markGooglePlacePreviewFailure(projectId, locationKey, lookupKey, message).catch((cacheError) => {
+        console.warn('[Google Places Preview] Fehlerstatus konnte nicht gespeichert werden:', cacheError);
+      });
+    }
+    if (cached) {
+      return NextResponse.json({
+        ...cached.data,
+        cacheState: 'stale',
+        sourceUpdatedAt: cached.sourceUpdatedAt,
+        warning: `${message} Letzter erfolgreicher Stand wird angezeigt.`,
+      }, { headers: PREVIEW_CACHE_HEADERS });
+    }
+    return NextResponse.json({ available: false, message }, { status: 502 });
   }
 }

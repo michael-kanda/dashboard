@@ -1,4 +1,5 @@
 import { sql } from '@vercel/postgres';
+import { getDashboardCacheDurationHours } from './cache-policy';
 
 export type ProjectSyncJobType = 'dashboard' | 'gsc-history' | 'indexing';
 export type ProjectSyncJobStatus = 'pending' | 'running' | 'completed' | 'failed';
@@ -102,6 +103,7 @@ export async function enqueueProjectSyncJob({
 }
 
 export async function seedDueProjectSyncJobs() {
+  const dashboardRefreshHours = getDashboardCacheDurationHours('30d');
   await sql`
     UPDATE project_sync_jobs
     SET
@@ -126,13 +128,13 @@ export async function seedDueProjectSyncJobs() {
       ON cache.user_id = u.id AND cache.date_range = '30d'
     WHERE u.role = 'BENUTZER'
       AND (
-        u.gsc_site_url IS NOT NULL
-        OR u.ga4_property_id IS NOT NULL
-        OR u.google_ads_sheet_id IS NOT NULL
+        NULLIF(BTRIM(u.gsc_site_url), '') IS NOT NULL
+        OR NULLIF(BTRIM(u.ga4_property_id), '') IS NOT NULL
+        OR NULLIF(BTRIM(u.google_ads_sheet_id), '') IS NOT NULL
       )
       AND (
         cache.last_fetched IS NULL
-        OR cache.last_fetched < NOW() - INTERVAL '20 hours'
+        OR cache.last_fetched < NOW() - (${dashboardRefreshHours} * INTERVAL '1 hour')
       )
     ON CONFLICT (user_id, job_type, date_range)
     DO UPDATE SET
@@ -155,8 +157,7 @@ export async function seedDueProjectSyncJobs() {
     LEFT JOIN project_data_sync_state state
       ON state.user_id = u.id AND state.source = 'gsc-daily'
     WHERE u.role = 'BENUTZER'
-      AND u.gsc_site_url IS NOT NULL
-      AND u.gsc_site_url != ''
+      AND NULLIF(BTRIM(u.gsc_site_url), '') IS NOT NULL
       AND (state.next_sync_at IS NULL OR state.next_sync_at <= NOW())
     ON CONFLICT (user_id, job_type, date_range)
     DO UPDATE SET
@@ -177,7 +178,7 @@ export async function seedDueProjectSyncJobs() {
     FROM users u
     LEFT JOIN project_indexing_sync state ON state.user_id = u.id
     WHERE u.role = 'BENUTZER'
-      AND u.gsc_site_url IS NOT NULL
+      AND NULLIF(BTRIM(u.gsc_site_url), '') IS NOT NULL
       AND (
         state.user_id IS NULL
         OR state.next_sync_at IS NULL

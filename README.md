@@ -71,22 +71,24 @@ Für lokale Projekte kann DataPeak mehrere Standorte abbilden, z.B. Kanzlei Wien
 
 ### Betrieb und Datenbank
 
+- Eine vollständige Beschreibung der Aktualisierungswege für GSC, GA4, Sitemap/Indexierung und Google-Unternehmensprofile steht in [`docs/DATENAKTUALISIERUNG.md`](docs/DATENAKTUALISIERUNG.md).
 - Datenbankänderungen liegen versioniert unter `migrations/` und werden vor dem Deployment mit `npm run db:migrate` angewendet.
 - Seiten, API-Routen und Cronjobs führen keine Schemaänderungen während eines Requests aus.
 - Projekt- und API-Aufrufe arbeiten nach dem Cache-first-/Stale-While-Revalidate-Prinzip: Ein vorhandener Snapshot wird sofort angezeigt, auch wenn seine Hintergrundaktualisierung bereits fällig ist.
-- Der Dispatcher `/api/cron/sync-project-data` aktualisiert automatisch nur den aktiven Standardzeitraum `30d`. Andere Zeiträume werden nur nach tatsächlicher Nutzung und mit längeren TTLs aktualisiert (`3m`: 48 h, `6m`: 72 h, `12m` bis `24m`: 7 Tage).
+- Der Dispatcher `/api/cron/sync-project-data` aktualisiert automatisch nur den aktiven Standardzeitraum `30d` mit einer einheitlichen TTL von 24 Stunden. Andere Zeiträume werden nur nach tatsächlicher Nutzung aktualisiert (`7d`: 24 h, `3m`: 48 h, `6m`: 72 h, `12m` bis `24m`: 7 Tage).
 - Ein erstmalig fehlender Zeitraum wird direkt synchronisiert. Eine projektweite, per Heartbeat verlängerte Datenquellen-Lease verhindert dabei parallele Google-Aufrufe; nach einem Prozessabbruch heilt die Sperre spätestens nach 90 Sekunden selbst.
+- Google-Unternehmensprofil-Vorschauen werden 24 Stunden projektbezogen gespeichert. Bei einem temporären Places-Ausfall bleibt der letzte erfolgreiche Stand sichtbar.
 - Interne Snapshot- oder Metadatenversionen erzwingen keinen erneuten Google-Abruf. Metadaten werden beim Lesen ergänzt und beim nächsten regulären Datenlauf persistiert.
 - Wiederverwendbare Sync-Aufträge verhindern unbegrenztes Tabellenwachstum. GSC-Historie und Indexierung bleiben getrennte Jobtypen im zentralen Dispatcher.
 - Jede zentrale Kennzahl speichert Quelle, Aktualisierungszeit, Zeitraum, Abdeckungsstatus, Berechnungsmethode und Berechnungsversion in `project_metric_snapshots` und im Dashboard-Snapshot.
-- Der Indexierungsstatus wird automatisch im 48-Stunden-Zyklus fortgesetzt. Geänderte und noch offene URLs werden priorisiert; Laufzeit- und API-Budgets verhindern lange Serverless-Aufrufe.
-- Temporäre Neon-Verbindungsfehler werden in Cronjobs kontrolliert wiederholt und als vorübergehend gemeldet, statt einen unkontrollierten Prozessabbruch auszulösen.
+- Ein vollständig abgeschlossener Indexierungslauf wird nach 48 Stunden erneut eingeplant; offene Arbeit bereits nach 24 Stunden. Einzelne URLs werden abhängig von Status und GSC-Leistung nach 24 Stunden, 7 Tagen oder 30 Tagen erneut geprüft.
+- Kurzlebige Neon-Verbindungsfehler bei Queue-Operationen werden bis zu dreimal direkt wiederholt. Bleibt die Infrastruktur nicht erreichbar, meldet der Cronjob HTTP 503; fehlgeschlagene Datenjobs bleiben mit Backoff in der Queue und erzeugen einen sichtbaren Fehlerstatus.
 - `npm run audit:code` prüft auf Runtime-DDL, exakte TypeScript-Duplikate, verwaiste Module und ungewollte Server-zu-UI-Abhängigkeiten.
 - `npm run build` bleibt die abschließende Produktionsprüfung.
 
 ### Datensicherheit
 
-DataPeak nutzt ausschließlich offizielle Google-APIs via OAuth2. Daten werden in einer dedizierten Vercel-Umgebung sicher verarbeitet — kein Drittanbieter sieht deine Analytics-Daten.
+DataPeak nutzt offizielle Google-APIs mit OAuth2 beziehungsweise API-Key-Authentifizierung. Daten werden in einer dedizierten Vercel-Umgebung sicher verarbeitet.
 
 ### Methodik: KI-Sichtbarkeit
 
@@ -191,24 +193,26 @@ For local projects, DataPeak can represent multiple locations such as a main off
 
 ### Operations and Database
 
+- Detailed documentation of the GSC, GA4, sitemap/indexing, and Google Business Profile refresh flows is available in [`docs/DATENAKTUALISIERUNG.md`](docs/DATENAKTUALISIERUNG.md).
 - Database changes are versioned in `migrations/` and applied before deployment with `npm run db:migrate`.
 - `ProjectDashboard` only orchestrates widget sections. Source normalization and rendering policy live outside the page component so UI changes do not alter measurement logic.
 - GSC, GA4, Google Ads, local SEO, and indexing expose independent dashboard data modules with shared availability/error contracts. Run their contract tests with `npm run test:data-modules`.
 - Pages, API routes, and cron jobs do not modify the schema during requests.
 - Project and API requests use a cache-first, stale-while-revalidate strategy: an existing snapshot is rendered immediately, even when a background refresh is already due.
-- The `/api/cron/sync-project-data` dispatcher automatically refreshes only the active default range `30d`. Other ranges refresh only after actual use and follow longer TTLs (`3m`: 48 hours, `6m`: 72 hours, `12m` through `24m`: 7 days).
+- The `/api/cron/sync-project-data` dispatcher automatically refreshes only the active default range `30d` with one consistent 24-hour TTL. Other ranges refresh only after actual use (`7d`: 24 hours, `3m`: 48 hours, `6m`: 72 hours, `12m` through `24m`: 7 days).
 - A range without any snapshot is synchronized directly. A project-wide source lease, extended by heartbeat, prevents concurrent Google requests and self-recovers no later than 90 seconds after an interrupted process.
+- Google Business Profile previews are stored per project for 24 hours. A temporary Places failure falls back to the last successful preview.
 - Internal snapshot or metadata versions do not force another Google API request. Metadata is attached when a snapshot is read and persisted during the next regular data refresh.
 - Reusable sync jobs prevent unbounded queue growth. GSC history and indexing remain separate job types in the central dispatcher.
 - Every central metric stores its source, refresh time, period, coverage, calculation method, and method version in `project_metric_snapshots` and the dashboard snapshot.
-- Indexing checks continue automatically on a 48-hour cycle. Changed and pending URLs are prioritized, while runtime and API budgets keep serverless executions bounded.
-- Cron jobs retry transient Neon connection failures and return a controlled temporary status instead of failing through an unhandled process error.
+- A completed indexing run is scheduled again after 48 hours, while unfinished work continues after 24 hours. Individual URLs are reinspected after 24 hours, 7 days, or 30 days depending on status and GSC performance.
+- Queue operations retry short-lived Neon connection failures up to three times. Persistent infrastructure failures return HTTP 503; failed data jobs remain queued with backoff and make the cron run visibly fail.
 - `npm run audit:code` checks for runtime DDL, exact TypeScript duplicates, orphaned modules, and unintended server-to-UI dependencies.
 - `npm run build` remains the final production verification.
 
 ### Data Security
 
-DataPeak uses only official Google APIs via OAuth2. Data is processed securely in a dedicated Vercel environment — no third-party ever sees your analytics data.
+DataPeak uses official Google APIs with OAuth2 or API-key authentication. Data is processed in a dedicated Vercel environment.
 
 ### Methodology: AI Visibility
 

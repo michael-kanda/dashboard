@@ -44,7 +44,7 @@ import {
   attachDashboardMetricMetadata,
   extractDashboardMetricValues,
 } from '@/lib/metric-metadata';
-import { persistMetricSnapshots } from '@/lib/metric-snapshot-store';
+import { persistMetricSnapshotsWithClient } from '@/lib/metric-snapshot-store';
 import { readDashboardSnapshot } from '@/lib/sync/dashboard-snapshot';
 
 const TOP_QUERIES_DATA_VERSION = 1;
@@ -723,20 +723,31 @@ export async function getOrFetchGoogleData(
   const hasCriticalErrors = !!(apiErrors.ga4 || apiErrors.gsc);
 
   if (!hasCriticalErrors) {
+    const client = await sql.connect();
     try {
-      await sql`
-        INSERT INTO google_data_cache (user_id, date_range, data, last_fetched)
-        VALUES (${userId}::uuid, ${dateRange}, ${JSON.stringify(enrichedFreshData)}::jsonb, NOW())
-        ON CONFLICT (user_id, date_range)
-        DO UPDATE SET data = ${JSON.stringify(enrichedFreshData)}::jsonb, last_fetched = NOW();
-      `;
-      await persistMetricSnapshots(
+      await client.query('BEGIN');
+      await client.query(
+        `INSERT INTO google_data_cache (user_id, date_range, data, last_fetched)
+         VALUES ($1::uuid, $2, $3::jsonb, NOW())
+         ON CONFLICT (user_id, date_range)
+         DO UPDATE SET data = EXCLUDED.data, last_fetched = NOW()`,
+        [userId, dateRange, JSON.stringify(enrichedFreshData)],
+      );
+      await persistMetricSnapshotsWithClient(
+        client,
         userId,
         dateRange,
         extractDashboardMetricValues(enrichedFreshData),
         enrichedFreshData.metricMetadata ?? {},
       );
-    } catch (e) { console.error('[Cache Write Error]', e); }
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      console.error('[Cache Write Error]', error);
+      throw error;
+    } finally {
+      client.release();
+    }
   } else {
     console.warn('[Cache Write] Übersprungen wegen kritischer API-Fehler:', apiErrors);
   }
