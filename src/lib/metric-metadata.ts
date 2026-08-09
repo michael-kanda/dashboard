@@ -68,7 +68,9 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
   'indexing.total': { key: 'indexing.total', source: 'indexing', unit: 'count', calculationMethod: 'Bereinigte URLs aus Sitemap und Unter-Sitemaps', calculationVersion: 2, defaultCoverage: 'complete', coverageNote: INDEXING_COVERAGE },
   'indexing.indexed': { key: 'indexing.indexed', source: 'indexing', unit: 'count', calculationMethod: 'URL-Inspection-Ergebnis: indexiert', calculationVersion: 2, defaultCoverage: 'partial', coverageNote: INDEXING_COVERAGE },
   'indexing.notIndexed': { key: 'indexing.notIndexed', source: 'indexing', unit: 'count', calculationMethod: 'URL-Inspection-Ergebnis: nicht indexiert', calculationVersion: 2, defaultCoverage: 'partial', coverageNote: INDEXING_COVERAGE },
-  'indexing.actionRequired': { key: 'indexing.actionRequired', source: 'indexing', unit: 'count', calculationMethod: 'URLs mit konkretem Indexierungs- oder Canonical-Problem', calculationVersion: 2, defaultCoverage: 'partial', coverageNote: INDEXING_COVERAGE },
+  'indexing.actionRequired': { key: 'indexing.actionRequired', source: 'indexing', unit: 'count', calculationMethod: 'Nicht indexierte URLs ohne erkennbar beabsichtigten Ausschluss, zuzüglich Prüffehler und Canonical-Abweichungen', calculationVersion: 3, defaultCoverage: 'partial', coverageNote: INDEXING_COVERAGE },
+  'indexing.intentional': { key: 'indexing.intentional', source: 'indexing', unit: 'count', calculationMethod: 'Nicht indexierte URLs mit beabsichtigtem Ausschluss: noindex, Weiterleitung oder alternative Seite mit Canonical', calculationVersion: 1, defaultCoverage: 'partial', coverageNote: INDEXING_COVERAGE },
+  'indexing.stale': { key: 'indexing.stale', source: 'indexing', unit: 'count', calculationMethod: 'URLs, deren letzte URL-Inspection älter als das Re-Check-Intervall zuzüglich Puffer ist', calculationVersion: 1, defaultCoverage: 'complete', coverageNote: 'Zeigt, wie weit der Datenstand hinter dem tatsächlichen Google-Index liegen kann.' },
 };
 
 function formatDate(date: Date) {
@@ -210,5 +212,7 @@ export function extractIndexingMetricValues(status: ProjectIndexingStatus) {
     'indexing.indexed': status.indexedUrls,
     'indexing.notIndexed': status.notIndexedUrls,
     'indexing.actionRequired': status.issueUrls,
+    'indexing.intentional': status.intentionalUrls,
+    'indexing.stale': status.staleUrls,
   } satisfies Record<string, number>;
 }
