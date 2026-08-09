@@ -95,7 +95,10 @@ function getHint(row: IndexingStatusRow) {
   if (row.status === 'pending') {
     return 'Noch nicht geprüft. Die URL wurde erkannt und ist für die automatische Google-Indexprüfung vorgemerkt.';
   }
-  return row.coverageState || (row.status === 'indexed' ? 'URL ist im Google-Index.' : 'Indexierungsstatus prüfen.');
+  const statusHint = row.coverageState || (row.status === 'indexed'
+    ? 'URL ist im Google-Index.'
+    : 'Indexierungsstatus prüfen.');
+  return row.inspectionPending ? `${statusHint} Erneute Prüfung vorgemerkt.` : statusHint;
 }
 
 function getStatusLabel(row: IndexingStatusRow) {
@@ -224,6 +227,7 @@ export default function IndexingStatusWidget({
     const columns = [
       'URL',
       'Status',
+      'Prüfstatus',
       'Hinweis',
       'GSC-Abdeckung',
       'Letzter Crawl',
@@ -238,6 +242,9 @@ export default function IndexingStatusWidget({
     const rows = filteredRows.map((row) => [
       row.url,
       getStatusLabel(row),
+      row.status === 'pending'
+        ? 'Erstprüfung vorgemerkt'
+        : row.inspectionPending ? 'Erneute Prüfung vorgemerkt' : 'Aktuell',
       getHint(row),
       row.coverageState,
       row.lastCrawlTime ? formatDate(row.lastCrawlTime, true) : '',
@@ -535,7 +542,14 @@ export default function IndexingStatusWidget({
                         <ExternalLink size={13} className="shrink-0" />
                       </a>
                     </td>
-                    <td className="px-4 py-3"><StatusBadge row={row} /></td>
+                    <td className="px-4 py-3">
+                      <StatusBadge row={row} />
+                      {row.status !== 'pending' && row.inspectionPending && (
+                        <span className="mt-1 block text-[10px] font-medium text-muted">
+                          Erneute Prüfung vorgemerkt
+                        </span>
+                      )}
+                    </td>
                     <td className="max-w-[280px] px-4 py-3 text-xs text-body">
                       <span className="line-clamp-2" title={getHint(row)}>{getHint(row)}</span>
                     </td>

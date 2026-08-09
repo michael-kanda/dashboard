@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { createGoogleAuth, GOOGLE_SCOPES } from '@/lib/google-auth';
 import { google } from 'googleapis';
 import { sql } from '@vercel/postgres';
+import { isBroadSitemapLastmodRefresh } from '@/lib/indexing-status-policy';
 
 export type IndexingUrlStatus = 'indexed' | 'not_indexed' | 'pending' | 'error';
 
@@ -18,6 +19,7 @@ export interface IndexingStatusRow {
   position: number | null;
   sitemapLastmod: string | null;
   inspectedAt: string | null;
+  inspectionPending: boolean;
   inspectionError: string | null;
   hasCanonicalIssue: boolean;
 }
@@ -477,12 +479,37 @@ export async function syncProjectIndexingStatus(
     const performance = entries.length
       ? await loadPagePerformance(config.gsc_site_url, deadlineAt)
       : new Map<string, { clicks: number; impressions: number; ctr: number; position: number }>();
+    const { rows: storedSitemapRows } = await sql<{
+      url: string;
+      sitemap_lastmod: string | null;
+    }>`
+      SELECT url, sitemap_lastmod
+      FROM project_indexing_urls
+      WHERE user_id = ${projectId}::uuid AND is_in_sitemap = TRUE
+    `;
+    const storedLastmods = new Map(storedSitemapRows.map((row) => [
+      row.url,
+      row.sitemap_lastmod ? new Date(row.sitemap_lastmod).getTime() : null,
+    ]));
+    const existingEntries = entries.filter((entry) => storedLastmods.has(entry.url));
+    const changedExistingEntries = existingEntries.filter((entry) => {
+      const stored = storedLastmods.get(entry.url) ?? null;
+      const incoming = entry.lastmod ? new Date(entry.lastmod).getTime() : null;
+      return stored !== incoming;
+    });
+    const broadLastmodRefresh = isBroadSitemapLastmodRefresh(
+      existingEntries.length,
+      changedExistingEntries.length,
+    );
     const sitemapPayload = entries.map((entry) => {
       const metrics = performance.get(entry.url);
+      const stored = storedLastmods.get(entry.url) ?? null;
+      const incoming = entry.lastmod ? new Date(entry.lastmod).getTime() : null;
       return {
         url: entry.url,
         source: entry.source,
         lastmod: entry.lastmod,
+        prioritizeChange: storedLastmods.has(entry.url) && stored !== incoming && !broadLastmodRefresh,
         clicks: metrics?.clicks ?? 0,
         impressions: metrics?.impressions ?? 0,
         ctr: metrics?.ctr ?? 0,
@@ -497,7 +524,8 @@ export async function syncProjectIndexingStatus(
       )
       SELECT
         ${projectId}::uuid, incoming.url, incoming.source, incoming.lastmod, TRUE, NOW(),
-        incoming.clicks, incoming.impressions, incoming.ctr, incoming.position, NOW(), NOW()
+        incoming.clicks, incoming.impressions, incoming.ctr, incoming.position, NOW(),
+        CASE WHEN incoming."prioritizeChange" THEN NOW() ELSE NULL END
       FROM jsonb_to_recordset(${JSON.stringify(sitemapPayload)}::jsonb) AS incoming(
         url TEXT,
         source TEXT,
@@ -505,7 +533,8 @@ export async function syncProjectIndexingStatus(
         clicks DOUBLE PRECISION,
         impressions DOUBLE PRECISION,
         ctr DOUBLE PRECISION,
-        position DOUBLE PRECISION
+        position DOUBLE PRECISION,
+        "prioritizeChange" BOOLEAN
       )
       ON CONFLICT (user_id, url) DO UPDATE SET
         source_sitemap = EXCLUDED.source_sitemap,
@@ -516,20 +545,18 @@ export async function syncProjectIndexingStatus(
         ctr = EXCLUDED.ctr,
         position = EXCLUDED.position,
         status = CASE
-          WHEN project_indexing_urls.is_in_sitemap = FALSE
-            OR project_indexing_urls.sitemap_lastmod IS DISTINCT FROM EXCLUDED.sitemap_lastmod
-            THEN 'pending'
+          WHEN project_indexing_urls.is_in_sitemap = FALSE THEN 'pending'
           ELSE project_indexing_urls.status
         END,
         change_detected_at = CASE
           WHEN project_indexing_urls.is_in_sitemap = FALSE
-            OR project_indexing_urls.sitemap_lastmod IS DISTINCT FROM EXCLUDED.sitemap_lastmod
+            OR EXCLUDED.change_detected_at IS NOT NULL
             THEN NOW()
           ELSE project_indexing_urls.change_detected_at
         END,
         next_inspection_at = CASE
           WHEN project_indexing_urls.is_in_sitemap = FALSE
-            OR project_indexing_urls.sitemap_lastmod IS DISTINCT FROM EXCLUDED.sitemap_lastmod
+            OR EXCLUDED.change_detected_at IS NOT NULL
             THEN NOW()
           ELSE project_indexing_urls.next_inspection_at
         END,
@@ -542,6 +569,26 @@ export async function syncProjectIndexingStatus(
         OR project_indexing_urls.impressions IS DISTINCT FROM EXCLUDED.impressions
         OR project_indexing_urls.ctr IS DISTINCT FROM EXCLUDED.ctr
         OR project_indexing_urls.position IS DISTINCT FROM EXCLUDED.position
+    `;
+    await sql`
+      UPDATE project_indexing_urls
+      SET status = CASE
+            WHEN verdict = 'PASS' THEN 'indexed'
+            WHEN verdict IN ('FAIL', 'NEUTRAL') THEN 'not_indexed'
+            ELSE status
+          END,
+          next_inspection_at = CASE
+            WHEN verdict = 'PASS' AND impressions >= 100 THEN inspected_at + INTERVAL '7 days'
+            WHEN verdict = 'PASS' THEN inspected_at + INTERVAL '30 days'
+            WHEN verdict IN ('FAIL', 'NEUTRAL') THEN inspected_at + INTERVAL '7 days'
+            ELSE next_inspection_at
+          END,
+          change_detected_at = inspected_at
+      WHERE user_id = ${projectId}::uuid
+        AND is_in_sitemap = TRUE
+        AND status = 'pending'
+        AND inspected_at IS NOT NULL
+        AND verdict IN ('PASS', 'FAIL', 'NEUTRAL')
     `;
     await sql`
       UPDATE project_indexing_urls AS stored
@@ -566,7 +613,6 @@ export async function syncProjectIndexingStatus(
           OR next_inspection_at IS NULL
           OR next_inspection_at <= NOW()
           OR status = 'pending'
-          OR (sitemap_lastmod IS NOT NULL AND sitemap_lastmod > inspected_at)
         )
       ORDER BY
         CASE
@@ -669,7 +715,6 @@ export async function syncProjectIndexingStatus(
           OR next_inspection_at IS NULL
           OR next_inspection_at <= NOW()
           OR status = 'pending'
-          OR (sitemap_lastmod IS NOT NULL AND sitemap_lastmod > inspected_at)
         )
     `;
     const partial = (pendingRows[0]?.count ?? 0) > 0;
@@ -750,7 +795,8 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
     const { rows } = await sql<any>`
       SELECT
         url, status, coverage_state, last_crawl_time, google_canonical, user_canonical,
-        impressions, clicks, position, sitemap_lastmod, inspected_at, inspection_error
+        verdict, impressions, clicks, position, sitemap_lastmod, inspected_at,
+        next_inspection_at, change_detected_at, inspection_error
       FROM project_indexing_urls
       WHERE user_id = ${projectId}::uuid AND is_in_sitemap = TRUE
       ORDER BY
@@ -758,24 +804,40 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
         impressions DESC,
         url ASC
     `;
-    const mapped: IndexingStatusRow[] = rows.map((row) => ({
-      url: row.url,
-      status: row.status,
-      coverageState: row.coverage_state,
-      lastCrawlTime: row.last_crawl_time ? new Date(row.last_crawl_time).toISOString() : null,
-      googleCanonical: row.google_canonical,
-      userCanonical: row.user_canonical,
-      impressions: Number(row.impressions ?? 0),
-      clicks: Number(row.clicks ?? 0),
-      position: row.position === null ? null : Number(row.position),
-      sitemapLastmod: row.sitemap_lastmod ? new Date(row.sitemap_lastmod).toISOString() : null,
-      inspectedAt: row.inspected_at ? new Date(row.inspected_at).toISOString() : null,
-      inspectionError: row.inspection_error,
-      hasCanonicalIssue: Boolean(
-        row.google_canonical &&
-        row.google_canonical.replace(/\/$/, '') !== (row.user_canonical || row.url).replace(/\/$/, '')
-      ),
-    }));
+    const now = Date.now();
+    const mapped: IndexingStatusRow[] = rows.map((row) => {
+      const inspectedAt = row.inspected_at ? new Date(row.inspected_at).toISOString() : null;
+      const resolvedStatus = row.status === 'pending' && row.verdict
+        ? getIndexingStatus(row.verdict)
+        : row.status;
+      const nextInspectionAt = row.next_inspection_at
+        ? new Date(row.next_inspection_at).getTime()
+        : null;
+      const changeDetectedAt = row.change_detected_at
+        ? new Date(row.change_detected_at).getTime()
+        : null;
+      return {
+        url: row.url,
+        status: resolvedStatus,
+        coverageState: row.coverage_state,
+        lastCrawlTime: row.last_crawl_time ? new Date(row.last_crawl_time).toISOString() : null,
+        googleCanonical: row.google_canonical,
+        userCanonical: row.user_canonical,
+        impressions: Number(row.impressions ?? 0),
+        clicks: Number(row.clicks ?? 0),
+        position: row.position === null ? null : Number(row.position),
+        sitemapLastmod: row.sitemap_lastmod ? new Date(row.sitemap_lastmod).toISOString() : null,
+        inspectedAt,
+        inspectionPending: !inspectedAt || nextInspectionAt === null || nextInspectionAt <= now || (
+          changeDetectedAt !== null && changeDetectedAt > new Date(inspectedAt).getTime()
+        ),
+        inspectionError: row.inspection_error,
+        hasCanonicalIssue: Boolean(
+          row.google_canonical &&
+          row.google_canonical.replace(/\/$/, '') !== (row.user_canonical || row.url).replace(/\/$/, '')
+        ),
+      };
+    });
     const sync = syncRows[0];
     const excludedUrls: ExcludedSitemapUrl[] = [];
     if (Array.isArray(sync?.excluded_urls)) {
