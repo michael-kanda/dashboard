@@ -1,5 +1,10 @@
 {
-  "buildCommand": "npm run db:migrate && npm run build",
+  "buildCommand": "npm run build",
+  "functions": {
+    "src/app/api/cron/sync-project-data/route.ts": {
+      "maxDuration": 300
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/sync-project-data",

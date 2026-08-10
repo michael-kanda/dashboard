@@ -1,10 +1,9 @@
 import { sql } from '@vercel/postgres';
 import type { User } from '../schemas';
-import type { ProjectDashboardData } from '../dashboard-shared';
+import { TOP_QUERIES_DATA_VERSION, type ProjectDashboardData } from '../dashboard-shared';
 import { getDemoAnalyticsData } from '../demo-data';
-import {
-  attachDashboardMetricMetadata,
-} from '../metric-metadata';
+import { attachDashboardMetricMetadata } from '../metric-metadata';
+import { isDemoProject } from '../demo-project';
 import { enqueueProjectSyncJob } from './job-queue';
 import { isDashboardSnapshotStale } from './cache-policy';
 
@@ -15,16 +14,12 @@ export interface DashboardSnapshotResult {
   queued: boolean;
 }
 
-const DASHBOARD_SNAPSHOT_VERSION = 2;
+export const DASHBOARD_SNAPSHOT_VERSION = 2;
 
 export { getDashboardCacheDurationHours } from './cache-policy';
 
-function isDemoProject(user: Pick<User, 'email' | 'domain'>) {
-  return user.email?.includes('demo') || user.domain?.includes('demo-shop');
-}
-
 export async function readDashboardSnapshot(
-  user: Pick<User, 'id' | 'email' | 'domain'>,
+  user: Pick<User, 'id' | 'email' | 'domain' | 'is_demo'>,
   dateRange: string,
   options: {
     enqueueIfStale?: boolean;
@@ -54,9 +49,11 @@ export async function readDashboardSnapshot(
     ? new Date(String(row.last_fetched)).toISOString()
     : null;
   const cachedData = row?.data as ProjectDashboardData | undefined;
-  const versionMismatch = cachedData?.snapshotVersion !== DASHBOARD_SNAPSHOT_VERSION;
-  const stale = versionMismatch
-    || isDashboardSnapshotStale(dateRange, lastFetchedAt);
+  const versionMismatch = Boolean(cachedData) && (
+    cachedData?.snapshotVersion !== DASHBOARD_SNAPSHOT_VERSION
+    || cachedData?.topQueriesDataVersion !== TOP_QUERIES_DATA_VERSION
+  );
+  const stale = versionMismatch || isDashboardSnapshotStale(dateRange, lastFetchedAt);
   let queued = false;
 
   const shouldEnqueue = stale

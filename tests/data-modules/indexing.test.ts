@@ -39,6 +39,8 @@ test('Indexing clamps invalid counters to the sitemap total', () => {
     notIndexed: 0,
     pending: 0,
     actionRequired: 10,
+    intentional: 0,
+    stale: 0,
   });
   assert.equal(result.data.hasCompletedSync, true);
 });

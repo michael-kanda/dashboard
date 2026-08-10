@@ -72,16 +72,18 @@ Für lokale Projekte kann DataPeak mehrere Standorte abbilden, z.B. Kanzlei Wien
 ### Betrieb und Datenbank
 
 - Eine vollständige Beschreibung der Aktualisierungswege für GSC, GA4, Sitemap/Indexierung und Google-Unternehmensprofile steht in [`docs/DATENAKTUALISIERUNG.md`](docs/DATENAKTUALISIERUNG.md).
-- Datenbankänderungen liegen versioniert unter `migrations/` und werden vor dem Deployment mit `npm run db:migrate` angewendet.
+- Datenbankänderungen liegen versioniert unter `migrations/` und werden vor dem Deployment einmalig mit `npm run db:migrate` angewendet. Der Vercel-Build führt bewusst keine Migration aus, damit Preview-Deployments niemals das Produktionsschema verändern.
 - Seiten, API-Routen und Cronjobs führen keine Schemaänderungen während eines Requests aus.
 - Projekt- und API-Aufrufe arbeiten nach dem Cache-first-/Stale-While-Revalidate-Prinzip: Ein vorhandener Snapshot wird sofort angezeigt, auch wenn seine Hintergrundaktualisierung bereits fällig ist.
 - Der Dispatcher `/api/cron/sync-project-data` aktualisiert automatisch nur den aktiven Standardzeitraum `30d` mit einer einheitlichen TTL von 24 Stunden. Andere Zeiträume werden nur nach tatsächlicher Nutzung aktualisiert (`7d`: 24 h, `3m`: 48 h, `6m`: 72 h, `12m` bis `24m`: 7 Tage).
-- Ein erstmalig fehlender Zeitraum wird direkt synchronisiert. Eine projektweite, per Heartbeat verlängerte Datenquellen-Lease verhindert dabei parallele Google-Aufrufe; nach einem Prozessabbruch heilt die Sperre spätestens nach 90 Sekunden selbst.
+- Eine fehlende oder abgelaufene Ansicht reiht einen wiederverwendbaren Hintergrundauftrag ein; vorhandene Daten bleiben sofort sichtbar. Eine pro Quelle und Dashboard-Zeitraum getrennte, per Heartbeat verlängerte Datenquellen-Lease verhindert parallele Google-Aufrufe; nach einem Prozessabbruch heilt die Quellensperre spätestens nach 90 Sekunden selbst.
 - Google-Unternehmensprofil-Vorschauen werden 24 Stunden projektbezogen gespeichert. Bei einem temporären Places-Ausfall bleibt der letzte erfolgreiche Stand sichtbar.
 - Interne Snapshot- oder Metadatenversionen erzwingen keinen erneuten Google-Abruf. Metadaten werden beim Lesen ergänzt und beim nächsten regulären Datenlauf persistiert.
-- Wiederverwendbare Sync-Aufträge verhindern unbegrenztes Tabellenwachstum. GSC-Historie und Indexierung bleiben getrennte Jobtypen im zentralen Dispatcher.
+- Wiederverwendbare Sync-Aufträge verhindern unbegrenztes Tabellenwachstum. Der Dispatcher verarbeitet höchstens neun Aufträge pro Lauf (Dashboard 3, GSC-Historie 2, Indexierung 4); seine Queue-Lease beträgt 240 Sekunden. Verschiebungen werden separat gezählt und nach zwölf erfolglosen Defers beendet, statt endlos zu pendeln.
 - Jede zentrale Kennzahl speichert Quelle, Aktualisierungszeit, Zeitraum, Abdeckungsstatus, Berechnungsmethode und Berechnungsversion in `project_metric_snapshots` und im Dashboard-Snapshot.
-- Ein vollständig abgeschlossener Indexierungslauf wird nach 48 Stunden erneut eingeplant; offene Arbeit bereits nach 24 Stunden. Einzelne URLs werden abhängig von Status und GSC-Leistung nach 24 Stunden, 7 Tagen oder 30 Tagen erneut geprüft.
+- Ein vollständig abgeschlossener Indexierungslauf wird nach 48 Stunden erneut eingeplant; offene Chargen werden im nächsten geeigneten Dispatcher-Lauf fortgesetzt. Pro Auftrag werden höchstens 150 URL-Inspections reserviert. Ein persistentes Tagesbudget von 1.800 Abfragen je GSC-Property lässt Puffer zum Google-Limit und verhindert, dass parallele Läufe das Kontingent gemeinsam überschreiten.
+- Dashboard und GSC-Historie verwenden dasselbe Berichtsfenster, das wegen der üblichen Search-Console-Verzögerung zwei Tage vor heute endet. Dadurch vergleichen beide Pfade identische Zeiträume.
+- Google-Fehler werden als transient, Quota oder permanent klassifiziert. Timeouts und Quotenfehler behalten den letzten guten Snapshot; dauerhaft entzogene Berechtigungen erlauben einen klar gekennzeichneten Teil-Snapshot der weiterhin funktionierenden Quelle und wechseln in einen längeren Cooldown.
 - Kurzlebige Neon-Verbindungsfehler bei Queue-Operationen werden bis zu dreimal direkt wiederholt. Bleibt die Infrastruktur nicht erreichbar, meldet der Cronjob HTTP 503; fehlgeschlagene Datenjobs bleiben mit Backoff in der Queue und erzeugen einen sichtbaren Fehlerstatus.
 - `npm run audit:code` prüft auf Runtime-DDL, exakte TypeScript-Duplikate, verwaiste Module und ungewollte Server-zu-UI-Abhängigkeiten.
 - `npm run build` bleibt die abschließende Produktionsprüfung.
@@ -194,18 +196,20 @@ For local projects, DataPeak can represent multiple locations such as a main off
 ### Operations and Database
 
 - Detailed documentation of the GSC, GA4, sitemap/indexing, and Google Business Profile refresh flows is available in [`docs/DATENAKTUALISIERUNG.md`](docs/DATENAKTUALISIERUNG.md).
-- Database changes are versioned in `migrations/` and applied before deployment with `npm run db:migrate`.
+- Database changes are versioned in `migrations/` and applied once before deployment with `npm run db:migrate`. Vercel builds intentionally do not run migrations, so preview deployments cannot mutate the production schema.
 - `ProjectDashboard` only orchestrates widget sections. Source normalization and rendering policy live outside the page component so UI changes do not alter measurement logic.
 - GSC, GA4, Google Ads, local SEO, and indexing expose independent dashboard data modules with shared availability/error contracts. Run their contract tests with `npm run test:data-modules`.
 - Pages, API routes, and cron jobs do not modify the schema during requests.
 - Project and API requests use a cache-first, stale-while-revalidate strategy: an existing snapshot is rendered immediately, even when a background refresh is already due.
 - The `/api/cron/sync-project-data` dispatcher automatically refreshes only the active default range `30d` with one consistent 24-hour TTL. Other ranges refresh only after actual use (`7d`: 24 hours, `3m`: 48 hours, `6m`: 72 hours, `12m` through `24m`: 7 days).
-- A range without any snapshot is synchronized directly. A project-wide source lease, extended by heartbeat, prevents concurrent Google requests and self-recovers no later than 90 seconds after an interrupted process.
+- Missing or expired ranges enqueue a reusable background job while existing data remains immediately available. Source leases are separated by source and dashboard range, extended by heartbeat, and self-recover no later than 90 seconds after an interrupted process.
 - Google Business Profile previews are stored per project for 24 hours. A temporary Places failure falls back to the last successful preview.
 - Internal snapshot or metadata versions do not force another Google API request. Metadata is attached when a snapshot is read and persisted during the next regular data refresh.
-- Reusable sync jobs prevent unbounded queue growth. GSC history and indexing remain separate job types in the central dispatcher.
+- Reusable sync jobs prevent unbounded queue growth. The dispatcher processes at most nine jobs per run (dashboard 3, GSC history 2, indexing 4), uses a 240-second queue lease, and caps repeated deferrals at twelve.
 - Every central metric stores its source, refresh time, period, coverage, calculation method, and method version in `project_metric_snapshots` and the dashboard snapshot.
-- A completed indexing run is scheduled again after 48 hours. Unfinished batches become eligible again after about five minutes and continue on the next 10-minute dispatcher cycle; temporary inspection errors resume at their URL-specific retry time. Individual URLs are otherwise reinspected after 24 hours, 7 days, or 30 days depending on status and GSC performance.
+- A completed indexing run is scheduled again after 48 hours. Unfinished batches continue in a later dispatcher cycle; each job reserves at most 150 inspections. A persistent daily budget of 1,800 requests per GSC property preserves headroom below Google's limit and coordinates concurrent workers.
+- Dashboard and GSC history use the same reporting window ending two days before today to account for Search Console processing delay.
+- Google failures are classified as transient, quota, or permanent. Timeouts and quota errors retain the last good snapshot; permanently revoked access permits a clearly partial snapshot from the remaining healthy source and enters a longer cooldown.
 - Queue operations retry short-lived Neon connection failures up to three times. Persistent infrastructure failures return HTTP 503; failed data jobs remain queued with backoff and make the cron run visibly fail.
 - `npm run audit:code` checks for runtime DDL, exact TypeScript duplicates, orphaned modules, and unintended server-to-UI dependencies.
 - `npm run build` remains the final production verification.

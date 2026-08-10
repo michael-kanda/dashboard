@@ -42,6 +42,7 @@ async function loadData(projectId: string, dateRange: string) {
         u.semrush_tracking_id, 
         u.semrush_tracking_id_02,
         u.google_ads_sheet_id,
+        u.is_demo,
         u.favicon_url, 
         u.project_timeline_active, 
         u.project_start_date, 

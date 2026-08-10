@@ -191,6 +191,8 @@ export interface PromptTrackingResult {
   brandKeywordsSource?: 'configured' | 'auto-detected' | 'domain-heuristic' | 'none';
 }
 
+export const TOP_QUERIES_DATA_VERSION = 1;
+
 export interface ProjectDashboardData {
   kpis?: {
     clicks?: KpiDatum;

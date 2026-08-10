@@ -1,6 +1,7 @@
 import { sql, type VercelPoolClient } from '@vercel/postgres';
 import { getGscDataForPagesWithComparison, getSearchConsoleData } from '../google-api';
 import { markDataSyncFinished, markDataSyncStarted } from '../data-sync-state';
+import { GSC_DATA_LAG_DAYS } from './cache-policy';
 
 type GscProject = {
   id: string;
@@ -17,7 +18,7 @@ function formatDate(date: Date) {
 
 function calculatePageDateRanges() {
   const endDateCurrent = new Date();
-  endDateCurrent.setDate(endDateCurrent.getDate() - 2);
+  endDateCurrent.setDate(endDateCurrent.getDate() - GSC_DATA_LAG_DAYS);
   const startDateCurrent = new Date(endDateCurrent);
   startDateCurrent.setDate(startDateCurrent.getDate() - 29);
   const endDatePrevious = new Date(startDateCurrent);
@@ -118,7 +119,7 @@ async function updateDailyHistory(client: VercelPoolClient, siteUrl: string) {
   const historyDays = hasHistory ? GSC_INCREMENTAL_DAYS : GSC_INITIAL_HISTORY_DAYS;
   const mode = hasHistory ? 'incremental' as const : 'initial' as const;
   const end = new Date();
-  end.setDate(end.getDate() - 2);
+  end.setDate(end.getDate() - GSC_DATA_LAG_DAYS);
   const start = new Date(end);
   start.setDate(start.getDate() - (historyDays - 1));
 
@@ -154,7 +155,10 @@ async function updateDailyHistory(client: VercelPoolClient, siteUrl: string) {
   return { count: entries.length, mode };
 }
 
-export async function syncGscHistoryForProject(userId: string) {
+export async function syncGscHistoryForProject(
+  userId: string,
+  options: { deadlineAt?: number } = {},
+) {
   const { rows } = await sql<GscProject>`
     SELECT id::text, email, gsc_site_url
     FROM users
@@ -169,7 +173,13 @@ export async function syncGscHistoryForProject(userId: string) {
   await markDataSyncStarted(project.id, 'gsc-daily');
   const client = await sql.connect();
   try {
+    if (options.deadlineAt && Date.now() + 30_000 >= options.deadlineAt) {
+      throw new Error('GSC-Historienlauf wegen Zeitbudget verschoben.');
+    }
     const updatedPages = await updateLandingPages(client, project);
+    if (options.deadlineAt && Date.now() + 20_000 >= options.deadlineAt) {
+      throw new Error('GSC-Historienlauf vor Tagesdaten wegen Zeitbudget beendet.');
+    }
     const daily = await updateDailyHistory(client, project.gsc_site_url);
     await markDataSyncFinished(project.id, 'gsc-daily', { success: true });
     return { updatedPages, dailyRows: daily.count, mode: daily.mode };

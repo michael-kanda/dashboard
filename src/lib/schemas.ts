@@ -6,6 +6,7 @@ export const UserSchema = z.object({
   email: z.string().email(),
   password: z.string().optional(),
   role: z.enum(['SUPERADMIN', 'ADMIN', 'BENUTZER']),
+  is_demo: z.boolean().optional().default(false),
   domain: z.string().nullable().optional(),
   sitemap_url: z.string().nullable().optional(),
   mandant_id: z.string().nullable().optional(),

@@ -29,11 +29,15 @@ export type IndexingExclusionCategory =
 /** Re-Check-Intervall für indexierte URLs mit nennenswerten Impressionen. */
 export const INDEXED_HOT_RECHECK_DAYS = 7;
 /** Re-Check-Intervall für alle übrigen indexierten URLs. Vorher 30 Tage. */
-export const INDEXED_RECHECK_DAYS = 14;
+export const INDEXED_RECHECK_DAYS = 30;
 /** Re-Check-Intervall für nicht indexierte URLs. */
 export const NOT_INDEXED_RECHECK_DAYS = 7;
 /** Ab diesem Alter gilt ein Prüfergebnis als veraltet. */
-export const STALE_AFTER_DAYS = INDEXED_RECHECK_DAYS + 7;
+export const STALE_AFTER_DAYS = 45;
+
+if (STALE_AFTER_DAYS <= INDEXED_RECHECK_DAYS) {
+  throw new Error('STALE_AFTER_DAYS muss größer als INDEXED_RECHECK_DAYS sein.');
+}
 
 /**
  * Vergleichsform für Canonical-Abgleiche: ignoriert Protokoll, www und

@@ -5,6 +5,11 @@ import { google } from 'googleapis';
 import { sql } from '@vercel/postgres';
 import { isBroadSitemapLastmodRefresh } from '@/lib/indexing-status-policy';
 import {
+  reserveInspectionQuota,
+  releaseInspectionQuota,
+} from '@/lib/sync/inspection-budget';
+import { classifyGoogleApiError } from '@/lib/sync/google-api-error';
+import {
   classifyIndexingRow,
   normalizeUrlForComparison,
   INDEXED_HOT_RECHECK_DAYS,
@@ -92,6 +97,7 @@ export interface ProjectIndexingStatus {
   errorMessage: string | null;
   performanceRange: string;
   rows: IndexingStatusRow[];
+  skipped?: 'locked' | 'not-due' | 'quota';
 }
 
 export type ProjectIndexingProgress = Pick<
@@ -470,10 +476,10 @@ export async function syncProjectIndexingStatus(
     WHERE user_id = ${projectId}::uuid
   `;
   if (!options.force && syncRows[0]?.next_sync_at && new Date(syncRows[0].next_sync_at) > new Date()) {
-    return getProjectIndexingStatus(projectId);
+    return { ...(await getProjectIndexingStatus(projectId)), skipped: 'not-due' as const };
   }
   if (syncRows[0]?.lock_until && new Date(syncRows[0].lock_until) > new Date()) {
-    return getProjectIndexingStatus(projectId);
+    return { ...(await getProjectIndexingStatus(projectId)), skipped: 'locked' as const };
   }
   const sitemapCheckedAt = syncRows[0]?.sitemap_checked_at
     ? new Date(syncRows[0].sitemap_checked_at).getTime()
@@ -506,7 +512,9 @@ export async function syncProjectIndexingStatus(
     WHERE project_indexing_sync.lock_until IS NULL OR project_indexing_sync.lock_until <= NOW()
     RETURNING user_id::text
   `;
-  if (!lockRows.length) return getProjectIndexingStatus(projectId);
+  if (!lockRows.length) {
+    return { ...(await getProjectIndexingStatus(projectId)), skipped: 'locked' as const };
+  }
 
   try {
     const sourceSnapshot = continueStoredInspectionQueue ? null : await (async () => {
@@ -698,7 +706,22 @@ export async function syncProjectIndexingStatus(
     };
     })();
 
-    const maxInspections = options.maxInspections ?? 120;
+    const requestedInspections = options.maxInspections ?? 120;
+    const grantedInspections = await reserveInspectionQuota(gscSiteUrl, requestedInspections);
+    if (grantedInspections === 0) {
+      await sql`
+        UPDATE project_indexing_sync
+        SET status = 'partial',
+            progress_stage = 'paused',
+            next_sync_at = GREATEST(next_sync_at, NOW() + INTERVAL '1 hour'),
+            lock_until = NULL,
+            sync_warning = 'Tageskontingent der URL Inspection API ausgeschöpft.',
+            updated_at = NOW()
+        WHERE user_id = ${projectId}::uuid
+      `;
+      return { ...(await getProjectIndexingStatus(projectId)), skipped: 'quota' as const };
+    }
+    const maxInspections = grantedInspections;
     const { rows: candidates } = await sql<{ url: string; due_total: number }>`
       SELECT url, COUNT(*) OVER()::int AS due_total
       FROM project_indexing_urls
@@ -735,88 +758,119 @@ export async function syncProjectIndexingStatus(
     `;
 
     const searchconsole = google.searchconsole({ version: 'v1', auth: createGscAuth() });
-    await mapWithConcurrency(
-      candidates,
-      inspectionConcurrency,
-      () => Date.now() + inspectionReserveMs < deadlineAt,
-      async ({ url }) => {
-        let skippedByBudget = false;
-        try {
-          const response = await searchconsole.urlInspection.index.inspect({
-            requestBody: {
-              inspectionUrl: url,
-              siteUrl: gscSiteUrl,
-              languageCode: 'de-DE',
-            },
-          }, { timeout: getRequestTimeout(deadlineAt, 15_000, Math.max(4_000, inspectionReserveMs - 4_000)) });
-          const result = response.data.inspectionResult?.indexStatusResult;
-          const status = getIndexingStatus(result?.verdict);
-          await sql`
-            UPDATE project_indexing_urls
-            SET status = ${status},
-                verdict = ${result?.verdict ?? null},
-                coverage_state = ${result?.coverageState ?? null},
-                robots_txt_state = ${result?.robotsTxtState ?? null},
-                indexing_state = ${result?.indexingState ?? null},
-                page_fetch_state = ${result?.pageFetchState ?? null},
-                google_canonical = ${result?.googleCanonical ?? null},
-                user_canonical = ${result?.userCanonical ?? null},
-                last_crawl_time = ${result?.lastCrawlTime ?? null},
-                inspected_at = NOW(),
-                next_inspection_at = CASE
-                  WHEN ${status} = 'indexed' AND impressions >= 100
-                    THEN NOW() + (${INDEXED_HOT_RECHECK_DAYS} * INTERVAL '1 day')
-                  WHEN ${status} = 'indexed'
-                    THEN NOW() + (${INDEXED_RECHECK_DAYS} * INTERVAL '1 day')
-                  WHEN ${status} = 'not_indexed'
-                    THEN NOW() + (${NOT_INDEXED_RECHECK_DAYS} * INTERVAL '1 day')
-                  ELSE NOW() + INTERVAL '24 hours'
-                END,
-                inspection_attempts = 0,
-                inspection_error = NULL
-            WHERE user_id = ${projectId}::uuid AND url = ${url}
-          `;
-        } catch (error) {
-          if (error instanceof InspectionBudgetExceededError) {
-            skippedByBudget = true;
-            return;
-          }
-          const message = error instanceof Error ? error.message : 'URL Inspection fehlgeschlagen';
-          await sql`
-            UPDATE project_indexing_urls
-            SET status = CASE
-                  WHEN verdict IN ('PASS', 'FAIL', 'NEUTRAL') THEN status
-                  ELSE 'error'
-                END,
-                inspected_at = CASE
-                  WHEN verdict IN ('PASS', 'FAIL', 'NEUTRAL') THEN inspected_at
-                  ELSE NOW()
-                END,
-                inspection_attempts = inspection_attempts + 1,
-                next_inspection_at = NOW() + CASE
-                  WHEN inspection_attempts = 0 THEN INTERVAL '2 hours'
-                  WHEN inspection_attempts = 1 THEN INTERVAL '12 hours'
-                  ELSE INTERVAL '48 hours'
-                END,
-                inspection_error = ${message}
-            WHERE user_id = ${projectId}::uuid AND url = ${url}
-          `;
-        } finally {
-          if (!skippedByBudget) {
-            try {
-              await sql`
-                UPDATE project_indexing_sync
-                SET progress_completed = LEAST(progress_completed + 1, progress_total),
-                    updated_at = NOW()
-                WHERE user_id = ${projectId}::uuid
-              `;
-            } catch (progressError) {
-              console.warn('[Indexing] Fortschritt konnte nicht aktualisiert werden:', progressError);
+    let attemptedInspections = 0;
+    let quotaExhausted = false;
+    let fatalInspectionError: unknown = null;
+    try {
+      await mapWithConcurrency(
+        candidates,
+        inspectionConcurrency,
+        () => !quotaExhausted
+          && fatalInspectionError === null
+          && Date.now() + inspectionReserveMs < deadlineAt,
+        async ({ url }) => {
+          let skippedByBudget = false;
+          try {
+            const requestTimeout = getRequestTimeout(
+              deadlineAt,
+              15_000,
+              Math.max(4_000, inspectionReserveMs - 4_000),
+            );
+            attemptedInspections += 1;
+            const response = await searchconsole.urlInspection.index.inspect({
+              requestBody: {
+                inspectionUrl: url,
+                siteUrl: gscSiteUrl,
+                languageCode: 'de-DE',
+              },
+            }, { timeout: requestTimeout });
+            const result = response.data.inspectionResult?.indexStatusResult;
+            const status = getIndexingStatus(result?.verdict);
+            await sql`
+              UPDATE project_indexing_urls
+              SET status = ${status},
+                  verdict = ${result?.verdict ?? null},
+                  coverage_state = ${result?.coverageState ?? null},
+                  robots_txt_state = ${result?.robotsTxtState ?? null},
+                  indexing_state = ${result?.indexingState ?? null},
+                  page_fetch_state = ${result?.pageFetchState ?? null},
+                  google_canonical = ${result?.googleCanonical ?? null},
+                  user_canonical = ${result?.userCanonical ?? null},
+                  last_crawl_time = ${result?.lastCrawlTime ?? null},
+                  inspected_at = NOW(),
+                  next_inspection_at = CASE
+                    WHEN ${status} = 'indexed' AND impressions >= 100
+                      THEN NOW() + (${INDEXED_HOT_RECHECK_DAYS} * INTERVAL '1 day')
+                    WHEN ${status} = 'indexed'
+                      THEN NOW() + (${INDEXED_RECHECK_DAYS} * INTERVAL '1 day')
+                    WHEN ${status} = 'not_indexed'
+                      THEN NOW() + (${NOT_INDEXED_RECHECK_DAYS} * INTERVAL '1 day')
+                    ELSE NOW() + INTERVAL '24 hours'
+                  END,
+                  inspection_attempts = 0,
+                  inspection_error = NULL
+              WHERE user_id = ${projectId}::uuid AND url = ${url}
+            `;
+          } catch (error) {
+            if (error instanceof InspectionBudgetExceededError) {
+              skippedByBudget = true;
+              return;
+            }
+            const classified = classifyGoogleApiError(error);
+            const message = classified.message || 'URL Inspection fehlgeschlagen';
+            if (classified.kind === 'quota') {
+              quotaExhausted = true;
+              skippedByBudget = true;
+              return;
+            }
+            if (classified.status === 401 || classified.status === 403) {
+              fatalInspectionError = error;
+              skippedByBudget = true;
+              return;
+            }
+            await sql`
+              UPDATE project_indexing_urls
+              SET status = CASE
+                    WHEN verdict IN ('PASS', 'FAIL', 'NEUTRAL') THEN status
+                    ELSE 'error'
+                  END,
+                  inspected_at = CASE
+                    WHEN verdict IN ('PASS', 'FAIL', 'NEUTRAL') THEN inspected_at
+                    ELSE NOW()
+                  END,
+                  inspection_attempts = inspection_attempts + 1,
+                  next_inspection_at = NOW() + CASE
+                    WHEN ${classified.kind === 'permanent'} THEN INTERVAL '7 days'
+                    WHEN inspection_attempts = 0 THEN INTERVAL '2 hours'
+                    WHEN inspection_attempts = 1 THEN INTERVAL '12 hours'
+                    ELSE INTERVAL '48 hours'
+                  END,
+                  inspection_error = ${message}
+              WHERE user_id = ${projectId}::uuid AND url = ${url}
+            `;
+          } finally {
+            if (!skippedByBudget) {
+              try {
+                await sql`
+                  UPDATE project_indexing_sync
+                  SET progress_completed = LEAST(progress_completed + 1, progress_total),
+                      updated_at = NOW()
+                  WHERE user_id = ${projectId}::uuid
+                `;
+              } catch (progressError) {
+                console.warn('[Indexing] Fortschritt konnte nicht aktualisiert werden:', progressError);
+              }
             }
           }
-        }
-      },
-    );
+        },
+      );
+    } finally {
+      await releaseInspectionQuota(
+        gscSiteUrl,
+        Math.max(0, grantedInspections - attemptedInspections),
+      );
+    }
+    if (fatalInspectionError !== null) throw fatalInspectionError;
 
     const { rows: remainingRows } = await sql<{
       due_count: number;
@@ -846,9 +900,10 @@ export async function syncProjectIndexingStatus(
     await sql`
       UPDATE project_indexing_sync
       SET status = ${partial ? 'partial' : 'completed'},
-          progress_stage = ${partial ? 'queued' : 'completed'},
+          progress_stage = ${quotaExhausted ? 'paused' : (partial ? 'queued' : 'completed')},
           completed_at = NOW(),
           next_sync_at = CASE
+            WHEN ${quotaExhausted} THEN NOW() + INTERVAL '1 hour'
             WHEN ${dueCount} > 0 THEN NOW() + INTERVAL '5 minutes'
             WHEN ${unresolvedCount} > 0 AND ${nextUnresolvedAt}::timestamptz IS NOT NULL
               THEN GREATEST(${nextUnresolvedAt}::timestamptz, NOW() + INTERVAL '5 minutes')
@@ -881,6 +936,7 @@ export async function syncProjectIndexingStatus(
             ELSE excluded_urls
           END,
           sync_warning = CASE
+            WHEN ${quotaExhausted} THEN 'Tageskontingent der URL Inspection API ausgeschöpft.'
             WHEN ${sourceSnapshot !== null} THEN ${sourceSnapshot?.warningMessage ?? null}
             ELSE sync_warning
           END,
@@ -889,7 +945,8 @@ export async function syncProjectIndexingStatus(
           updated_at = NOW()
       WHERE user_id = ${projectId}::uuid
     `;
-    return getProjectIndexingStatus(projectId);
+    const finalStatus = await getProjectIndexingStatus(projectId);
+    return quotaExhausted ? { ...finalStatus, skipped: 'quota' as const } : finalStatus;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Indexierungsabgleich fehlgeschlagen';
     await sql`

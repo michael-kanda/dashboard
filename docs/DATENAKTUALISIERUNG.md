@@ -1,6 +1,6 @@
 # Datenaktualisierung im DataPeak-Dashboard
 
-Stand: 9. August 2026
+Stand: 10. August 2026
 
 Dieses Dokument beschreibt, wie DataPeak die Dashboard-Daten aus Google Search Console (GSC), Google Analytics 4 (GA4), Sitemaps und Google-Unternehmensprofilen aktualisiert. Es trennt dabei bewusst zwischen dauerhaft gespeicherten Dashboard-Snapshots, der URL-Indexierungsprüfung und den live geladenen Profilvorschauen.
 
@@ -12,8 +12,8 @@ Ein Projektaufruf soll keine Kette externer Google-API-Anfragen auslösen. Desha
 2. Ein vorhandener Snapshot wird sofort angezeigt, auch wenn er bereits zur Aktualisierung fällig ist.
 3. Eine fällige Aktualisierung mit vorhandenem Snapshot wird als Hintergrundauftrag in `project_sync_jobs` eingereiht.
 4. Der zentrale Dispatcher verarbeitet diese Aufträge mit begrenzter Laufzeit und begrenzter Parallelität.
-5. Erst nach einem erfolgreichen Abruf wird der alte Snapshot ersetzt.
-6. Bei einem kritischen GSC- oder GA4-Fehler bleibt der letzte funktionierende Snapshot erhalten.
+5. Erst nach einem verwertbaren Abruf wird der alte Snapshot ersetzt.
+6. Bei Timeout- oder Quotenfehlern bleibt der letzte funktionierende Snapshot erhalten. Ein permanenter Berechtigungsfehler darf einen klar als teilweise abgedeckt markierten Snapshot der weiterhin funktionierenden Quelle nicht einfrieren.
 
 ```mermaid
 flowchart LR
@@ -41,9 +41,11 @@ Vercel ruft alle zehn Minuten `GET /api/cron/sync-project-data` auf. Der Endpunk
 | `gsc-history` | Historische GSC-Tageswerte und gespeicherte Landingpage-Werte aktualisieren |
 | `indexing` | Sitemap einlesen und ausgewählte URLs mit der URL Inspection API prüfen |
 
-Pro Cronlauf werden maximal sechs Aufträge innerhalb eines festen Zeitbudgets verarbeitet. Die Auftragstypen rotieren, damit beispielsweise eine große Indexierungswarteschlange die normalen Dashboard-Aktualisierungen nicht verdrängt. Fehlgeschlagene Aufträge werden mit wachsendem Abstand erneut versucht und führen zu einem Fehlerstatus des Cronlaufs, damit Vercel und Monitoring den Teilausfall erkennen.
+Pro Cronlauf werden maximal neun Aufträge innerhalb eines Zeitbudgets von 235 Sekunden verarbeitet: vier Indexierungs-, drei Dashboard- und zwei GSC-Historienaufträge. Vor jedem Start prüft der Dispatcher, ob das verbleibende Zeitbudget für den jeweiligen Auftragstyp reicht. Die Auftragstypen rotieren, damit eine große Indexierungswarteschlange die normalen Dashboard-Aktualisierungen nicht verdrängt.
 
-Eine 90 Sekunden lange, per Heartbeat verlängerte Projekt-Lease verhindert, dass mehrere Prozesse gleichzeitig dieselben Google-Daten abrufen. Nach einem abgebrochenen Lauf wird diese Sperre automatisch wieder frei. Kurzlebige Neon-Verbindungsfehler bei Queue-Operationen werden bis zu dreimal direkt wiederholt; bleibt der Fehler bestehen, antwortet der Dispatcher mit HTTP 503.
+Die Queue-Lease eines reservierten Jobs beträgt 240 Sekunden. Zusätzlich verhindert eine 90 Sekunden lange, per Heartbeat verlängerte Quellen-Lease, dass mehrere Prozesse gleichzeitig dieselben Google-Daten abrufen; Dashboard-Leases sind nach Zeitraum getrennt, etwa `dashboard:30d`. Verschiebungen verbrauchen keinen Ausführungsversuch, werden aber separat gezählt und nach zwölf Wiederholungen beendet. Kurzlebige Neon-Verbindungsfehler bei Queue-Operationen werden bis zu dreimal direkt wiederholt; bleibt der Fehler bestehen, antwortet der Dispatcher mit HTTP 503.
+
+Fehler werden in `transient`, `quota` und `permanent` eingeteilt. Transiente Fehler und Quotenfehler werden erneut versucht und halten den letzten guten Cache. Dauerhafte Konfigurationsfehler wie 403/404 wechseln direkt in einen 24-Stunden-Cooldown; sie machen den Cronlauf nicht dauerhaft rot, werden aber als eingeschränkter Zustand protokolliert.
 
 ## 2. GSC-Daten
 
@@ -54,7 +56,7 @@ Eine 90 Sekunden lange, per Heartbeat verlängerte Projekt-Lease verhindert, das
 
 ### Welche Daten werden geladen?
 
-Der normale Dashboard-Snapshot enthält unter anderem:
+Der normale Dashboard-Snapshot und die GSC-Historie verwenden dasselbe Berichtsfenster. Es endet zwei Tage vor dem aktuellen Datum, damit verzögert eintreffende Search-Console-Werte nicht als künstlicher Einbruch erscheinen. Der Snapshot enthält unter anderem:
 
 - Klicks, Impressionen, CTR und durchschnittliche Position
 - Tagesverlauf für den gewählten Zeitraum
@@ -92,7 +94,7 @@ Die Historie liegt getrennt vom Dashboard-Snapshot in `gsc_daily_data`, `landing
 
 ### Fehlerverhalten
 
-Ist GSC für das Projekt konfiguriert und der zentrale GSC-Abruf scheitert, schreibt DataPeak keinen unvollständigen neuen Dashboard-Snapshot. Der letzte erfolgreiche Datenstand bleibt sichtbar.
+Bei transienten GSC-Fehlern oder ausgeschöpfter Quote schreibt DataPeak keinen unvollständigen neuen Dashboard-Snapshot. Bei einem permanenten Berechtigungs- oder Konfigurationsfehler kann die weiterhin funktionierende GA4-Quelle als Teil-Snapshot gespeichert werden; die betroffenen Kennzahlen werden über ihre Metadaten als teilweise oder nicht verfügbar ausgewiesen.
 
 ## 3. GA4-Daten
 
@@ -119,11 +121,12 @@ Aktueller Zeitraum und Vergleichszeitraum werden nacheinander geladen. Auch die 
 
 ### Cache und Aktualisierung
 
-GA4 und GSC werden im selben Dashboard-Snapshot in `google_data_cache` gespeichert. Deshalb gelten für GA4 dieselben Cache-Dauern wie für GSC. Das Dashboard kann beide Quellen konsistent für denselben Berichtszeitraum anzeigen, ohne beim Seitenaufruf erneut die GA4 API aufzurufen.
+GA4 und GSC werden im selben Dashboard-Snapshot in `google_data_cache` gespeichert. Deshalb gelten für GA4 dieselben Cache-Dauern und dasselbe um zwei Tage verzögerte Berichtsfenster wie für GSC. Dieser bewusste Konsistenz-Trade-off verhindert unterschiedliche Datumsgrenzen innerhalb eines Widgets und vermeidet API-Aufrufe beim Seitenaufruf.
 
 ### Fehlerverhalten und Abdeckung
 
-- Scheitert der zentrale GA4-Bericht, wird der bestehende Snapshot nicht überschrieben.
+- Scheitert der zentrale GA4-Bericht transient oder wegen einer Quote, wird der bestehende Snapshot nicht überschrieben.
+- Ist der GA4-Zugriff dauerhaft entzogen, kann ein Teil-Snapshot mit funktionierenden GSC-Daten gespeichert werden; GA4-Kennzahlen werden nicht als gemessene Nullwerte ausgegeben.
 - Scheitert nur ein optionaler Detailbericht, kann der Snapshot mit eingeschränkter Abdeckung gespeichert werden.
 - Quelle, Aktualisierungszeit, Zeitraum, Abdeckung und Berechnungsmethode werden zusätzlich in `project_metric_snapshots` dokumentiert.
 - GA4-Daten bleiben von Consent, Consent Mode und gegebenenfalls modellierten Werten abhängig. Sie sind deshalb nicht direkt mit cookie-unabhängigen GSC-Impressionen gleichzusetzen.
@@ -149,12 +152,15 @@ Sitemap-Indizes werden rekursiv bis zu einer begrenzten Tiefe aufgelöst. Insges
 | `project_indexing_sync` | Status und Zeitpunkt des Projektlaufs sowie nächster geplanter Lauf |
 | `project_indexing_urls` | Sitemap-URL, Last-Modified-Signal, letzter bekannter Google-Status und nächster Prüftermin |
 | `project_metric_snapshots` | Aggregierte Kennzahlen und Metadaten für das Widget |
+| `url_inspection_budget` | Reserviertes URL-Inspection-Tageskontingent je GSC-Property |
 
 Der letzte bekannte Google-Indexierungsstatus bleibt erhalten, während eine neue URL-Inspection noch aussteht. Ein massenhaft geändertes `lastmod` wird als mögliches Sitemap-Rauschen behandelt und führt nicht automatisch dazu, dass alle URLs gleichzeitig erneut geprüft werden. Neue und glaubhaft geänderte URLs werden bevorzugt.
 
 ### Automatische Prüfung
 
-Der Dispatcher prüft pro Indexierungsauftrag maximal 80 Kandidaten mit einem Laufzeitbudget von etwa 75 Sekunden und geringer Parallelität. Reicht eine Charge nicht aus, wird die Restmenge nach etwa fünf Minuten wieder fällig und beim nächsten 10-Minuten-Dispatcherlauf automatisch fortgesetzt. Der Benutzer muss nicht wiederholt auf **Jetzt prüfen** klicken.
+Der Dispatcher reserviert pro Indexierungsauftrag maximal 150 Kandidaten und gibt dem Auftrag höchstens etwa 90 Sekunden. Reicht eine Charge nicht aus, wird die Restmenge beim nächsten geeigneten 10-Minuten-Dispatcherlauf automatisch fortgesetzt. Der Benutzer muss nicht wiederholt auf **Jetzt prüfen** klicken.
+
+Die URL Inspection API wird zusätzlich durch `url_inspection_budget` koordiniert. DataPeak reserviert höchstens 1.800 Abfragen pro UTC-Tag und GSC-Property und lässt damit einen Sicherheitspuffer. Parallele Worker sperren den Budgetdatensatz transaktional, sodass sie das Tageslimit nicht gemeinsam überschreiten können. Nicht gestartete Reservierungen werden zurückgegeben. Ist das Budget ausgeschöpft, pausiert der Projektlauf für mindestens eine Stunde; die URLs bleiben unverändert und werden nicht fälschlich als fehlerhaft markiert.
 
 Das Widget unterscheidet dabei zwei Zustände:
 
@@ -169,7 +175,10 @@ Die ungefähren Wiederholungsintervalle sind:
 | Indexiert mit geringerer Leistung | nach 30 Tagen |
 | Nicht indexiert | nach 7 Tagen |
 | Noch nicht eindeutig geprüft | nach 24 Stunden |
-| Fehler | abgestuft nach ca. 2, 12 oder 48 Stunden |
+| Transienter Fehler | abgestuft nach ca. 2, 12 oder 48 Stunden |
+| Permanenter URL-spezifischer Fehler | nach 7 Tagen |
+
+Ein projektweiter 401/403-Berechtigungsfehler beendet die Charge sofort, ohne die betroffenen URLs als fehlerhaft zu markieren. Der Queue-Auftrag wechselt stattdessen in den 24-Stunden-Cooldown für permanente Konfigurationsfehler.
 
 Ein vollständig abgeschlossener Projektlauf wird normalerweise nach 48 Stunden wieder fällig. Sofort fällige Restarbeit wird innerhalb des nächsten Dispatcher-Zyklus fortgesetzt. Liefert Google für eine URL einen temporären Fehler, wird diese URL zu ihrem abgestuften Retry-Termin erneut eingeplant, ohne den übrigen Bestand als vollständig auszugeben.
 
@@ -240,6 +249,8 @@ Die angezeigten Bewertungen sind reine Profildaten. Die GSC-Klicks, GA4-Nutzer u
 - `src/lib/sync/dashboard.ts`
 - `src/lib/sync/dashboard-snapshot.ts`
 - `src/lib/sync/cache-policy.ts`
+- `src/lib/sync/google-api-error.ts`
+- `src/lib/sync/inspection-budget.ts`
 - `src/lib/sync/gsc-history.ts`
 - `src/lib/indexing-status.ts`
 - `src/app/api/projects/[id]/indexing-status/route.ts`

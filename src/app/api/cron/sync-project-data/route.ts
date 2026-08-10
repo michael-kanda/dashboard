@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { trySyncDashboardProjectSnapshot } from '@/lib/sync/dashboard';
+import { trySyncDashboardProjectSnapshot, DashboardSourceError } from '@/lib/sync/dashboard';
 import { syncGscHistoryForProject } from '@/lib/sync/gsc-history';
 import { syncIndexingProjectSnapshot } from '@/lib/sync/indexing';
 import {
@@ -7,12 +7,14 @@ import {
   deferProjectSyncJob,
   finishProjectSyncJob,
   seedDueProjectSyncJobs,
+  type ProjectSyncFailureKind,
   type ProjectSyncJob,
 } from '@/lib/sync/job-queue';
 import {
   isRetryableInfrastructureError,
   withInfrastructureRetry,
 } from '@/lib/sync/retry';
+import { classifyGoogleApiError } from '@/lib/sync/google-api-error';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -33,6 +35,16 @@ const JOB_TYPE_RANK: Record<ProjectSyncJob['jobType'], number> = {
   'gsc-history': 2,
 };
 
+const JOB_TYPE_RESERVE_MS: Record<ProjectSyncJob['jobType'], number> = {
+  indexing: 100_000,
+  dashboard: 130_000,
+  'gsc-history': 100_000,
+};
+
+type JobOutcome =
+  | { kind: 'done'; message: string }
+  | { kind: 'defer'; reason: string; delaySeconds: number };
+
 function retryDatabaseOperation<T>(label: string, operation: () => Promise<T>) {
   return withInfrastructureRetry(operation, {
     onRetry: (_error, nextAttempt) => {
@@ -41,28 +53,45 @@ function retryDatabaseOperation<T>(label: string, operation: () => Promise<T>) {
   });
 }
 
-async function executeJob(job: ProjectSyncJob, deadlineAt: number): Promise<string | null> {
+function classifyJobFailure(error: unknown): ProjectSyncFailureKind {
+  if (error instanceof DashboardSourceError) return error.kind;
+  return classifyGoogleApiError(error).kind === 'permanent' ? 'permanent' : 'transient';
+}
+
+async function executeJob(job: ProjectSyncJob, deadlineAt: number): Promise<JobOutcome> {
   switch (job.jobType) {
     case 'dashboard': {
       const dateRange = job.dateRange || String(job.payload.dateRange ?? '30d');
-      const result = await trySyncDashboardProjectSnapshot(job.userId, dateRange);
-      if (!result.acquired) return null;
-      return `Dashboard ${dateRange} aktualisiert`;
+      const result = await trySyncDashboardProjectSnapshot(job.userId, dateRange, { deadlineAt });
+      if (!result.acquired) {
+        return { kind: 'defer', reason: 'Source-Lease belegt', delaySeconds: 30 };
+      }
+      return { kind: 'done', message: `Dashboard ${dateRange} aktualisiert` };
     }
     case 'gsc-history': {
-      const result = await syncGscHistoryForProject(job.userId);
-      return `${result.updatedPages} Landingpages und ${result.dailyRows} GSC-Tage aktualisiert`;
+      const result = await syncGscHistoryForProject(job.userId, { deadlineAt });
+      return {
+        kind: 'done',
+        message: `${result.updatedPages} Landingpages und ${result.dailyRows} GSC-Tage aktualisiert`,
+      };
     }
     case 'indexing': {
       const indexingDeadline = Math.min(deadlineAt, Date.now() + 90_000);
-      const status = await syncIndexingProjectSnapshot(job.userId, {
+      const { status, skipped } = await syncIndexingProjectSnapshot(job.userId, {
         force: job.payload.force === true,
         maxInspections: 150,
         inspectionConcurrency: 6,
         inspectionReserveMs: 15_000,
         deadlineAt: indexingDeadline,
       });
-      return `${status.indexedUrls}/${status.totalUrls} URLs indexiert`;
+      if (skipped) {
+        return {
+          kind: 'defer',
+          reason: `Indexierung übersprungen (${skipped})`,
+          delaySeconds: skipped === 'quota' ? 3_600 : 300,
+        };
+      }
+      return { kind: 'done', message: `${status.indexedUrls}/${status.totalUrls} URLs indexiert` };
     }
     default: {
       const exhaustive: never = job.jobType;
@@ -72,7 +101,12 @@ async function executeJob(job: ProjectSyncJob, deadlineAt: number): Promise<stri
 }
 
 export async function GET(request: NextRequest) {
-  if (request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    console.error('[Sync Dispatcher] CRON_SECRET ist nicht gesetzt.');
+    return NextResponse.json({ message: 'CRON_SECRET nicht konfiguriert' }, { status: 500 });
+  }
+  if (request.headers.get('authorization') !== `Bearer ${secret}`) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
@@ -85,16 +119,20 @@ export async function GET(request: NextRequest) {
       type: string;
       projectId: string;
       success: boolean;
+      failureKind?: ProjectSyncFailureKind;
       message: string;
     }> = [];
     const remainingQuota: Record<ProjectSyncJob['jobType'], number> = { ...JOB_TYPE_QUOTA };
     const exhaustedTypes = new Set<ProjectSyncJob['jobType']>();
 
+    const timeLeft = () => deadlineAt - Date.now();
+    const fits = (type: ProjectSyncJob['jobType']) => JOB_TYPE_RESERVE_MS[type] <= timeLeft();
     const pickNextType = () => (Object.keys(remainingQuota) as Array<ProjectSyncJob['jobType']>)
-      .filter((type) => remainingQuota[type] > 0 && !exhaustedTypes.has(type))
+      .filter((type) => remainingQuota[type] > 0 && !exhaustedTypes.has(type) && fits(type))
       .sort((a, b) => remainingQuota[b] - remainingQuota[a] || JOB_TYPE_RANK[a] - JOB_TYPE_RANK[b])[0];
 
-    while (results.length < MAX_JOBS_PER_RUN && Date.now() + 20_000 < deadlineAt) {
+    const minReserve = Math.min(...Object.values(JOB_TYPE_RESERVE_MS));
+    while (results.length < MAX_JOBS_PER_RUN && timeLeft() > minReserve) {
       const preferredType = pickNextType();
       const preferredJob = preferredType
         ? await retryDatabaseOperation(
@@ -112,17 +150,30 @@ export async function GET(request: NextRequest) {
         () => claimNextProjectSyncJob(),
       );
       if (!job) break;
+      if (!fits(job.jobType)) {
+        await retryDatabaseOperation(
+          'Job wegen Zeitbudget verschieben',
+          () => deferProjectSyncJob(job, 60, 'Zeitbudget des Laufs reicht nicht mehr'),
+        );
+        break;
+      }
       remainingQuota[job.jobType] = Math.max(0, remainingQuota[job.jobType] - 1);
       try {
-        const message = await executeJob(job, deadlineAt);
-        if (message === null) {
-          await retryDatabaseOperation('Job verschieben', () => deferProjectSyncJob(job));
+        const outcome = await executeJob(job, deadlineAt);
+        if (outcome.kind === 'defer') {
+          const deferResult = await retryDatabaseOperation(
+            'Job verschieben',
+            () => deferProjectSyncJob(job, outcome.delaySeconds, outcome.reason),
+          );
           results.push({
             jobId: job.id,
             type: job.jobType,
             projectId: job.userId,
-            success: true,
-            message: 'Wegen laufender Projektsynchronisierung kurz verschoben',
+            success: !deferResult.escalated,
+            failureKind: deferResult.escalated ? 'transient' : undefined,
+            message: deferResult.escalated
+              ? `${outcome.reason} - nach ${deferResult.deferCount} Verschiebungen abgebrochen`
+              : `${outcome.reason} (Verschiebung ${deferResult.deferCount})`,
           });
           continue;
         }
@@ -135,35 +186,42 @@ export async function GET(request: NextRequest) {
           type: job.jobType,
           projectId: job.userId,
           success: true,
-          message,
+          message: outcome.message,
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        const failureKind = classifyJobFailure(error);
         await retryDatabaseOperation(
           'Fehlgeschlagenen Job speichern',
-          () => finishProjectSyncJob(job, { success: false, error: message }),
+          () => finishProjectSyncJob(job, { success: false, error: message, kind: failureKind }),
         );
         results.push({
           jobId: job.id,
           type: job.jobType,
           projectId: job.userId,
           success: false,
+          failureKind,
           message,
         });
       }
     }
 
-    const failed = results.filter((result) => !result.success).length;
+    const failures = results.filter((result) => !result.success);
+    const transientFailures = failures.filter((result) => result.failureKind !== 'permanent');
+    const permanentFailures = failures.length - transientFailures.length;
     return NextResponse.json({
-      success: failed === 0,
+      success: transientFailures.length === 0,
+      degraded: permanentFailures > 0,
       seeded,
       processed: results.length,
       successful: results.filter((result) => result.success).length,
-      failed,
+      failed: failures.length,
+      failedTransient: transientFailures.length,
+      failedPermanent: permanentFailures,
       durationSeconds: Math.round((Date.now() - startedAt) / 100) / 10,
       results,
     }, {
-      status: failed > 0 ? 500 : 200,
+      status: transientFailures.length > 0 ? 500 : 200,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

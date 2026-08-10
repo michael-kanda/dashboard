@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from 'next-auth';
+import { isDemoProject } from '@/lib/demo-project';
 
 export const baseAuthConfig = {
   providers: [],
@@ -25,7 +26,7 @@ export const baseAuthConfig = {
         token.google_ads_sheet_id = user.google_ads_sheet_id;
         token.brand_keywords = user.brand_keywords;
         token.settings_show_prompt_tracking = user.settings_show_prompt_tracking;
-        token.is_demo = user.email?.includes('demo') || user.domain?.includes('demo-shop');
+        token.is_demo = isDemoProject(user);
       }
       return token;
     },

@@ -26,6 +26,7 @@ import { normalizeManualGoogleGenAiData } from '@/lib/google-genai-manual';
 import { getBingData } from '@/lib/bing-api';
 import {
   ProjectDashboardData,
+  TOP_QUERIES_DATA_VERSION,
   ChartEntry,
   ApiErrorStatus,
   ConvertingPageData,
@@ -48,8 +49,9 @@ import {
 import { persistMetricSnapshotsWithClient } from '@/lib/metric-snapshot-store';
 import { readDashboardSnapshot } from '@/lib/sync/dashboard-snapshot';
 import { isPaidSearchChannel } from '@/lib/ga4-metrics';
-
-const TOP_QUERIES_DATA_VERSION = 1;
+import { getReportingWindow } from '@/lib/sync/cache-policy';
+import { classifyGoogleApiError } from '@/lib/sync/google-api-error';
+import { isDemoProject } from '@/lib/demo-project';
 
 function getShortErrorMessage(error: unknown): string {
   const err = error as any;
@@ -382,7 +384,7 @@ export async function getOrFetchGoogleData(
   user: User,
   dateRange: string,
   forceRefresh = false,
-  options: { enqueueIfMissing?: boolean } = {},
+  options: { enqueueIfMissing?: boolean; deadlineAt?: number } = {},
 ): Promise<ProjectDashboardData | null> {
   if (!user.id) return null;
   const userId = user.id;
@@ -391,8 +393,7 @@ export async function getOrFetchGoogleData(
     `[Google Data Loader] User: ${user.email} | google_ads_sheet_id: ${user.google_ads_sheet_id || '(nicht gesetzt)'}`
   );
 
-  const isDemo = user.email?.includes('demo') || user.domain?.includes('demo-shop');
-  if (isDemo) {
+  if (isDemoProject(user)) {
     console.log('[Google Data Loader] Demo-User erkannt. Lade Demo-Daten...');
     return attachDashboardMetricMetadata(getDemoAnalyticsData(dateRange), dateRange);
   }
@@ -409,27 +410,11 @@ export async function getOrFetchGoogleData(
 
   console.log(`[Google Cache] 🔄 Lade frische Daten für ${user.email}...`);
 
-  const end = new Date();
-  end.setDate(end.getDate() - 1);
-  const start = new Date(end);
-  let days = 30;
-  if (dateRange === '7d') days = 7;
-  if (dateRange === '3m') days = 90;
-  if (dateRange === '6m') days = 180;
-  if (dateRange === '12m') days = 365;
-  if (dateRange === '18m') days = 548;
-  if (dateRange === '24m') days = 730;
-  start.setDate(end.getDate() - (days - 1));
-
-  const startDateStr = start.toISOString().split('T')[0];
-  const endDateStr = end.toISOString().split('T')[0];
-
-  const prevEnd = new Date(start);
-  prevEnd.setDate(prevEnd.getDate() - 1);
-  const prevStart = new Date(prevEnd);
-  prevStart.setDate(prevEnd.getDate() - (days - 1));
-  const prevStartStr = prevStart.toISOString().split('T')[0];
-  const prevEndStr = prevEnd.toISOString().split('T')[0];
+  const reportingWindow = getReportingWindow(dateRange);
+  const startDateStr = reportingWindow.startDate;
+  const endDateStr = reportingWindow.endDate;
+  const prevStartStr = reportingWindow.previousStartDate;
+  const prevEndStr = reportingWindow.previousEndDate;
 
   let currentData: RawApiData = { ...INITIAL_DATA };
   let prevData: RawApiData = { ...INITIAL_DATA };
@@ -743,7 +728,11 @@ export async function getOrFetchGoogleData(
   // ════════════════════════════════════════════════════════════════════
   const synchronizedAt = new Date().toISOString();
   const enrichedFreshData = attachDashboardMetricMetadata(freshData, dateRange, synchronizedAt);
-  const hasCriticalErrors = !!(apiErrors.ga4 || apiErrors.gsc);
+  const blockingSources = (['gsc', 'ga4'] as const).filter((source) => {
+    const raw = apiErrors[source];
+    return raw ? classifyGoogleApiError(raw).blocksSnapshotWrite : false;
+  });
+  const hasCriticalErrors = blockingSources.length > 0;
 
   if (!hasCriticalErrors) {
     const client = await sql.connect();
@@ -772,7 +761,7 @@ export async function getOrFetchGoogleData(
       client.release();
     }
   } else {
-    console.warn('[Cache Write] Übersprungen wegen kritischer API-Fehler:', apiErrors);
+    console.warn('[Cache Write] Übersprungen wegen behebbarer API-Fehler:', blockingSources, apiErrors);
   }
 
   return enrichedFreshData;

@@ -35,14 +35,14 @@ export const authConfig = {
               SELECT
                 id, email, password, role, mandant_id, ansprache, permissions, domain,
                 gsc_site_url, ga4_property_id, google_ads_sheet_id,
-                brand_keywords, settings_show_prompt_tracking
+                brand_keywords, settings_show_prompt_tracking, is_demo
               FROM users
               WHERE email = ${normalizedEmail}
             `;
             rows = result.rows;
           } catch (dbError) {
             const message = dbError instanceof Error ? dbError.message : String(dbError);
-            if (!message.includes('brand_keywords') && !message.includes('settings_show_prompt_tracking') && !message.includes('ansprache')) {
+            if (!message.includes('brand_keywords') && !message.includes('settings_show_prompt_tracking') && !message.includes('ansprache') && !message.includes('is_demo')) {
               throw dbError;
             }
 
@@ -55,7 +55,8 @@ export const authConfig = {
                 gsc_site_url, ga4_property_id,
                 NULL::varchar as google_ads_sheet_id,
                 NULL::text[] as brand_keywords,
-                FALSE as settings_show_prompt_tracking
+                FALSE as settings_show_prompt_tracking,
+                FALSE as is_demo
               FROM users
               WHERE email = ${normalizedEmail}
             `;

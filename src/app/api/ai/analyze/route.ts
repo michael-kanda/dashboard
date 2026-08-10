@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     // ==========================================
     // ✅ DEMO-MODUS CHECK
     // ==========================================
-    const isDemo = session.user.email?.includes('demo');
+    const isDemo = session.user.is_demo === true;
     
     if (isDemo) {
       console.log('[AI Analyze] Demo-User erkannt. Simuliere Antwort...');
