@@ -514,7 +514,7 @@ export async function getOrFetchGoogleData(
         const shareTrend = buildShareTrend(
           gscRaw.impressions?.daily || [],
           promptTracking.trend || [],
-          days
+          reportingWindow.days
         );
         // Loader weiß, ob Keywords gerade auto-detected wurden (überschreibt die
         // 'configured'-Vermutung der Patch-Funktion in google-api).
