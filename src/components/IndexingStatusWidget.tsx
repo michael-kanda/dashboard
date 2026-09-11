@@ -512,24 +512,24 @@ export default function IndexingStatusWidget({
             )}
 
             {(data.sitemapEntryCount > 0 || data.totalUrls > 0) && (
-              <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border-subtle bg-border-subtle lg:grid-cols-3 2xl:grid-cols-6">
+              <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border-subtle bg-border-subtle lg:grid-cols-4 xl:grid-cols-7">
                 {summaryItems.map((item) => item.showsDetails ? (
                   <button
                     key={item.label}
                     type="button"
                     onClick={() => setShowExcludedUrls((current) => !current)}
                     disabled={data.excludedUrlCount === 0}
-                    className="bg-surface px-4 py-4 text-left transition-colors hover:bg-surface-secondary disabled:cursor-default disabled:hover:bg-surface"
+                    className="min-w-0 bg-surface px-3 py-3 text-left transition-colors hover:bg-surface-secondary disabled:cursor-default disabled:hover:bg-surface"
                   >
                     <p className="text-[11px] font-semibold uppercase text-muted">{item.label}</p>
-                    <p className="mt-1 text-2xl font-semibold tabular-nums text-heading">{item.value}</p>
-                    <p className="mt-1.5 text-[11px] leading-4 text-muted">{item.description}</p>
+                    <p className="mt-1 text-xl font-semibold tabular-nums text-heading">{item.value}</p>
+                    <p className="mt-1 text-[10px] leading-[15px] text-muted">{item.description}</p>
                   </button>
                 ) : (
-                  <div key={item.label} className="bg-surface px-4 py-4">
+                  <div key={item.label} className="min-w-0 bg-surface px-3 py-3">
                     <p className="text-[11px] font-semibold uppercase text-muted">{item.label}</p>
-                    <p className="mt-1 text-2xl font-semibold tabular-nums text-heading">{item.value}</p>
-                    <p className="mt-1.5 text-[11px] leading-4 text-muted">{item.description}</p>
+                    <p className="mt-1 text-xl font-semibold tabular-nums text-heading">{item.value}</p>
+                    <p className="mt-1 text-[10px] leading-[15px] text-muted">{item.description}</p>
                   </div>
                 ))}
               </div>
