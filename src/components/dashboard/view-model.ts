@@ -113,6 +113,7 @@ export function buildDashboardViewModel({
 
   return {
     modules,
+    reportingPeriod: data.reportingPeriod ?? data.metricMetadata?.['ga4.sessions']?.period,
     isAdmin: policy.isAdmin,
     visibility,
     canShow: policy.canShow,

@@ -42,7 +42,7 @@ export default function DashboardAcquisitionWidgets({
               title="Zugriffe nach Channel"
               isLoading={isLoading}
               error={ga4.displayError ?? undefined}
-              dateRange={dateRange}
+              reportingPeriod={model.reportingPeriod}
             />
           )}
           {trafficBreakdowns.countries && (
@@ -51,7 +51,7 @@ export default function DashboardAcquisitionWidgets({
               title="Zugriffe nach Land"
               isLoading={isLoading}
               error={ga4.displayError ?? undefined}
-              dateRange={dateRange}
+              reportingPeriod={model.reportingPeriod}
             />
           )}
           {trafficBreakdowns.devices && (
@@ -60,7 +60,7 @@ export default function DashboardAcquisitionWidgets({
               title="Zugriffe nach Endgerät"
               isLoading={isLoading}
               error={ga4.displayError ?? undefined}
-              dateRange={dateRange}
+              reportingPeriod={model.reportingPeriod}
             />
           )}
         </div>

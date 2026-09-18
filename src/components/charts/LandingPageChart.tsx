@@ -14,8 +14,7 @@ import {
   Diagram3Fill,
   Download
 } from 'react-bootstrap-icons';
-import { format, subDays, subMonths } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { formatReportingPeriod, type ReportingPeriod } from '@/lib/reporting-period';
 
 // Typ für die Query-Daten pro Landingpage
 export interface LandingPageQueries {
@@ -40,6 +39,7 @@ interface Props {
   isLoading?: boolean;
   title?: string;
   dateRange?: string;
+  reportingPeriod?: ReportingPeriod;
   queryData?: LandingPageQueries;
   projectId?: string;
   headerAction?: React.ReactNode;
@@ -50,6 +50,7 @@ export default function LandingPageChart({
   isLoading,
   title = "Top Landingpages",
   dateRange = '30d',
+  reportingPeriod,
   queryData,
   projectId,
   headerAction
@@ -64,22 +65,6 @@ export default function LandingPageChart({
   const [followUpData, setFollowUpData] = useState<FollowUpData | null>(null);
   const [isLoadingFollowUp, setIsLoadingFollowUp] = useState(false);
   const [followUpError, setFollowUpError] = useState<string | null>(null);
-
-  const getDateRangeString = (range: string) => {
-    const end = new Date();
-    let start = subDays(end, 30);
-
-    switch (range) {
-      case '7d': start = subDays(end, 7); break;
-      case '30d': start = subDays(end, 30); break;
-      case '3m': start = subMonths(end, 3); break;
-      case '6m': start = subMonths(end, 6); break;
-      case '12m': start = subMonths(end, 12); break;
-      default: start = subDays(end, 30);
-    }
-
-    return `${format(start, 'dd.MM.yyyy', { locale: de })} – ${format(end, 'dd.MM.yyyy', { locale: de })}`;
-  };
 
   const toggleExpanded = (path: string) => {
     setExpandedPaths(prev => {
@@ -187,7 +172,7 @@ export default function LandingPageChart({
     : 0;
   const totalConversions = sortedData.reduce((sum, page) => sum + (page.conversions || 0), 0);
 
-  const formattedDateRange = getDateRangeString(dateRange);
+  const formattedDateRange = formatReportingPeriod(reportingPeriod);
 
   const handleExportCsv = () => {
     if (!sortedData.length) return;
@@ -277,7 +262,7 @@ export default function LandingPageChart({
           </div>
 
           <p className="text-xs text-muted mt-2">
-            Sortiert nach Neuen Nutzern · Quelle GA4 + GSC · {formattedDateRange}
+            Sortiert nach Neuen Nutzern · Quelle GA4 + GSC{formattedDateRange ? ` · ${formattedDateRange}` : ''}
             {queryData && ' · Mit Suchbegriffen'}
           </p>
         </div>

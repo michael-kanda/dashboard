@@ -62,6 +62,7 @@ export default function DashboardAiWidgets({
               className="h-full"
               isLoading={isLoading}
               dateRange={dateRange}
+              reportingPeriod={model.reportingPeriod}
               error={model.modules.ga4.data.displayError ?? undefined}
               onDetailClick={projectId ? () => setShowTrafficDetail((current) => !current) : undefined}
               onPromptTrackingClick={model.render.promptTracking ? handlePromptTrackingClick : undefined}

@@ -47,6 +47,7 @@ export default function DashboardSearchWidgets({
                   isLoading={isLoading}
                   title="Top Landingpages"
                   dateRange={dateRange}
+                  reportingPeriod={model.reportingPeriod}
                   queryData={gsc.data.landingPageQueries}
                   projectId={projectId}
                 />

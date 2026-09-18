@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 // Wir nutzen hier den absoluten Pfad mit @, um sicherzustellen, dass die Datei gefunden wird
 import AiTrafficDetailCardV2 from '@/components/AiTrafficDetailCardV2';
 import type { AiTrafficExtendedData } from '@/lib/ai-traffic-extended-v2';
+import type { ReportingPeriod } from '@/lib/reporting-period';
 
 export interface AiTrafficDetailWidgetV2Props {
   projectId?: string;
@@ -18,6 +19,7 @@ export default function AiTrafficDetailWidgetV2({
   className
 }: AiTrafficDetailWidgetV2Props) {
   const [data, setData] = useState<AiTrafficExtendedData | undefined>(undefined);
+  const [reportingPeriod, setReportingPeriod] = useState<ReportingPeriod | undefined>();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | undefined>(undefined);
 
@@ -56,6 +58,10 @@ export default function AiTrafficDetailWidgetV2({
 
       console.log('[AiTrafficDetailWidgetV2] Data received:', result.data ? 'OK' : 'null');
       setData(result.data || undefined);
+      const period = result.meta?.currentPeriod;
+      setReportingPeriod(period?.start && period?.end
+        ? { from: period.start, to: period.end }
+        : undefined);
       
     } catch (err) {
       console.error('[AiTrafficDetailWidgetV2] Fetch Error:', err);
@@ -73,7 +79,7 @@ export default function AiTrafficDetailWidgetV2({
     <AiTrafficDetailCardV2
       data={data}
       isLoading={isLoading}
-      dateRange={dateRange}
+      reportingPeriod={reportingPeriod}
       error={error}
       onRefresh={fetchData}
       className={className}

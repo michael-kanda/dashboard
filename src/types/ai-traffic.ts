@@ -41,6 +41,7 @@ export interface AiTrafficCardProps {
   className?: string;
   isLoading?: boolean;
   dateRange?: string;
+  reportingPeriod?: import('@/lib/reporting-period').ReportingPeriod;
   error?: string;
   onDetailClick?: () => void;
   onPromptTrackingClick?: () => void;

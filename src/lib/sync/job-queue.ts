@@ -75,6 +75,8 @@ export async function enqueueProjectSyncJob({
       run_after = CASE
         WHEN project_sync_jobs.status = 'pending' AND ${preservePending}
         THEN project_sync_jobs.run_after
+        WHEN project_sync_jobs.status = 'failed' AND ${restartFailed} = FALSE
+        THEN project_sync_jobs.run_after
         ELSE LEAST(project_sync_jobs.run_after, EXCLUDED.run_after)
       END,
       status = CASE
@@ -123,7 +125,11 @@ export async function enqueueProjectSyncJob({
         THEN project_sync_jobs.failure_kind
         ELSE NULL
       END,
-      updated_at = NOW()
+      updated_at = CASE
+        WHEN project_sync_jobs.status = 'failed' AND ${restartFailed} = FALSE
+        THEN project_sync_jobs.updated_at
+        ELSE NOW()
+      END
   `;
 }
 

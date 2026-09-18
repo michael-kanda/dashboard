@@ -14,6 +14,7 @@ import DashboardOverviewWidgets from '@/components/dashboard/DashboardOverviewWi
 import DashboardSearchWidgets from '@/components/dashboard/DashboardSearchWidgets';
 import { buildDashboardViewModel } from '@/components/dashboard/view-model';
 import type { ProjectDashboardProps } from '@/components/dashboard/types';
+import { formatReportingPeriod } from '@/lib/reporting-period';
 
 export type { ProjectDashboardProps } from '@/components/dashboard/types';
 
@@ -44,6 +45,7 @@ export default function ProjectDashboard({
   const chartRef = useRef<HTMLDivElement>(null);
   const [activeKpi, setActiveKpi] = useState<ActiveKpi>('clicks');
   const [isUpdating, setIsUpdating] = useState(false);
+  const reportingPeriodLabel = formatReportingPeriod(data.reportingPeriod);
 
   const model = useMemo(() => buildDashboardViewModel({
     data,
@@ -94,6 +96,12 @@ export default function ProjectDashboard({
           userEmail={userEmail}
           userAnsprache={userAnsprache}
         />
+
+        {data.cacheStale && (
+          <p className="mt-4 text-sm text-secondary" role="status">
+            Gespeicherte Daten{reportingPeriodLabel ? ` für ${reportingPeriodLabel}` : ''}. Aktualisierung ausstehend.
+          </p>
+        )}
 
         <DashboardOverviewWidgets
           data={data}

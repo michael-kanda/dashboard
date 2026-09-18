@@ -15,9 +15,10 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar, Cell
 } from 'recharts';
-import { format, subDays, subMonths } from 'date-fns';
+import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import type { AiTrafficExtendedData, IntentCategory } from '@/lib/ai-traffic-extended-v2';
+import { formatReportingPeriod, type ReportingPeriod } from '@/lib/reporting-period';
 
 // ============================================================================
 // PROPS & TYPES
@@ -26,7 +27,7 @@ import type { AiTrafficExtendedData, IntentCategory } from '@/lib/ai-traffic-ext
 interface AiTrafficDetailCardV2Props {
   data?: AiTrafficExtendedData;
   isLoading?: boolean;
-  dateRange?: string;
+  reportingPeriod?: ReportingPeriod;
   className?: string;
   error?: string;
   onRefresh?: () => void;
@@ -106,19 +107,6 @@ function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.round(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-function getDateRangeString(range: string): string {
-  const end = new Date();
-  let start = subDays(end, 30);
-  switch (range) {
-    case '7d': start = subDays(end, 7); break;
-    case '30d': start = subDays(end, 30); break;
-    case '3m': start = subMonths(end, 3); break;
-    case '6m': start = subMonths(end, 6); break;
-    case '12m': start = subMonths(end, 12); break;
-  }
-  return `${format(start, 'dd.MM.yyyy', { locale: de })} - ${format(end, 'dd.MM.yyyy', { locale: de })}`;
 }
 
 // ============================================================================
@@ -242,7 +230,7 @@ const JourneyFlowCard: React.FC<{
 // ============================================================================
 
 export default function AiTrafficDetailCardV2({
-  data, isLoading = false, dateRange = '30d', className, error, onRefresh
+  data, isLoading = false, reportingPeriod, className, error, onRefresh
 }: AiTrafficDetailCardV2Props) {
   
   const [activeTab, setActiveTab] = useState<ViewTab>('overview');
@@ -252,7 +240,7 @@ export default function AiTrafficDetailCardV2({
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [isExpanded, setIsExpanded] = useState(true);
 
-  const formattedDateRange = getDateRangeString(dateRange);
+  const formattedDateRange = formatReportingPeriod(reportingPeriod);
 
   const filteredPages = useMemo(() => {
     if (!data?.landingPages) return [];

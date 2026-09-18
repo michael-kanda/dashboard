@@ -10,6 +10,7 @@ import SourceMiniSparkline from '@/components/SourceMiniSparkline';
 import AiTrafficAnomalyBanner from '@/components/AiTrafficAnomalyBanner';
 import AiTrafficTopQuestions, { type TopQuestionItem } from '@/components/AiTrafficTopQuestions';
 import { useAiTrafficExtended } from '@/hooks/useAiTrafficExtended';
+import { formatReportingPeriod } from '@/lib/reporting-period';
 
 const AiTrafficModelTrendChart = dynamic(
   () => import('@/components/AiTrafficModelTrendChart'),
@@ -67,6 +68,7 @@ export default function AiTrafficCard({
   topAiSources = [],
   isLoading = false,
   dateRange = '30d',
+  reportingPeriod,
   className,
   error,
   onDetailClick,
@@ -137,33 +139,7 @@ export default function AiTrafficCard({
       }));
   }, [promptTracking]);
 
-  // Dynamische Datumsberechnung
-  const formattedDateRange = useMemo(() => {
-    const endDate = new Date();
-    const startDate = new Date();
-
-    switch (dateRange) {
-      case '30d':
-        startDate.setDate(endDate.getDate() - 30);
-        break;
-      case '3m':
-        startDate.setMonth(endDate.getMonth() - 3);
-        break;
-      case '6m':
-        startDate.setMonth(endDate.getMonth() - 6);
-        break;
-      case '12m':
-        startDate.setFullYear(endDate.getFullYear() - 1);
-        break;
-      default:
-        startDate.setDate(endDate.getDate() - 30);
-    }
-
-    const formatDate = (date: Date) =>
-      date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
-    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-  }, [dateRange]);
+  const formattedDateRange = formatReportingPeriod(reportingPeriod);
 
   // Ladezustand
   if (isLoading) {
@@ -241,8 +217,12 @@ export default function AiTrafficCard({
                 <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded text-xs font-semibold">
                   Quelle: GA4
                 </span>
-                <span className="text-faint text-xs">•</span>
-                <span className="text-muted text-xs">{formattedDateRange}</span>
+                {formattedDateRange && (
+                  <>
+                    <span className="text-faint text-xs">•</span>
+                    <span className="text-muted text-xs">{formattedDateRange}</span>
+                  </>
+                )}
               </div>
 
               {/* Top KI-Quellen */}
