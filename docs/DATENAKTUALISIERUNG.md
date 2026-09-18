@@ -1,6 +1,6 @@
 # Datenaktualisierung im DataPeak-Dashboard
 
-Stand: 10. September 2026
+Stand: 18. September 2026
 
 Dieses Dokument beschreibt, wie DataPeak die Dashboard-Daten aus Google Search Console (GSC), Google Analytics 4 (GA4), Google Ads, Sitemaps und Google-Unternehmensprofilen aktualisiert. Es trennt dabei bewusst zwischen dauerhaft gespeicherten Dashboard-Snapshots, der URL-Indexierungsprüfung und den bei Bedarf geladenen, ebenfalls gespeicherten Profilvorschauen.
 
@@ -16,6 +16,8 @@ Ein Projektaufruf soll keine Kette externer Google-API-Anfragen auslösen. Desha
 6. Bei Timeout- oder Quotenfehlern bleibt der letzte funktionierende Snapshot erhalten. Ein permanenter Berechtigungsfehler darf einen klar als teilweise abgedeckt markierten Snapshot der weiterhin funktionierenden Quelle nicht einfrieren.
 
 Fehlt ein Snapshot vollständig, startet die Serverantwort bewusst **keinen** langen GSC-/GA4-Abruf. Das Dashboard zeigt die einheitliche Lade-Lightbox; anschließend übernimmt der Browser-Endpunkt den kontrollierten Erstabruf. Der alle zwölf Stunden laufende Cron bleibt als Rückfall bestehen und erkennt zusätzlich fehlende `30d`-Snapshots. Bereits vorhandene Sonderzeiträume werden bei Nutzung nach ihrer TTL erneuert; ein noch nie gespeicherter Sonderzeitraum wird erst beim ausdrücklichen Öffnen dieses Zeitraums angelegt.
+
+Die Superadmin-Aktion **Aktualisierung vormerken** (`/api/clear-cache`, historischer Pfadname) markiert vorhandene Dashboard-Snapshots über `last_fetched` als fällig, löscht ihre Daten aber nicht. Der letzte gültige Stand bleibt während eines Fehlers oder einer wartenden Synchronisierung sichtbar. Die Aktion markiert alle Projekte und Zeiträume, löst aber keine direkte parallele Google-Abfrage aus. Der Dispatcher legt `30d`-Aufträge im nächsten regulären Lauf an; andere Zeiträume werden beim Öffnen eingereiht. Ein bereits physisch gelöschter Snapshot kann dadurch nicht wiederhergestellt werden und benötigt einen erfolgreichen Neuabruf. Fehlt nur der Snapshot des gewählten Zeitraums, bietet die Lightbox bei vorhandenem anderem Zeitraum einen Wechsel zu diesen gespeicherten Daten an und unterscheidet wartende von fehlgeschlagenen Aufträgen.
 
 ```mermaid
 flowchart LR

@@ -82,7 +82,18 @@ async function loadData(projectId: string, dateRange: string) {
       getProjectIndexingStatus(projectId),
     ]);
 
-    return { projectUser, dashboardData, indexingStatus };
+    const fallbackRange = dashboardData ? null : (await sql<{ date_range: string }>`
+      SELECT date_range
+      FROM google_data_cache
+      WHERE user_id = ${projectId}::uuid
+        AND date_range <> ${dateRange}
+        AND date_range IN ('7d', '30d', '3m', '6m', '12m', '18m', '24m')
+        AND data IS NOT NULL
+      ORDER BY CASE WHEN date_range = '30d' THEN 0 ELSE 1 END, last_fetched DESC
+      LIMIT 1
+    `).rows[0]?.date_range ?? null;
+
+    return { projectUser, dashboardData, indexingStatus, fallbackRange };
   } catch (e) {
     console.error('Error loading project data:', e);
     return null;
@@ -119,7 +130,7 @@ export default async function ProjectPage({
     );
   }
 
-  const { projectUser, dashboardData, indexingStatus } = data;
+  const { projectUser, dashboardData, indexingStatus, fallbackRange } = data;
   const supportEmail = projectUser.assigned_admins || projectUser.creator_email || '';
   const timelineActive = projectUser.project_timeline_active === true;
   const isDataMaxEnabled = projectUser.data_max_enabled !== false;
@@ -156,6 +167,7 @@ export default async function ProjectPage({
           projectId={projectUser.id}
           dateRange={dateRange}
           backgroundOnly={Boolean(dashboardData)}
+          fallbackRange={fallbackRange}
         />
       )}
     </>

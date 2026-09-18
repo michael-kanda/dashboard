@@ -19,6 +19,7 @@ const RANGE_DAYS: Record<string, number> = {
 };
 
 export const GSC_DATA_LAG_DAYS = 2;
+export const INVALIDATED_CACHE_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
 export function getDashboardCacheDurationHours(dateRange: string) {
   return CACHE_TTL_HOURS[dateRange] ?? 48;

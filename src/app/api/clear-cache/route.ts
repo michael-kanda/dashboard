@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
+import { INVALIDATED_CACHE_TIMESTAMP } from '@/lib/sync/cache-policy';
 
 type ClearCacheBody = {
   dateRange?: string;
@@ -46,64 +47,59 @@ export async function POST(request: NextRequest) {
 
     const { dateRange, userId } = body;
 
-    // Fall 1: Keine User ID übergeben -> ALLE User-Caches löschen (Superadmin!)
+    // Vorhandene Snapshots bleiben sichtbar, bis die Synchronisierung neue Daten liefert.
     if (!userId) {
       if (dateRange) {
-        // Nur bestimmten Zeitraum für ALLE löschen
         const result = await sql`
-          DELETE FROM google_data_cache 
+          UPDATE google_data_cache
+          SET last_fetched = ${INVALIDATED_CACHE_TIMESTAMP}::timestamptz
           WHERE date_range = ${dateRange}
         `;
-        console.log(`[Clear Cache] ✅ Cache gelöscht für ALLE User, dateRange: ${dateRange}`);
         return NextResponse.json({ 
           success: true, 
-          message: `Cache für ${dateRange} (alle User) gelöscht`,
+          message: `Daten für ${dateRange} zur Aktualisierung vorgemerkt`,
           cleared: dateRange,
-          rowsDeleted: result.rowCount
+          rowsMarkedStale: result.rowCount
         });
       } else {
-        // ALLES löschen
         const result = await sql`
-          DELETE FROM google_data_cache
+          UPDATE google_data_cache
+          SET last_fetched = ${INVALIDATED_CACHE_TIMESTAMP}::timestamptz
         `;
-        console.log(`[Clear Cache] ✅ GESAMTER Cache gelöscht (alle User)`);
         return NextResponse.json({ 
           success: true, 
-          message: 'Gesamter Cache (alle User) gelöscht',
+          message: 'Alle vorhandenen Daten zur Aktualisierung vorgemerkt',
           cleared: 'all',
-          rowsDeleted: result.rowCount
+          rowsMarkedStale: result.rowCount
         });
       }
     }
 
-    // Fall 2: Spezifischer User
-    console.log(`[Clear Cache] Request für User ${userId}, dateRange: ${dateRange || 'ALL'}`);
-
     if (dateRange) {
       const result = await sql`
-        DELETE FROM google_data_cache 
+        UPDATE google_data_cache
+        SET last_fetched = ${INVALIDATED_CACHE_TIMESTAMP}::timestamptz
         WHERE user_id = ${userId}::uuid AND date_range = ${dateRange}
       `;
-      console.log(`[Clear Cache] ✅ Cache gelöscht für User ${userId}, dateRange: ${dateRange}`);
       return NextResponse.json({ 
         success: true, 
-        message: `Cache für ${dateRange} gelöscht`,
+        message: `Daten für ${dateRange} zur Aktualisierung vorgemerkt`,
         cleared: dateRange,
         userId,
-        rowsDeleted: result.rowCount
+        rowsMarkedStale: result.rowCount
       });
     } else {
       const result = await sql`
-        DELETE FROM google_data_cache 
+        UPDATE google_data_cache
+        SET last_fetched = ${INVALIDATED_CACHE_TIMESTAMP}::timestamptz
         WHERE user_id = ${userId}::uuid
       `;
-      console.log(`[Clear Cache] ✅ Gesamter Cache gelöscht für User ${userId}`);
       return NextResponse.json({ 
         success: true, 
-        message: 'Gesamter Cache gelöscht',
+        message: 'Vorhandene Daten zur Aktualisierung vorgemerkt',
         cleared: 'all',
         userId,
-        rowsDeleted: result.rowCount
+        rowsMarkedStale: result.rowCount
       });
     }
 
@@ -111,7 +107,7 @@ export async function POST(request: NextRequest) {
     console.error('[Clear Cache] CRITICAL Error:', error);
     return NextResponse.json(
       {
-        error: 'Cache konnte nicht geloescht werden',
+        error: 'Daten konnten nicht zur Aktualisierung vorgemerkt werden',
         details: error instanceof Error ? error.message : 'Unbekannter Fehler',
       },
       { status: 500 }

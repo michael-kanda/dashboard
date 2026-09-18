@@ -9,6 +9,8 @@ import {
   deferProjectSyncJob,
   enqueueProjectSyncJob,
   finishProjectSyncJob,
+  PERMANENT_FAILURE_COOLDOWN_HOURS,
+  TRANSIENT_FAILURE_COOLDOWN_HOURS,
   type ProjectSyncFailureKind,
 } from '@/lib/sync/job-queue';
 import { classifyGoogleApiError } from '@/lib/sync/google-api-error';
@@ -30,14 +32,27 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const dateRange = request.nextUrl.searchParams.get('dateRange') ?? '';
   if (!DATE_RANGES.has(dateRange)) return NextResponse.json({}, { status: 400 });
   const { rows } = await sql`
-    SELECT status, run_after, lease_until FROM project_sync_jobs
+    SELECT status, run_after, lease_until, failure_kind, updated_at,
+      EXISTS (
+        SELECT 1 FROM google_data_cache cache
+        WHERE cache.user_id = ${id}::uuid
+          AND cache.date_range = ${dateRange}
+          AND cache.data IS NOT NULL
+      ) AS has_snapshot
+    FROM project_sync_jobs
     WHERE user_id = ${id}::uuid AND job_type = 'dashboard' AND date_range = ${dateRange}
   `;
   const job = rows[0];
   const running = job?.status === 'running' && new Date(job.lease_until).getTime() > Date.now();
+  const failed = job?.status === 'failed';
+  const cooldownHours = job?.failure_kind === 'permanent'
+    ? PERMANENT_FAILURE_COOLDOWN_HOURS
+    : TRANSIENT_FAILURE_COOLDOWN_HOURS;
   return NextResponse.json({
-    status: running ? 'running' : job?.status === 'completed' ? 'ready' : 'scheduled',
-    nextAttemptAt: job?.run_after ?? null,
+    status: running ? 'running' : failed ? 'failed' : job?.status === 'completed' && job.has_snapshot ? 'ready' : 'scheduled',
+    nextAttemptAt: failed
+      ? new Date(new Date(job.updated_at).getTime() + cooldownHours * 3_600_000).toISOString()
+      : job?.run_after ?? null,
   }, { headers: { 'Cache-Control': 'no-store' } });
 }
 

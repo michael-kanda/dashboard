@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  INVALIDATED_CACHE_TIMESTAMP,
   getDashboardCacheDurationHours,
   getReportingWindow,
   isDashboardSnapshotStale,
@@ -45,6 +46,13 @@ test('marks snapshots stale only after their range-specific TTL', () => {
   );
   assert.equal(
     isDashboardSnapshotStale('30d', '2026-08-03T12:00:00.000Z', now),
+    true,
+  );
+});
+
+test('a preserved snapshot can be marked for refresh without removing its data', () => {
+  assert.equal(
+    isDashboardSnapshotStale('30d', INVALIDATED_CACHE_TIMESTAMP, Date.parse('2026-09-18T12:00:00.000Z')),
     true,
   );
 });

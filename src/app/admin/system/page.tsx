@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { 
-  DatabaseCheck, ShieldLock, ArrowRepeat, Trash,
+  DatabaseCheck, ShieldLock, ArrowRepeat,
   CheckCircleFill, XCircleFill, ExclamationTriangleFill,
   HddNetwork, Search, BarChartLine,
   ConeStriped, PersonFillLock, Magic,
@@ -25,7 +25,8 @@ type UserStatus = {
 export default function SystemHealthPage() {
   const [status, setStatus] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isClearingCache, setIsClearingCache] = useState(false);
+  const [isSchedulingRefresh, setIsSchedulingRefresh] = useState(false);
+  const [cacheNotice, setCacheNotice] = useState<string | null>(null);
   
   // --- WARTUNGSMODUS STATE ---
   const [maintenanceUsers, setMaintenanceUsers] = useState<UserStatus[]>([]);
@@ -217,13 +218,18 @@ export default function SystemHealthPage() {
     } catch (e) { alert('Fehler beim Freigeben'); await fetchDataMaxStatus(); }
   };
 
-  const handleClearCache = async () => {
-    if(!confirm("Cache für ALLE User leeren?")) return;
-    setIsClearingCache(true);
+  const handleScheduleRefresh = async () => {
+    if (!confirm('Alle gespeicherten Dashboard-Daten zur Aktualisierung vormerken? Bis zum erfolgreichen Abruf bleiben die bisherigen Daten sichtbar.')) return;
+    setIsSchedulingRefresh(true);
+    setCacheNotice(null);
     try {
-      await fetch('/api/clear-cache', { method: 'POST', body: JSON.stringify({}) });
-      window.location.reload();
-    } catch (e) { alert('Fehler'); } finally { setIsClearingCache(false); }
+      const response = await fetch('/api/clear-cache', { method: 'POST', body: JSON.stringify({}) });
+      if (!response.ok) throw new Error('Aktualisierung konnte nicht vorgemerkt werden.');
+      const result = await response.json();
+      setCacheNotice(`${result.rowsMarkedStale ?? 0} Einträge zur Aktualisierung vorgemerkt.`);
+    } catch (error) {
+      setCacheNotice(error instanceof Error ? error.message : 'Aktualisierung fehlgeschlagen.');
+    } finally { setIsSchedulingRefresh(false); }
   };
 
   const getStatusIcon = (s: string) => {
@@ -583,10 +589,11 @@ export default function SystemHealthPage() {
             </div>
             <div className="flex flex-col items-start justify-between gap-3 rounded-md bg-surface-secondary p-4 sm:flex-row sm:items-center">
               <div><span className="text-sm text-body font-medium">Einträge:</span><span className="ml-2 text-lg font-bold text-heading">{status.cache.count}</span></div>
-              <button onClick={handleClearCache} disabled={isClearingCache} className="flex items-center gap-2 bg-surface border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm disabled:opacity-50">
-                {isClearingCache ? <ArrowRepeat className="animate-spin" /> : <Trash />} Cache leeren
+              <button onClick={handleScheduleRefresh} disabled={isSchedulingRefresh} className="flex items-center gap-2 rounded-md border border-theme-border-subtle bg-surface px-4 py-2.5 text-sm font-medium text-heading shadow-sm hover:bg-surface-secondary disabled:opacity-50">
+                <ArrowRepeat className={isSchedulingRefresh ? 'animate-spin' : undefined} /> Aktualisierung vormerken
               </button>
             </div>
+            {cacheNotice && <p className="mt-3 text-sm text-secondary" role="status">{cacheNotice}</p>}
           </div>
 
         </div>
