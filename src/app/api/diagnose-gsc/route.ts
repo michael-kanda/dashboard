@@ -24,6 +24,11 @@ interface GscDiagnosticRow {
   position?: number;
 }
 
+interface GscSiteEntry {
+  siteUrl: string;
+  permissionLevel: string;
+}
+
 const GEN_AI_SEARCH_APPEARANCE_MATCHERS = [
   'ai overview',
   'ai overviews',
@@ -161,18 +166,28 @@ export async function GET(request: NextRequest) {
     const searchconsole = google.searchconsole({ version: 'v1', auth: authClient });
     
     let availableSites: string[] = [];
+    let availableSiteEntries: GscSiteEntry[] = [];
     try {
       const sitesResponse = await searchconsole.sites.list();
-      availableSites = sitesResponse.data.siteEntry?.map(s => s.siteUrl || '') || [];
+      availableSiteEntries = (sitesResponse.data.siteEntry || [])
+        .filter((site) => Boolean(site.siteUrl))
+        .map((site) => ({
+          siteUrl: site.siteUrl || '',
+          permissionLevel: site.permissionLevel || 'siteUnverifiedUser',
+        }));
+      availableSites = availableSiteEntries.map((site) => site.siteUrl);
+      const accessibleSiteCount = availableSiteEntries.filter(
+        (site) => site.permissionLevel !== 'siteUnverifiedUser',
+      ).length;
       
       results.push({
         step: '3. GSC Sites Liste',
-        status: availableSites.length > 0 ? 'ok' : 'warning',
+        status: accessibleSiteCount > 0 ? 'ok' : 'warning',
         message: availableSites.length > 0 
-          ? `${availableSites.length} Sites gefunden` 
+          ? `${availableSites.length} Sites gefunden, ${accessibleSiteCount} mit Datenzugriff`
           : '⚠️ Keine Sites gefunden - Service Account hat keinen Zugriff!',
         details: {
-          sites: availableSites,
+          sites: availableSiteEntries,
           hint: availableSites.length === 0 
             ? `Füge "${serviceEmail}" als Nutzer in der GSC hinzu!`
             : null
@@ -261,13 +276,19 @@ export async function GET(request: NextRequest) {
           // ==========================================
           // SCHRITT 6: Zugriff auf diese spezifische Site prüfen
           // ==========================================
-          const hasAccessToSite = availableSites.includes(gscUrl);
+          const requestedSiteEntry = availableSiteEntries.find((site) => site.siteUrl === gscUrl);
+          const hasAccessToSite = Boolean(
+            requestedSiteEntry && requestedSiteEntry.permissionLevel !== 'siteUnverifiedUser',
+          );
           let compatibleDomainProperty: string | null = null;
           if (!hasAccessToSite && isUrlPrefix) {
             try {
               const hostname = new URL(gscUrl).hostname.replace(/^www\./, '');
               const candidate = `sc-domain:${hostname}`;
-              compatibleDomainProperty = availableSites.includes(candidate) ? candidate : null;
+              const domainEntry = availableSiteEntries.find((site) => site.siteUrl === candidate);
+              compatibleDomainProperty = domainEntry && domainEntry.permissionLevel !== 'siteUnverifiedUser'
+                ? candidate
+                : null;
             } catch {
               compatibleDomainProperty = null;
             }
@@ -283,6 +304,7 @@ export async function GET(request: NextRequest) {
                 : '❌ Service Account hat KEINEN Zugriff auf diese Site!',
             details: {
               requestedSite: gscUrl,
+              requestedPermissionLevel: requestedSiteEntry?.permissionLevel ?? null,
               availableSites: availableSites,
               compatibleDomainProperty,
               solution: hasAccessToSite ? null : `
