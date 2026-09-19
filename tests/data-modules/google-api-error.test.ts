@@ -16,6 +16,15 @@ test('classifies permission messages even when only a string was retained', () =
   assert.equal(result.blocksSnapshotWrite, false);
 });
 
+test('classifies the exact Search Console sufficient-permission message as permanent', () => {
+  const result = classifyGoogleApiError(
+    "User does not have sufficient permission for site 'https://anwalt-hofer.at/'.",
+  );
+  assert.equal(result.kind, 'permanent');
+  assert.equal(result.retryable, false);
+  assert.equal(result.blocksSnapshotWrite, false);
+});
+
 test('preserves the HTTP status for project-level access decisions', () => {
   const result = classifyGoogleApiError({ response: { status: 403 } });
   assert.equal(result.kind, 'permanent');

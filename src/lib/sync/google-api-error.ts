@@ -88,6 +88,7 @@ export function classifyGoogleApiError(error: unknown): ClassifiedGoogleApiError
     || (reason !== null && PERMANENT_REASONS.has(reason))
     || haystack.includes('permission denied')
     || haystack.includes('insufficient permission')
+    || haystack.includes('does not have sufficient permission')
     || haystack.includes('forbidden')
     || haystack.includes('unauthorized')
     || haystack.includes('not found')

@@ -42,14 +42,15 @@ export async function syncDashboardProjectSnapshot(
     const raw = data.apiErrors?.[source];
     return raw ? [{ source: source.toUpperCase(), raw, classified: classifyGoogleApiError(raw) }] : [];
   });
-  if (failures.length > 0) {
-    const kind = failures.some(({ classified }) => classified.kind !== 'permanent')
+  const blockingFailures = failures.filter(({ classified }) => classified.blocksSnapshotWrite);
+  if (blockingFailures.length > 0) {
+    const kind = blockingFailures.some(({ classified }) => classified.kind !== 'permanent')
       ? 'transient'
       : 'permanent';
     throw new DashboardSourceError(
-      failures.map(({ source, classified }) => `${source}: ${classified.message}`).join(' | '),
+      blockingFailures.map(({ source, classified }) => `${source}: ${classified.message}`).join(' | '),
       kind,
-      failures.map(({ source }) => source),
+      blockingFailures.map(({ source }) => source),
     );
   }
 

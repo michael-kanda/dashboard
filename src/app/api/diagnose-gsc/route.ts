@@ -261,27 +261,37 @@ export async function GET(request: NextRequest) {
           // ==========================================
           // SCHRITT 6: Zugriff auf diese spezifische Site prüfen
           // ==========================================
-          const hasAccessToSite = availableSites.some(site => 
-            site === gscUrl || 
-            site.includes(gscUrl.replace('sc-domain:', '')) ||
-            gscUrl.includes(site.replace('sc-domain:', '').replace('https://', '').replace('http://', ''))
-          );
+          const hasAccessToSite = availableSites.includes(gscUrl);
+          let compatibleDomainProperty: string | null = null;
+          if (!hasAccessToSite && isUrlPrefix) {
+            try {
+              const hostname = new URL(gscUrl).hostname.replace(/^www\./, '');
+              const candidate = `sc-domain:${hostname}`;
+              compatibleDomainProperty = availableSites.includes(candidate) ? candidate : null;
+            } catch {
+              compatibleDomainProperty = null;
+            }
+          }
 
           results.push({
             step: '6. Site-Zugriff',
-            status: hasAccessToSite ? 'ok' : 'error',
+            status: hasAccessToSite ? 'ok' : compatibleDomainProperty ? 'warning' : 'error',
             message: hasAccessToSite 
               ? '✅ Service Account hat Zugriff auf diese Site'
-              : '❌ Service Account hat KEINEN Zugriff auf diese Site!',
+              : compatibleDomainProperty
+                ? `⚠️ Kein Zugriff auf die konfigurierte Property; verfügbar ist ${compatibleDomainProperty}`
+                : '❌ Service Account hat KEINEN Zugriff auf diese Site!',
             details: {
               requestedSite: gscUrl,
               availableSites: availableSites,
+              compatibleDomainProperty,
               solution: hasAccessToSite ? null : `
                 1. Gehe zu: https://search.google.com/search-console
                 2. Wähle die Property: ${gscUrl}
                 3. Einstellungen > Nutzer und Berechtigungen
                 4. Füge hinzu: ${serviceEmail}
                 5. Berechtigung: "Vollständig" oder "Eingeschränkt"
+                ${compatibleDomainProperty ? `Alternativ: Hinterlege im Projekt exakt "${compatibleDomainProperty}".` : ''}
               `
             }
           });

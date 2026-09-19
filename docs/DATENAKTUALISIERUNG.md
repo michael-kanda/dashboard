@@ -70,6 +70,8 @@ Google-API-Fehler werden fachlich in `transient`, `quota`, `permanent` und `unkn
 - Beim Projekt ist `gsc_site_url` hinterlegt.
 - Der DataPeak-Service-Account besitzt Zugriff auf die zugehörige Search-Console-Property.
 
+`gsc_site_url` muss die Property exakt so bezeichnen, wie sie dem Service-Account in Search Console freigegeben ist. `https://example.com/` und `sc-domain:example.com` sind unterschiedliche Properties und werden nicht automatisch gleichgesetzt. Die Admin-Diagnose `/api/diagnose-gsc?userId=...` zeigt die verwendete Service-Account-Adresse, die verfügbaren Properties und gegebenenfalls eine passende Domain-Property als Konfigurationshinweis.
+
 ### Welche Daten werden geladen?
 
 Der normale Dashboard-Snapshot und die GSC-Historie verwenden dasselbe Berichtsfenster. Es endet zwei Tage vor dem aktuellen Datum, damit verzögert eintreffende Search-Console-Werte nicht als künstlicher Einbruch erscheinen. Der Snapshot enthält unter anderem:
@@ -112,7 +114,7 @@ Die Historie liegt getrennt vom Dashboard-Snapshot in `gsc_daily_data`, `landing
 
 ### Fehlerverhalten
 
-Bei transienten GSC-Fehlern oder ausgeschöpfter Quote schreibt DataPeak keinen unvollständigen neuen Dashboard-Snapshot. Bei einem permanenten Berechtigungs- oder Konfigurationsfehler kann die weiterhin funktionierende GA4-Quelle als Teil-Snapshot gespeichert werden; die betroffenen Kennzahlen werden über ihre Metadaten als teilweise oder nicht verfügbar ausgewiesen.
+Bei transienten GSC-Fehlern oder ausgeschöpfter Quote schreibt DataPeak keinen unvollständigen neuen Dashboard-Snapshot. Bei einem permanenten Berechtigungs- oder Konfigurationsfehler kann die weiterhin funktionierende GA4-Quelle als Teil-Snapshot gespeichert werden; die betroffenen Kennzahlen werden über ihre Metadaten als teilweise oder nicht verfügbar ausgewiesen. Dazu zählt auch Googles Fehlertext `User does not have sufficient permission for site ...`; dieser Zustand wird nicht erneut versucht, bis Berechtigung oder Property-Konfiguration korrigiert wurde.
 
 ## 3. GA4-Daten
 
