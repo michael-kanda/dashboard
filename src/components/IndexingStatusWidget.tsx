@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   CheckCircle2,
+  ChevronDown,
   Clock3,
   Download,
   ExternalLink,
@@ -706,7 +707,20 @@ export default function IndexingStatusWidget({
       </div>
 
       {data.configured && (
-        <div className="border-t border-[var(--indexing-line)]">
+        <details className="group border-t border-[var(--indexing-line)]">
+          <summary className="indexing-coverage-rail__table-header flex min-h-12 list-none items-center justify-between gap-4 px-5 py-3 text-left transition-colors hover:bg-surface-secondary [&::-webkit-details-marker]:hidden">
+            <span>
+              <span className="block text-xs font-medium text-heading">URL-Details</span>
+              <span className="mt-0.5 block text-[10px] text-muted">
+                {filteredRows.length} von {data.totalUrls} URLs anzeigen
+              </span>
+            </span>
+            <ChevronDown
+              size={16}
+              className="shrink-0 text-muted transition-transform duration-200 group-open:rotate-180"
+              aria-hidden="true"
+            />
+          </summary>
           <div className="max-h-[520px] overflow-auto">
             <table className="w-full min-w-[940px] border-collapse text-left">
               <thead className="indexing-coverage-rail__table-header sticky top-0 z-10">
@@ -764,7 +778,7 @@ export default function IndexingStatusWidget({
             <span>{filteredRows.length} von {data.totalUrls} URLs</span>
             <span>Letzter Abgleich: {formatDate(data.lastSyncedAt, true)}</span>
           </div>
-        </div>
+        </details>
       )}
     </section>
   );
