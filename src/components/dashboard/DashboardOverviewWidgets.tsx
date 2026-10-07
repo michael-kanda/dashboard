@@ -70,6 +70,7 @@ export default function DashboardOverviewWidgets({
               allChartData={model.allChartData}
               apiErrors={model.errors}
               dateRange={dateRange}
+              reportingPeriod={model.reportingPeriod}
             />
           )}
         </div>
@@ -82,6 +83,7 @@ export default function DashboardOverviewWidgets({
             onKpiChange={(kpi) => onActiveKpiChange(kpi as ActiveKpi)}
             allChartData={model.allChartData}
             weatherData={data.weatherData}
+            reportingPeriod={model.reportingPeriod}
           />
         </div>
       )}
@@ -92,6 +94,7 @@ export default function DashboardOverviewWidgets({
             data={model.modules.localSeo.data.report}
             projectId={projectId}
             userRole={userRole}
+            reportingPeriod={model.reportingPeriod}
           />
         </div>
       )}

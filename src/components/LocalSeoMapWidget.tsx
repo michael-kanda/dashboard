@@ -5,11 +5,13 @@ import type { PointerEvent } from 'react';
 import type { LocalSeoData, LocalSeoLocationData } from '@/lib/dashboard-shared';
 import austriaGeoJson from '@/data/austria-bundeslaender.json';
 import GoogleCleanUnderline from '@/components/ui/GoogleCleanUnderline';
+import { formatReportingPeriod, type ReportingPeriod } from '@/lib/reporting-period';
 
 interface LocalSeoMapWidgetProps {
   data?: LocalSeoData;
   projectId?: string;
   userRole?: string;
+  reportingPeriod?: ReportingPeriod;
 }
 
 type GooglePlacePreview = {
@@ -327,8 +329,14 @@ function svgPointToPercent(point: { x: number; y: number }) {
   };
 }
 
-export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSeoMapWidgetProps) {
+export default function LocalSeoMapWidget({
+  data,
+  projectId,
+  userRole,
+  reportingPeriod,
+}: LocalSeoMapWidgetProps) {
   const locations = data?.locations || [];
+  const reportingPeriodLabel = formatReportingPeriod(reportingPeriod);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [displayLocations, setDisplayLocations] = useState<LocalSeoLocationData[]>(locations);
   const [selectedId, setSelectedId] = useState<string | undefined>(locations[0]?.id);
@@ -520,6 +528,17 @@ export default function LocalSeoMapWidget({ data, projectId, userRole }: LocalSe
         <div>
           <h3 className="text-lg font-semibold text-heading">Lokale Sichtbarkeit</h3>
           <GoogleCleanUnderline id="google-clean-gradient-local-seo" />
+          <div className="mt-2 flex items-center gap-2 text-xs text-muted">
+            <span className="rounded bg-surface-tertiary px-1.5 py-0.5 font-medium text-secondary">
+              Quelle: GSC + GA4
+            </span>
+            {reportingPeriodLabel && (
+              <>
+                <span className="text-faint">•</span>
+                <span>{reportingPeriodLabel}</span>
+              </>
+            )}
+          </div>
           <p className="mt-1 text-sm text-muted">
             Standort-Auswertung aus GSC-Queries, Standort-Landingpages und GA4-Stadt-Daten.
           </p>

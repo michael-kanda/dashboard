@@ -19,21 +19,22 @@ import { ArrowLeftRight, CalendarEvent, Filter } from 'react-bootstrap-icons';
 import { cn } from '@/lib/utils';
 import { buildHolidayMap, type HolidayInfo } from '@/lib/holidays';
 import type { DailyWeather, WeatherIcon } from '@/lib/weather';
+import { formatReportingPeriod, type ReportingPeriod } from '@/lib/reporting-period';
 
 // --- KONFIGURATION ---
-const KPI_CONFIG: Record<string, { label: string; color: string; gradientId: string }> = {
-  impressions: { label: 'Impressionen', color: '#8b5cf6', gradientId: 'gradPurple' }, 
-  clicks: { label: 'Google Klicks', color: '#3b82f6', gradientId: 'gradBlue' },       
-  newUsers: { label: 'Neue Besucher', color: '#6366f1', gradientId: 'gradIndigo' }, 
-  totalUsers: { label: 'Besucher', color: '#0ea5e9', gradientId: 'gradSky' },     
-  sessions: { label: 'Sessions', color: '#06b6d4', gradientId: 'gradCyan' },       
-  aiTraffic: { label: 'KI-Traffic', color: '#7c3aed', gradientId: 'gradAi' },
-  genAiImpressions: { label: 'Google GenAI', color: '#4285f4', gradientId: 'gradGoogleGenAi' },
-  engagementRate: { label: 'Interaktionsrate', color: '#ec4899', gradientId: 'gradPink' },
-  conversions: { label: 'Conversions', color: '#10b981', gradientId: 'gradEmerald' },   
-  avgEngagementTime: { label: 'Ø Verweildauer', color: '#f59e0b', gradientId: 'gradAmber' },
-  bounceRate: { label: 'Absprungrate', color: '#f43f5e', gradientId: 'gradRose' },
-  paidSearch: { label: 'Paid Search', color: '#14b8a6', gradientId: 'gradTeal' },
+const KPI_CONFIG: Record<string, { label: string; color: string; gradientId: string; source: string }> = {
+  impressions: { label: 'Impressionen', color: '#8b5cf6', gradientId: 'gradPurple', source: 'GSC' },
+  clicks: { label: 'Google Klicks', color: '#3b82f6', gradientId: 'gradBlue', source: 'GSC' },
+  newUsers: { label: 'Neue Besucher', color: '#6366f1', gradientId: 'gradIndigo', source: 'GA4' },
+  totalUsers: { label: 'Besucher', color: '#0ea5e9', gradientId: 'gradSky', source: 'GA4' },
+  sessions: { label: 'Sessions', color: '#06b6d4', gradientId: 'gradCyan', source: 'GA4' },
+  aiTraffic: { label: 'KI-Traffic', color: '#7c3aed', gradientId: 'gradAi', source: 'GA4' },
+  genAiImpressions: { label: 'Google GenAI', color: '#4285f4', gradientId: 'gradGoogleGenAi', source: 'Search Console' },
+  engagementRate: { label: 'Interaktionsrate', color: '#ec4899', gradientId: 'gradPink', source: 'GA4' },
+  conversions: { label: 'Conversions', color: '#10b981', gradientId: 'gradEmerald', source: 'GA4' },
+  avgEngagementTime: { label: 'Ø Verweildauer', color: '#f59e0b', gradientId: 'gradAmber', source: 'GA4' },
+  bounceRate: { label: 'Absprungrate', color: '#f43f5e', gradientId: 'gradRose', source: 'GA4' },
+  paidSearch: { label: 'Paid Search', color: '#14b8a6', gradientId: 'gradTeal', source: 'GA4' },
 };
 
 const WEEKDAY_SHORT: Record<number, string> = {
@@ -125,6 +126,7 @@ interface KpiTrendChartProps {
   onKpiChange: (kpi: string) => void;
   allChartData?: Record<string, ChartPoint[]>;
   weatherData?: Record<string, DailyWeather>;
+  reportingPeriod?: ReportingPeriod;
   isLoading?: boolean;
   className?: string;
 }
@@ -220,6 +222,7 @@ export default function KpiTrendChart({
   onKpiChange,
   allChartData,
   weatherData,
+  reportingPeriod,
   isLoading,
   className
 }: KpiTrendChartProps) {
@@ -270,6 +273,7 @@ export default function KpiTrendChart({
 
   const activeConfig = KPI_CONFIG[activeKpi] || KPI_CONFIG['sessions'];
   const compareConfig = compareKpi !== 'none' ? KPI_CONFIG[compareKpi] : null;
+  const reportingPeriodLabel = formatReportingPeriod(reportingPeriod);
 
   const formatYAxis = (val: number, kpiContext: string) => {
     if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
@@ -321,6 +325,17 @@ export default function KpiTrendChart({
               </defs>
               <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-verlauf)" />
             </svg>
+          </div>
+          <div className="mt-2 flex items-center gap-2 text-xs text-muted">
+            <span className="rounded bg-surface-tertiary px-1.5 py-0.5 font-medium text-secondary">
+              Quelle: {activeConfig.source}
+            </span>
+            {reportingPeriodLabel && (
+              <>
+                <span className="text-faint">•</span>
+                <span>{reportingPeriodLabel}</span>
+              </>
+            )}
           </div>
         </div>
 
