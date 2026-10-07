@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import TableauKpiCard from './tableau-kpi-card';
-import GoogleCleanUnderline from '@/components/ui/GoogleCleanUnderline';
 import type { DateRangeOption } from '@/components/DateRangeSelector';
 import { getRangeLabel } from '@/components/DateRangeSelector';
 import type { ApiErrorStatus, ChartPoint, KpiDatum } from '@/lib/dashboard-shared';
@@ -41,7 +40,7 @@ function KpiSectionHeader({
   rangeLabel: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-y border-border-subtle bg-surface-secondary px-4 py-3 sm:px-6">
+    <div className="kpi-quiet-grid__section flex items-center justify-between gap-4 border-y px-4 py-[13px] sm:px-6">
       <div className="flex min-w-0 items-center gap-3">
         <span className="text-[11px] font-medium text-faint">{index}</span>
         <h3 className="truncate text-sm font-semibold text-heading">{title}</h3>
@@ -79,7 +78,7 @@ export default function TableauKpiGrid({
   const gscError = apiErrors?.gsc;
   const ga4Error = apiErrors?.ga4;
   const rangeLabel = getRangeLabel(dateRange as DateRangeOption);
-  const formatPercent = (value: number) => `${value.toFixed(1)} %`;
+  const formatPercent = (value: number) => `${value.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
   const formatTime = (value: number) => `${Math.floor(value / 60)}m ${Math.floor(value % 60)}s`;
   const getComparison = (kpi: KpiDatum) => {
     if (!Number.isFinite(kpi.value) || !Number.isFinite(kpi.change)) return undefined;
@@ -88,20 +87,25 @@ export default function TableauKpiGrid({
   };
 
   return (
-    <section className="dashboard-widget-surface rounded-lg">
-      <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
+    <section className="dashboard-widget-surface kpi-quiet-grid rounded-lg">
+      <div className="flex flex-col gap-3 px-4 pb-[18px] pt-[22px] sm:flex-row sm:items-start sm:justify-between sm:px-6">
         <div>
           <p className="text-[11px] font-medium uppercase text-faint">Performance Dashboard</p>
-          <h2 className="text-lg font-semibold text-heading">Kennzahlen im Überblick</h2>
-          <GoogleCleanUnderline id="google-clean-gradient-kpi-grid" />
+          <h2 className="text-[17px] font-medium text-heading">Kennzahlen im Überblick</h2>
+          <div className="mt-[7px] flex h-1 w-[152px] overflow-hidden rounded-sm" aria-hidden="true">
+            <span className="w-1/4 bg-[#4285F4]" />
+            <span className="w-1/4 bg-[#EA4335]" />
+            <span className="w-1/4 bg-[#FBBC05]" />
+            <span className="w-1/4 bg-[#34A853]" />
+          </div>
         </div>
-        <p className="text-xs text-muted sm:pt-1">
+        <p className="whitespace-nowrap text-xs text-muted sm:pt-1">
           Quelle: GSC + GA4{dateSubtitle ? ` · ${dateSubtitle}` : ''}
         </p>
       </div>
 
       <KpiSectionHeader index="01" title="Traffic & Reichweite" rangeLabel={rangeLabel} />
-      <div className="grid grid-cols-1 gap-px bg-border-subtle sm:grid-cols-2 lg:grid-cols-4">
+      <div className="kpi-quiet-grid__metrics grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <TableauKpiCard
           title="Impressionen"
           description="Wie oft Ihre Website in den Google-Suchergebnissen gesehen wurde."
@@ -155,7 +159,7 @@ export default function TableauKpiGrid({
       </div>
 
       <KpiSectionHeader index="02" title="Qualität & Interaktion" rangeLabel={rangeLabel} />
-      <div className="grid grid-cols-1 gap-px bg-border-subtle sm:grid-cols-2 lg:grid-cols-4">
+      <div className="kpi-quiet-grid__metrics grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.engagementRate ? (
           <TableauKpiCard
             title="Interaktionsrate"

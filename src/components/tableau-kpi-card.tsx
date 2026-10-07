@@ -38,6 +38,10 @@ export default function TableauKpiCard({
   source,
 }: TableauKpiCardProps) {
   const isPositive = change !== undefined && change >= 0;
+  const formattedChange = change?.toLocaleString('de-DE', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
   const previousValue = comparison ? formatValue(comparison.previous) : null;
 
   const yDomain = useMemo(() => {
@@ -60,7 +64,7 @@ export default function TableauKpiCard({
 
   if (isLoading) {
     return (
-      <div className={`flex min-h-[184px] flex-col bg-surface p-4 sm:p-5 ${className}`}>
+      <div className={`kpi-quiet-grid__metric flex flex-col ${className}`}>
         <div className="animate-pulse space-y-4">
           <div className="h-3 w-2/5 rounded bg-surface-tertiary" />
           <div className="h-8 w-3/5 rounded bg-surface-tertiary" />
@@ -72,7 +76,7 @@ export default function TableauKpiCard({
   }
 
   return (
-    <article className={`relative flex min-h-[184px] flex-col bg-surface p-4 sm:p-5 ${className}`}>
+    <article className={`kpi-quiet-grid__metric relative flex flex-col ${className}`}>
       <div className="flex min-h-6 items-center gap-2 text-xs text-muted">
         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
         <h4 className="font-medium text-body">{title}</h4>
@@ -96,18 +100,18 @@ export default function TableauKpiCard({
         </div>
       ) : (
         <>
-          <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <strong className="text-2xl font-semibold leading-tight text-heading tabular-nums sm:text-[1.7rem]">
+          <div className="mt-[11px] flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <strong className="text-[27px] font-medium leading-[1.15] text-heading tabular-nums">
               {formatValue(value)}
             </strong>
             {change !== undefined ? (
               <span className={`text-xs font-semibold tabular-nums ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                {isPositive ? '+' : ''}{change.toFixed(1)} %
+                {isPositive ? '+' : ''}{formattedChange} %
               </span>
             ) : null}
           </div>
 
-          <div className="mt-3 h-10 min-h-10 opacity-90">
+          <div className="mt-[17px] h-8 min-h-8 opacity-90">
             {data && data.length > 1 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data} margin={{ top: 3, right: 2, bottom: 3, left: 2 }}>
@@ -132,7 +136,7 @@ export default function TableauKpiCard({
         </>
       )}
 
-      <div className="mt-auto flex items-center justify-between gap-3 pt-2 text-[11px] text-faint">
+      <div className="mt-2 flex items-center justify-between gap-3 text-xs text-faint">
         <span className="truncate tabular-nums">
           {previousValue ? `Vorher ${previousValue}` : 'Kein Vergleichswert'}
         </span>

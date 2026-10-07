@@ -100,6 +100,60 @@
       0 12px 30px rgba(0, 0, 0, 0.34);
   }
 
+  .dashboard-widget-surface.kpi-quiet-grid {
+    --kpi-grid-panel: #ffffff;
+    --kpi-grid-section: #f8fafc;
+    --kpi-grid-line: #e4e7ec;
+    background: var(--kpi-grid-panel) !important;
+    border: 1px solid var(--kpi-grid-line) !important;
+    box-shadow: 0 12px 34px rgba(16, 24, 40, 0.07);
+    overflow: hidden;
+  }
+
+  .kpi-quiet-grid__section {
+    background: var(--kpi-grid-section);
+    border-color: var(--kpi-grid-line);
+  }
+
+  .kpi-quiet-grid__metric {
+    min-height: 190px;
+    padding: 20px 20px 17px;
+    background: var(--kpi-grid-panel);
+    border-bottom: 1px solid var(--kpi-grid-line);
+  }
+
+  .kpi-quiet-grid__metrics > .kpi-quiet-grid__metric:last-child {
+    border-bottom: 0;
+  }
+
+  @media (min-width: 640px) {
+    .kpi-quiet-grid__metric:nth-child(odd) {
+      border-right: 1px solid var(--kpi-grid-line);
+    }
+
+    .kpi-quiet-grid__metric:nth-last-child(-n + 2) {
+      border-bottom: 0;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .kpi-quiet-grid__metric {
+      border-right: 1px solid var(--kpi-grid-line);
+      border-bottom: 0;
+    }
+
+    .kpi-quiet-grid__metric:last-child {
+      border-right: 0;
+    }
+  }
+
+  .dark .dashboard-widget-surface.kpi-quiet-grid {
+    --kpi-grid-panel: #171d27;
+    --kpi-grid-section: #202733;
+    --kpi-grid-line: #303947;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24);
+  }
+
   /* ── Clean administration surfaces ─────────────────────── */
   .admin-clean {
     color: var(--dp-text-body);
