@@ -32,7 +32,7 @@ interface IndexingStatusWidgetProps {
 
 function GoogleUnderline() {
   return (
-    <div className="mt-1 flex h-1.5 w-[220px] overflow-hidden rounded-full" aria-hidden="true">
+    <div className="mt-2.5 flex h-1 w-[152px] overflow-hidden rounded-full" aria-hidden="true">
       <span className="w-1/4 bg-[#4285F4]" />
       <span className="w-1/4 bg-[#EA4335]" />
       <span className="w-1/4 bg-[#FBBC05]" />
@@ -162,6 +162,9 @@ export default function IndexingStatusWidget({
   const indexShare = data.verifiedUrls > 0
     ? Math.round((data.indexedUrls / data.verifiedUrls) * 100)
     : 0;
+  const indexedWidth = data.totalUrls > 0 ? (data.indexedUrls / data.totalUrls) * 100 : 0;
+  const notIndexedWidth = data.totalUrls > 0 ? (data.notIndexedUrls / data.totalUrls) * 100 : 0;
+  const pendingWidth = data.totalUrls > 0 ? (data.pendingUrls / data.totalUrls) * 100 : 0;
   const showSyncProgress = isSyncing || data.status === 'running';
   const runProgressTotal = Math.max(data.progressTotal, data.progressDueTotal);
   const runProgress = runProgressTotal > 0
@@ -173,6 +176,13 @@ export default function IndexingStatusWidget({
       : showSyncProgress
         ? 'Prüfung läuft…'
         : 'Jetzt prüfen';
+  const hasCoverageNotices = (
+    (data.totalUrls > 0 && !data.isVerificationComplete)
+    || data.staleUrls > 0
+    || Boolean(data.warningMessage)
+    || (showExcludedUrls && data.excludedUrls.length > 0)
+    || Boolean(syncError || data.errorMessage)
+  );
 
   useEffect(() => {
     if (!showSyncProgress) return;
@@ -320,51 +330,47 @@ export default function IndexingStatusWidget({
     { value: 'error', label: 'Fehler', count: data.rows.filter((row) => row.status === 'error').length },
     { value: 'canonical', label: 'Canonical', count: data.rows.filter((row) => row.hasCanonicalIssue).length },
   ];
-  const summaryItems = [
+  const primaryFilters = filters.filter((item) => ['all', 'indexed', 'action'].includes(item.value));
+  const secondaryFilters = filters.filter((item) => !['all', 'indexed', 'action'].includes(item.value));
+  const secondaryFilterValue = secondaryFilters.some((item) => item.value === filter) ? filter : '';
+  const coverageMetrics: Array<{
+    label: string;
+    value: number;
+    description: string;
+    showsDetails?: boolean;
+    filter?: FilterValue;
+  }> = [
     {
-      label: 'Sitemap-Einträge',
+      label: 'Sitemap',
       value: data.sitemapEntryCount,
-      description: 'Alle Einträge der erkannten Sitemap.',
+      description: 'Erkannte Einträge',
     },
     {
       label: 'Relevante Seiten',
       value: data.totalUrls,
-      description: 'Für die Indexierungsprüfung berücksichtigt.',
+      description: 'Für die Prüfung',
     },
     {
-      label: 'Technisch ausgeschlossen',
+      label: 'Ausgeschlossen',
       value: data.excludedUrlCount,
-      description: 'Feeds, Trackbacks und System-URLs.',
+      description: 'Technische URLs',
       showsDetails: true,
-    },
-    {
-      label: 'Indexiert',
-      value: data.indexedUrls,
-      description: 'Von Google geprüft und im Suchindex.',
-    },
-    {
-      label: 'Nicht indexiert',
-      value: data.notIndexedUrls,
-      description: 'Nicht im Google-Index, unabhängig von der Ursache.',
-    },
-    {
-      label: 'Beabsichtigt',
-      value: data.intentionalUrls,
-      description: 'noindex, Weiterleitung oder alternative Seite mit Canonical.',
     },
     {
       label: 'Handlungsbedarf',
       value: data.issueUrls,
-      description: 'Nur ungewollte Ausschlüsse, Prüffehler und Canonical-Konflikte.',
+      description: 'Ungewollte Probleme',
+      filter: 'action' as const,
     },
   ];
 
   return (
-    <section className="dashboard-widget-surface overflow-hidden rounded-lg">
-      <div className="p-5 sm:p-6">
+    <section className="dashboard-widget-surface indexing-coverage-rail overflow-hidden rounded-lg">
+      <div className="px-5 pb-[18px] pt-[22px] sm:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-heading">Indexierungsstatus</h2>
+            <p className="text-[10px] font-semibold uppercase text-muted">Google Index</p>
+            <h2 className="mt-1 text-[17px] font-medium text-heading">Indexierungsstatus</h2>
             <GoogleUnderline />
             <div className="mt-2 flex items-center gap-1.5">
               <p className="text-sm text-body">Sitemap und Google-Index im direkten Abgleich.</p>
@@ -380,7 +386,7 @@ export default function IndexingStatusWidget({
             </div>
             {data.lastSyncedAt && (
               <p className="mt-1 text-[11px] text-muted">
-                Stand: {formatDate(data.lastSyncedAt, true)} Uhr
+                Stand: {formatDate(data.lastSyncedAt, true)} Uhr · GSC-Leistung: {data.performanceRange.toLocaleLowerCase('de-DE')}
               </p>
             )}
             {showDataInfo && (
@@ -407,7 +413,7 @@ export default function IndexingStatusWidget({
             )}
           </div>
           {data.configured && (
-            <div className="flex min-w-[240px] flex-col items-stretch gap-2">
+            <div className="flex min-w-[220px] flex-col items-stretch gap-2">
               <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                 <button
                   type="button"
@@ -430,15 +436,11 @@ export default function IndexingStatusWidget({
                   </button>
                 )}
               </div>
-              <div
-                aria-live="polite"
-                className={`min-h-[38px] w-full rounded-md border px-3 py-2 transition-opacity ${
-                  showSyncProgress
-                    ? 'border-[#4285F4]/30 bg-[#4285F4]/5 opacity-100'
-                    : 'pointer-events-none border-transparent opacity-0'
-                }`}
-              >
-                {showSyncProgress && (
+              {showSyncProgress && (
+                <div
+                  aria-live="polite"
+                  className="w-full rounded-md border border-[#4285F4]/30 bg-[#4285F4]/5 px-3 py-2"
+                >
                   <>
                     <p className="text-left text-xs font-semibold text-body">
                       {getSyncProgressLabel(data)}
@@ -452,8 +454,8 @@ export default function IndexingStatusWidget({
                       </div>
                     )}
                   </>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -467,6 +469,149 @@ export default function IndexingStatusWidget({
             {data.status === 'idle' && data.totalUrls === 0 && (
               <div className="mt-5 rounded-md border border-dashed border-border-subtle p-4 text-sm text-body">
                 Der erste Abgleich ist vorgemerkt. Bis Sitemap, GSC-Daten und URL-Prüfungen verarbeitet wurden, werden keine Nullwerte als Ergebnis ausgewiesen.
+              </div>
+            )}
+
+            {(data.sitemapEntryCount > 0 || data.totalUrls > 0) && (
+              <div className={`indexing-coverage-rail__layout -mx-5 mt-5 sm:-mx-6 ${hasCoverageNotices ? '' : '-mb-[18px]'}`}>
+                <aside className="indexing-coverage-rail__score">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase text-muted">Indexabdeckung</p>
+                    <p className="mt-2 text-[46px] font-medium leading-none tabular-nums text-heading">
+                      {indexShare}%
+                    </p>
+                    <p className="mt-2.5 text-[11px] leading-[17px] text-muted">
+                      {data.isVerificationComplete
+                        ? `${data.indexedUrls} von ${data.totalUrls} relevanten URLs sind im Google-Index.`
+                        : `${data.indexedUrls} von ${data.verifiedUrls} erfolgreich geprüften URLs sind indexiert.`}
+                    </p>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--indexing-muted)]">
+                      <div
+                        className="h-full rounded-full bg-[#34A853] transition-[width]"
+                        style={{ width: `${indexShare}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 space-y-2.5 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => setFilter('indexed')}
+                      className="flex w-full items-center justify-between gap-3 text-left text-muted hover:text-heading"
+                    >
+                      <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#34A853]" />Indexiert</span>
+                      <strong className="font-medium tabular-nums text-heading">{data.indexedUrls}</strong>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFilter('not_indexed')}
+                      className="flex w-full items-center justify-between gap-3 text-left text-muted hover:text-heading"
+                    >
+                      <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#EA4335]" />Nicht indexiert</span>
+                      <strong className="font-medium tabular-nums text-heading">{data.notIndexedUrls}</strong>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFilter('intentional')}
+                      className="flex w-full items-center justify-between gap-3 text-left text-muted hover:text-heading"
+                    >
+                      <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[var(--dp-text-muted)]" />Davon beabsichtigt</span>
+                      <strong className="font-medium tabular-nums text-heading">{data.intentionalUrls}</strong>
+                    </button>
+                  </div>
+                </aside>
+
+                <div className="indexing-coverage-rail__main">
+                  <div className="indexing-coverage-rail__metrics">
+                    {coverageMetrics.map((item) => {
+                      const interactive = item.showsDetails || item.filter;
+                      const content = (
+                        <>
+                          <p className="text-[10px] font-semibold uppercase text-muted">{item.label}</p>
+                          <p className="mt-2 text-[22px] font-medium leading-none tabular-nums text-heading">{item.value}</p>
+                          <p className="mt-2 text-[10px] text-muted">{item.description}</p>
+                        </>
+                      );
+
+                      return interactive ? (
+                        <button
+                          key={item.label}
+                          type="button"
+                          onClick={() => {
+                            if (item.showsDetails) setShowExcludedUrls((current) => !current);
+                            if (item.filter) setFilter(item.filter);
+                          }}
+                          disabled={item.showsDetails && data.excludedUrlCount === 0}
+                          className="indexing-coverage-rail__metric text-left transition-colors hover:bg-surface-secondary disabled:cursor-default disabled:hover:bg-transparent"
+                        >
+                          {content}
+                        </button>
+                      ) : (
+                        <div key={item.label} className="indexing-coverage-rail__metric">{content}</div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="indexing-coverage-rail__distribution px-[18px] py-4">
+                    <div className="flex items-center justify-between gap-3 text-[10px] text-muted">
+                      <span>{data.isVerificationComplete ? 'Vollständiger Datenstand' : 'Vorläufiger Datenstand'}</span>
+                      <span className="tabular-nums">
+                        {data.isVerificationComplete && data.recheckPendingUrls > 0
+                          ? `${data.recheckPendingUrls} Re-Checks vorgemerkt`
+                          : `${data.verifiedUrls} von ${data.totalUrls} geprüft`}
+                      </span>
+                    </div>
+                    <div className="mt-2.5 flex h-2 overflow-hidden rounded-full bg-[var(--indexing-muted)]" aria-label="Verteilung der Indexierungsstatus">
+                      <span className="h-full bg-[#34A853]" style={{ width: `${indexedWidth}%` }} />
+                      <span className="h-full bg-[#EA4335]" style={{ width: `${notIndexedWidth}%` }} />
+                      <span className="h-full bg-[#4285F4]" style={{ width: `${pendingWidth}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="indexing-coverage-rail__filters flex flex-col gap-3 px-[18px] py-3.5 xl:flex-row xl:items-center xl:justify-between">
+                    <div className="flex flex-wrap items-center gap-1">
+                      {primaryFilters.map((item) => (
+                        <button
+                          key={item.value}
+                          type="button"
+                          onClick={() => setFilter(item.value)}
+                          className={`rounded-md px-2.5 py-2 text-[11px] font-medium transition-colors ${
+                            filter === item.value
+                              ? 'bg-surface-tertiary text-heading'
+                              : 'text-muted hover:bg-surface-secondary hover:text-heading'
+                          }`}
+                        >
+                          {item.label} <span className="ml-1 tabular-nums">{item.count}</span>
+                        </button>
+                      ))}
+                      <select
+                        value={secondaryFilterValue}
+                        onChange={(event) => {
+                          if (event.target.value) setFilter(event.target.value as FilterValue);
+                        }}
+                        aria-label="Weitere Statusfilter"
+                        className={`h-8 rounded-md border-0 px-2 text-[11px] font-medium outline-none ${
+                          secondaryFilterValue ? 'bg-surface-tertiary text-heading' : 'bg-transparent text-muted'
+                        }`}
+                      >
+                        <option value="">Weitere Filter</option>
+                        {secondaryFilters.map((item) => (
+                          <option key={item.value} value={item.value}>{item.label} ({item.count})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <label className="relative block w-full xl:w-[210px]">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={14} />
+                      <input
+                        type="search"
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        placeholder="URL suchen"
+                        className="h-9 w-full rounded-md border border-border-subtle bg-surface pl-9 pr-3 text-[11px] text-body outline-none placeholder:text-muted focus:border-[#4285F4]"
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -491,12 +636,6 @@ export default function IndexingStatusWidget({
               </div>
             )}
 
-            {data.isVerificationComplete && data.recheckPendingUrls > 0 && (
-              <p className="mt-4 text-xs text-muted">
-                Vollständiger Datenstand. {data.recheckPendingUrls} URLs werden turnusmäßig erneut geprüft; bis dahin bleibt ihr letzter gültiger Google-Status sichtbar.
-              </p>
-            )}
-
             {data.staleUrls > 0 && (
               <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
                 Bei {data.staleUrls} URLs liegt die letzte Google-Prüfung länger zurück als das Re-Check-Intervall.
@@ -508,30 +647,6 @@ export default function IndexingStatusWidget({
                 >
                   Betroffene URLs anzeigen
                 </button>
-              </div>
-            )}
-
-            {(data.sitemapEntryCount > 0 || data.totalUrls > 0) && (
-              <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border-subtle bg-border-subtle lg:grid-cols-4 xl:grid-cols-7">
-                {summaryItems.map((item) => item.showsDetails ? (
-                  <button
-                    key={item.label}
-                    type="button"
-                    onClick={() => setShowExcludedUrls((current) => !current)}
-                    disabled={data.excludedUrlCount === 0}
-                    className="min-w-0 bg-surface px-3 py-3 text-left transition-colors hover:bg-surface-secondary disabled:cursor-default disabled:hover:bg-surface"
-                  >
-                    <p className="text-[11px] font-semibold uppercase text-muted">{item.label}</p>
-                    <p className="mt-1 text-xl font-semibold tabular-nums text-heading">{item.value}</p>
-                    <p className="mt-1 text-[10px] leading-[15px] text-muted">{item.description}</p>
-                  </button>
-                ) : (
-                  <div key={item.label} className="min-w-0 bg-surface px-3 py-3">
-                    <p className="text-[11px] font-semibold uppercase text-muted">{item.label}</p>
-                    <p className="mt-1 text-xl font-semibold tabular-nums text-heading">{item.value}</p>
-                    <p className="mt-1 text-[10px] leading-[15px] text-muted">{item.description}</p>
-                  </div>
-                ))}
               </div>
             )}
 
@@ -580,66 +695,22 @@ export default function IndexingStatusWidget({
               </div>
             )}
 
-            {data.totalUrls > 0 && (
-              <div className="mt-5">
-                <div className="mb-2 flex items-center justify-between gap-3 text-xs">
-                  <span className="font-medium text-body">
-                    {data.isVerificationComplete
-                      ? `${data.indexedUrls} von ${data.totalUrls} URLs indexiert`
-                      : `${data.indexedUrls} von ${data.verifiedUrls} erfolgreich geprüften URLs indexiert`}
-                  </span>
-                  <span className="font-semibold tabular-nums text-heading">{indexShare}%</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-surface-tertiary">
-                  <div className="h-full rounded-full bg-[#34A853] transition-[width]" style={{ width: `${indexShare}%` }} />
-                </div>
-              </div>
-            )}
-
             {(syncError || data.errorMessage) && (
               <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
                 {syncError || data.errorMessage}
               </div>
             )}
 
-            <div className="mt-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex flex-wrap gap-1.5">
-                {filters.map((item) => (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => setFilter(item.value)}
-                    className={`rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                      filter === item.value
-                        ? 'border-[#4285F4] bg-[#4285F4]/10 text-[#4285F4]'
-                        : 'border-border-subtle bg-surface text-body hover:bg-surface-secondary'
-                    }`}
-                  >
-                    {item.label} <span className="ml-1 tabular-nums text-muted">{item.count}</span>
-                  </button>
-                ))}
-              </div>
-              <label className="relative block w-full xl:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={15} />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="URL suchen"
-                  className="h-9 w-full rounded-md border border-border-subtle bg-surface pl-9 pr-3 text-xs text-body outline-none placeholder:text-muted focus:border-[#4285F4]"
-                />
-              </label>
-            </div>
           </>
         )}
       </div>
 
       {data.configured && (
-        <div className="border-t border-border-subtle">
+        <div className="border-t border-[var(--indexing-line)]">
           <div className="max-h-[520px] overflow-auto">
             <table className="w-full min-w-[940px] border-collapse text-left">
-              <thead className="sticky top-0 z-10 bg-surface-secondary">
-                <tr className="border-b border-border-subtle text-[11px] font-semibold uppercase text-muted">
+              <thead className="indexing-coverage-rail__table-header sticky top-0 z-10">
+                <tr className="border-b border-[var(--indexing-line)] text-[10px] font-semibold uppercase text-muted">
                   <th className="px-5 py-3">URL</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Hinweis</th>
@@ -650,7 +721,7 @@ export default function IndexingStatusWidget({
               </thead>
               <tbody>
                 {filteredRows.map((row) => (
-                  <tr key={row.url} className="border-b border-border-subtle last:border-0 hover:bg-surface-secondary/70">
+                  <tr key={row.url} className="border-b border-[var(--indexing-line)] last:border-0 hover:bg-surface-secondary/70">
                     <td className="max-w-[360px] px-5 py-3">
                       <a
                         href={row.url}
@@ -689,7 +760,7 @@ export default function IndexingStatusWidget({
               </tbody>
             </table>
           </div>
-          <div className="flex flex-col gap-1 border-t border-border-subtle bg-surface-secondary px-5 py-3 text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between">
+          <div className="indexing-coverage-rail__table-footer flex flex-col gap-1 border-t border-[var(--indexing-line)] px-5 py-3 text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between">
             <span>{filteredRows.length} von {data.totalUrls} URLs</span>
             <span>Letzter Abgleich: {formatDate(data.lastSyncedAt, true)}</span>
           </div>

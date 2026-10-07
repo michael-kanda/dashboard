@@ -154,6 +154,99 @@
     box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24);
   }
 
+  .dashboard-widget-surface.indexing-coverage-rail {
+    --indexing-panel: #ffffff;
+    --indexing-section: #f8fafc;
+    --indexing-muted: #f1f4f8;
+    --indexing-line: #e4e7ec;
+    background: var(--indexing-panel) !important;
+    border: 1px solid var(--indexing-line) !important;
+    box-shadow: 0 12px 34px rgba(16, 24, 40, 0.07);
+  }
+
+  .indexing-coverage-rail__layout {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    border-top: 1px solid var(--indexing-line);
+  }
+
+  .indexing-coverage-rail__score {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+    padding: 22px;
+    border-right: 1px solid var(--indexing-line);
+    background: var(--indexing-section);
+  }
+
+  .indexing-coverage-rail__main {
+    min-width: 0;
+    background: var(--indexing-panel);
+  }
+
+  .indexing-coverage-rail__metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .indexing-coverage-rail__metric {
+    min-width: 0;
+    padding: 18px;
+    border-right: 1px solid var(--indexing-line);
+  }
+
+  .indexing-coverage-rail__metric:last-child {
+    border-right: 0;
+  }
+
+  .indexing-coverage-rail__distribution,
+  .indexing-coverage-rail__filters {
+    border-top: 1px solid var(--indexing-line);
+  }
+
+  .indexing-coverage-rail__filters {
+    background: var(--indexing-panel);
+  }
+
+  .indexing-coverage-rail__table-header,
+  .indexing-coverage-rail__table-footer {
+    background: var(--indexing-section);
+  }
+
+  .dark .dashboard-widget-surface.indexing-coverage-rail {
+    --indexing-panel: #171d27;
+    --indexing-section: #202733;
+    --indexing-muted: #252d39;
+    --indexing-line: #303947;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24);
+  }
+
+  @media (max-width: 1023px) {
+    .indexing-coverage-rail__layout {
+      grid-template-columns: 1fr;
+    }
+
+    .indexing-coverage-rail__score {
+      border-right: 0;
+      border-bottom: 1px solid var(--indexing-line);
+    }
+  }
+
+  @media (max-width: 767px) {
+    .indexing-coverage-rail__metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .indexing-coverage-rail__metric:nth-child(2) {
+      border-right: 0;
+    }
+
+    .indexing-coverage-rail__metric:nth-child(-n + 2) {
+      border-bottom: 1px solid var(--indexing-line);
+    }
+  }
+
   /* ── Clean administration surfaces ─────────────────────── */
   .admin-clean {
     color: var(--dp-text-body);
