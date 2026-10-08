@@ -297,9 +297,9 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
   if (!hasAnyData) {
     return (
       <div className="dashboard-widget-surface rounded-xl p-5">
-        <h3 className="text-[18px] font-semibold text-heading">Google Ads Performance</h3>
+        <h3 className="widget-title text-heading">Google Ads Performance</h3>
         <GoogleCleanUnderline id="google-clean-gradient-google-ads-empty" />
-        <p className="mt-3 text-sm text-muted">
+        <p className="widget-body mt-3 text-muted">
           {isSheet
             ? 'Google-Ads-Sheet ist konfiguriert, aber für diesen Zeitraum wurden keine lesbaren Zeilen gefunden. Prüfe Sheet-Freigabe, Tabs Kampagnen/Anzeigengruppen/Anzeigen/Suchanfragen und das Datum im Tab Kampagnen.'
             : 'Keine Google Ads-Daten für diesen Zeitraum vorhanden. Stelle sicher, dass Google Ads mit GA4 verknüpft ist.'
@@ -318,9 +318,9 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="mb-4">
-        <h3 className="text-[18px] font-semibold text-heading">Google Ads Performance</h3>
+        <h3 className="widget-title text-heading">Google Ads Performance</h3>
         <GoogleCleanUnderline id="google-clean-gradient-google-ads" />
-        <p className="mt-2 text-xs text-muted">
+        <p className="widget-meta mt-2 text-muted">
           Quelle {isSheet ? 'Google Ads' : 'GA4'}
           {dateRangeStr && ` · ${dateRangeStr}`}
           {isSheet && latestDataDate && ` · Sheet-Daten bis ${latestDataDate}`}
@@ -353,7 +353,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
                   setExpandedRow(null);
                   setSearchTerm('');
                 }}
-                className={`px-3.5 py-2 text-[13px] font-medium transition-colors border-b-2 ${
+                className={`widget-control px-3.5 py-2 transition-colors border-b-2 ${
                   isActive
                     ? 'border-strong text-heading'
                     : 'border-transparent text-muted hover:text-body'
@@ -366,7 +366,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
         </div>
 
         <div className="flex items-center gap-3 pb-2">
-          <span className="text-[11px] text-faint whitespace-nowrap">
+          <span className="widget-meta text-faint whitespace-nowrap">
             {tableData.length} {tableData.length === 1 ? 'Eintrag' : 'Einträge'}
           </span>
           <div className="relative">
@@ -376,7 +376,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Suchen..."
-              className="w-40 pl-7 pr-2.5 py-1 text-xs h-7 rounded-md border border-theme-border-subtle bg-surface text-body placeholder:text-faint focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+              className="widget-control w-40 pl-7 pr-2.5 py-1 h-7 rounded-md border border-theme-border-subtle bg-surface text-body placeholder:text-faint focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
             />
           </div>
         </div>
@@ -387,12 +387,12 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
         <table className="w-full">
           <thead>
             <tr>
-              <th className="text-left px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider text-faint">
+              <th className="widget-table-head text-left px-2 py-2.5 tracking-wider text-faint">
                 {viewModeLabels[viewMode]}
               </th>
               <th
                 onClick={() => handleSort('cost')}
-                className={`text-right px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                className={`widget-table-head text-right px-2 py-2.5 tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
                   sortField === 'cost' ? 'text-body' : 'text-faint'
                 }`}
               >
@@ -400,7 +400,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
               </th>
               <th
                 onClick={() => handleSort('clicks')}
-                className={`text-right px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                className={`widget-table-head text-right px-2 py-2.5 tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
                   sortField === 'clicks' ? 'text-body' : 'text-faint'
                 }`}
               >
@@ -408,7 +408,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
               </th>
               <th
                 onClick={() => handleSort('cpc')}
-                className={`text-right px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                className={`widget-table-head text-right px-2 py-2.5 tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
                   sortField === 'cpc' ? 'text-body' : 'text-faint'
                 }`}
               >
@@ -417,7 +417,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
               {!hideConv && (
                 <th
                   onClick={() => handleSort('conversions')}
-                  className={`text-right px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                  className={`widget-table-head text-right px-2 py-2.5 tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
                     sortField === 'conversions' ? 'text-body' : 'text-faint'
                   }`}
                 >
@@ -427,7 +427,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
               {!isSheet && (
                 <th
                   onClick={() => handleSort('sessions')}
-                  className={`text-right px-2 py-2.5 text-[11px] font-medium uppercase tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                  className={`widget-table-head text-right px-2 py-2.5 tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
                     sortField === 'sessions' ? 'text-body' : 'text-faint'
                   }`}
                 >
@@ -483,10 +483,10 @@ function KpiMini({
 }) {
   return (
     <div className="bg-surface-secondary/60 rounded-md px-3.5 py-3" title={tooltip}>
-      <div className="text-[10px] font-medium text-faint uppercase tracking-wider mb-1.5">
+      <div className="widget-eyebrow text-faint tracking-wider mb-1.5">
         {label}
       </div>
-      <div className="text-[18px] font-medium text-heading leading-none">
+      <div className="widget-metric-sm text-heading">
         {value}
       </div>
     </div>
@@ -560,7 +560,7 @@ function TableRow({
           hasSubRows ? 'cursor-pointer hover:bg-surface-secondary/40' : ''
         } ${isExpanded ? 'bg-surface-secondary/50' : ''}`}
       >
-        <td className="px-2 py-3 text-sm font-medium text-strong max-w-[300px]">
+        <td className="widget-table-cell px-2 py-3 font-medium text-strong max-w-[300px]">
           <div className="flex items-center gap-2">
             <span className="text-faint flex-shrink-0 w-3 flex justify-center">
               {hasSubRows ? (
@@ -572,22 +572,22 @@ function TableRow({
             </span>
           </div>
         </td>
-        <td className="text-right px-2 py-3 text-sm font-medium text-heading whitespace-nowrap">
+        <td className="widget-table-cell text-right px-2 py-3 font-medium text-heading whitespace-nowrap">
           {formatCurrency(row.cost)}
         </td>
-        <td className="text-right px-2 py-3 text-sm text-body whitespace-nowrap">
+        <td className="widget-table-cell text-right px-2 py-3 text-body whitespace-nowrap">
           {formatNumber(row.clicks)}
         </td>
-        <td className="text-right px-2 py-3 text-sm text-body whitespace-nowrap">
+        <td className="widget-table-cell text-right px-2 py-3 text-body whitespace-nowrap">
           {formatCurrency(row.cpc)}
         </td>
         {!hideConv && (
-          <td className="text-right px-2 py-3 text-sm text-body whitespace-nowrap">
+          <td className="widget-table-cell text-right px-2 py-3 text-body whitespace-nowrap">
             {formatNumber(row.conversions)}
           </td>
         )}
         {!isSheet && (
-          <td className="text-right px-2 py-3 text-sm text-body whitespace-nowrap">
+          <td className="widget-table-cell text-right px-2 py-3 text-body whitespace-nowrap">
             {formatNumber(row.sessions)}
           </td>
         )}

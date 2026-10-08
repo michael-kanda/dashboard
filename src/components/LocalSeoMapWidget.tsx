@@ -316,8 +316,8 @@ function projectToAustriaSvg(location: LocalSeoLocationData) {
 function LocationMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-[9px] font-semibold uppercase text-muted">{label}</p>
-      <p className="mt-1.5 text-[17px] font-medium leading-none tabular-nums text-heading">{value}</p>
+      <p className="widget-eyebrow text-muted">{label}</p>
+      <p className="widget-metric-sm mt-1.5 text-heading">{value}</p>
     </div>
   );
 }
@@ -559,13 +559,13 @@ export default function LocalSeoMapWidget({
     <section className="dashboard-widget-surface local-signal-map overflow-hidden rounded-lg">
       <header className="flex flex-col gap-4 px-5 pb-[18px] pt-[22px] sm:px-6 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase text-muted">Standort Performance</p>
-          <h3 className="mt-1 text-[17px] font-medium text-heading">Lokale Sichtbarkeit</h3>
+          <p className="widget-eyebrow text-muted">Standort Performance</p>
+          <h3 className="widget-title mt-1 text-heading">Lokale Sichtbarkeit</h3>
           <GoogleRule />
-          <p className="mt-2 text-sm text-muted">
+          <p className="widget-body mt-2 text-muted">
             Standort-Auswertung aus GSC-Queries, Standort-Landingpages und GA4-Stadt-Daten.
           </p>
-          <p className="mt-1 text-[11px] text-muted">
+          <p className="widget-meta mt-1 text-muted">
             Quelle: GSC + GA4{reportingPeriodLabel ? ` · ${reportingPeriodLabel}` : ''} · {displayLocations.length} Standorte
           </p>
           {pinSaveError ? <p className="mt-2 text-xs font-medium text-red-600 dark:text-red-400">{pinSaveError}</p> : null}
@@ -714,8 +714,8 @@ export default function LocalSeoMapWidget({
         <div className="local-signal-map__side">
           <div className="local-signal-map__locations">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-[10px] font-semibold uppercase text-muted">Standorte</p>
-              <span className="text-[9px] uppercase text-muted">Sessions</span>
+              <p className="widget-eyebrow text-muted">Standorte</p>
+              <span className="widget-eyebrow text-muted">Sessions</span>
             </div>
             <div className="mt-2 space-y-0.5">
               {rankedLocations.map((location, index) => {
@@ -736,9 +736,9 @@ export default function LocalSeoMapWidget({
                     aria-pressed={selected?.id === location.id}
                     className="local-signal-map__location border-0 bg-transparent transition-colors hover:bg-surface-secondary"
                   >
-                    <span className="text-[11px] font-medium tabular-nums text-muted">{String(index + 1).padStart(2, '0')}</span>
+                    <span className="widget-meta font-medium tabular-nums text-muted">{String(index + 1).padStart(2, '0')}</span>
                     <span className="min-w-0">
-                      <span className="block truncate text-[13px] font-medium text-heading">{location.name}</span>
+                      <span className="widget-item-title block truncate text-heading">{location.name}</span>
                       <span className="mt-0.5 block truncate text-[10px] text-muted">
                         {[location.postalCode, location.city].filter(Boolean).join(' ')}
                       </span>
@@ -761,7 +761,7 @@ export default function LocalSeoMapWidget({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] font-semibold uppercase text-muted">Ausgewählter Standort</p>
-                  <h4 className="mt-1 truncate text-[13px] font-medium text-heading">{selected.name}</h4>
+                  <h4 className="widget-item-title mt-1 truncate text-heading">{selected.name}</h4>
                   <p className="mt-0.5 text-[10px] text-muted">
                   {[selected.postalCode, selected.city, selected.country].filter(Boolean).join(' · ')}
                   </p>

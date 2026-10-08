@@ -100,6 +100,76 @@
       0 12px 30px rgba(0, 0, 0, 0.34);
   }
 
+  /* ── Dashboard typography ──────────────────────────────── */
+  .widget-eyebrow {
+    font-size: var(--dp-widget-eyebrow);
+    font-weight: var(--dp-weight-semibold);
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .widget-title {
+    font-size: var(--dp-widget-title);
+    font-weight: var(--dp-weight-medium);
+    line-height: 1.35;
+  }
+
+  .widget-body {
+    font-size: var(--dp-widget-body);
+    font-weight: var(--dp-weight-normal);
+    line-height: var(--dp-leading-normal);
+  }
+
+  .widget-meta {
+    font-size: var(--dp-widget-meta);
+    font-weight: var(--dp-weight-normal);
+    line-height: 1.45;
+  }
+
+  .widget-control,
+  .widget-table-head {
+    font-size: var(--dp-widget-control);
+    font-weight: var(--dp-weight-medium);
+    line-height: 1.4;
+  }
+
+  .widget-table-head {
+    text-transform: uppercase;
+  }
+
+  .widget-table-cell {
+    font-size: var(--dp-widget-control);
+    font-weight: var(--dp-weight-normal);
+    line-height: var(--dp-leading-normal);
+  }
+
+  .widget-item-title,
+  .widget-section-title {
+    font-size: var(--dp-widget-item-title);
+    font-weight: var(--dp-weight-medium);
+    line-height: 1.4;
+  }
+
+  .widget-metric,
+  .widget-metric-sm,
+  .widget-score {
+    font-weight: var(--dp-weight-medium);
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .widget-metric {
+    font-size: var(--dp-widget-metric);
+  }
+
+  .widget-metric-sm {
+    font-size: var(--dp-widget-metric-sm);
+  }
+
+  .widget-score {
+    font-size: var(--dp-widget-score);
+  }
+
   .dashboard-widget-surface.kpi-quiet-grid {
     --kpi-grid-panel: #ffffff;
     --kpi-grid-section: #f8fafc;

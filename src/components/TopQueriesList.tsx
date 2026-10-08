@@ -138,7 +138,7 @@ export default function TopQueriesList({
     <div className="mb-6 flex-shrink-0">
       <div className="flex items-start justify-between gap-4 mb-3">
         <div>
-          <h3 className="text-[18px] font-semibold text-heading">Top Suchanfragen</h3>
+          <h3 className="widget-title text-heading">Top Suchanfragen</h3>
           <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
               <defs>
@@ -165,7 +165,7 @@ export default function TopQueriesList({
               placeholder="Query oder Pfad..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 pr-8 py-1.5 text-sm border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint bg-surface"
+              className="widget-control pl-8 pr-8 py-1.5 border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint bg-surface"
             />
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
             {searchTerm && (
@@ -182,7 +182,7 @@ export default function TopQueriesList({
             type="button"
             onClick={handleExportCsv}
             disabled={!displayedQueries.length}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm border border-theme-border-default rounded-md text-body hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors print:hidden"
+            className="widget-control inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-theme-border-default rounded-md text-body hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors print:hidden"
             title="Als CSV herunterladen"
           >
             <Download size={12} />
@@ -190,7 +190,7 @@ export default function TopQueriesList({
           </button>
         </div>
       </div>
-      <p className="text-xs text-muted mt-2">{subtitle}</p>
+      <p className="widget-meta text-muted mt-2">{subtitle}</p>
     </div>
   );
 
@@ -215,7 +215,7 @@ export default function TopQueriesList({
         {renderHeader('Quelle GSC')}
         <div className="py-12 text-center flex flex-col items-center gap-2">
           <ExclamationTriangleFill className="text-red-500" size={24} />
-          <span className="text-sm font-semibold text-strong">Fehler bei GSC-Daten</span>
+          <span className="widget-section-title text-strong">Fehler bei GSC-Daten</span>
           <p className="text-xs text-muted max-w-md" title={error}>
             Die Suchanfragen konnten nicht geladen werden.
           </p>
@@ -275,7 +275,7 @@ export default function TopQueriesList({
                 >
                   <div className="mb-2 flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <div className="mb-1 truncate text-sm font-medium text-heading" title={query.query}>
+                      <div className="widget-item-title mb-1 truncate text-heading" title={query.query}>
                         {query.query}
                       </div>
                       {formattedPath ? (
@@ -289,7 +289,7 @@ export default function TopQueriesList({
                     </div>
 
                     <div className="min-w-[76px] flex-shrink-0 text-right">
-                      <div className="text-sm font-medium leading-tight text-strong">
+                      <div className="widget-item-title leading-tight text-strong">
                         {query.clicks.toLocaleString('de-DE')}
                       </div>
                       <div className="mt-1 text-[11px] text-faint">Klicks</div>

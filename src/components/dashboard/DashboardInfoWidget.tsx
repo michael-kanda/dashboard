@@ -68,8 +68,8 @@ export default function DashboardInfoWidget({
       <div className="dashboard-widget-surface rounded-lg p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
-            <h3 className="text-sm font-semibold text-heading">Hinweis zur Datenbasis</h3>
-            <p className="text-xs text-muted mt-0.5">Methodik, Datenschutz und Messlogik.</p>
+            <h3 className="widget-section-title text-heading">Hinweis zur Datenbasis</h3>
+            <p className="widget-meta text-muted mt-0.5">Methodik, Datenschutz und Messlogik.</p>
           </div>
           {isAdmin && (
             <div className="flex items-center gap-2 shrink-0">

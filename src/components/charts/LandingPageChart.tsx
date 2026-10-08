@@ -217,7 +217,7 @@ export default function LandingPageChart({
         <div className="mb-6 flex-shrink-0">
           <div className="flex items-start justify-between gap-4 mb-3">
             <div>
-              <h3 className="text-[18px] font-semibold text-heading">{title}</h3>
+              <h3 className="widget-title text-heading">{title}</h3>
               <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
                   <defs>
@@ -244,7 +244,7 @@ export default function LandingPageChart({
                   placeholder="Seite oder Suchbegriff..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 text-sm border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint bg-surface"
+                  className="widget-control pl-8 pr-3 py-1.5 border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint bg-surface"
                 />
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
               </div>
@@ -252,7 +252,7 @@ export default function LandingPageChart({
                 type="button"
                 onClick={handleExportCsv}
                 disabled={!sortedData.length}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm border border-theme-border-default rounded-md text-body hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors print:hidden"
+                className="widget-control inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-theme-border-default rounded-md text-body hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors print:hidden"
                 title="Als CSV herunterladen"
               >
                 <Download size={12} />
@@ -261,7 +261,7 @@ export default function LandingPageChart({
             </div>
           </div>
 
-          <p className="text-xs text-muted mt-2">
+          <p className="widget-meta text-muted mt-2">
             Sortiert nach Neuen Nutzern · Quelle GA4 + GSC{formattedDateRange ? ` · ${formattedDateRange}` : ''}
             {queryData && ' · Mit Suchbegriffen'}
           </p>
@@ -301,7 +301,7 @@ export default function LandingPageChart({
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex-1 min-w-0">
                       <div
-                        className={`text-sm font-medium text-heading truncate mb-1 ${hasQueries ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}
+                        className={`widget-item-title text-heading truncate mb-1 ${hasQueries ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}
                         onClick={() => hasQueries && toggleExpanded(page.path)}
                         title={page.path}
                       >
@@ -335,7 +335,7 @@ export default function LandingPageChart({
                     </div>
 
                     <div className="text-right flex-shrink-0 min-w-[76px]">
-                      <div className="text-sm font-medium text-strong leading-tight">
+                      <div className="widget-item-title text-strong leading-tight">
                         {newUsers.toLocaleString('de-DE')}
                       </div>
                       <div className="text-[11px] text-faint mt-1">Neue Nutzer</div>
@@ -462,7 +462,7 @@ export default function LandingPageChart({
                   <Diagram3Fill className="text-blue-600 dark:text-blue-300" size={18} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-[18px] font-semibold text-heading">
+                  <h4 className="widget-title text-heading">
                     Folgepfade Analyse
                   </h4>
                   <div className="mt-1 h-[8px] max-w-[180px]" aria-hidden="true">
@@ -541,13 +541,13 @@ export default function LandingPageChart({
                   <div className="grid grid-cols-2 gap-6 border-b border-theme-border-subtle pb-5 mb-5">
                     <div>
                       <div className="text-xs text-muted uppercase font-semibold tracking-wider mb-1">Einstiege</div>
-                      <div className="text-2xl font-semibold text-heading">
+                      <div className="widget-metric text-heading">
                         {followUpData.landingPageSessions.toLocaleString()}
                       </div>
                     </div>
                     <div>
                       <div className="text-xs text-muted uppercase font-semibold tracking-wider mb-1">Verschiedene Folgepfade</div>
-                      <div className="text-2xl font-semibold text-heading">
+                      <div className="widget-metric text-heading">
                         {followUpData.followUpPaths.length}
                       </div>
                     </div>
@@ -575,14 +575,14 @@ export default function LandingPageChart({
                             key={idx}
                             className="flex items-center gap-4 p-3 bg-surface-secondary border border-theme-border-subtle rounded-md transition-colors hover:border-theme-border-strong group"
                           >
-                            <div className="w-8 h-8 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 rounded-md flex items-center justify-center text-sm font-bold flex-shrink-0">
+                            <div className="widget-control w-8 h-8 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 rounded-md flex items-center justify-center flex-shrink-0">
                               {idx + 1}
                             </div>
 
                             <ArrowRight className="text-faint flex-shrink-0" size={16} />
 
                             <div className="flex-1 min-w-0 py-1">
-                              <div className="text-[15px] font-medium text-strong truncate mb-1.5" title={fp.path}>
+                              <div className="widget-item-title text-strong truncate mb-1.5" title={fp.path}>
                                 {fp.path}
                               </div>
                               <div className="h-2 bg-surface-tertiary rounded-full overflow-hidden">

@@ -94,7 +94,7 @@ export default function PromptTrackingCard({
     return (
       <div className="dashboard-widget-surface prompt-tracking-card rounded-lg p-6">
         <div className="mb-3">
-          <h3 className="text-lg font-semibold text-heading">Prompt Tracking</h3>
+          <h3 className="widget-title text-heading">Prompt Tracking</h3>
           <GoogleCleanUnderline id="google-clean-gradient-prompt-tracking-empty" />
         </div>
         <p className="text-muted text-sm">
@@ -174,10 +174,10 @@ export default function PromptTrackingCard({
       <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
         <div className="flex-1">
           <div>
-            <h3 className="text-lg font-semibold text-heading">Prompt Tracking</h3>
+            <h3 className="widget-title text-heading">Prompt Tracking</h3>
             <GoogleCleanUnderline id="google-clean-gradient-prompt-tracking" />
           </div>
-          <div className="flex items-center gap-2 flex-wrap mt-3 text-xs">
+          <div className="widget-meta flex items-center gap-2 flex-wrap mt-3">
             <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded font-semibold">Quelle: GSC</span>
             <span className="text-faint">•</span>
             <span className="text-muted">AI Mode Proxy</span>
@@ -193,7 +193,7 @@ export default function PromptTrackingCard({
               </span>
             )}
           </div>
-          <p className="text-muted text-xs mt-1">
+          <p className="widget-meta text-muted mt-1">
             Konversationsartige Suchanfragen – möglicher AI-Mode-Indikator
           </p>
         </div>
@@ -202,14 +202,14 @@ export default function PromptTrackingCard({
           <button
             onClick={handleCluster}
             disabled={!canCluster || isClustering}
-            className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-border text-body bg-surface hover:bg-surface-tertiary disabled:opacity-50 disabled:cursor-not-allowed transition print:hidden"
+            className="widget-control flex items-center gap-2 px-3 py-1.5 rounded-md border border-border text-body bg-surface hover:bg-surface-tertiary disabled:opacity-50 disabled:cursor-not-allowed transition print:hidden"
             title={!canCluster ? `Mindestens ${MIN_QUERIES_FOR_AI} Queries nötig` : `${queriesForAi.length} Queries analysieren`}
           >
             {isClustering ? <><Loader2 className="w-4 h-4 animate-spin" />Analysiere...</> : <><WandSparkles className="w-4 h-4" />Mit AI clustern</>}
           </button>
           <button
             onClick={handleExport}
-            className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-border text-body hover:bg-surface-secondary transition"
+            className="widget-control flex items-center gap-2 px-3 py-1.5 rounded-md border border-border text-body hover:bg-surface-secondary transition"
             title="CSV exportieren"
           >
             <Download className="w-4 h-4" />
@@ -548,10 +548,10 @@ function PromptResearchTool({
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-6">
         <div>
           <div>
-            <h3 className="text-lg font-semibold text-heading">Prompt Research Tool</h3>
+            <h3 className="widget-title text-heading">Prompt Research Tool</h3>
             <GoogleCleanUnderline id="google-clean-gradient-prompt-research" />
           </div>
-          <div className="flex items-center gap-2 flex-wrap mt-3 text-xs">
+          <div className="widget-meta flex items-center gap-2 flex-wrap mt-3">
             <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded font-semibold">Nur Admins</span>
             <span className="text-faint">•</span>
             <span className="text-muted">GSC + GA4</span>
@@ -693,7 +693,7 @@ function PromptResearchTool({
       <div className="space-y-2">
         {displayedOpportunities.map((item) => (
           <div key={`${item.rank}-${item.topic}-${item.intent}`} className="grid grid-cols-[44px_1fr] lg:grid-cols-[44px_120px_1fr_110px] gap-3 rounded-md shadow-sm bg-surface p-3">
-            <div className="text-lg font-bold tabular-nums text-heading">#{item.rank}</div>
+            <div className="widget-metric-sm text-heading">#{item.rank}</div>
             <div className="hidden lg:block">
               <div className="text-[10px] uppercase tracking-wide font-semibold text-muted">{item.intent}</div>
               <div className="text-xs font-medium tabular-nums text-body">Score {item.score}</div>
@@ -728,8 +728,8 @@ function ResearchStep({ step, title, lines }: { step: string; title: string; lin
   return (
     <div className="rounded-md shadow-sm bg-surface p-3">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-[10px] font-bold text-muted tabular-nums">{step}</span>
-        <span className="text-sm font-semibold text-heading">{title}</span>
+        <span className="widget-eyebrow text-muted tabular-nums">{step}</span>
+        <span className="widget-section-title text-heading">{title}</span>
       </div>
       <ul className="space-y-1">
         {lines.map((line) => (
@@ -1008,7 +1008,7 @@ function ClusterDisplay({
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-2 flex-wrap">
           <WandSparkles className="w-5 h-5 text-purple-600" />
-          <h4 className="font-semibold text-heading">KI-Analyse: {clusters.length} Cluster erkannt</h4>
+          <h4 className="widget-section-title text-heading">KI-Analyse: {clusters.length} Cluster erkannt</h4>
           <span className="text-xs text-muted">
             {meta.queriesAnalyzed} Queries · {(meta.elapsedMs / 1000).toFixed(1)}s · {meta.model}
           </span>
@@ -1136,7 +1136,7 @@ function KpiTile({ label, value, sub, delta, deltaSuffix = '', tooltip, highligh
         <span>{label}</span>
         {tooltip && <span title={tooltip} className="cursor-help"><Info className="w-3 h-3 opacity-60" /></span>}
       </div>
-      <div className="text-xl font-semibold mt-0.5 tabular-nums text-heading">{value}</div>
+      <div className="widget-metric-sm mt-0.5 text-heading">{value}</div>
       {delta !== undefined && (
         <div className={`text-[11px] mt-0.5 tabular-nums flex items-center gap-0.5 ${delta > 0 ? 'text-green-600 dark:text-green-400' : delta < 0 ? 'text-red-600 dark:text-red-400' : 'text-muted'}`}>
           {delta > 0 ? <TrendingUp className="w-3 h-3" /> : delta < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}

@@ -77,7 +77,7 @@ export default function TableauKpiCard({
 
   return (
     <article className={`kpi-quiet-grid__metric relative flex flex-col ${className}`}>
-      <div className="flex min-h-6 items-center gap-2 text-xs text-muted">
+      <div className="widget-control flex min-h-6 items-center gap-2 text-muted">
         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
         <h4 className="font-medium text-body">{title}</h4>
         {description ? (
@@ -101,11 +101,11 @@ export default function TableauKpiCard({
       ) : (
         <>
           <div className="mt-[11px] flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <strong className="text-[27px] font-medium leading-[1.15] text-heading tabular-nums">
+            <strong className="widget-metric text-heading">
               {formatValue(value)}
             </strong>
             {change !== undefined ? (
-              <span className={`text-xs font-semibold tabular-nums ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`widget-control font-semibold tabular-nums ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                 {isPositive ? '+' : ''}{formattedChange} %
               </span>
             ) : null}
@@ -136,7 +136,7 @@ export default function TableauKpiCard({
         </>
       )}
 
-      <div className="mt-2 flex items-center justify-between gap-3 text-xs text-faint">
+      <div className="widget-control mt-2 flex items-center justify-between gap-3 text-faint">
         <span className="truncate tabular-nums">
           {previousValue ? `Vorher ${previousValue}` : 'Kein Vergleichswert'}
         </span>

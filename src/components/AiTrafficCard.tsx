@@ -164,7 +164,7 @@ export default function AiTrafficCard({
       {/* Header (volle Breite) */}
       <div className="flex items-center justify-between gap-3 flex-wrap mb-5">
         <div className="min-w-0">
-          <h3 className="text-lg font-semibold text-heading">KI-Traffic</h3>
+          <h3 className="widget-title text-heading">KI-Traffic</h3>
           <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
               <defs>
@@ -213,14 +213,14 @@ export default function AiTrafficCard({
             <div className="min-w-0 flex flex-col gap-4">
 
               {/* Meta-Info: Quelle und Datum */}
-              <div className="flex items-center gap-2 text-sm">
-                <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded text-xs font-semibold">
+              <div className="widget-meta flex items-center gap-2">
+                <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded font-medium">
                   Quelle: GA4
                 </span>
                 {formattedDateRange && (
                   <>
-                    <span className="text-faint text-xs">•</span>
-                    <span className="text-muted text-xs">{formattedDateRange}</span>
+                    <span className="text-faint">•</span>
+                    <span className="text-muted">{formattedDateRange}</span>
                   </>
                 )}
               </div>
@@ -228,7 +228,7 @@ export default function AiTrafficCard({
               {/* Top KI-Quellen */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[11px] text-muted font-medium uppercase tracking-wide">
+                  <p className="widget-eyebrow text-muted tracking-wide">
                     Top KI-Quellen
                   </p>
                   {selectedModel && (
@@ -357,7 +357,7 @@ export default function AiTrafficCard({
 
             {/* ── Spalte 2: Sitzungs-Trend nach KI-Modell + Action-Buttons ── */}
             <div className="min-w-0 flex flex-col">
-              <p className="text-[11px] text-muted font-medium uppercase tracking-wide mb-3">
+              <p className="widget-eyebrow text-muted tracking-wide mb-3">
                 Sitzungs-Trend nach KI-Modell
               </p>
 
@@ -378,7 +378,7 @@ export default function AiTrafficCard({
                   type="button"
                   onClick={onDetailClick}
                   disabled={!onDetailClick}
-                  className="group w-full py-2 px-4 bg-surface hover:bg-surface-tertiary border border-border text-body text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
+                  className="widget-control group w-full py-2 px-4 bg-surface hover:bg-surface-tertiary border border-border text-body rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
                 >
                   KI-Traffic Analyse
                   {detailOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
@@ -387,7 +387,7 @@ export default function AiTrafficCard({
                   type="button"
                   onClick={onPromptTrackingClick}
                   disabled={!onPromptTrackingClick}
-                  className="group w-full py-2 px-4 bg-surface hover:bg-surface-tertiary border border-border text-body text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
+                  className="widget-control group w-full py-2 px-4 bg-surface hover:bg-surface-tertiary border border-border text-body rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
                 >
                   Prompt Tracking
                   {promptTrackingOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}

@@ -144,14 +144,14 @@ const IntentCard: React.FC<{
     </div>
     <div className="grid grid-cols-2 gap-3 mb-3">
       <div><div className="text-xs text-muted">Sessions</div>
-        <div className="text-lg font-bold text-heading">{sessions.toLocaleString('de-DE')}</div></div>
+        <div className="widget-metric-sm text-heading">{sessions.toLocaleString('de-DE')}</div></div>
       <div><div className="text-xs text-muted">Conversions</div>
-        <div className="text-lg font-bold text-heading">{conversions}</div></div>
+        <div className="widget-metric-sm text-heading">{conversions}</div></div>
       <div><div className="text-xs text-muted">Conv. Rate</div>
-        <div className={cn("text-lg font-bold", conversionRate > 5 ? "text-green-600" : conversionRate > 2 ? "text-amber-600" : "text-secondary")}>
+        <div className={cn("widget-metric-sm", conversionRate > 5 ? "text-green-600" : conversionRate > 2 ? "text-amber-600" : "text-secondary")}>
           {conversionRate.toFixed(1)}%</div></div>
       <div><div className="text-xs text-muted">Interaktionsrate</div>
-        <div className={cn("text-lg font-bold", engagementRate > 60 ? "text-green-600" : engagementRate > 40 ? "text-amber-600" : "text-secondary")}>
+        <div className={cn("widget-metric-sm", engagementRate > 60 ? "text-green-600" : engagementRate > 40 ? "text-amber-600" : "text-secondary")}>
           {engagementRate.toFixed(1)}%</div></div>
     </div>
     {topPages.length > 0 && (
@@ -185,7 +185,7 @@ const JourneyFlowCard: React.FC<{
           {landingPage === '/' ? '/ (Startseite)' : landingPage}</div>
       </div>
       <div className="text-right ml-4">
-        <div className="text-lg font-bold text-purple-600">{totalSessions}</div>
+        <div className="widget-metric-sm text-purple-600">{totalSessions}</div>
         <div className="text-xs text-muted">Sessions</div>
       </div>
     </div>
@@ -291,7 +291,7 @@ export default function AiTrafficDetailCardV2({
     <div className={cn("dashboard-widget-surface rounded-2xl p-6", className)}>
       <div className="flex flex-col items-center justify-center text-center py-8">
         <AlertTriangle className="text-red-500 w-12 h-12 mb-4" />
-        <h3 className="text-lg font-semibold text-heading mb-2">Fehler beim Laden</h3>
+        <h3 className="widget-title text-heading mb-2">Fehler beim Laden</h3>
         <p className="text-sm text-muted mb-4 max-w-md">{error}</p>
         {onRefresh && <button onClick={onRefresh} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"><RefreshCcw size={16} />Erneut versuchen</button>}
       </div>
@@ -303,7 +303,7 @@ export default function AiTrafficDetailCardV2({
     <div className={cn("dashboard-widget-surface rounded-2xl p-6", className)}>
       <div className="flex flex-col items-center justify-center text-center py-12">
         <div className="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-4"><Bot className="text-purple-400" size={32} /></div>
-        <h3 className="text-lg font-semibold text-heading mb-2">Keine KI-Traffic Daten</h3>
+        <h3 className="widget-title text-heading mb-2">Keine KI-Traffic Daten</h3>
         <p className="text-sm text-muted max-w-md">Im ausgewählten Zeitraum wurden keine Besuche von KI-Plattformen erfasst.</p>
       </div>
     </div>
@@ -317,7 +317,7 @@ export default function AiTrafficDetailCardV2({
       <div className="pb-5 border-b border-border-subtle">
         <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
           <div className="min-w-0">
-            <h3 className="text-lg font-semibold text-heading">KI-Traffic Analyse</h3>
+            <h3 className="widget-title text-heading">KI-Traffic Analyse</h3>
             <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
                 <defs>
@@ -340,8 +340,8 @@ export default function AiTrafficDetailCardV2({
           <button onClick={() => setIsExpanded(!isExpanded)} className="p-2 hover:bg-surface-tertiary rounded-md text-body">
             {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}</button>
         </div>
-        <div className="flex items-center gap-3 text-xs flex-wrap">
-          <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded text-xs font-semibold">Quelle: GA4</span>
+        <div className="widget-meta flex items-center gap-3 flex-wrap">
+          <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded font-medium">Quelle: GA4</span>
           <span className="text-faint">•</span>
           <span className="text-muted">{formattedDateRange}</span>
           {onRefresh && <><span className="text-faint">•</span>
@@ -359,7 +359,7 @@ export default function AiTrafficDetailCardV2({
                 <div className="flex items-center gap-2 mb-1"><TrendingUp className="text-purple-600" size={16} />
                   <span className="text-xs font-medium text-purple-700 dark:text-purple-300">Sessions</span></div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-purple-900 dark:text-purple-100">{data.totalSessions.toLocaleString('de-DE')}</span>
+                  <span className="widget-metric text-purple-900 dark:text-purple-100">{data.totalSessions.toLocaleString('de-DE')}</span>
                   {data.totalSessionsChange !== undefined && <span className={cn("text-xs font-semibold", data.totalSessionsChange >= 0 ? "text-green-600" : "text-red-600")}>
                     {data.totalSessionsChange >= 0 ? '+' : ''}{data.totalSessionsChange.toFixed(1)}%</span>}
                 </div>
@@ -367,28 +367,28 @@ export default function AiTrafficDetailCardV2({
               <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-200/60 dark:border-indigo-700/30">
                 <div className="flex items-center gap-2 mb-1"><Users className="text-indigo-600" size={16} />
                   <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">Nutzer</span></div>
-                <span className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">{data.totalUsers.toLocaleString('de-DE')}</span>
+                <span className="widget-metric text-indigo-900 dark:text-indigo-100">{data.totalUsers.toLocaleString('de-DE')}</span>
               </div>
               <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-4 border border-teal-200/60 dark:border-teal-700/30">
                 <div className="flex items-center gap-2 mb-1"><Clock className="text-teal-600" size={16} />
                   <span className="text-xs font-medium text-teal-700 dark:text-teal-300">Ø Verweildauer</span></div>
-                <span className="text-2xl font-bold text-teal-900 dark:text-teal-100">{formatDuration(data.avgEngagementTime)}</span>
+                <span className="widget-metric text-teal-900 dark:text-teal-100">{formatDuration(data.avgEngagementTime)}</span>
               </div>
               <div className="bg-rose-50 dark:bg-rose-900/20 rounded-xl p-4 border border-rose-200/60 dark:border-rose-700/30">
                 <div className="flex items-center gap-2 mb-1"><Activity className="text-rose-600" size={16} />
                   <span className="text-xs font-medium text-rose-700 dark:text-rose-300">Interaktionsrate</span></div>
-                <span className={cn("text-2xl font-bold", data.engagementRate > 60 ? "text-green-600" : data.engagementRate > 40 ? "text-amber-600" : "text-rose-900")}>
+                <span className={cn("widget-metric", data.engagementRate > 60 ? "text-green-600" : data.engagementRate > 40 ? "text-amber-600" : "text-rose-900")}>
                   {data.engagementRate.toFixed(1)}%</span>
               </div>
               <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200/60 dark:border-amber-700/30">
                 <div className="flex items-center gap-2 mb-1"><Target className="text-amber-600" size={16} />
                   <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Conversions</span></div>
-                <span className="text-2xl font-bold text-amber-900 dark:text-amber-100">{data.conversions.toLocaleString('de-DE')}</span>
+                <span className="widget-metric text-amber-900 dark:text-amber-100">{data.conversions.toLocaleString('de-DE')}</span>
               </div>
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200/60 dark:border-blue-700/30">
                 <div className="flex items-center gap-2 mb-1"><BarChart3 className="text-blue-600" size={16} />
                   <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Ø Seiten/Session</span></div>
-                <span className="text-2xl font-bold text-blue-900 dark:text-blue-100">{data.userJourney.avgPagesPerSession.toFixed(1)}</span>
+                <span className="widget-metric text-blue-900 dark:text-blue-100">{data.userJourney.avgPagesPerSession.toFixed(1)}</span>
               </div>
             </div>
           </div>
@@ -409,7 +409,7 @@ export default function AiTrafficDetailCardV2({
             {activeTab === 'overview' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-sm font-semibold text-strong mb-3 flex items-center gap-2">
+                  <h3 className="widget-section-title text-strong mb-3 flex items-center gap-2">
                     <TrendingUp size={14} className="text-purple-500" />Sessions-Trend</h3>
                   <div className="h-48">
                     <ResponsiveContainer width="100%" height="100%">
@@ -427,7 +427,7 @@ export default function AiTrafficDetailCardV2({
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-strong mb-3 flex items-center gap-2">
+                  <h3 className="widget-section-title text-strong mb-3 flex items-center gap-2">
                     <Bot size={14} className="text-purple-500" />KI-Quellen</h3>
                   <div className="h-48">
                     <ResponsiveContainer width="100%" height="100%">
@@ -444,7 +444,7 @@ export default function AiTrafficDetailCardV2({
                   </div>
                 </div>
                 <div className="lg:col-span-2">
-                  <h3 className="text-sm font-semibold text-strong mb-3 flex items-center gap-2">
+                  <h3 className="widget-section-title text-strong mb-3 flex items-center gap-2">
                     <Target size={14} className="text-purple-500" />Intent-Verteilung</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                     {data.intentBreakdown.map((item, i) => (
@@ -455,7 +455,7 @@ export default function AiTrafficDetailCardV2({
                           <span style={{ color: item.intent.color }}>{getIntentIcon(item.intent.icon, 14)}</span>
                           <span className="text-xs font-medium text-body truncate">{item.intent.label}</span>
                         </div>
-                        <div className="text-lg font-bold text-heading">{item.sessions}</div>
+                        <div className="widget-metric-sm text-heading">{item.sessions}</div>
                         <div className="text-xs text-muted">{item.percentage.toFixed(1)}% • {item.engagementRate.toFixed(0)}% Int.</div>
                       </div>
                     ))}
@@ -463,7 +463,7 @@ export default function AiTrafficDetailCardV2({
                 </div>
                 {data.userJourney.interactionEvents.length > 0 && (
                   <div className="lg:col-span-2">
-                    <h3 className="text-sm font-semibold text-strong mb-3 flex items-center gap-2">
+                    <h3 className="widget-section-title text-strong mb-3 flex items-center gap-2">
                       <MousePointerClick size={14} className="text-purple-500" />Interaktionen</h3>
                     <div className="flex flex-wrap gap-2">
                       {data.userJourney.interactionEvents.slice(0, 10).map((event, i) => (
@@ -494,7 +494,7 @@ export default function AiTrafficDetailCardV2({
               <div className="space-y-6">
                 {(data.userJourney.scrollDepth.reached25 > 0 || data.userJourney.scrollDepth.reached50 > 0) && (
                   <div>
-                    <h3 className="text-sm font-semibold text-strong mb-3">Scroll-Tiefe</h3>
+                    <h3 className="widget-section-title text-strong mb-3">Scroll-Tiefe</h3>
                     <div className="flex items-end gap-4 h-24">
                       {[{ label: '25%', value: data.userJourney.scrollDepth.reached25 },
                         { label: '50%', value: data.userJourney.scrollDepth.reached50 },
@@ -516,7 +516,7 @@ export default function AiTrafficDetailCardV2({
                   </div>
                 )}
                 <div>
-                  <h3 className="text-sm font-semibold text-strong mb-3">Top Einstiegsseiten & Folgepfade</h3>
+                  <h3 className="widget-section-title text-strong mb-3">Top Einstiegsseiten & Folgepfade</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {data.userJourney.topJourneys.slice(0, 6).map((journey, i) => (
                       <JourneyFlowCard key={i} landingPage={journey.landingPage} totalSessions={journey.totalSessions}
@@ -582,7 +582,7 @@ export default function AiTrafficDetailCardV2({
                               style={{ backgroundColor: `${page.intent.color}15`, color: page.intent.color }}>
                               {getIntentIcon(page.intent.icon, 12)} {page.intent.label}</span>
                           </td>
-                          <td className="px-4 py-3 text-right text-sm font-semibold text-heading">{page.sessions.toLocaleString('de-DE')}</td>
+                          <td className="widget-table-cell px-4 py-3 text-right font-medium text-heading">{page.sessions.toLocaleString('de-DE')}</td>
                           <td className="px-4 py-3 text-right text-sm">
                             <span className={cn("font-medium", page.engagementRate > 60 ? "text-green-600" : page.engagementRate > 40 ? "text-amber-600" : "text-secondary")}>
                               {page.engagementRate.toFixed(1)}%</span>
@@ -605,7 +605,7 @@ export default function AiTrafficDetailCardV2({
             {activeTab === 'sources' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-surface-secondary rounded-xl p-5 border border-border-subtle">
-                  <h3 className="text-sm font-semibold text-strong mb-4 flex items-center gap-2">
+                  <h3 className="widget-section-title text-strong mb-4 flex items-center gap-2">
                     <BarChart3 size={14} className="text-purple-500" />Verteilung der KI-Quellen</h3>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
@@ -622,7 +622,7 @@ export default function AiTrafficDetailCardV2({
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-strong mb-3 flex items-center gap-2">
+                  <h3 className="widget-section-title text-strong mb-3 flex items-center gap-2">
                     <Sparkles size={14} className="text-amber-500" />Performance nach Plattform</h3>
                   <div className="overflow-hidden rounded-xl border border-border-subtle">
                     <table className="w-full">

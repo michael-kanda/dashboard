@@ -182,16 +182,16 @@ export default function AiAnalysisWidget({
           </div>
           <div className="flex-1 text-center sm:text-left">
             <div className="flex items-center justify-center sm:justify-start gap-3 mb-2">
-              <h3 className="text-xl font-bold text-heading">Data Max</h3>
-              <span className="px-2.5 py-0.5 rounded-full text-indigo-400 bg-indigo-500/10 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/20">AI Analyst</span>
+              <h3 className="widget-title text-heading">Data Max</h3>
+              <span className="widget-eyebrow px-2.5 py-0.5 rounded-full text-indigo-400 bg-indigo-500/10 tracking-wider border border-indigo-500/20">AI Analyst</span>
             </div>
-            <p className="text-base text-secondary leading-relaxed max-w-xl">
+            <p className="widget-body text-secondary max-w-xl">
               {isPrefetched && teaserText
                 ? <span className="text-secondary animate-in fade-in duration-500">{teaserText}</span>
                 : <span>Soll ich die Performance der letzten <span className="font-medium text-body">{rangeLabel}</span> analysieren?</span>}
             </p>
           </div>
-          <button onClick={handleAnalyze} className="shrink-0 px-6 py-3 bg-[#188BDB] hover:bg-[#1479BF] text-white rounded-lg text-sm font-medium shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 group">
+          <button onClick={handleAnalyze} className="widget-control shrink-0 px-6 py-3 bg-[#188BDB] hover:bg-[#1479BF] text-white rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 group">
             <Lightbulb size={18} className="text-white/90 group-hover:text-yellow-200 transition-colors" />
             <span>Jetzt analysieren</span>
           </button>
@@ -204,7 +204,7 @@ export default function AiAnalysisWidget({
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="dashboard-widget-surface rounded-2xl flex flex-col h-full">
         <div className="p-5 border-b border-theme-border-subtle rounded-t-2xl flex justify-between items-center">
-          <h3 className="font-bold text-heading flex items-center gap-2">
+          <h3 className="widget-section-title text-heading flex items-center gap-2">
             {isLoading ? <ArrowRepeat className="animate-spin text-indigo-500" /> : <InfoCircle className="text-indigo-500" />}
             Status ({rangeLabel})
           </h3>
@@ -225,7 +225,7 @@ export default function AiAnalysisWidget({
 
       <div className="dashboard-widget-surface rounded-2xl flex flex-col h-full">
         <div className="p-5 border-b border-theme-border-subtle flex justify-between items-center">
-          <h3 className="font-bold text-heading flex items-center gap-2">
+          <h3 className="widget-section-title text-heading flex items-center gap-2">
             <GraphUpArrow className="text-emerald-500" />
             Analyse & Fazit
           </h3>

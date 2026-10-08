@@ -43,7 +43,7 @@ function KpiSectionHeader({
     <div className="kpi-quiet-grid__section flex items-center justify-between gap-4 border-y px-4 py-[13px] sm:px-6">
       <div className="flex min-w-0 items-center gap-3">
         <span className="text-[11px] font-medium text-faint">{index}</span>
-        <h3 className="truncate text-sm font-semibold text-heading">{title}</h3>
+        <h3 className="widget-section-title truncate text-heading">{title}</h3>
       </div>
       <span className="shrink-0 text-[11px] font-medium uppercase text-faint">{rangeLabel}</span>
     </div>
@@ -90,8 +90,8 @@ export default function TableauKpiGrid({
     <section className="dashboard-widget-surface kpi-quiet-grid rounded-lg">
       <div className="flex flex-col gap-3 px-4 pb-[18px] pt-[22px] sm:flex-row sm:items-start sm:justify-between sm:px-6">
         <div>
-          <p className="text-[11px] font-medium uppercase text-faint">Performance Dashboard</p>
-          <h2 className="text-[17px] font-medium text-heading">Kennzahlen im Überblick</h2>
+          <p className="widget-eyebrow text-faint">Performance Dashboard</p>
+          <h2 className="widget-title text-heading">Kennzahlen im Überblick</h2>
           <div className="mt-[7px] flex h-1 w-[152px] overflow-hidden rounded-sm" aria-hidden="true">
             <span className="w-1/4 bg-[#4285F4]" />
             <span className="w-1/4 bg-[#EA4335]" />
@@ -99,7 +99,7 @@ export default function TableauKpiGrid({
             <span className="w-1/4 bg-[#34A853]" />
           </div>
         </div>
-        <p className="whitespace-nowrap text-xs text-muted sm:pt-1">
+        <p className="widget-meta whitespace-nowrap text-muted sm:pt-1">
           Quelle: GSC + GA4{dateSubtitle ? ` · ${dateSubtitle}` : ''}
         </p>
       </div>

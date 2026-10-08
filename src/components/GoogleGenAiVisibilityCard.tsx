@@ -136,10 +136,10 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
     <div className={cn('dashboard-widget-surface rounded-lg p-6', className)}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <h3 className="text-lg font-semibold text-heading">Google GenAI Sichtbarkeit</h3>
+          <h3 className="widget-title text-heading">Google GenAI Sichtbarkeit</h3>
           <GoogleCleanUnderline id="google-clean-gradient-genai-visibility" />
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-            <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded font-semibold">
+          <div className="widget-meta mt-2 flex flex-wrap items-center gap-2">
+            <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded font-medium">
               Quelle: {isManualExport ? 'GSC Export' : 'Search Console'}
             </span>
             <span className="text-faint">•</span>
@@ -162,9 +162,9 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
         <div className="flex flex-col items-start gap-2 sm:items-end">
           <div className="rounded-lg bg-surface-secondary px-4 py-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">GenAI-Impressions</p>
+              <p className="widget-eyebrow tracking-wide text-muted">GenAI-Impressions</p>
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-semibold text-heading tabular-nums">
+                <span className="widget-metric text-heading">
                   {formatCompact(data?.totalImpressions || 0)}
                 </span>
                 <ChangeBadge change={data?.impressionsChange} />
@@ -199,7 +199,7 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
         <div className="mt-5 rounded-lg border border-border-subtle bg-surface-secondary p-4">
           <div className="flex flex-col gap-3">
             <div>
-              <p className="text-sm font-semibold text-heading">GSC GenAI-Export einfügen</p>
+              <p className="widget-section-title text-heading">GSC GenAI-Export einfügen</p>
               <p className="mt-1 text-xs text-muted">
                 CSV/TSV aus dem GSC-Report oder JSON mit <code>totalImpressions</code>, <code>topPages</code> und optional <code>trend</code>.
               </p>
@@ -264,7 +264,7 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
       {!hasData ? (
         <div className="mt-5 rounded-lg border border-dashed border-border-subtle bg-surface-secondary p-4">
           <div>
-            <p className="text-sm font-semibold text-heading">Noch keine offiziellen Google-GenAI-Daten sichtbar</p>
+            <p className="widget-section-title text-heading">Noch keine offiziellen Google-GenAI-Daten sichtbar</p>
             <p className="mt-1 text-sm text-muted leading-relaxed">
               {data?.message || 'Google rollt den neuen Search-Console-Report schrittweise aus. Sobald die Property freigeschaltet ist oder die API passende Search-Appearance-Daten liefert, wird dieser Block automatisch befuellt.'}
             </p>
@@ -322,7 +322,7 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
 
           <div className="min-w-0">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Top-Seiten in Google GenAI</p>
+              <p className="widget-eyebrow tracking-wide text-muted">Top-Seiten in Google GenAI</p>
               <span className="text-[11px] font-semibold text-muted tabular-nums">
                 {displayedPages.length}{searchTerm ? ` von ${topPages.length}` : ''}
               </span>
@@ -336,7 +336,7 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
                     <span className="truncate font-mono text-xs text-body" title={page.key}>
                       {page.key}
                     </span>
-                    <span className="shrink-0 text-sm font-semibold text-heading tabular-nums">
+                    <span className="widget-item-title shrink-0 text-heading tabular-nums">
                       {formatCompact(page.impressions)}
                     </span>
                   </div>

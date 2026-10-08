@@ -306,7 +306,7 @@ export default function KpiTrendChart({
       {/* HEADER & CONTROLS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-heading">
+          <h3 className="widget-title text-heading">
             Verlauf & Analyse
           </h3>
           <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
@@ -326,7 +326,7 @@ export default function KpiTrendChart({
               <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-verlauf)" />
             </svg>
           </div>
-          <div className="mt-2 flex items-center gap-2 text-xs text-muted">
+          <div className="widget-meta mt-2 flex items-center gap-2 text-muted">
             <span className="rounded bg-surface-tertiary px-1.5 py-0.5 font-medium text-secondary">
               Quelle: {activeConfig.source}
             </span>
@@ -344,7 +344,7 @@ export default function KpiTrendChart({
             <select
               value={activeKpi}
               onChange={(e) => onKpiChange(e.target.value)}
-              className="appearance-none bg-surface-secondary hover:bg-surface border border-border hover:border-border text-body text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 pr-10 py-2 cursor-pointer transition-colors"
+              className="widget-control appearance-none bg-surface-secondary hover:bg-surface border border-border hover:border-border text-body rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 pr-10 py-2 cursor-pointer transition-colors"
             >
               {Object.keys(KPI_CONFIG).map((key) => (
                 <option key={key} value={key}>
@@ -364,7 +364,7 @@ export default function KpiTrendChart({
             <select
               value={compareKpi}
               onChange={(e) => setCompareKpi(e.target.value)}
-              className="appearance-none bg-surface border border-border hover:border-border text-secondary text-sm rounded-md focus:ring-purple-500 focus:border-purple-500 block w-full pl-9 pr-8 py-2 cursor-pointer transition-colors"
+              className="widget-control appearance-none bg-surface border border-border hover:border-border text-secondary rounded-md focus:ring-purple-500 focus:border-purple-500 block w-full pl-9 pr-8 py-2 cursor-pointer transition-colors"
             >
               <option value="none">Kein Vergleich</option>
               {Object.keys(KPI_CONFIG)

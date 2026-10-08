@@ -29,6 +29,17 @@
   --dp-text-xl:   1.25rem;    /*  20px  page titles           */
   --dp-text-2xl:  1.5rem;     /*  24px  hero text             */
 
+  /* Dashboard widget typography */
+  --dp-widget-eyebrow:     0.625rem;   /* 10px */
+  --dp-widget-meta:        0.6875rem;  /* 11px */
+  --dp-widget-control:     0.75rem;    /* 12px */
+  --dp-widget-item-title:  0.8125rem;  /* 13px */
+  --dp-widget-body:        0.875rem;   /* 14px */
+  --dp-widget-title:       1.0625rem;  /* 17px */
+  --dp-widget-metric-sm:   1.125rem;   /* 18px */
+  --dp-widget-metric:      1.6875rem;  /* 27px */
+  --dp-widget-score:       2.875rem;   /* 46px */
+
   --dp-weight-normal:   400;
   --dp-weight-medium:   500;
   --dp-weight-semibold: 600;

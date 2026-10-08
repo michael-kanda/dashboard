@@ -231,7 +231,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
     const Icon = isPositive ? ArrowUp : ArrowDown;
 
     return (
-      <div className={`flex items-center gap-1 font-bold text-[10px] bg-surface px-1.5 py-0.5 rounded border shadow-sm ${colorClass} mb-1`}>
+      <div className={`widget-eyebrow flex items-center gap-1 bg-surface px-1.5 py-0.5 rounded border shadow-sm ${colorClass} mb-1`}>
         <Icon size={9} />
         {Math.abs(change).toFixed(0)}%
       </div>
@@ -244,13 +244,13 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 border-b border-theme-border-default/50 pb-4">
         <div>
-          <h2 className="text-xl font-bold text-heading flex items-center gap-2">
+          <h2 className="widget-title text-heading flex items-center gap-2">
             <ClockHistory className="text-indigo-600" size={22} />
             Projekt-Status
           </h2>
         </div>
         <div className="mt-2 sm:mt-0">
-           <div className="px-3 py-1 bg-indigo-50/80 text-indigo-700 rounded-full text-xs font-semibold border border-indigo-100/50 backdrop-blur-sm">
+           <div className="widget-control px-3 py-1 bg-indigo-50/80 text-indigo-700 rounded-full border border-indigo-100/50 backdrop-blur-sm">
              Laufzeit: {duration} Monate
            </div>
         </div>
@@ -263,11 +263,11 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
           {/* Zeitachse */}
           <div className="space-y-3">
             <div className="flex justify-between items-end mb-2">
-              <div className="flex items-center gap-2 text-lg font-semibold text-heading">
+              <div className="widget-section-title flex items-center gap-2 text-heading">
                 <CalendarWeek className="text-indigo-500" size={20} />
                 <h3>Zeitachse</h3>
               </div>
-              <span className="text-sm font-medium text-muted">{Math.round(timeElapsedPercentage)}% vergangen</span>
+              <span className="widget-control text-muted">{Math.round(timeElapsedPercentage)}% vergangen</span>
             </div>
             <div className="relative h-10 w-full bg-surface-tertiary/80 rounded-lg border border-theme-border-default/60 overflow-hidden">
               <div className="absolute top-0 left-0 h-full bg-indigo-200 border-r-2 border-indigo-500 transition-all duration-1000" style={{ width: `${timeElapsedPercentage}%` }} />
@@ -281,11 +281,11 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
           {/* Status */}
           <div className="space-y-3">
             <div className="flex justify-between items-end mb-2">
-              <div className="flex items-center gap-2 text-lg font-semibold text-heading">
+              <div className="widget-section-title flex items-center gap-2 text-heading">
                 <ListCheck className="text-green-600" size={22} />
                 <h3>Landingpages Status</h3>
               </div>
-              <div className="flex items-baseline gap-1"><span className="text-2xl font-bold text-heading">{Math.round(percentage)}%</span><span className="text-sm text-muted font-medium">fertig</span></div>
+              <div className="flex items-baseline gap-1"><span className="widget-metric text-heading">{Math.round(percentage)}%</span><span className="widget-control text-muted">fertig</span></div>
             </div>
             <div className="h-6 w-full bg-surface-tertiary/80 rounded-full overflow-hidden flex shadow-inner border border-theme-border-default/60">
               {counts.Total > 0 ? (
@@ -310,11 +310,11 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
             <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100 shadow-sm">
                <div className="flex items-center gap-2 mb-2 text-blue-600">
                   <Search size={14} />
-                  <span className="text-xs font-bold uppercase tracking-wide opacity-80">GSC Impr.</span>
+                  <span className="widget-eyebrow tracking-wide opacity-80">GSC Impr.</span>
                </div>
                <div className="flex items-end gap-2">
                   <div className="mb-1"><TrendIcon direction={gscTrend} colorClass="text-blue-600" /></div>
-                  <span className="text-xl font-bold text-heading leading-none">
+                  <span className="widget-metric-sm text-heading">
                     {new Intl.NumberFormat('de-DE', { notation: 'compact', maximumFractionDigits: 1 }).format(totalGscImpressions)}
                   </span>
                   <ChangeBadge change={gscChangePercent} />
@@ -325,11 +325,11 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
             <div className="bg-purple-50/50 rounded-xl p-3 border border-purple-100 shadow-sm">
                <div className="flex items-center gap-2 mb-2 text-purple-600">
                   <Cpu size={14} />
-                  <span className="text-xs font-bold uppercase tracking-wide opacity-80">KI Traffic</span>
+                  <span className="widget-eyebrow tracking-wide opacity-80">KI Traffic</span>
                </div>
                <div className="flex items-end gap-2">
                   <div className="mb-1"><TrendIcon direction={aiTrend} colorClass="text-purple-600" /></div>
-                  <span className="text-xl font-bold text-heading leading-none">
+                  <span className="widget-metric-sm text-heading">
                     {new Intl.NumberFormat('de-DE', { notation: 'compact', maximumFractionDigits: 1 }).format(totalAiSessions)}
                   </span>
                   <ChangeBadge change={aiChangePercent} />
@@ -339,11 +339,11 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
             <div className="bg-sky-50/50 rounded-xl p-3 border border-sky-100 shadow-sm">
                <div className="flex items-center gap-2 mb-2 text-sky-600">
                   <Cpu size={14} />
-                  <span className="text-xs font-bold uppercase tracking-wide opacity-80">Google GenAI</span>
+                  <span className="widget-eyebrow tracking-wide opacity-80">Google GenAI</span>
                </div>
                <div className="flex items-end gap-2">
                   <div className="mb-1"><TrendIcon direction={genAiTrend} colorClass="text-sky-600" /></div>
-                  <span className="text-xl font-bold text-heading leading-none">
+                  <span className="widget-metric-sm text-heading">
                     {new Intl.NumberFormat('de-DE', { notation: 'compact', maximumFractionDigits: 1 }).format(totalGenAiImpressions)}
                   </span>
                   <ChangeBadge change={genAiChangePercent} />
@@ -356,7 +356,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
         {/* SPALTE 2: Top Movers */}
         <div className="flex flex-col h-full border-b lg:border-b-0 lg:border-r border-theme-border-subtle pb-6 lg:pb-0 lg:px-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-lg font-semibold text-heading">
+            <div className="widget-section-title flex items-center gap-2 text-heading">
               <Trophy className="text-amber-500" size={20} />
               <h3>Top-Performer (GSC)</h3>
             </div>
@@ -367,12 +367,12 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
               {topMovers.map((page, index) => (
                 <div key={index} className="bg-surface-secondary/50 rounded-lg border border-theme-border-subtle p-3 hover:shadow-sm transition-all flex items-center justify-between">
                   <div className="min-w-0 flex-1 pr-3">
-                    <div className="font-medium text-sm text-heading truncate" title={page.haupt_keyword || page.url}>
+                    <div className="widget-item-title text-heading truncate" title={page.haupt_keyword || page.url}>
                       {page.haupt_keyword || <span className="text-faint italic">Kein Keyword</span>}
                     </div>
                     <div className="text-[10px] text-faint truncate mt-0.5">{new URL(page.url).pathname}</div>
                   </div>
-                  <div className="flex items-center gap-1 text-green-600 font-bold text-xs bg-surface px-1.5 py-0.5 rounded border border-green-100 shadow-sm">
+                  <div className="widget-control flex items-center gap-1 text-green-600 bg-surface px-1.5 py-0.5 rounded border border-green-100 shadow-sm">
                     <ArrowUp size={10} />
                     {page.gsc_impressionen_change > 1000 ? (page.gsc_impressionen_change / 1000).toFixed(1) + 'k' : page.gsc_impressionen_change}
                   </div>
@@ -389,7 +389,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
                {/* Titel */}
-               <h3 className="text-lg font-semibold text-heading flex items-center gap-2">
+               <h3 className="widget-section-title text-heading flex items-center gap-2">
                   <GraphUpArrow className="text-blue-500" size={18} />
                   Reichweite
                </h3>

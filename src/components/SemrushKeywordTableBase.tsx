@@ -154,7 +154,7 @@ export default function SemrushKeywordTableBase({
     
     if (rounded === 1) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-50 text-yellow-700 border border-yellow-200 shadow-sm">
+        <span className="widget-control inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200 shadow-sm">
           <Trophy size={10} className="text-yellow-600" />
           {position}
         </span>
@@ -162,7 +162,7 @@ export default function SemrushKeywordTableBase({
     }
     if (rounded <= 3) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-surface-tertiary text-body border border-theme-border-default shadow-sm">
+        <span className="widget-control inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-tertiary text-body border border-theme-border-default shadow-sm">
           <Award size={10} className="text-muted" />
           {position}
         </span>
@@ -170,7 +170,7 @@ export default function SemrushKeywordTableBase({
     }
     if (rounded <= 10) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+        <span className="widget-control inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
           <CheckCircleFill size={10} className="text-emerald-500 opacity-60" />
           {position}
         </span>
@@ -191,7 +191,7 @@ export default function SemrushKeywordTableBase({
         <div className={cn("p-4 rounded-t-lg bg-gradient-to-r", theme.headerGradient)}>
           <div className="flex items-center gap-2">
             <Search className="text-white" size={20} />
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
+            <h3 className="widget-title text-white">{title}</h3>
           </div>
         </div>
         <div className="p-6 animate-pulse space-y-3">
@@ -211,7 +211,7 @@ export default function SemrushKeywordTableBase({
         <div className={cn("p-4 rounded-t-lg bg-gradient-to-r", theme.headerGradient)}>
           <div className="flex items-center gap-2">
             <Search className="text-white" size={20} />
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
+            <h3 className="widget-title text-white">{title}</h3>
           </div>
         </div>
         <div className="p-6">
@@ -234,7 +234,7 @@ export default function SemrushKeywordTableBase({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Search className="text-white" size={20} />
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
+            <h3 className="widget-title text-white">{title}</h3>
           </div>
           <div className="flex items-center gap-3">
             {lastFetched && (
@@ -267,20 +267,20 @@ export default function SemrushKeywordTableBase({
           <table className="w-full border-collapse">
             <thead className="sticky top-0 z-10">
               <tr className="text-white" style={{ backgroundColor: theme.tableHeaderBgColor }}>
-                <th onClick={() => handleSort('keyword')} className="px-4 py-3 text-left text-sm font-semibold cursor-pointer transition-colors border-r border-white/20" style={{ backgroundColor: theme.tableHeaderBgColor }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderHoverColor} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderBgColor}>
+                <th onClick={() => handleSort('keyword')} className="widget-table-head px-4 py-3 text-left cursor-pointer transition-colors border-r border-white/20" style={{ backgroundColor: theme.tableHeaderBgColor }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderHoverColor} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderBgColor}>
                   <div className="flex items-center gap-2">Keyword <FunnelFill size={12} className="opacity-60" /></div>
                 </th>
-                <th onClick={() => handleSort('position')} className="px-4 py-3 text-right text-sm font-semibold cursor-pointer transition-colors whitespace-nowrap border-r border-white/20" style={{ backgroundColor: theme.tableHeaderBgColor }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderHoverColor} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderBgColor}>
+                <th onClick={() => handleSort('position')} className="widget-table-head px-4 py-3 text-right cursor-pointer transition-colors whitespace-nowrap border-r border-white/20" style={{ backgroundColor: theme.tableHeaderBgColor }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderHoverColor} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderBgColor}>
                   <div className="flex items-center justify-end gap-2">Position <FunnelFill size={12} className="opacity-60" /></div>
                 </th>
-                <th className="px-4 py-3 text-center text-sm font-semibold whitespace-nowrap border-r border-white/20" style={{ backgroundColor: theme.tableHeaderBgColor }}>Änderung</th>
-                <th onClick={() => handleSort('searchVolume')} className="px-4 py-3 text-right text-sm font-semibold cursor-pointer transition-colors whitespace-nowrap border-r border-white/20" style={{ backgroundColor: theme.tableHeaderBgColor }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderHoverColor} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderBgColor}>
+                <th className="widget-table-head px-4 py-3 text-center whitespace-nowrap border-r border-white/20" style={{ backgroundColor: theme.tableHeaderBgColor }}>Änderung</th>
+                <th onClick={() => handleSort('searchVolume')} className="widget-table-head px-4 py-3 text-right cursor-pointer transition-colors whitespace-nowrap border-r border-white/20" style={{ backgroundColor: theme.tableHeaderBgColor }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderHoverColor} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderBgColor}>
                   <div className="flex items-center justify-end gap-2">Suchvolumen <FunnelFill size={12} className="opacity-60" /></div>
                 </th>
-                <th onClick={() => handleSort('trafficPercent')} className="px-4 py-3 text-right text-sm font-semibold cursor-pointer transition-colors whitespace-nowrap border-r border-white/20" style={{ backgroundColor: theme.tableHeaderBgColor }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderHoverColor} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderBgColor}>
+                <th onClick={() => handleSort('trafficPercent')} className="widget-table-head px-4 py-3 text-right cursor-pointer transition-colors whitespace-nowrap border-r border-white/20" style={{ backgroundColor: theme.tableHeaderBgColor }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderHoverColor} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.tableHeaderBgColor}>
                   <div className="flex items-center justify-end gap-2">Traffic % <FunnelFill size={12} className="opacity-60" /></div>
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{ backgroundColor: theme.tableHeaderBgColor }}>URL</th>
+                <th className="widget-table-head px-4 py-3 text-left whitespace-nowrap" style={{ backgroundColor: theme.tableHeaderBgColor }}>URL</th>
               </tr>
             </thead>
             <tbody>
@@ -288,16 +288,16 @@ export default function SemrushKeywordTableBase({
                 const positionChange = getPositionChange(kw.position, kw.previousPosition);
                 return (
                   <tr key={`${keyPrefix}-${projectId || 'user'}-${kw.keyword}-${index}`} className={cn("border-b border-theme-border-default transition-colors", index % 2 === 0 ? "bg-surface" : "bg-surface-secondary", theme.tableRowHover)}>
-                    <td className="px-4 py-3 text-sm text-heading font-medium border-r border-theme-border-default"><div className="break-words max-w-xs">{kw.keyword}</div></td>
+                    <td className="widget-table-cell px-4 py-3 text-heading font-medium border-r border-theme-border-default"><div className="break-words max-w-xs">{kw.keyword}</div></td>
                     
                     {/* ✅ KORREKTUR: Neue Badges */}
-                    <td className="px-4 py-3 text-sm text-right border-r border-theme-border-default whitespace-nowrap">
+                    <td className="widget-table-cell px-4 py-3 text-right border-r border-theme-border-default whitespace-nowrap">
                       <div className="flex justify-end">
                         {renderRankingBadge(kw.position)}
                       </div>
                     </td>
                     
-                    <td className="px-4 py-3 text-sm text-center border-r border-theme-border-default whitespace-nowrap">
+                    <td className="widget-table-cell px-4 py-3 text-center border-r border-theme-border-default whitespace-nowrap">
                       {positionChange !== null && positionChange !== 0 ? (
                         <span className={cn("inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-xs font-semibold", positionChange > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
                           {positionChange > 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
@@ -305,9 +305,9 @@ export default function SemrushKeywordTableBase({
                         </span>
                       ) : (<span className="text-faint text-xs">-</span>)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-heading text-right font-medium border-r border-theme-border-default whitespace-nowrap">{kw.searchVolume.toLocaleString('de-DE')}</td>
-                    <td className="px-4 py-3 text-sm text-heading text-right font-medium border-r border-theme-border-default whitespace-nowrap">{kw.trafficPercent.toFixed(1)}%</td>
-                    <td className="px-4 py-3 text-sm border-r-0">
+                    <td className="widget-table-cell px-4 py-3 text-heading text-right font-medium border-r border-theme-border-default whitespace-nowrap">{kw.searchVolume.toLocaleString('de-DE')}</td>
+                    <td className="widget-table-cell px-4 py-3 text-heading text-right font-medium border-r border-theme-border-default whitespace-nowrap">{kw.trafficPercent.toFixed(1)}%</td>
+                    <td className="widget-table-cell px-4 py-3 border-r-0">
                       {kw.url ? (
                         <a href={kw.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate block max-w-xs text-xs" title={kw.url}>{kw.url.length > 40 ? kw.url.substring(0, 40) + '...' : kw.url}</a>
                       ) : (<span className="text-faint text-xs">-</span>)}

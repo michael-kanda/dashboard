@@ -370,11 +370,11 @@ export default function IndexingStatusWidget({
       <div className="px-5 pb-[18px] pt-[22px] sm:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-[10px] font-semibold uppercase text-muted">Google Index</p>
-            <h2 className="mt-1 text-[17px] font-medium text-heading">Indexierungsstatus</h2>
+            <p className="widget-eyebrow text-muted">Google Index</p>
+            <h2 className="widget-title mt-1 text-heading">Indexierungsstatus</h2>
             <GoogleUnderline />
             <div className="mt-2 flex items-center gap-1.5">
-              <p className="text-sm text-body">Sitemap und Google-Index im direkten Abgleich.</p>
+              <p className="widget-body text-body">Sitemap und Google-Index im direkten Abgleich.</p>
               <button
                 type="button"
                 onClick={() => setShowDataInfo((current) => !current)}
@@ -386,7 +386,7 @@ export default function IndexingStatusWidget({
               </button>
             </div>
             {data.lastSyncedAt && (
-              <p className="mt-1 text-[11px] text-muted">
+              <p className="widget-meta mt-1 text-muted">
                 Stand: {formatDate(data.lastSyncedAt, true)} Uhr · GSC-Leistung: {data.performanceRange.toLocaleLowerCase('de-DE')}
               </p>
             )}
@@ -477,11 +477,11 @@ export default function IndexingStatusWidget({
               <div className={`indexing-coverage-rail__layout -mx-5 mt-5 sm:-mx-6 ${hasCoverageNotices ? '' : '-mb-[18px]'}`}>
                 <aside className="indexing-coverage-rail__score">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase text-muted">Indexabdeckung</p>
-                    <p className="mt-2 text-[46px] font-medium leading-none tabular-nums text-heading">
+                    <p className="widget-eyebrow text-muted">Indexabdeckung</p>
+                    <p className="widget-score mt-2 text-heading">
                       {indexShare}%
                     </p>
-                    <p className="mt-2.5 text-[11px] leading-[17px] text-muted">
+                    <p className="widget-meta mt-2.5 text-muted">
                       {data.isVerificationComplete
                         ? `${data.indexedUrls} von ${data.totalUrls} relevanten URLs sind im Google-Index.`
                         : `${data.indexedUrls} von ${data.verifiedUrls} erfolgreich geprüften URLs sind indexiert.`}
@@ -528,9 +528,9 @@ export default function IndexingStatusWidget({
                       const interactive = item.showsDetails || item.filter;
                       const content = (
                         <>
-                          <p className="text-[10px] font-semibold uppercase text-muted">{item.label}</p>
-                          <p className="mt-2 text-[22px] font-medium leading-none tabular-nums text-heading">{item.value}</p>
-                          <p className="mt-2 text-[10px] text-muted">{item.description}</p>
+                          <p className="widget-eyebrow text-muted">{item.label}</p>
+                          <p className="widget-metric-sm mt-2 text-heading">{item.value}</p>
+                          <p className="widget-meta mt-2 text-muted">{item.description}</p>
                         </>
                       );
 
@@ -619,7 +619,7 @@ export default function IndexingStatusWidget({
             {data.totalUrls > 0 && !data.isVerificationComplete && (
               <div className="mt-5 rounded-md border border-[#4285F4]/30 bg-[#4285F4]/5 px-4 py-3">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm font-semibold text-heading">Vorläufiger Datenstand</p>
+                  <p className="widget-section-title text-heading">Vorläufiger Datenstand</p>
                   <p className="text-xs font-semibold tabular-nums text-[#4285F4]">
                     {data.verifiedUrls} von {data.totalUrls} URLs klassifiziert
                   </p>
@@ -724,7 +724,7 @@ export default function IndexingStatusWidget({
           <div className="max-h-[520px] overflow-auto">
             <table className="w-full min-w-[940px] border-collapse text-left">
               <thead className="indexing-coverage-rail__table-header sticky top-0 z-10">
-                <tr className="border-b border-[var(--indexing-line)] text-[10px] font-semibold uppercase text-muted">
+                <tr className="widget-table-head border-b border-[var(--indexing-line)] text-muted">
                   <th className="px-5 py-3">URL</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Hinweis</th>

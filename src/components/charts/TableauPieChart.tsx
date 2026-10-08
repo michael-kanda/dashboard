@@ -75,17 +75,17 @@ const CustomTooltip = ({ active, payload, totalValue }: CustomTooltipProps) => {
             className="w-2.5 h-2.5 rounded-full shadow-sm" 
             style={{ backgroundColor: color }}
           />
-          <span className="text-sm font-semibold text-body">{data.name}</span>
+          <span className="widget-item-title text-body">{data.name}</span>
         </div>
 
         {/* Standard Werte */}
         <div className="flex justify-between items-center mb-1 gap-4">
           <span className="text-xs text-muted">Anteil:</span>
-          <span className="text-xs font-bold text-heading">{percentValue.toFixed(1)}%</span>
+          <span className="widget-control text-heading">{percentValue.toFixed(1)}%</span>
         </div>
         <div className="flex justify-between items-center mb-2 gap-4">
           <span className="text-xs text-muted">Sitzungen:</span>
-          <span className="text-sm font-bold text-heading">
+          <span className="widget-item-title text-heading">
             {new Intl.NumberFormat('de-DE').format(data.value)}
           </span>
         </div>
@@ -100,7 +100,7 @@ const CustomTooltip = ({ active, payload, totalValue }: CustomTooltipProps) => {
                 <GraphUp size={11} className="text-purple-500" />
                 <span className="text-[11px] font-medium text-secondary">{data.subLabel}:</span>
               </div>
-              <span className="text-[11px] font-bold text-purple-700">
+              <span className="widget-meta font-medium text-purple-700">
                 {data.subValue}
               </span>
             </div>
@@ -113,7 +113,7 @@ const CustomTooltip = ({ active, payload, totalValue }: CustomTooltipProps) => {
                 <CheckCircleFill size={11} className="text-emerald-600" />
                 <span className="text-[11px] font-medium text-secondary">{data.subLabel2}:</span>
               </div>
-              <span className="text-[11px] font-bold text-emerald-700">
+              <span className="widget-meta font-medium text-emerald-700">
                 {new Intl.NumberFormat('de-DE').format(data.subValue2)}
               </span>
             </div>
@@ -146,7 +146,7 @@ const renderCustomLabel = (props: PieLabelRenderProps & { index?: number }) => {
       fill={textColor} 
       textAnchor="middle" 
       dominantBaseline="central"
-      className="text-[11px] font-bold pointer-events-none"
+      className="widget-meta font-medium pointer-events-none"
       style={{ textShadow: textColor === '#ffffff' ? '0px 0px 2px rgba(0,0,0,0.3)' : 'none' }}
     >
       {`${((percent || 0) * 100).toFixed(0)}%`}
@@ -193,7 +193,7 @@ export default function TableauPieChart({
      return (
       <div className={cn('dashboard-widget-surface rounded-lg p-6 flex flex-col h-[350px]', className)}>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-heading">{title}</h3>
+          <h3 className="widget-title text-heading">{title}</h3>
           <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
               <defs>
@@ -224,7 +224,7 @@ export default function TableauPieChart({
     return (
       <div className={cn('dashboard-widget-surface rounded-lg p-6 flex flex-col h-[350px]', className)}>
         <div className="mb-4 self-start">
-          <h3 className="text-lg font-semibold text-heading">{title}</h3>
+          <h3 className="widget-title text-heading">{title}</h3>
           <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
               <defs>
@@ -253,7 +253,7 @@ export default function TableauPieChart({
   return (
     <div className={cn('dashboard-widget-surface rounded-lg p-6 flex flex-col h-[350px] transition-shadow', className)}>
       <div className="mb-1 flex-shrink-0">
-        <h3 className="text-lg font-semibold text-heading">{title}</h3>
+        <h3 className="widget-title text-heading">{title}</h3>
         <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
             <defs>
@@ -272,7 +272,7 @@ export default function TableauPieChart({
           </svg>
         </div>
       </div>
-      <div className="flex items-center gap-2 text-xs text-muted mb-2 flex-shrink-0">
+      <div className="widget-meta flex items-center gap-2 text-muted mb-2 flex-shrink-0">
         <span className="bg-surface-tertiary px-1.5 py-0.5 rounded text-secondary font-medium">Quelle: GA4</span>
         {dateLabel && (
           <>
