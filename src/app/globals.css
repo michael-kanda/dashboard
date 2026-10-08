@@ -272,6 +272,23 @@
     background: var(--local-map-section);
   }
 
+  .local-signal-map__profile {
+    position: absolute;
+    z-index: 10;
+    top: 18px;
+    left: 24px;
+    width: 248px;
+    overflow: hidden;
+    border: 1px solid var(--local-map-line);
+    border-radius: 7px;
+    background: var(--local-map-panel);
+    box-shadow: 0 10px 26px rgba(16, 24, 40, 0.12);
+  }
+
+  .dark .local-signal-map__profile {
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+  }
+
   .local-signal-map__side {
     min-width: 0;
     background: var(--local-map-panel);
@@ -287,9 +304,9 @@
     grid-template-columns: 24px minmax(0, 1fr) auto;
     align-items: center;
     width: 100%;
-    min-height: 48px;
+    min-height: 62px;
     gap: 9px;
-    padding: 7px 9px;
+    padding: 9px 11px;
     border-radius: 6px;
     text-align: left;
   }
@@ -347,6 +364,12 @@
     .local-signal-map__stage {
       min-height: 320px;
       padding: 14px;
+    }
+
+    .local-signal-map__profile {
+      top: 12px;
+      left: 12px;
+      width: 218px;
     }
 
     .local-signal-map__metrics {

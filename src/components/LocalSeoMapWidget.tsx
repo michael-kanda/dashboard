@@ -365,6 +365,23 @@ export default function LocalSeoMapWidget({
   const selectedProfileUrl = selected
     ? selectedPreview?.googleMapsUri || getExternalProfileUrl(selected.googleBusinessProfileUrl)
     : null;
+  const mapProfileLocation = displayLocations.find((location) => location.id === hoveredId) || selected;
+  const mapProfilePreview = mapProfileLocation
+    ? placePreviews[mapProfileLocation.id || mapProfileLocation.name]
+    : null;
+  const mapProfileUrl = mapProfileLocation
+    ? mapProfilePreview?.googleMapsUri || getExternalProfileUrl(mapProfileLocation.googleBusinessProfileUrl)
+    : null;
+  const mapProfileImageUrl = mapProfileLocation
+    ? mapProfilePreview?.photoUrl || getExternalProfileUrl(mapProfileLocation.googleBusinessProfileImageUrl)
+    : null;
+  const mapProfileRating = typeof mapProfilePreview?.rating === 'number'
+    ? mapProfilePreview.rating.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+    : null;
+  const mapProfileReviews = typeof mapProfilePreview?.userRatingCount === 'number'
+    ? formatNumber(mapProfilePreview.userRatingCount)
+    : null;
+  const mapProfileOpeningLabel = getOpeningLabel(mapProfilePreview);
 
   const rankedLocations = useMemo(
     () => [...displayLocations].sort((a, b) => b.score - a.score),
@@ -592,6 +609,47 @@ export default function LocalSeoMapWidget({
 
       <div className="local-signal-map__layout">
         <div className="local-signal-map__stage">
+          {mapProfileLocation && (
+            <div className="local-signal-map__profile">
+              {mapProfileImageUrl ? (
+                <div
+                  className="h-16 w-full bg-surface-secondary bg-cover bg-center"
+                  style={{ backgroundImage: `url(${JSON.stringify(mapProfileImageUrl)})` }}
+                  aria-hidden="true"
+                />
+              ) : null}
+              <div className="px-3 py-2.5">
+                <p className="truncate text-[11px] font-medium text-heading" title={mapProfileLocation.name}>
+                  {mapProfilePreview?.displayName || mapProfileLocation.name}
+                </p>
+                <p className="mt-0.5 truncate text-[10px] text-muted">
+                  {mapProfilePreview?.primaryType || 'Google Unternehmensprofil'}
+                </p>
+                {mapProfileRating ? (
+                  <p className="mt-1 flex items-center gap-1.5 text-[10px]">
+                    <span className="tracking-[1px] text-amber-500" aria-label="5 Bewertungssterne">★★★★★</span>
+                    <span className="text-muted">{mapProfileRating}{mapProfileReviews ? ` (${mapProfileReviews})` : ''}</span>
+                  </p>
+                ) : null}
+                {mapProfileUrl ? (
+                  <a
+                    href={mapProfileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`mt-1.5 inline-block text-[10px] font-medium hover:underline ${
+                      mapProfileOpeningLabel === 'Geöffnet' ? 'text-emerald-600 dark:text-emerald-300' : 'text-[#4285F4]'
+                    }`}
+                  >
+                    {mapProfileOpeningLabel ? `${mapProfileOpeningLabel} · Profil öffnen` : 'Profil öffnen'}
+                  </a>
+                ) : null}
+              </div>
+              <div className="grid grid-cols-2 border-t border-[var(--local-map-line)] px-3 py-2 text-[10px]">
+                <span className="text-muted">Neue Besucher <strong className="font-medium tabular-nums text-heading">{formatNumber(mapProfileLocation.newUsers)}</strong></span>
+                <span className="text-right text-muted">Conversions <strong className="font-medium tabular-nums text-heading">{formatNumber(mapProfileLocation.conversions)}</strong></span>
+              </div>
+            </div>
+          )}
           <svg
             ref={svgRef}
             viewBox="0 0 820 420"
@@ -619,38 +677,6 @@ export default function LocalSeoMapWidget({
               const point = projectToAustriaSvg(location);
               const isSelected = selected?.id === location.id;
               const isActive = isSelected || hoveredId === location.id;
-              const preview = placePreviews[location.id || location.name] || null;
-              const rawLabel = preview?.displayName || location.name;
-              const label = rawLabel.length > 30 ? `${rawLabel.slice(0, 27)}...` : rawLabel;
-              const profileUrl = preview?.googleMapsUri || getExternalProfileUrl(location.googleBusinessProfileUrl);
-              const profileImageUrl = preview?.photoUrl || getExternalProfileUrl(location.googleBusinessProfileImageUrl);
-              const hasProfileImage = Boolean(profileImageUrl);
-              const categoryLabel = preview?.primaryType || 'Google Unternehmensprofil';
-              const openingLabel = getOpeningLabel(preview);
-              const ratingLabel = typeof preview?.rating === 'number'
-                ? preview.rating.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-                : null;
-              const reviewLabel = typeof preview?.userRatingCount === 'number'
-                ? `(${formatNumber(preview.userRatingCount)})`
-                : '';
-              const profileClipId = `local-seo-profile-${String(location.id || 'location').replace(/[^a-zA-Z0-9_-]/g, '-')}`;
-              const imageHeight = 88;
-              const labelWidth = profileUrl ? 300 : Math.min(286, Math.max(214, label.length * 7.2 + 44));
-              const labelHeight = profileUrl ? (hasProfileImage ? 226 : 152) : 82;
-              const preferredLabelX = point.x > MAP_VIEWBOX.width - labelWidth - 20 ? -labelWidth - 17 : 18;
-              const preferredLabelY = profileUrl ? (hasProfileImage ? -236 : -162) : -92;
-              const absoluteLabelX = Math.max(8, Math.min(MAP_VIEWBOX.width - labelWidth - 8, point.x + preferredLabelX));
-              const absoluteLabelY = Math.max(8, Math.min(MAP_VIEWBOX.height - labelHeight - 8, point.y + preferredLabelY));
-              const labelX = absoluteLabelX - point.x;
-              const labelY = absoluteLabelY - point.y;
-              const pointerX = Math.max(12, Math.min(labelWidth - 12, point.x - absoluteLabelX));
-              const pointerAtBottom = absoluteLabelY + labelHeight <= point.y;
-              const nameY = profileUrl ? (hasProfileImage ? 116 : 26) : 24;
-              const profileMetaY = hasProfileImage ? 140 : 50;
-              const ratingY = hasProfileImage ? 158 : 68;
-              const profileActionY = hasProfileImage ? 176 : 88;
-              const visitorsY = profileUrl ? (hasProfileImage ? 202 : 118) : 50;
-              const conversionsY = profileUrl ? (hasProfileImage ? 220 : 138) : 70;
               return (
                 <g
                   key={location.id}
@@ -669,134 +695,13 @@ export default function LocalSeoMapWidget({
                       <circle cx="50" cy="30" r="18" />
                     </g>
                   </g>
-                  {hoveredId === location.id ? (
-                    <g transform={`translate(${labelX} ${labelY})`}>
-                      <path
-                        d={pointerAtBottom
-                          ? `M${pointerX - 9} ${labelHeight - 1} L${pointerX} ${labelHeight + 10} L${pointerX + 9} ${labelHeight - 1} Z`
-                          : `M${pointerX - 9} 1 L${pointerX} -10 L${pointerX + 9} 1 Z`
-                        }
-                        fill="white"
-                        stroke={GOOGLE_BLUE}
-                        className="dark:fill-slate-900"
-                        strokeWidth="1"
-                      />
-                      <rect
-                        width={labelWidth}
-                        height={labelHeight}
-                        rx="7"
-                        fill="white"
-                        stroke={GOOGLE_BLUE}
-                        className="drop-shadow-sm dark:fill-slate-900"
-                        strokeWidth="1"
-                      />
-                      {profileUrl ? (
-                        <a
-                          href={profileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(event) => event.stopPropagation()}
-                          className="cursor-pointer"
-                        >
-                          {profileImageUrl ? (
-                            <>
-                              <defs>
-                                <clipPath id={profileClipId}>
-                                  <rect x="1" y="1" width={labelWidth - 2} height={imageHeight} rx="7" />
-                                </clipPath>
-                              </defs>
-                              <rect x="1" y="1" width={labelWidth - 2} height={imageHeight} rx="7" fill="#E5E7EB" />
-                            </>
-                          ) : null}
-                          {profileImageUrl ? (
-                            <image
-                              href={profileImageUrl}
-                              x="1"
-                              y="1"
-                              width={labelWidth - 2}
-                              height={imageHeight}
-                              preserveAspectRatio="xMidYMid meet"
-                              clipPath={`url(#${profileClipId})`}
-                            />
-                          ) : null}
-                          <rect width={labelWidth} height={labelHeight} fill="transparent" />
-                        </a>
-                      ) : null}
-                      <text
-                        x="13"
-                        y={nameY}
-                        fill={profileUrl ? '#111827' : GOOGLE_BLUE}
-                        className="text-[15px] font-semibold dark:fill-slate-100"
-                      >
-                        {label}
-                      </text>
-                      {profileUrl ? (
-                        <>
-                          <text
-                            x="13"
-                            y={profileMetaY}
-                            fill="#64748B"
-                            className="text-[13px] dark:fill-slate-300"
-                          >
-                            {categoryLabel.length > 34 ? `${categoryLabel.slice(0, 31)}...` : categoryLabel}
-                          </text>
-                          {ratingLabel ? (
-                            <text
-                              x="13"
-                              y={ratingY}
-                              fill="#374151"
-                              className="text-[13px] dark:fill-slate-200"
-                            >
-                              {ratingLabel} Sterne {reviewLabel}
-                            </text>
-                          ) : null}
-                          <text
-                            x="13"
-                            y={profileActionY}
-                            fill={openingLabel === 'Geöffnet' ? '#15803D' : '#DC2626'}
-                            className="text-[13px]"
-                          >
-                            {openingLabel ? `${openingLabel} · Profil öffnen` : 'Profil öffnen'}
-                          </text>
-                        </>
-                      ) : null}
-                      <text
-                        x="13"
-                        y={visitorsY}
-                        fill={GOOGLE_BLUE}
-                        className="text-[13px] font-semibold"
-                      >
-                        Neue Besucher {formatNumber(location.newUsers)}
-                      </text>
-                      <text
-                        x="13"
-                        y={conversionsY}
-                        fill={GOOGLE_BLUE}
-                        className="text-[13px] font-semibold"
-                      >
-                        Conversions {formatNumber(location.conversions)}
-                      </text>
-                      {profileUrl ? (
-                        <a
-                          href={profileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(event) => event.stopPropagation()}
-                          className="cursor-pointer"
-                        >
-                          <rect width={labelWidth} height={labelHeight} fill="transparent" />
-                        </a>
-                      ) : null}
-                    </g>
-                  ) : (
-                    <text
-                      x="12"
-                      y="-10"
-                      className="fill-slate-700 text-[11px] font-medium dark:fill-slate-200"
-                    >
-                      {location.city || (location.name.length > 18 ? `${location.name.slice(0, 16)}…` : location.name)}
-                    </text>
-                  )}
+                  <text
+                    x="12"
+                    y="-10"
+                    className="fill-slate-700 text-[11px] font-medium dark:fill-slate-200"
+                  >
+                    {location.city || (location.name.length > 18 ? `${location.name.slice(0, 16)}…` : location.name)}
+                  </text>
                 </g>
               );
             })}
@@ -831,15 +736,20 @@ export default function LocalSeoMapWidget({
                     aria-pressed={selected?.id === location.id}
                     className="local-signal-map__location border-0 bg-transparent transition-colors hover:bg-surface-secondary"
                   >
-                    <span className="text-[10px] font-medium tabular-nums text-muted">{String(index + 1).padStart(2, '0')}</span>
+                    <span className="text-[11px] font-medium tabular-nums text-muted">{String(index + 1).padStart(2, '0')}</span>
                     <span className="min-w-0">
-                      <span className="block truncate text-[11px] font-medium text-heading">{location.name}</span>
-                      <span className="mt-0.5 block truncate text-[9px] text-muted">
+                      <span className="block truncate text-[13px] font-medium text-heading">{location.name}</span>
+                      <span className="mt-0.5 block truncate text-[10px] text-muted">
                         {[location.postalCode, location.city].filter(Boolean).join(' ')}
-                        {ratingLabel ? ` · ${ratingLabel} Sterne${reviewLabel ? ` (${reviewLabel})` : ''}` : ''}
                       </span>
+                      {ratingLabel ? (
+                        <span className="mt-1 flex items-center gap-1.5 text-[10px]">
+                          <span className="tracking-[1px] text-amber-500" aria-label="5 Bewertungssterne">★★★★★</span>
+                          <span className="text-muted">{ratingLabel}{reviewLabel ? ` (${reviewLabel})` : ''}</span>
+                        </span>
+                      ) : null}
                     </span>
-                    <span className="text-xs font-medium tabular-nums text-heading">{formatNumber(location.sessions)}</span>
+                    <span className="text-[13px] font-medium tabular-nums text-heading">{formatNumber(location.sessions)}</span>
                   </button>
                 );
               })}
