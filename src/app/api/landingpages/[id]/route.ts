@@ -2,6 +2,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
+import { canAccessLandingpage } from '@/lib/project-access';
 import * as Brevo from '@getbrevo/brevo'; // ✅ Brevo direkt importiert
 
 // --- Brevo Konfiguration (Wie in deiner Status-Route) ---
@@ -12,16 +13,9 @@ apiInstance.setApiKey(
 );
 const systemEmail = process.env.BREVO_SYSTEM_EMAIL || 'status@datapeak.at'; // Fallback wie in Status-Route
 
-// Helper-Funktion: Prüft, ob Benutzer Admin/Superadmin ist ODER Eigentümer der Landingpage
+// Superadmins, zugewiesene Admins und der Projektinhaber dürfen auf die Landingpage zugreifen.
 async function hasAccess(landingpageId: string, session: any) {
-  if (!session?.user) return false;
-  if (session.user.role === 'ADMIN' || session.user.role === 'SUPERADMIN') return true;
-  
-  const { rows } = await sql`SELECT user_id FROM landingpages WHERE id = ${landingpageId}`;
-  if (rows.length > 0 && rows[0].user_id === session.user.id) {
-    return true;
-  }
-  return false;
+  return canAccessLandingpage(session?.user, landingpageId);
 }
 
 // GET - Landingpage Details abrufen
@@ -202,6 +196,9 @@ export async function DELETE(
       return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
     }
     const { id } = await context.params;
+    if (!(await hasAccess(id, session))) {
+      return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
+    }
     await sql`DELETE FROM landingpages WHERE id = ${id}`;
     return NextResponse.json({ message: 'Landingpage erfolgreich gelöscht' });
   } catch (error) {

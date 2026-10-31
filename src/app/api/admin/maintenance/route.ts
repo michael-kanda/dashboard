@@ -1,6 +1,7 @@
 // src/app/api/admin/maintenance/route.ts
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 
 export const dynamic = 'force-dynamic';
@@ -91,6 +92,10 @@ export async function POST(req: Request) {
 
     if (targetUser.length === 0) return NextResponse.json({ message: 'User nicht gefunden' }, { status: 404 });
     if (targetUser[0].role === 'SUPERADMIN') return NextResponse.json({ message: 'Superadmins sind geschützt' }, { status: 403 });
+    // Admins schalten nur zugewiesene Projekte; andere Admins verwaltet ausschließlich der Superadmin.
+    if (!(await canAccessProject(session.user, String(targetUser[0].id)))) {
+      return NextResponse.json({ message: 'Keine Berechtigung für diesen Benutzer' }, { status: 403 });
+    }
 
     // Update
     await sql`

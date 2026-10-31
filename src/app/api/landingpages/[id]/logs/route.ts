@@ -1,6 +1,7 @@
 // src/app/api/landingpages/[id]/logs/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
+import { canAccessLandingpage } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 
 type LogEntry = {
@@ -23,8 +24,9 @@ export async function GET(
       return NextResponse.json({ message: "Zugriff verweigert" }, { status: 403 });
     }
 
-    // Berechtigungsprüfung (optional, aber empfohlen: Prüfen, ob der Admin Zugriff auf das Projekt hat)
-    // ... (ähnliche Logik wie in der Status-Update-Route oder GET-Route für Landingpages)
+    if (!(await canAccessLandingpage(session.user, landingpageId))) {
+      return NextResponse.json({ message: "Zugriff verweigert" }, { status: 403 });
+    }
 
     const { rows } = await sql<LogEntry>`
       SELECT id, user_email, action, timestamp

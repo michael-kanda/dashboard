@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { markDashboardSnapshotsStale } from '@/lib/sync/dashboard-snapshot';
 import { normalizeManualGoogleGenAiData } from '@/lib/google-genai-manual';
 
@@ -9,34 +10,12 @@ export const dynamic = 'force-dynamic';
 async function canEditProject(projectId: string) {
   const session = await auth();
   const role = session?.user?.role;
-  const userId = session?.user?.id;
-  const mandantId = session?.user?.mandant_id;
 
   if (!session?.user || (role !== 'ADMIN' && role !== 'SUPERADMIN')) {
     return { ok: false as const, status: 403, message: 'Zugriff verweigert' };
   }
 
-  if (role === 'SUPERADMIN') {
-    return { ok: true as const };
-  }
-
-  const { rows } = await sql`
-    SELECT 1
-    FROM users u
-    WHERE u.id::text = ${projectId}
-      AND (
-        u."createdByAdminId"::text = ${userId}
-        OR (u.mandant_id IS NOT NULL AND u.mandant_id = ${mandantId || null})
-        OR EXISTS (
-          SELECT 1
-          FROM project_assignments pa
-          WHERE pa.user_id::text = ${userId} AND pa.project_id::text = ${projectId}
-        )
-      )
-    LIMIT 1
-  `;
-
-  if (rows.length === 0) {
+  if (!(await canAccessProject(session.user, projectId))) {
     return { ok: false as const, status: 403, message: 'Keine Berechtigung für dieses Projekt.' };
   }
 

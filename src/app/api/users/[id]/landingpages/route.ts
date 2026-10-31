@@ -2,6 +2,7 @@
 
 import { NextResponse, NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { Landingpage } from '@/types';
 import * as XLSX from '@e965/xlsx';
@@ -58,7 +59,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const { id: userId } = await params;
     const session = await auth();
     
-    if (!session?.user || (session.user.id !== userId && session.user.role !== 'ADMIN' && session.user.role !== 'SUPERADMIN')) {
+    if (!session?.user || !(await canAccessProject(session.user, userId))) {
       return NextResponse.json({ message: 'Nicht autorisiert.' }, { status: 401 });
     }
 
@@ -83,6 +84,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (!session?.user || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPERADMIN')) {
       return NextResponse.json({ message: 'Nicht autorisiert. Nur Admins dürfen Landingpages importieren.' }, { status: 403 });
+    }
+    if (!(await canAccessProject(session.user, userId))) {
+      return NextResponse.json({ message: 'Zugriff auf dieses Projekt verweigert.' }, { status: 403 });
     }
 
     let rawData: any[] = [];

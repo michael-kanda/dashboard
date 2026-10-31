@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { markDashboardSnapshotsStale } from '@/lib/sync/dashboard-snapshot';
 import { sql } from '@vercel/postgres';
 import { detectBrandKeywords } from '@/lib/prompt-tracking/brand-detector';
@@ -40,7 +41,7 @@ async function resolveTargetUserId(
   const url = new URL(req.url);
   const target = (fromBody?.targetUserId) || url.searchParams.get('targetUserId') || userId;
 
-  if (target !== userId && !isAdmin) {
+  if (target !== userId && (!isAdmin || !(await canAccessProject(session.user, target)))) {
     return { ok: false, res: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
   return { ok: true, userId: target };

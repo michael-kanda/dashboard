@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { getGscDataForPagesWithComparison } from '@/lib/google-api';
 
@@ -19,6 +20,9 @@ export async function GET(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json({ message: 'userId parameter erforderlich' }, { status: 400 });
+    }
+    if (!(await canAccessProject(session?.user, userId))) {
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 403 });
     }
 
     console.log('[Debug GSC Landingpages] User ID:', userId);

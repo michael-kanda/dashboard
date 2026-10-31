@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,8 +12,6 @@ export async function PUT(
   try {
     const session = await auth();
     const role = session?.user?.role;
-    const userId = session?.user?.id;
-    const mandantId = session?.user?.mandant_id;
 
     if (!session?.user || (role !== 'ADMIN' && role !== 'SUPERADMIN')) {
       return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
@@ -26,26 +25,8 @@ export async function PUT(
       return NextResponse.json({ message: 'Infobox-Text ist zu lang.' }, { status: 400 });
     }
 
-    if (role === 'ADMIN') {
-      const { rows } = await sql`
-        SELECT 1
-        FROM users u
-        WHERE u.id::text = ${projectId}
-          AND (
-            u."createdByAdminId"::text = ${userId}
-            OR (u.mandant_id IS NOT NULL AND u.mandant_id = ${mandantId || null})
-            OR EXISTS (
-              SELECT 1
-              FROM project_assignments pa
-              WHERE pa.user_id::text = ${userId} AND pa.project_id::text = ${projectId}
-            )
-          )
-        LIMIT 1
-      `;
-
-      if (rows.length === 0) {
-        return NextResponse.json({ message: 'Keine Berechtigung für dieses Projekt.' }, { status: 403 });
-      }
+    if (!(await canAccessProject(session.user, projectId))) {
+      return NextResponse.json({ message: 'Keine Berechtigung für dieses Projekt.' }, { status: 403 });
     }
 
     const { rows } = await sql`

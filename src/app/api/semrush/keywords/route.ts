@@ -1,6 +1,7 @@
 // src/app/api/semrush/keywords/route.ts (DEBUG VERSION - Findet Cache-Problem)
 import { NextResponse, NextRequest } from 'next/server';
 import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { getSemrushKeywordsWithFallback } from '@/lib/semrush-api-handler';
 
@@ -38,6 +39,9 @@ export async function GET(request: NextRequest) {
     let targetUserId: string;
 
     if (projectIdParam && (role === 'ADMIN' || role === 'SUPERADMIN')) {
+      if (!(await canAccessProject(session.user, projectIdParam))) {
+        return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
+      }
       targetUserId = projectIdParam;
       debugLog(`Admin ${adminOrUserId} accessing user ${targetUserId}`);
     } else {

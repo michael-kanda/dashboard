@@ -1,6 +1,7 @@
 // src/app/api/projects/[id]/settings/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 
 export async function PATCH(
@@ -17,6 +18,9 @@ export async function PATCH(
 
     // 2. Berechtigungs-Check (Nur Admins/Superadmins)
     if (session.user.role !== 'ADMIN' && session.user.role !== 'SUPERADMIN') {
+      return NextResponse.json({ message: 'Keine Berechtigung' }, { status: 403 });
+    }
+    if (!(await canAccessProject(session.user, params.id))) {
       return NextResponse.json({ message: 'Keine Berechtigung' }, { status: 403 });
     }
 

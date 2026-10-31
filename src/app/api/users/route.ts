@@ -129,12 +129,9 @@ export async function GET(request: NextRequest) {
           LEFT JOIN users creator ON u."createdByAdminId" = creator.id
           LEFT JOIN landingpages lp ON u.id = lp.user_id
           WHERE u.role = 'BENUTZER'
-            AND (
-              (u.mandant_id = ${adminMandantId} AND u."createdByAdminId"::text = ${adminId})
-              OR EXISTS (
-                SELECT 1 FROM project_assignments pa 
-                WHERE pa.project_id = u.id AND pa.user_id::text = ${adminId}
-              )
+            AND EXISTS (
+              SELECT 1 FROM project_assignments pa
+              WHERE pa.project_id = u.id AND pa.user_id::text = ${adminId}
             )
           GROUP BY u.id, creator.email
           ORDER BY u.domain ASC, u.email ASC
@@ -159,13 +156,10 @@ export async function GET(request: NextRequest) {
               WHERE pa_sub2.user_id = u.id
             ) as assigned_projects
           FROM users u
-          WHERE u.role = 'BENUTZER' 
-            AND (
-              (u.mandant_id = ${adminMandantId} AND u."createdByAdminId"::text = ${adminId})
-              OR EXISTS (
-                SELECT 1 FROM project_assignments pa 
-                WHERE pa.project_id = u.id AND pa.user_id::text = ${adminId}
-              )
+          WHERE u.role = 'BENUTZER'
+            AND EXISTS (
+              SELECT 1 FROM project_assignments pa
+              WHERE pa.project_id = u.id AND pa.user_id::text = ${adminId}
             )
         `;
         let rows = kundenRes.rows;

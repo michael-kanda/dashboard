@@ -22,3 +22,10 @@ export async function canAccessProject(user: ProjectAccessUser | null | undefine
   }
   return user.id === projectId;
 }
+
+// Landingpages gehören über user_id zu einem Projekt; Zugriff folgt dem Projekt.
+export async function canAccessLandingpage(user: ProjectAccessUser | null | undefined, landingpageId: string) {
+  if (!user?.id) return false;
+  const { rows } = await sql`SELECT user_id::text AS project_id FROM landingpages WHERE id::text = ${landingpageId} LIMIT 1`;
+  return rows.length > 0 && canAccessProject(user, String(rows[0].project_id));
+}

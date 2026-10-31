@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { google } from 'googleapis';
 import { GOOGLE_SCOPES, tryCreateGoogleAuth } from '@/lib/google-auth';
@@ -107,6 +108,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const shouldRunGenAiDiagnosis = searchParams.get('genAi') !== '0';
+    // Die Property-Liste des Dienstkontos umfasst alle Kunden; Admins sehen nur zugewiesene Projekte.
+    const isSuperAdmin = session?.user?.role === 'SUPERADMIN';
+    if (!isSuperAdmin && (!userId || !(await canAccessProject(session.user, userId)))) {
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 403 });
+    }
 
     // ==========================================
     // SCHRITT 1: Credentials prüfen
@@ -187,7 +193,7 @@ export async function GET(request: NextRequest) {
           ? `${availableSites.length} Sites gefunden, ${accessibleSiteCount} mit Datenzugriff`
           : '⚠️ Keine Sites gefunden - Service Account hat keinen Zugriff!',
         details: {
-          sites: availableSiteEntries,
+          sites: isSuperAdmin ? availableSiteEntries : undefined,
           hint: availableSites.length === 0 
             ? `Füge "${serviceEmail}" als Nutzer in der GSC hinzu!`
             : null
@@ -305,7 +311,7 @@ export async function GET(request: NextRequest) {
             details: {
               requestedSite: gscUrl,
               requestedPermissionLevel: requestedSiteEntry?.permissionLevel ?? null,
-              availableSites: availableSites,
+              availableSites: isSuperAdmin ? availableSites : undefined,
               compatibleDomainProperty,
               solution: hasAccessToSite ? null : `
                 1. Gehe zu: https://search.google.com/search-console

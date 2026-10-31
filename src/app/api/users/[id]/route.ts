@@ -5,6 +5,7 @@ import { markDashboardSnapshotsStale } from '@/lib/sync/dashboard-snapshot';
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
 import { auth } from '@/lib/auth'; 
+import { canAccessProject } from '@/lib/project-access';
 import { User } from '@/types';
 import { normalizeDashboardWidgetVisibility } from '@/lib/dashboard-widget-visibility';
 export const revalidate = 0;
@@ -160,6 +161,9 @@ export async function GET(
       if (userToGet.mandant_id !== sessionMandantId) {
          return NextResponse.json({ message: 'Zugriff auf diesen Mandanten verweigert' }, { status: 403 });
       }
+      if (userToGet.role === 'BENUTZER' && !(await canAccessProject(session.user, targetUserId))) {
+         return NextResponse.json({ message: 'Dieses Projekt ist Ihnen nicht zugewiesen' }, { status: 403 });
+      }
       const kannAdminsVerwalten = sessionPermissions?.includes('kann_admins_verwalten');
       if (userToGet.role === 'ADMIN' && !isOwnProfile && !kannAdminsVerwalten) {
           return NextResponse.json({ message: 'Sie haben keine Berechtigung, diesen Admin anzuzeigen' }, { status: 403 });
@@ -253,6 +257,9 @@ export async function PUT(
       }
       if (targetUser.mandant_id !== sessionMandantId) {
         return NextResponse.json({ message: 'Sie dürfen nur Benutzer Ihres eigenen Mandanten bearbeiten' }, { status: 403 });
+      }
+      if (targetUser.role === 'BENUTZER' && !(await canAccessProject(session.user, targetUserId))) {
+        return NextResponse.json({ message: 'Dieses Projekt ist Ihnen nicht zugewiesen' }, { status: 403 });
       }
       const kannAdminsVerwalten = sessionPermissions?.includes('kann_admins_verwalten');
       if (targetUser.role === 'ADMIN' && !isOwnProfile && !kannAdminsVerwalten) {
@@ -491,6 +498,9 @@ export async function DELETE(
       }
       if (targetUser.mandant_id !== sessionMandantId) {
         return NextResponse.json({ message: 'Sie dürfen nur Benutzer Ihres eigenen Mandanten löschen' }, { status: 403 });
+      }
+      if (targetUser.role === 'BENUTZER' && !(await canAccessProject(session.user, targetUserId))) {
+        return NextResponse.json({ message: 'Dieses Projekt ist Ihnen nicht zugewiesen' }, { status: 403 });
       }
       const kannAdminsVerwalten = sessionPermissions?.includes('kann_admins_verwalten');
       if (targetUser.role === 'ADMIN' && !isOwnProfile && !kannAdminsVerwalten) {

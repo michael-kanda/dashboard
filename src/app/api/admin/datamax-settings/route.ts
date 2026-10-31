@@ -1,6 +1,7 @@
 // src/app/api/admin/datamax-settings/route.ts
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 
 export const dynamic = 'force-dynamic';
@@ -86,6 +87,9 @@ export async function POST(req: Request) {
     `;
     if (targetUser[0]?.role === 'SUPERADMIN') {
       return NextResponse.json({ message: 'Superadmins können nicht deaktiviert werden' }, { status: 403 });
+    }
+    if (!(await canAccessProject(session.user, userId))) {
+      return NextResponse.json({ message: 'Keine Berechtigung für diesen Benutzer' }, { status: 403 });
     }
 
     // Update DB

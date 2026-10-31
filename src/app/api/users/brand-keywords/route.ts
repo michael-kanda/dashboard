@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { markDashboardSnapshotsStale } from '@/lib/sync/dashboard-snapshot';
 
 export const dynamic = 'force-dynamic';
@@ -46,7 +47,7 @@ async function resolveTargetUserId(
   const url = new URL(req.url);
   const target = body?.targetUserId || url.searchParams.get('targetUserId') || userId;
 
-  if (target !== userId && !isAdmin) {
+  if (target !== userId && (!isAdmin || !(await canAccessProject(session.user, target)))) {
     return { ok: false, res: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
 

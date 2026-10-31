@@ -1,6 +1,7 @@
 // src/app/api/project-timeline/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 
 export async function GET(req: NextRequest) {
@@ -19,6 +20,9 @@ export async function GET(req: NextRequest) {
     if (session.user.role === 'BENUTZER') {
       targetProjectId = session.user.id!;
     } else if (projectId) {
+      if (!(await canAccessProject(session.user, projectId))) {
+        return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
+      }
       targetProjectId = projectId;
     } else {
       return NextResponse.json({ message: 'Keine Projekt-ID angegeben' }, { status: 400 });

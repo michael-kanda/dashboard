@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import {
   markGooglePlacePreviewFailure,
   readGooglePlacePreviewCache,
@@ -274,7 +275,7 @@ export async function GET(request: NextRequest) {
   if (projectId && !/^[0-9a-f-]{36}$/i.test(projectId)) {
     return NextResponse.json({ message: 'Ungültige projectId.' }, { status: 400 });
   }
-  if (projectId && session.user.role === 'BENUTZER' && session.user.id !== projectId) {
+  if (projectId && !(await canAccessProject(session.user, projectId))) {
     return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
   }
 
