@@ -28,6 +28,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "date-holidays": "^3.26.9",
+    "dompurify": "^3.2.6",
     "framer-motion": "^12.23.24",
     "google-auth-library": "^10.4.0",
     "googleapis": "^161.0.0",

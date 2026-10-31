@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Lightbulb, ArrowRepeat, ExclamationTriangle, InfoCircle, GraphUpArrow } from 'react-bootstrap-icons';
 import { getRangeLabel, DateRangeOption } from '@/components/DateRangeSelector';
 import ExportButton from '@/components/ExportButton';
+import { sanitizeAiHtml } from '@/lib/sanitize-ai-html';
 
 interface Props {
   projectId: string;
@@ -210,7 +211,7 @@ export default function AiAnalysisWidget({
           </h3>
         </div>
         <div className="p-5 text-sm text-body leading-relaxed flex-grow [&_strong]:text-strong [&_b]:text-strong [&_h1]:text-heading [&_h2]:text-heading [&_h3]:text-heading [&_h4]:text-heading [&_a]:text-indigo-500 hover:[&_a]:text-indigo-400 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:marker:text-indigo-500/60">
-           <div dangerouslySetInnerHTML={{ __html: statusContent }} />
+           <div dangerouslySetInnerHTML={{ __html: sanitizeAiHtml(statusContent) }} />
            {isLoading && !analysisContent && (
              <div className="inline-flex items-center gap-2 mt-2 text-emerald-500 font-medium animate-pulse opacity-80">
                <span className="relative flex h-2.5 w-2.5">
@@ -245,7 +246,7 @@ export default function AiAnalysisWidget({
         
         <div className="p-5 text-sm text-body leading-relaxed flex-grow [&_strong]:text-strong [&_b]:text-strong [&_h1]:text-heading [&_h2]:text-heading [&_h3]:text-heading [&_h4]:text-heading [&_a]:text-indigo-500 hover:[&_a]:text-indigo-400 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:marker:text-indigo-500/60">
            {analysisContent ? (
-             <div dangerouslySetInnerHTML={{ __html: analysisContent }} />
+             <div dangerouslySetInnerHTML={{ __html: sanitizeAiHtml(analysisContent) }} />
            ) : (
              isLoading && !statusContent ? <p className="text-faint italic">Warte auf Datenverarbeitung...</p> : null
            )}
