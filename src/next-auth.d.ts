@@ -23,6 +23,7 @@ declare module 'next-auth' {
     brand_keywords?: string[] | null;        // <--- NEU (Prompt-Tracking v3)
     settings_show_prompt_tracking?: boolean | null;
     is_demo?: boolean;
+    password_fingerprint?: string;
   }
 
   /**
@@ -72,5 +73,7 @@ declare module 'next-auth/jwt' {
     brand_keywords?: string[] | null;        // <--- NEU (Prompt-Tracking v3)
     settings_show_prompt_tracking?: boolean | null;
     is_demo?: boolean;
+    password_fingerprint?: string;
+    refreshed_at?: number;
   }
 }

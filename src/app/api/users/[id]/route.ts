@@ -4,6 +4,7 @@ import { enqueueProjectSyncJob } from '@/lib/sync/job-queue';
 import { markDashboardSnapshotsStale } from '@/lib/sync/dashboard-snapshot';
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
+import { getPasswordError } from '@/lib/password-policy';
 import { auth } from '@/lib/auth'; 
 import { canAccessProject } from '@/lib/project-access';
 import { User } from '@/types';
@@ -277,6 +278,12 @@ export async function PUT(
       }
       if (isOwnProfile) {
          return NextResponse.json({ message: 'Superadmins können sich nicht selbst über die API bearbeiten.' }, { status: 403 });
+      }
+    }
+    if (typeof password === 'string' && password.trim().length > 0) {
+      const passwordError = getPasswordError(password);
+      if (passwordError) {
+        return NextResponse.json({ message: passwordError }, { status: 400 });
       }
     }
 

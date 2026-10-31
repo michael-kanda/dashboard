@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
+import { getPasswordError } from '@/lib/password-policy';
 import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
 
 export async function POST(request: Request) {
@@ -22,10 +23,9 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    if (newPassword.length < 6) {
-      return NextResponse.json({ 
-        message: 'Passwort muss mindestens 6 Zeichen lang sein' 
-      }, { status: 400 });
+    const passwordError = getPasswordError(newPassword);
+    if (passwordError) {
+      return NextResponse.json({ message: passwordError }, { status: 400 });
     }
 
     const normalizedEmail = email.toLowerCase().trim();

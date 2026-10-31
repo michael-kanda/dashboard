@@ -1,10 +1,20 @@
 // src/lib/auth.ts
-import NextAuth from 'next-auth';
+import NextAuth, { CredentialsSignin } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
 import { unstable_noStore as noStore } from 'next/cache';
 import { baseAuthConfig } from '@/lib/auth-config';
+import { clearLoginFailures, isLoginLocked, readClientIp, recordLoginFailure } from '@/lib/login-throttle';
+import { fingerprintPasswordHash } from '@/lib/session-state';
+
+// Code erscheint im Login-Formular als Hinweis auf die vorübergehende Sperre.
+class LoginLockedError extends CredentialsSignin {
+  code = 'locked';
+}
+
+// Vergleichs-Hash für unbekannte E-Mails, damit die Antwortzeit nichts über existierende Konten verrät.
+const DUMMY_PASSWORD_HASH = '$2b$10$PgAbWWYUzkCE/lvp8gSy3ub6ePjMlFnzjxbVosls5z10oVG1ru4n6';
 
 export const authConfig = {
   ...baseAuthConfig,
@@ -15,7 +25,7 @@ export const authConfig = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         noStore();
 
         if (!credentials?.email || !credentials.password) {
@@ -23,6 +33,11 @@ export const authConfig = {
         }
 
         const normalizedEmail = (credentials.email as string).toLowerCase().trim();
+        const clientIp = readClientIp(request);
+        if (await isLoginLocked(normalizedEmail, clientIp)) {
+          console.warn('[Authorize] Login wegen wiederholter Fehlversuche gesperrt:', normalizedEmail);
+          throw new LoginLockedError();
+        }
         console.log('[Authorize] Suche Benutzer:', normalizedEmail);
 
         let user;
@@ -65,6 +80,8 @@ export const authConfig = {
           user = rows[0];
 
           if (!user) {
+            await bcrypt.compare(credentials.password as string, DUMMY_PASSWORD_HASH);
+            await recordLoginFailure(normalizedEmail, clientIp);
             console.log('[Authorize] Benutzer nicht gefunden:', normalizedEmail);
             throw new Error('Diese E-Mail-Adresse ist nicht registriert');
           }
@@ -80,11 +97,13 @@ export const authConfig = {
           const passwordsMatch = await bcrypt.compare(credentials.password as string, user.password);
 
           if (!passwordsMatch) {
+            await recordLoginFailure(normalizedEmail, clientIp);
             console.log('[Authorize] Passwort-Vergleich fehlgeschlagen für:', normalizedEmail);
             throw new Error('Das Passwort ist nicht korrekt');
           }
 
           console.log('[Authorize] Login erfolgreich für:', user.email);
+          await clearLoginFailures(normalizedEmail);
 
         } catch (authError) {
           if (authError instanceof Error) {
@@ -135,6 +154,7 @@ export const authConfig = {
           google_ads_sheet_id: user.google_ads_sheet_id || null,
           brand_keywords: user.brand_keywords || null,
           settings_show_prompt_tracking: user.settings_show_prompt_tracking ?? false,
+          password_fingerprint: await fingerprintPasswordHash(user.password),
         };
       }
     })

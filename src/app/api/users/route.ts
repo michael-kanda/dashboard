@@ -2,6 +2,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
+import { getPasswordError } from '@/lib/password-policy';
 import { User } from '@/types';
 import { auth } from '@/lib/auth';
 import { normalizeDashboardWidgetVisibility } from '@/lib/dashboard-widget-visibility';
@@ -243,6 +244,10 @@ export async function POST(req: NextRequest) {
 
     if (!email || !password || !role) {
       return NextResponse.json({ message: 'E-Mail, Passwort und Rolle sind erforderlich' }, { status: 400 });
+    }
+    const passwordError = getPasswordError(password);
+    if (passwordError) {
+      return NextResponse.json({ message: passwordError }, { status: 400 });
     }
     
     const loggedInUserRole = session.user.role;

@@ -155,7 +155,9 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
 
     if (result?.error) {
       setIsLoading(false);
-      setError('E-Mail oder Passwort ist falsch.');
+      setError(result.code === 'locked'
+        ? 'Zu viele Fehlversuche. Bitte in 15 Minuten erneut versuchen.'
+        : 'E-Mail oder Passwort ist falsch.');
     } else {
       const session = await getSession();
       setSuccessAnsprache(session?.user?.ansprache?.trim() || '');

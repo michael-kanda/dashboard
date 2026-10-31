@@ -1,5 +1,9 @@
 import type { NextAuthConfig } from 'next-auth';
 import { isDemoProject } from '@/lib/demo-project';
+import { loadSessionState } from '@/lib/session-state';
+
+// Rolle, Rechte und Mandant werden spätestens nach diesem Intervall aus der Datenbank übernommen.
+const SESSION_REFRESH_MS = 5 * 60 * 1000;
 
 export const baseAuthConfig = {
   providers: [],
@@ -27,6 +31,26 @@ export const baseAuthConfig = {
         token.brand_keywords = user.brand_keywords;
         token.settings_show_prompt_tracking = user.settings_show_prompt_tracking;
         token.is_demo = isDemoProject(user);
+        token.password_fingerprint = user.password_fingerprint;
+        token.refreshed_at = Date.now();
+        return token;
+      }
+
+      const refreshedAt = typeof token.refreshed_at === 'number' ? token.refreshed_at : 0;
+      if (token.id && Date.now() - refreshedAt > SESSION_REFRESH_MS) {
+        const current = await loadSessionState(token.id as string);
+        if (current === null) return null;
+        if (current) {
+          // Sitzungen von vor dieser Prüfung übernehmen den aktuellen Fingerabdruck einmalig.
+          if (token.password_fingerprint && token.password_fingerprint !== current.passwordFingerprint) {
+            return null;
+          }
+          token.role = current.role;
+          token.mandant_id = current.mandant_id;
+          token.permissions = current.permissions;
+          token.password_fingerprint = current.passwordFingerprint;
+          token.refreshed_at = Date.now();
+        }
       }
       return token;
     },
