@@ -630,6 +630,6 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('[AI Analyze] Fehler:', error);
-    return NextResponse.json({ message: 'Fehler', error: String(error) }, { status: 500 });
+    return NextResponse.json({ message: 'Analyse fehlgeschlagen' }, { status: 500 });
   }
 }

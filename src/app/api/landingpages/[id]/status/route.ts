@@ -257,7 +257,7 @@ export async function PUT(
     return NextResponse.json(
       {
         message: 'Fehler beim Aktualisieren des Status',
-        error: error instanceof Error ? error.message : 'Unbekannter Fehler'
+        error: 'Unbekannter Fehler'
       },
       { status: 500 }
     );

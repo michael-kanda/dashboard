@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[Prompt Research] DataMax Fehler:', error);
     return NextResponse.json(
-      { error: 'Prompt Research fehlgeschlagen', details: error?.message || 'Unbekannter Fehler' },
+      { error: 'Prompt Research fehlgeschlagen' },
       { status: 500 }
     );
   }

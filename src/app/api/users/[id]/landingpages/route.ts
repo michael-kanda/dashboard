@@ -104,9 +104,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       try {
         rawData = await getGoogleSheetData(sheetId);
       } catch (err) {
+        console.error('Google-Sheet-Import Fehler:', err);
         return NextResponse.json({ 
           message: 'Zugriff auf Google Sheet fehlgeschlagen.',
-          error: err instanceof Error ? err.message : String(err)
+          error: 'Interner Fehler'
         }, { status: 403 });
       }
     } 
@@ -229,7 +230,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     console.error('Import Fehler:', error);
     return NextResponse.json({ 
       message: 'Fehler beim Import.',
-      error: error instanceof Error ? error.message : String(error)
+      error: 'Interner Fehler'
     }, { status: 500 });
   }
 }

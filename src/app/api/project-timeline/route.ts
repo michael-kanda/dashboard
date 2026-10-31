@@ -267,7 +267,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('[Project Timeline] Error:', error);
     return NextResponse.json({ 
-      message: error instanceof Error ? error.message : 'Interner Serverfehler' 
+      message: 'Interner Serverfehler' 
     }, { status: 500 });
   }
 }

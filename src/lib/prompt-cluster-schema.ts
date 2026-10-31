@@ -84,12 +84,12 @@ export type PromptClusterResult = z.infer<typeof PromptClusterResultSchema>;
 
 // ── API-Request-Body ──────────────────────────────────────────────
 export const PromptClusterRequestSchema = z.object({
-  domain: z.string().optional(),
-  dateRange: z.string().optional(),
+  domain: z.string().max(255).optional(),
+  dateRange: z.string().max(20).optional(),
   queries: z
     .array(
       z.object({
-        query: z.string(),
+        query: z.string().max(500),
         clicks: z.number(),
         impressions: z.number(),
       })

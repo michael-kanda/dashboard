@@ -34,7 +34,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     
     const campaign = searchParams.get('campaign') || 'kampagne_1'; 
-    const forceRefresh = searchParams.get('forceRefresh') === 'true';
+    const forceRefresh = searchParams.get('forceRefresh') === 'true'
+      && (role === 'ADMIN' || role === 'SUPERADMIN');
     const projectIdParam = searchParams.get('projectId');
     let targetUserId: string;
 
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
       });
     } catch (cacheError) {
       debugLog('❌ Cache query error', {
-        error: cacheError instanceof Error ? cacheError.message : String(cacheError),
+        error: 'Interner Fehler',
         stack: cacheError instanceof Error ? cacheError.stack : undefined
       });
       // Weiter ohne Cache
@@ -246,7 +247,7 @@ export async function GET(request: NextRequest) {
       
     } catch (error) {
       debugLog('❌ Cache save error', {
-        error: error instanceof Error ? error.message : String(error),
+        error: 'Interner Fehler',
         stack: error instanceof Error ? error.stack : undefined
       });
     }
@@ -262,7 +263,7 @@ export async function GET(request: NextRequest) {
     console.error('[API Keywords] ❌ Unexpected error:', error);
     return NextResponse.json({ 
       keywords: [],
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Unknown error',
       keywordsCount: 0
     }, { status: 500 });
   }

@@ -96,7 +96,7 @@ export async function POST(
     console.error('[POST] ❌ Fehler bei der Zuweisung:', error);
     return NextResponse.json({ 
       message: 'Fehler bei der Zuweisung',
-      error: error instanceof Error ? error.message : 'Ein unbekannter Fehler'
+      error: 'Ein unbekannter Fehler'
     }, { status: 500 });
   }
 }
@@ -145,7 +145,7 @@ export async function DELETE(
     console.error('[DELETE] ❌ Fehler:', error);
     return NextResponse.json({ 
       message: 'Fehler beim Entfernen der Zuweisung',
-      error: error instanceof Error ? error.message : 'Ein unbekannter Fehler'
+      error: 'Ein unbekannter Fehler'
     }, { status: 500 });
   }
 }

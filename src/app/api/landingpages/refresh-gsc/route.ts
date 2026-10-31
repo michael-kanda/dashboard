@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
     await client.query('ROLLBACK');
     console.error('[GSC Refresh] Fehler:', error);
     return NextResponse.json(
-      { message: 'Fehler beim Synchronisieren', error: error instanceof Error ? error.message : 'Unbekannt' },
+      { message: 'Fehler beim Synchronisieren', error: 'Unbekannt' },
       { status: 500 }
     );
   } finally {

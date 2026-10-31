@@ -21,6 +21,8 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const MODEL_ID = AI_CONFIG.primaryModel;
+// Neue (nicht gecachte) Gemini-Analysen pro Nutzer und Tag; Superadmins sind ausgenommen.
+const MAX_CLUSTER_RUNS_PER_DAY = 20;
 
 const SYSTEM_PROMPT = `Du bist ein erfahrener SEO- und Suchintention-Analyst.
 
@@ -97,6 +99,7 @@ export async function POST(req: NextRequest) {
 
   const { domain, dateRange, queries } = parsed.data;
   const queriesHash = hashQueries(queries);
+  const isSuperAdmin = session.user.role === 'SUPERADMIN';
 
   // ── 4. Cache-Check: gleicher Hash innerhalb von 7 Tagen? ────────
   try {
@@ -115,6 +118,26 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     console.warn('[Prompt Cluster] Cache-Lookup fehlgeschlagen (ignoriert):', e);
+  }
+
+  // ── 4b. Tageslimit für neue Gemini-Analysen (jede landet in der History) ─
+  if (!isSuperAdmin) {
+    try {
+      const { rows } = await sql`
+        SELECT COUNT(*)::int AS count
+        FROM prompt_cluster_history
+        WHERE user_id = ${userId}::uuid
+          AND created_at > NOW() - INTERVAL '1 day'
+      `;
+      if ((rows[0]?.count ?? 0) >= MAX_CLUSTER_RUNS_PER_DAY) {
+        return NextResponse.json(
+          { error: 'Tageslimit für Cluster-Analysen erreicht. Bitte morgen erneut versuchen.' },
+          { status: 429 }
+        );
+      }
+    } catch (e) {
+      console.warn('[Prompt Cluster] Limit-Prüfung fehlgeschlagen (ignoriert):', e);
+    }
   }
 
   // ── 5. Prompt zusammenbauen ─────────────────────────────────────
@@ -198,7 +221,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: 'Cluster-Analyse fehlgeschlagen',
-        details: error?.message || 'Unbekannter Fehler',
       },
       { status: 500 }
     );

@@ -1,6 +1,7 @@
 // src/app/api/semrush/config/route.ts (KORRIGIERT - Mit Kampagne 2 Support)
 import { NextResponse, NextRequest } from 'next/server';
 import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 
 /**
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
     console.error('[/api/semrush/config] GET Error:', error);
     return NextResponse.json({ 
       message: 'Fehler beim Laden der Konfiguration',
-      error: error instanceof Error ? error.message : String(error)
+      error: 'Interner Fehler'
     }, { status: 500 });
   }
 }
@@ -98,34 +99,14 @@ export async function PUT(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
 
-    // Bestimme welcher User aktualisiert werden soll
-    let targetUserId: string;
-
-    if (projectId) {
-      // Admin aktualisiert anderes Projekt
-      if (role !== 'ADMIN' && role !== 'SUPERADMIN') {
-        return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
-      }
-
-      if (role === 'ADMIN') {
-        // Prüfe ob Admin Zugriff auf dieses Projekt hat
-        const { rows: assignments } = await sql`
-          SELECT 1 
-          FROM project_assignments 
-          WHERE user_id::text = ${id} 
-          AND project_id::text = ${projectId}
-        `;
-
-        if (assignments.length === 0) {
-          return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
-        }
-      }
-
-      targetUserId = projectId;
-    } else {
-      // User aktualisiert eigene Daten
-      targetUserId = id;
+    // Semrush-IDs bestimmen, welche Agentur-Daten ein Projekt sieht: nur Admins setzen sie.
+    if (role !== 'ADMIN' && role !== 'SUPERADMIN') {
+      return NextResponse.json({ message: 'Nur Admins dürfen Semrush-IDs ändern' }, { status: 403 });
     }
+    if (projectId && !(await canAccessProject(session.user, projectId))) {
+      return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
+    }
+    const targetUserId = projectId || id;
 
     // ✅ KORREKTUR: Parse auch semrushTrackingId02
     const body = await request.json();
@@ -240,7 +221,7 @@ export async function PUT(request: NextRequest) {
     console.error('[/api/semrush/config] PUT Error:', error);
     return NextResponse.json({ 
       message: 'Fehler beim Speichern der Konfiguration',
-      error: error instanceof Error ? error.message : String(error)
+      error: 'Interner Fehler'
     }, { status: 500 });
   }
 }

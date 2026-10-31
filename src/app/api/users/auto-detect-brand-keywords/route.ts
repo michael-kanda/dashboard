@@ -90,8 +90,9 @@ export async function POST(req: NextRequest) {
   try {
     result = await detectBrandKeywords({ domain: user.domain });
   } catch (e: any) {
+    console.error('[Brand Detection] Fehler:', e);
     return NextResponse.json(
-      { error: 'Detection fehlgeschlagen', details: e.message },
+      { error: 'Detection fehlgeschlagen' },
       { status: 500 }
     );
   }
@@ -105,8 +106,9 @@ export async function POST(req: NextRequest) {
     `;
     await markDashboardSnapshotsStale({ userId: ctx.userId });
   } catch (e: any) {
+    console.error('[Brand Detection] Speichern fehlgeschlagen:', e);
     return NextResponse.json(
-      { error: 'DB-Save fehlgeschlagen', details: e.message },
+      { error: 'DB-Save fehlgeschlagen' },
       { status: 500 }
     );
   }

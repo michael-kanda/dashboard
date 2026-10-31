@@ -750,7 +750,7 @@ KUNDEN-MODUS AKTIV:
   } catch (error) {
     console.error('[DataMax Chat] Fehler:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Interner Fehler' },
+      { error: 'Interner Fehler' },
       { status: 500 }
     );
   }

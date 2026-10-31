@@ -86,8 +86,9 @@ export async function POST(req: NextRequest) {
       keywords: rows[0].brand_keywords || null,
     });
   } catch (e: any) {
+    console.error('[Brand Keywords] Speichern fehlgeschlagen:', e);
     return NextResponse.json(
-      { error: 'DB-Save fehlgeschlagen', details: e.message },
+      { error: 'DB-Save fehlgeschlagen' },
       { status: 500 }
     );
   }

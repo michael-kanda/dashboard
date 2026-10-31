@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
   } catch (e: any) {
     console.error('[Cluster History] Fehler:', e);
     return NextResponse.json(
-      { error: 'Konnte Historie nicht laden', details: e.message },
+      { error: 'Konnte Historie nicht laden' },
       { status: 500 }
     );
   }

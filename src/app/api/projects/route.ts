@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     console.error('[/api/projects] Fehler beim Laden der Projekte:', error);
     return NextResponse.json({ 
       message: 'Fehler beim Laden der Projekte',
-      error: error instanceof Error ? error.message : 'Unbekannter Fehler'
+      error: 'Unbekannter Fehler'
     }, { status: 500 });
   }
 }

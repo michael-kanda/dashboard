@@ -217,7 +217,7 @@ export async function GET(request: NextRequest) {
     console.error('[/api/users] Fehler beim Abrufen der Benutzer:', error);
     return NextResponse.json({
       message: 'Interner Serverfehler',
-      error: error instanceof Error ? error.message : 'Unbekannter Fehler'
+      error: 'Unbekannter Fehler'
     }, { status: 500 });
   }
 }
@@ -333,6 +333,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(newUser, { status: 201 });
 
   } catch (error) {
-    return NextResponse.json({ message: 'Serverfehler', error: error instanceof Error ? error.message : 'Unbekannter Fehler' }, { status: 500 });
+    console.error('[POST /api/users] Fehler:', error);
+    return NextResponse.json({ message: 'Serverfehler', error: 'Unbekannter Fehler' }, { status: 500 });
   }
 }

@@ -429,7 +429,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('[AI Traffic V2 API] Error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal Server Error' },
+      { error: 'Internal Server Error' },
       { status: 500 }
     );
   }

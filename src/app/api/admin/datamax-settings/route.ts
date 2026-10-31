@@ -103,6 +103,6 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error('DataMax Settings POST error:', error);
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    return NextResponse.json({ message: 'Interner Fehler' }, { status: 500 });
   }
 }

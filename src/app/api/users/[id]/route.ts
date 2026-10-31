@@ -456,7 +456,7 @@ export async function PUT(
     console.error(`[PUT /api/users/${targetUserId}] Fehler:`, error);
     return NextResponse.json({
       message: 'Interner Serverfehler',
-      error: error instanceof Error ? error.message : 'Unbekannter Fehler'
+      error: 'Unbekannter Fehler'
     }, { status: 500 });
   }
 }
