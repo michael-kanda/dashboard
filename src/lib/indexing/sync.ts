@@ -337,8 +337,9 @@ export async function syncProjectIndexingStatus(
           updated_at = NOW()
       WHERE user_id = ${projectId}::uuid
     `;
-    const finalStatus = await getProjectIndexingStatus(projectId);
-    return quotaExhausted ? { ...finalStatus, skipped: 'quota' as const } : finalStatus;
+    // Auch bei unterwegs ausgeschöpfter Quote sind die geprüften URLs gespeichert;
+    // next_sync_at und sync_warning planen die Fortsetzung bereits ein.
+    return getProjectIndexingStatus(projectId);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Indexierungsabgleich fehlgeschlagen';
     await sql`

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
+import { markDashboardSnapshotsStale } from '@/lib/sync/dashboard-snapshot';
 
 type PositionPayload = {
   id?: unknown;
@@ -71,7 +72,7 @@ export async function PATCH(
   `;
 
   try {
-    await sql`DELETE FROM google_data_cache WHERE user_id = ${projectId}::uuid`;
+    await markDashboardSnapshotsStale(projectId);
   } catch (cacheError) {
     console.warn(`[Local SEO Pins] Cache konnte nicht invalidiert werden:`, cacheError);
   }

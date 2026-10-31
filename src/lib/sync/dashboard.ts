@@ -42,14 +42,13 @@ export async function syncDashboardProjectSnapshot(
     const raw = data.apiErrors?.[source];
     return raw ? [{ source: source.toUpperCase(), raw, classified: classifyGoogleApiError(raw) }] : [];
   });
+  // Dauerhafte Fehler blockieren den Snapshot bewusst nicht (Teil-Snapshot mit
+  // markierter Abdeckung); was hier ankommt, ist daher immer erneut versuchbar.
   const blockingFailures = failures.filter(({ classified }) => classified.blocksSnapshotWrite);
   if (blockingFailures.length > 0) {
-    const kind = blockingFailures.some(({ classified }) => classified.kind !== 'permanent')
-      ? 'transient'
-      : 'permanent';
     throw new DashboardSourceError(
       blockingFailures.map(({ source, classified }) => `${source}: ${classified.message}`).join(' | '),
-      kind,
+      'transient',
       blockingFailures.map(({ source }) => source),
     );
   }

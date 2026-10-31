@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
+import { markDashboardSnapshotsStale } from '@/lib/sync/dashboard-snapshot';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    await sql`DELETE FROM google_data_cache WHERE user_id = ${ctx.userId}::uuid`;
+    await markDashboardSnapshotsStale(ctx.userId);
 
     return NextResponse.json({
       success: true,

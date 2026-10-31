@@ -1,6 +1,7 @@
 // src/app/projekt/[id]/page.tsx
 
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { redirect } from 'next/navigation';
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
 import { sql } from '@vercel/postgres';
@@ -116,7 +117,7 @@ export default async function ProjectPage({
     redirect('/login');
   }
 
-  if (session.user.role === 'BENUTZER' && session.user.id !== projectId) {
+  if (!(await canAccessProject(session.user, projectId))) {
     redirect('/');
   }
 

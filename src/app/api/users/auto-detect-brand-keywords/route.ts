@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { markDashboardSnapshotsStale } from '@/lib/sync/dashboard-snapshot';
 import { sql } from '@vercel/postgres';
 import { detectBrandKeywords } from '@/lib/prompt-tracking/brand-detector';
 
@@ -101,7 +102,7 @@ export async function POST(req: NextRequest) {
       SET brand_keywords = ${keywordsToSave as any}
       WHERE id = ${ctx.userId}::uuid
     `;
-    await sql`DELETE FROM google_data_cache WHERE user_id = ${ctx.userId}::uuid`;
+    await markDashboardSnapshotsStale(ctx.userId);
   } catch (e: any) {
     return NextResponse.json(
       { error: 'DB-Save fehlgeschlagen', details: e.message },

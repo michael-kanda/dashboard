@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import {
   getProjectIndexingProgress,
   getProjectIndexingStatus,
 } from '@/lib/indexing-status';
 import {
   claimProjectSyncJob,
+  deferProjectSyncJob,
   enqueueProjectSyncJob,
   finishProjectSyncJob,
   getProjectSyncJob,
@@ -31,7 +33,7 @@ async function authorize(projectId: string, write = false) {
   const role = session.user.role;
   const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN';
   if (write && !isAdmin) return { error: 'Nur Admins dürfen einen Abgleich starten.', status: 403 };
-  if (!isAdmin && session.user.id !== projectId) {
+  if (!(await canAccessProject(session.user, projectId))) {
     return { error: 'Zugriff verweigert', status: 403 };
   }
   return { session };
@@ -105,7 +107,12 @@ export async function POST(
         inspectionReserveMs: MANUAL_INSPECTION_RESERVE_MS,
         deadlineAt: Date.now() + MANUAL_SYNC_DEADLINE_MS,
       });
-      await finishProjectSyncJob(job, { success: true });
+      if (result.skipped === 'locked') {
+        // Ein anderer Lauf hält die Sperre; der Auftrag bleibt eingeplant statt als erledigt zu gelten.
+        await deferProjectSyncJob(job, 60, 'Indexierungsabgleich läuft bereits');
+      } else {
+        await finishProjectSyncJob(job, { success: true });
+      }
       return NextResponse.json(createIndexingStatusResponse(result.status, result.skipped));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Indexierungsabgleich fehlgeschlagen';

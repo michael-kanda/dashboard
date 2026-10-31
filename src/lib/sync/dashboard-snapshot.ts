@@ -5,7 +5,7 @@ import { getDemoAnalyticsData } from '../demo-data';
 import { attachDashboardMetricMetadata } from '../metric-metadata';
 import { isDemoProject } from '../demo-project';
 import { enqueueProjectSyncJob } from './job-queue';
-import { isDashboardSnapshotStale } from './cache-policy';
+import { INVALIDATED_CACHE_TIMESTAMP, isDashboardSnapshotStale } from './cache-policy';
 import { isDashboardSnapshotCompatible } from './dashboard-snapshot-contract';
 
 export interface DashboardSnapshotResult {
@@ -87,4 +87,14 @@ export async function readDashboardSnapshot(
     stale,
     queued,
   };
+}
+
+// Markiert alle Snapshots eines Projekts als fällig, ohne ihre Daten zu löschen:
+// Der letzte gültige Stand bleibt bis zur erfolgreichen Synchronisierung sichtbar.
+export async function markDashboardSnapshotsStale(userId: string) {
+  await sql`
+    UPDATE google_data_cache
+    SET last_fetched = ${INVALIDATED_CACHE_TIMESTAMP}::timestamptz
+    WHERE user_id = ${userId}::uuid
+  `;
 }

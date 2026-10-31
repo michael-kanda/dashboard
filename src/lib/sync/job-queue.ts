@@ -229,6 +229,8 @@ export async function seedDueProjectSyncJobs() {
       )
     ON CONFLICT (user_id, job_type, date_range)
     DO UPDATE SET
+      -- Ein früher erzwungener Abgleich darf reguläre Folgeläufe nicht ebenfalls erzwingen.
+      payload = EXCLUDED.payload,
       status = 'pending', attempts = 0, defer_count = 0, failure_kind = NULL,
       run_after = NOW(), updated_at = NOW()
     WHERE project_sync_jobs.status = 'completed'

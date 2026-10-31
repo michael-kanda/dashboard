@@ -23,6 +23,12 @@ import type {
 } from '@/lib/indexing-status';
 import { readIndexingStatusResponse } from '@/lib/indexing-response';
 
+const SKIPPED_SYNC_NOTICES: Record<NonNullable<ProjectIndexingStatus['skipped']>, string> = {
+  locked: 'Es läuft bereits ein Abgleich. Der Stand wird danach automatisch aktualisiert.',
+  'not-due': 'Der Indexierungsstatus ist aktuell; ein neuer Abgleich ist noch nicht fällig.',
+  quota: 'Das Tageskontingent der URL Inspection API ist ausgeschöpft. Der Abgleich wird später fortgesetzt.',
+};
+
 type FilterValue = 'all' | IndexingUrlStatus | 'canonical' | 'action' | 'intentional' | 'stale';
 
 interface IndexingStatusWidgetProps {
@@ -157,6 +163,7 @@ export default function IndexingStatusWidget({
   const [search, setSearch] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
+  const [syncNotice, setSyncNotice] = useState('');
   const [showExcludedUrls, setShowExcludedUrls] = useState(false);
   const [showDataInfo, setShowDataInfo] = useState(false);
   const canSync = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
@@ -182,7 +189,7 @@ export default function IndexingStatusWidget({
     || data.staleUrls > 0
     || Boolean(data.warningMessage)
     || (showExcludedUrls && data.excludedUrls.length > 0)
-    || Boolean(syncError || data.errorMessage)
+    || Boolean(syncError || data.errorMessage || syncNotice)
   );
 
   useEffect(() => {
@@ -233,6 +240,7 @@ export default function IndexingStatusWidget({
   async function runSync() {
     setIsSyncing(true);
     setSyncError('');
+    setSyncNotice('');
     setData((current) => ({
       ...current,
       status: 'running',
@@ -258,6 +266,7 @@ export default function IndexingStatusWidget({
         throw new Error('Der Indexierungsstatus konnte nicht gelesen werden.');
       }
       setData(nextData);
+      if (nextData.skipped) setSyncNotice(SKIPPED_SYNC_NOTICES[nextData.skipped]);
     } catch (error) {
       setSyncError(error instanceof Error ? error.message : 'Abgleich fehlgeschlagen');
       setData((current) => ({ ...current, status: 'error', progressStage: 'error' }));
@@ -693,6 +702,12 @@ export default function IndexingStatusWidget({
                     Angezeigt werden die ersten {data.excludedUrls.length} von {data.excludedUrlCount} ausgeschlossenen URLs.
                   </p>
                 )}
+              </div>
+            )}
+
+            {syncNotice && !syncError && (
+              <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                {syncNotice}
               </div>
             )}
 

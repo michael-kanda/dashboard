@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
+import { markDashboardSnapshotsStale } from '@/lib/sync/dashboard-snapshot';
 import { normalizeManualGoogleGenAiData } from '@/lib/google-genai-manual';
 
 export const dynamic = 'force-dynamic';
@@ -72,7 +73,7 @@ export async function POST(
           updated_at = CURRENT_TIMESTAMP
       WHERE id::text = ${projectId}
     `;
-    await sql`DELETE FROM google_data_cache WHERE user_id = ${projectId}::uuid`;
+    await markDashboardSnapshotsStale(projectId);
 
     return NextResponse.json({
       message: 'Google-GenAI-Export gespeichert und Dashboard-Cache gelöscht.',
@@ -101,7 +102,7 @@ export async function DELETE(
           updated_at = CURRENT_TIMESTAMP
       WHERE id::text = ${projectId}
     `;
-    await sql`DELETE FROM google_data_cache WHERE user_id = ${projectId}::uuid`;
+    await markDashboardSnapshotsStale(projectId);
 
     return NextResponse.json({ message: 'Manueller Google-GenAI-Export gelöscht.' });
   } catch (error) {

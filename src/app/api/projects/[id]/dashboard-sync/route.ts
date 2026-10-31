@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { DashboardSourceError, trySyncDashboardProjectSnapshot } from '@/lib/sync/dashboard';
 import { isDashboardSnapshotStale } from '@/lib/sync/cache-policy';
 import { isDashboardSnapshotCompatible } from '@/lib/sync/dashboard-snapshot-contract';
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   const session = await auth();
   if (!session?.user) return NextResponse.json({}, { status: 401 });
-  if (session.user.id !== id && !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+  if (!(await canAccessProject(session.user, id))) {
     return NextResponse.json({}, { status: 403 });
   }
   const dateRange = request.nextUrl.searchParams.get('dateRange') ?? '';
@@ -70,8 +71,7 @@ export async function POST(
   if (!session?.user) {
     return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 });
   }
-  const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SUPERADMIN';
-  if (!isAdmin && session.user.id !== id) {
+  if (!(await canAccessProject(session.user, id))) {
     return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
   }
 

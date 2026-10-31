@@ -80,6 +80,10 @@ async function executeJob(job: ProjectSyncJob, deadlineAt: number): Promise<JobO
         inspectionReserveMs: 15_000,
         deadlineAt: indexingDeadline,
       });
+      if (skipped === 'not-due') {
+        // Ein anderer Lauf hat das Projekt bereits aktualisiert; nichts zu verschieben.
+        return { kind: 'done', message: 'Indexierung noch nicht fällig' };
+      }
       if (skipped) {
         return {
           kind: 'defer',
