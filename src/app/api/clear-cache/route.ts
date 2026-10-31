@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
-import { INVALIDATED_CACHE_TIMESTAMP } from '@/lib/sync/cache-policy';
+import { markDashboardSnapshotsStale } from '@/lib/sync/dashboard-snapshot';
 
 type ClearCacheBody = {
   dateRange?: string;
@@ -48,60 +48,17 @@ export async function POST(request: NextRequest) {
     const { dateRange, userId } = body;
 
     // Vorhandene Snapshots bleiben sichtbar, bis die Synchronisierung neue Daten liefert.
-    if (!userId) {
-      if (dateRange) {
-        const result = await sql`
-          UPDATE google_data_cache
-          SET last_fetched = ${INVALIDATED_CACHE_TIMESTAMP}::timestamptz
-          WHERE date_range = ${dateRange}
-        `;
-        return NextResponse.json({ 
-          success: true, 
-          message: `Daten für ${dateRange} zur Aktualisierung vorgemerkt`,
-          cleared: dateRange,
-          rowsMarkedStale: result.rowCount
-        });
-      } else {
-        const result = await sql`
-          UPDATE google_data_cache
-          SET last_fetched = ${INVALIDATED_CACHE_TIMESTAMP}::timestamptz
-        `;
-        return NextResponse.json({ 
-          success: true, 
-          message: 'Alle vorhandenen Daten zur Aktualisierung vorgemerkt',
-          cleared: 'all',
-          rowsMarkedStale: result.rowCount
-        });
-      }
-    }
-
-    if (dateRange) {
-      const result = await sql`
-        UPDATE google_data_cache
-        SET last_fetched = ${INVALIDATED_CACHE_TIMESTAMP}::timestamptz
-        WHERE user_id = ${userId}::uuid AND date_range = ${dateRange}
-      `;
-      return NextResponse.json({ 
-        success: true, 
-        message: `Daten für ${dateRange} zur Aktualisierung vorgemerkt`,
-        cleared: dateRange,
-        userId,
-        rowsMarkedStale: result.rowCount
-      });
-    } else {
-      const result = await sql`
-        UPDATE google_data_cache
-        SET last_fetched = ${INVALIDATED_CACHE_TIMESTAMP}::timestamptz
-        WHERE user_id = ${userId}::uuid
-      `;
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Vorhandene Daten zur Aktualisierung vorgemerkt',
-        cleared: 'all',
-        userId,
-        rowsMarkedStale: result.rowCount
-      });
-    }
+    const rowsMarkedStale = await markDashboardSnapshotsStale({ userId, dateRange });
+    const scope = userId ? 'Vorhandene Daten' : 'Alle vorhandenen Daten';
+    return NextResponse.json({
+      success: true,
+      message: dateRange
+        ? `Daten für ${dateRange} zur Aktualisierung vorgemerkt`
+        : `${scope} zur Aktualisierung vorgemerkt`,
+      cleared: dateRange ?? 'all',
+      ...(userId ? { userId } : {}),
+      rowsMarkedStale,
+    });
 
   } catch (error: unknown) {
     console.error('[Clear Cache] CRITICAL Error:', error);

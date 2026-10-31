@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
       SET brand_keywords = ${keywordsToSave as any}
       WHERE id = ${ctx.userId}::uuid
     `;
-    await markDashboardSnapshotsStale(ctx.userId);
+    await markDashboardSnapshotsStale({ userId: ctx.userId });
   } catch (e: any) {
     return NextResponse.json(
       { error: 'DB-Save fehlgeschlagen', details: e.message },

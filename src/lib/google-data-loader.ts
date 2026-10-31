@@ -695,13 +695,11 @@ async function loadGoogleData(
     const sameSource = user.google_ads_sheet_id
       ? previous?.source === 'sheet' && previous.configuredSheetId === user.google_ads_sheet_id.trim()
       : previous && previous.source !== 'sheet';
-    // Ohne verwertbaren Vorstand bleibt der leere Sheet-Platzhalter stehen, damit der
-    // Snapshot zur konfigurierten Sheet-ID passt und nicht bei jedem Aufruf neu geladen wird.
-    googleAdsData = previous && sameSource
-      ? { ...previous, fetchedAt: previous.fetchedAt ?? new Date(rows[0].last_fetched).toISOString() }
-      : user.google_ads_sheet_id
-        ? createEmptyGoogleAdsSheetData(user.google_ads_sheet_id.trim(), startDateStr, endDateStr)
-        : undefined;
+    // Ohne passenden Vorstand bleibt der leere Sheet-Platzhalter stehen, damit der
+    // Snapshot zur konfigurierten Sheet-ID passt.
+    if (previous && sameSource) {
+      googleAdsData = { ...previous, fetchedAt: previous.fetchedAt ?? new Date(rows[0].last_fetched).toISOString() };
+    }
   } else if (googleAdsData) {
     googleAdsData = { ...googleAdsData, reportStartDate: startDateStr, reportEndDate: endDateStr,
       fetchedAt: googleAdsData.fetchedAt ?? new Date().toISOString() };

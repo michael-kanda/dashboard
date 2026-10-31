@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 // ✅ WICHTIG: UserSchema für Validierung, User Typ ist hier nicht zwingend nötig
 import { UserSchema } from '@/lib/schemas'; 
@@ -38,12 +39,8 @@ export async function GET(request: Request) {
       if (rows.length === 0) return NextResponse.json({ message: 'Projekt nicht gefunden' }, { status: 404 });
 
       // Berechtigungsprüfung für normale Admins
-      if (role === 'ADMIN') {
-        const { rows: assignments } = await sql`
-          SELECT 1 FROM project_assignments
-          WHERE user_id::text = ${id} AND project_id::text = ${projectId}
-        `;
-        if (assignments.length === 0) return NextResponse.json({ message: 'Zugriff verweigert.' }, { status: 403 });
+      if (!(await canAccessProject(session.user, projectId))) {
+        return NextResponse.json({ message: 'Zugriff verweigert.' }, { status: 403 });
       }
 
       // ✅ ZOD VALIDIERUNG (Repariert permissions: null -> [])

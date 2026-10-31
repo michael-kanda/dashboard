@@ -72,7 +72,7 @@ export async function PATCH(
   `;
 
   try {
-    await markDashboardSnapshotsStale(projectId);
+    await markDashboardSnapshotsStale({ userId: projectId });
   } catch (cacheError) {
     console.warn(`[Local SEO Pins] Cache konnte nicht invalidiert werden:`, cacheError);
   }

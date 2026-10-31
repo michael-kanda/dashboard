@@ -91,10 +91,17 @@ export async function readDashboardSnapshot(
 
 // Markiert alle Snapshots eines Projekts als fällig, ohne ihre Daten zu löschen:
 // Der letzte gültige Stand bleibt bis zur erfolgreichen Synchronisierung sichtbar.
-export async function markDashboardSnapshotsStale(userId: string) {
-  await sql`
+// Ohne userId bzw. dateRange gilt die Markierung für alle Projekte bzw. Zeiträume.
+export async function markDashboardSnapshotsStale({
+  userId,
+  dateRange,
+}: { userId?: string; dateRange?: string } = {}) {
+  const result = await sql`
     UPDATE google_data_cache
     SET last_fetched = ${INVALIDATED_CACHE_TIMESTAMP}::timestamptz
-    WHERE user_id = ${userId}::uuid
+    WHERE (${userId ?? null}::uuid IS NULL OR user_id = ${userId ?? null}::uuid)
+      AND (${dateRange ?? null}::text IS NULL OR date_range = ${dateRange ?? null})
+      AND last_fetched IS DISTINCT FROM ${INVALIDATED_CACHE_TIMESTAMP}::timestamptz
   `;
+  return result.rowCount ?? 0;
 }

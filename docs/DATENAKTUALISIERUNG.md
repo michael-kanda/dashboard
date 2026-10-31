@@ -19,7 +19,7 @@ Fehlt ein Snapshot vollständig, startet die Serverantwort bewusst **keinen** la
 
 Die Superadmin-Aktion **Aktualisierung vormerken** (`/api/clear-cache`, historischer Pfadname) markiert vorhandene Dashboard-Snapshots über `last_fetched` als fällig, löscht ihre Daten aber nicht. Der letzte gültige Stand bleibt während eines Fehlers oder einer wartenden Synchronisierung sichtbar. Die Aktion markiert alle Projekte und Zeiträume, löst aber keine direkte parallele Google-Abfrage aus. Der Dispatcher legt `30d`-Aufträge im nächsten regulären Lauf an; andere Zeiträume werden beim Öffnen eingereiht. Ein bereits physisch gelöschter Snapshot kann dadurch nicht wiederhergestellt werden und benötigt einen erfolgreichen Neuabruf. Fehlt nur der Snapshot des gewählten Zeitraums, bietet die Lightbox bei vorhandenem anderem Zeitraum einen Wechsel zu diesen gespeicherten Daten an und unterscheidet wartende von fehlgeschlagenen Aufträgen.
 
-Dasselbe gilt für Änderungen an Projekteinstellungen, Brand-Keywords, Standort-Pins und manuellen Google-GenAI-Exporten: Sie markieren die Snapshots des Projekts über `markDashboardSnapshotsStale` als fällig, statt sie zu löschen. Nur das Debug-Werkzeug `/api/debug-google-cache` löscht Snapshots noch physisch.
+Dasselbe gilt für Änderungen an Projekteinstellungen, Brand-Keywords, Standort-Pins und manuellen Google-GenAI-Exporten: Sie markieren die Snapshots des Projekts über `markDashboardSnapshotsStale` (auch von `/api/clear-cache` genutzt) als fällig, statt sie zu löschen. Nur das Debug-Werkzeug `/api/debug-google-cache` löscht Snapshots noch physisch.
 
 ```mermaid
 flowchart LR

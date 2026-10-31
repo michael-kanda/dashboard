@@ -5,15 +5,17 @@ type ProjectAccessUser = {
   role?: string | null;
 };
 
-// Gleiche Regel wie /api/projects/[id] und /api/data: Superadmins sehen alles,
-// Admins nur zugewiesene Projekte, Kunden ausschließlich ihr eigenes Projekt.
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Superadmins sehen alles, Admins nur zugewiesene Projekte, Kunden ausschließlich ihr eigenes Projekt.
 export async function canAccessProject(user: ProjectAccessUser | null | undefined, projectId: string) {
   if (!user?.id) return false;
   if (user.role === 'SUPERADMIN') return true;
   if (user.role === 'ADMIN') {
+    if (!UUID_PATTERN.test(user.id) || !UUID_PATTERN.test(projectId)) return false;
     const { rows } = await sql`
       SELECT 1 FROM project_assignments
-      WHERE user_id::text = ${user.id} AND project_id::text = ${projectId}
+      WHERE user_id = ${user.id}::uuid AND project_id = ${projectId}::uuid
       LIMIT 1
     `;
     return rows.length > 0;

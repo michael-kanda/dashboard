@@ -73,10 +73,10 @@ export async function POST(
           updated_at = CURRENT_TIMESTAMP
       WHERE id::text = ${projectId}
     `;
-    await markDashboardSnapshotsStale(projectId);
+    await markDashboardSnapshotsStale({ userId: projectId });
 
     return NextResponse.json({
-      message: 'Google-GenAI-Export gespeichert und Dashboard-Cache gelöscht.',
+      message: 'Google-GenAI-Export gespeichert; das Dashboard wird neu synchronisiert.',
       googleGenAi: normalized,
     });
   } catch (error) {
@@ -102,7 +102,7 @@ export async function DELETE(
           updated_at = CURRENT_TIMESTAMP
       WHERE id::text = ${projectId}
     `;
-    await markDashboardSnapshotsStale(projectId);
+    await markDashboardSnapshotsStale({ userId: projectId });
 
     return NextResponse.json({ message: 'Manueller Google-GenAI-Export gelöscht.' });
   } catch (error) {

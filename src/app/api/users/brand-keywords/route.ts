@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    await markDashboardSnapshotsStale(ctx.userId);
+    await markDashboardSnapshotsStale({ userId: ctx.userId });
 
     return NextResponse.json({
       success: true,

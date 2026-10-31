@@ -30,9 +30,9 @@ const MANUAL_INSPECTION_CONCURRENCY = 6;
 async function authorize(projectId: string, write = false) {
   const session = await auth();
   if (!session?.user) return { error: 'Nicht autorisiert', status: 401 };
-  const role = session.user.role;
-  const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN';
-  if (write && !isAdmin) return { error: 'Nur Admins dürfen einen Abgleich starten.', status: 403 };
+  if (write && session.user.role !== 'ADMIN' && session.user.role !== 'SUPERADMIN') {
+    return { error: 'Nur Admins dürfen einen Abgleich starten.', status: 403 };
+  }
   if (!(await canAccessProject(session.user, projectId))) {
     return { error: 'Zugriff verweigert', status: 403 };
   }
@@ -44,16 +44,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const permission = await authorize(id);
-  if ('error' in permission) {
-    return NextResponse.json({ message: permission.error }, { status: permission.status });
-  }
   if (request.nextUrl.searchParams.get('progress') === '1') {
+    // Wird während eines Abgleichs alle 2,5 s abgefragt: Lesezugriffe laufen parallel zur Rechteprüfung.
+    const session = await auth();
+    if (!session?.user) return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 });
     try {
-      const [progress, queuedJob] = await Promise.all([
+      const [allowed, progress, queuedJob] = await Promise.all([
+        canAccessProject(session.user, id),
         getProjectIndexingProgress(id),
         getProjectSyncJob(id, 'indexing'),
       ]);
+      if (!allowed) return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
       const queued = queuedJob?.status === 'pending' || queuedJob?.status === 'running';
       return NextResponse.json(queued ? {
         ...progress,
@@ -67,6 +68,10 @@ export async function GET(
     } catch {
       return NextResponse.json({ message: 'Fortschritt noch nicht verfügbar' }, { status: 503 });
     }
+  }
+  const permission = await authorize(id);
+  if ('error' in permission) {
+    return NextResponse.json({ message: permission.error }, { status: permission.status });
   }
   return NextResponse.json(await getProjectIndexingStatus(id));
 }

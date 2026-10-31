@@ -3,20 +3,27 @@ import type { User } from '@/lib/schemas';
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
 import { runWithSourceLease } from '@/lib/sync/source-lease';
 import { classifyGoogleApiError } from '@/lib/sync/google-api-error';
+import type { ProjectSyncFailureKind } from '@/lib/sync/job-queue';
 
 export interface DashboardSyncOptions {
   deadlineAt?: number;
 }
 
+// Dauerhafte Fehler blockieren den Snapshot bewusst nicht (Teil-Snapshot mit
+// markierter Abdeckung); ein DashboardSourceError ist daher immer erneut versuchbar.
 export class DashboardSourceError extends Error {
   constructor(
     message: string,
-    readonly kind: 'transient' | 'permanent',
     readonly sources: string[],
   ) {
     super(message);
     this.name = 'DashboardSourceError';
   }
+}
+
+export function classifyDashboardJobFailure(error: unknown): ProjectSyncFailureKind {
+  if (error instanceof DashboardSourceError) return 'transient';
+  return classifyGoogleApiError(error).kind === 'permanent' ? 'permanent' : 'transient';
 }
 
 export async function syncDashboardProjectSnapshot(
@@ -42,13 +49,10 @@ export async function syncDashboardProjectSnapshot(
     const raw = data.apiErrors?.[source];
     return raw ? [{ source: source.toUpperCase(), raw, classified: classifyGoogleApiError(raw) }] : [];
   });
-  // Dauerhafte Fehler blockieren den Snapshot bewusst nicht (Teil-Snapshot mit
-  // markierter Abdeckung); was hier ankommt, ist daher immer erneut versuchbar.
   const blockingFailures = failures.filter(({ classified }) => classified.blocksSnapshotWrite);
   if (blockingFailures.length > 0) {
     throw new DashboardSourceError(
       blockingFailures.map(({ source, classified }) => `${source}: ${classified.message}`).join(' | '),
-      'transient',
       blockingFailures.map(({ source }) => source),
     );
   }

@@ -23,11 +23,7 @@ import type {
 } from '@/lib/indexing-status';
 import { readIndexingStatusResponse } from '@/lib/indexing-response';
 
-const SKIPPED_SYNC_NOTICES: Record<NonNullable<ProjectIndexingStatus['skipped']>, string> = {
-  locked: 'Es läuft bereits ein Abgleich. Der Stand wird danach automatisch aktualisiert.',
-  'not-due': 'Der Indexierungsstatus ist aktuell; ein neuer Abgleich ist noch nicht fällig.',
-  quota: 'Das Tageskontingent der URL Inspection API ist ausgeschöpft. Der Abgleich wird später fortgesetzt.',
-};
+const NOTICE_CLASS = 'mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200';
 
 type FilterValue = 'all' | IndexingUrlStatus | 'canonical' | 'action' | 'intentional' | 'stale';
 
@@ -163,7 +159,6 @@ export default function IndexingStatusWidget({
   const [search, setSearch] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
-  const [syncNotice, setSyncNotice] = useState('');
   const [showExcludedUrls, setShowExcludedUrls] = useState(false);
   const [showDataInfo, setShowDataInfo] = useState(false);
   const canSync = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
@@ -184,6 +179,9 @@ export default function IndexingStatusWidget({
       : showSyncProgress
         ? 'Prüfung läuft…'
         : 'Jetzt prüfen';
+  const syncNotice = data.skipped === 'locked'
+    ? 'Es läuft bereits ein Abgleich. Der Stand wird danach automatisch aktualisiert.'
+    : '';
   const hasCoverageNotices = (
     (data.totalUrls > 0 && !data.isVerificationComplete)
     || data.staleUrls > 0
@@ -240,10 +238,10 @@ export default function IndexingStatusWidget({
   async function runSync() {
     setIsSyncing(true);
     setSyncError('');
-    setSyncNotice('');
     setData((current) => ({
       ...current,
       status: 'running',
+      skipped: undefined,
       progressStage: 'sitemap',
       progressTotal: 0,
       progressCompleted: 0,
@@ -266,7 +264,6 @@ export default function IndexingStatusWidget({
         throw new Error('Der Indexierungsstatus konnte nicht gelesen werden.');
       }
       setData(nextData);
-      if (nextData.skipped) setSyncNotice(SKIPPED_SYNC_NOTICES[nextData.skipped]);
     } catch (error) {
       setSyncError(error instanceof Error ? error.message : 'Abgleich fehlgeschlagen');
       setData((current) => ({ ...current, status: 'error', progressStage: 'error' }));
@@ -647,7 +644,7 @@ export default function IndexingStatusWidget({
             )}
 
             {data.staleUrls > 0 && (
-              <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+              <div className={NOTICE_CLASS}>
                 Bei {data.staleUrls} URLs liegt die letzte Google-Prüfung länger zurück als das Re-Check-Intervall.
                 Ihr Status kann inzwischen veraltet sein und die Summen entsprechend vom aktuellen Google-Index abweichen.
                 <button
@@ -661,7 +658,7 @@ export default function IndexingStatusWidget({
             )}
 
             {data.warningMessage && (
-              <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+              <div className={NOTICE_CLASS}>
                 {data.warningMessage}
               </div>
             )}
@@ -706,7 +703,7 @@ export default function IndexingStatusWidget({
             )}
 
             {syncNotice && !syncError && (
-              <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+              <div className={NOTICE_CLASS}>
                 {syncNotice}
               </div>
             )}

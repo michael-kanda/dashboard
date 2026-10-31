@@ -409,9 +409,9 @@ export async function PUT(
     }
 
     try {
-      await markDashboardSnapshotsStale(targetUserId);
-      if (rows[0].role === 'BENUTZER') {
-        await Promise.all([
+      await Promise.all([
+        markDashboardSnapshotsStale({ userId: targetUserId }),
+        ...(rows[0].role === 'BENUTZER' ? [
           enqueueProjectSyncJob({
             userId: targetUserId,
             jobType: 'dashboard',
@@ -425,8 +425,8 @@ export async function PUT(
             payload: { force: true, reason: 'project-settings-updated' },
             priority: 80,
           }),
-        ]);
-      }
+        ] : []),
+      ]);
     } catch (cacheError) {
       console.warn(`[PUT /api/users/${targetUserId}] Cache/Sync-Auftrag konnte nicht aktualisiert werden:`, cacheError);
     }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { trySyncDashboardProjectSnapshot, DashboardSourceError } from '@/lib/sync/dashboard';
+import { trySyncDashboardProjectSnapshot, classifyDashboardJobFailure } from '@/lib/sync/dashboard';
 import { syncGscHistoryForProject } from '@/lib/sync/gsc-history';
 import { syncIndexingProjectSnapshot } from '@/lib/sync/indexing';
 import {
@@ -15,7 +15,6 @@ import {
   isRetryableInfrastructureError,
   withInfrastructureRetry,
 } from '@/lib/sync/retry';
-import { classifyGoogleApiError } from '@/lib/sync/google-api-error';
 import { pickNextProjectSyncJobType } from '@/lib/sync/dispatcher-policy';
 
 export const dynamic = 'force-dynamic';
@@ -49,11 +48,6 @@ function retryDatabaseOperation<T>(label: string, operation: () => Promise<T>) {
   });
 }
 
-function classifyJobFailure(error: unknown): ProjectSyncFailureKind {
-  if (error instanceof DashboardSourceError) return error.kind;
-  return classifyGoogleApiError(error).kind === 'permanent' ? 'permanent' : 'transient';
-}
-
 async function executeJob(job: ProjectSyncJob, deadlineAt: number): Promise<JobOutcome> {
   switch (job.jobType) {
     case 'dashboard': {
@@ -80,18 +74,17 @@ async function executeJob(job: ProjectSyncJob, deadlineAt: number): Promise<JobO
         inspectionReserveMs: 15_000,
         deadlineAt: indexingDeadline,
       });
-      if (skipped === 'not-due') {
-        // Ein anderer Lauf hat das Projekt bereits aktualisiert; nichts zu verschieben.
-        return { kind: 'done', message: 'Indexierung noch nicht fällig' };
+      // Nur eine fremde Sperre lässt die Arbeit offen; für 'not-due' und 'quota'
+      // plant next_sync_at die Fortsetzung bereits über den Seed ein.
+      if (skipped === 'locked') {
+        return { kind: 'defer', reason: 'Indexierung übersprungen (locked)', delaySeconds: 300 };
       }
-      if (skipped) {
-        return {
-          kind: 'defer',
-          reason: `Indexierung übersprungen (${skipped})`,
-          delaySeconds: skipped === 'quota' ? 3_600 : 300,
-        };
-      }
-      return { kind: 'done', message: `${status.indexedUrls}/${status.totalUrls} URLs indexiert` };
+      return {
+        kind: 'done',
+        message: skipped
+          ? `Indexierung übersprungen (${skipped})`
+          : `${status.indexedUrls}/${status.totalUrls} URLs indexiert`,
+      };
     }
     default: {
       const exhaustive: never = job.jobType;
@@ -201,7 +194,7 @@ export async function GET(request: NextRequest) {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        const failureKind = classifyJobFailure(error);
+        const failureKind = classifyDashboardJobFailure(error);
         await retryDatabaseOperation(
           'Fehlgeschlagenen Job speichern',
           () => finishProjectSyncJob(job, { success: false, error: message, kind: failureKind }),

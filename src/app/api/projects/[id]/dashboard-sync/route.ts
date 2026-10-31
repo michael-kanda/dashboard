@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
-import { DashboardSourceError, trySyncDashboardProjectSnapshot } from '@/lib/sync/dashboard';
+import { classifyDashboardJobFailure, trySyncDashboardProjectSnapshot } from '@/lib/sync/dashboard';
 import { isDashboardSnapshotStale } from '@/lib/sync/cache-policy';
 import { isDashboardSnapshotCompatible } from '@/lib/sync/dashboard-snapshot-contract';
 import {
@@ -12,9 +12,7 @@ import {
   finishProjectSyncJob,
   PERMANENT_FAILURE_COOLDOWN_HOURS,
   TRANSIENT_FAILURE_COOLDOWN_HOURS,
-  type ProjectSyncFailureKind,
 } from '@/lib/sync/job-queue';
-import { classifyGoogleApiError } from '@/lib/sync/google-api-error';
 import type { ProjectDashboardData } from '@/lib/dashboard-shared';
 
 export const dynamic = 'force-dynamic';
@@ -27,12 +25,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   const session = await auth();
   if (!session?.user) return NextResponse.json({}, { status: 401 });
-  if (!(await canAccessProject(session.user, id))) {
-    return NextResponse.json({}, { status: 403 });
-  }
   const dateRange = request.nextUrl.searchParams.get('dateRange') ?? '';
   if (!DATE_RANGES.has(dateRange)) return NextResponse.json({}, { status: 400 });
-  const { rows } = await sql`
+  const [allowed, { rows }] = await Promise.all([canAccessProject(session.user, id), sql`
     SELECT status, run_after, lease_until, failure_kind, updated_at,
       EXISTS (
         SELECT 1 FROM google_data_cache cache
@@ -42,7 +37,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       ) AS has_snapshot
     FROM project_sync_jobs
     WHERE user_id = ${id}::uuid AND job_type = 'dashboard' AND date_range = ${dateRange}
-  `;
+  `]);
+  if (!allowed) return NextResponse.json({}, { status: 403 });
   const job = rows[0];
   const running = job?.status === 'running' && new Date(job.lease_until).getTime() > Date.now();
   const failed = job?.status === 'failed';
@@ -55,11 +51,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       ? new Date(new Date(job.updated_at).getTime() + cooldownHours * 3_600_000).toISOString()
       : job?.run_after ?? null,
   }, { headers: { 'Cache-Control': 'no-store' } });
-}
-
-function classifyJobFailure(error: unknown): ProjectSyncFailureKind {
-  if (error instanceof DashboardSourceError) return error.kind;
-  return classifyGoogleApiError(error).kind === 'permanent' ? 'permanent' : 'transient';
 }
 
 export async function POST(
@@ -158,7 +149,7 @@ export async function POST(
     await finishProjectSyncJob(job, {
       success: false,
       error: message,
-      kind: classifyJobFailure(error),
+      kind: classifyDashboardJobFailure(error),
     });
     return NextResponse.json({ success: false, pending: true, message }, { status: 502 });
   }

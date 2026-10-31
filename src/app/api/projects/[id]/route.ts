@@ -2,6 +2,7 @@
 
 import { NextResponse, NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 // Wir brauchen den User Typ für TypeScript Casts
 import { User } from '@/lib/schemas'; 
@@ -39,7 +40,6 @@ export async function GET(
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 });
     }
 
-    const { role, id: userId } = session.user;
     const resolvedParams = await context.params;
     const projectId = resolvedParams.id;
 
@@ -49,22 +49,7 @@ export async function GET(
     console.log('[/api/projects/[id]] GET Request');
     
     // ========== BERECHTIGUNGSPRÜFUNG ==========
-    let hasAccess = false;
-    
-    if (role === 'SUPERADMIN') {
-      hasAccess = true;
-    } else if (role === 'ADMIN') {
-      const { rows: accessCheck } = await sql`
-        SELECT 1 FROM project_assignments
-        WHERE user_id::text = ${userId} AND project_id::text = ${projectId}
-        LIMIT 1;
-      `;
-      hasAccess = accessCheck.length > 0;
-    } else if (role === 'BENUTZER') {
-      hasAccess = userId === projectId;
-    }
-
-    if (!hasAccess) {
+    if (!(await canAccessProject(session.user, projectId))) {
       return NextResponse.json({ message: 'Keine Berechtigung.' }, { status: 403 });
     }
 
