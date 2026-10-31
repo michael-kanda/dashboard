@@ -10,6 +10,11 @@ function getPlacesApiKey() {
     || '';
 }
 
+// Places-API-v1-Fotonamen: places/{placeId}/photos/{photoId}. Andere Pfade würden
+// den Server-Schlüssel an beliebige Places-Endpunkte weiterreichen.
+const PHOTO_NAME_PATTERN = /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/;
+const CACHE_CONTROL = 'private, max-age=3600, stale-while-revalidate=86400';
+
 function normalizeDimension(value: string | null, fallback: number) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -30,7 +35,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const name = searchParams.get('name')?.trim();
   const photoReference = searchParams.get('photoReference')?.trim();
-  if (!name?.startsWith('places/') && !photoReference) {
+  if (!(name && PHOTO_NAME_PATTERN.test(name)) && !photoReference) {
     return NextResponse.json({ message: 'Ungueltiger Foto-Name.' }, { status: 400 });
   }
 
@@ -38,13 +43,20 @@ export async function GET(request: NextRequest) {
   const maxHeightPx = normalizeDimension(searchParams.get('maxHeightPx'), 240);
 
   if (photoReference) {
+    // Die Legacy-URL enthält den API-Schlüssel; das Bild wird deshalb serverseitig
+    // geladen und durchgereicht, statt den Browser dorthin weiterzuleiten.
     const legacyUrl = new URL('https://maps.googleapis.com/maps/api/place/photo');
     legacyUrl.searchParams.set('photo_reference', photoReference);
     legacyUrl.searchParams.set('maxwidth', String(maxWidthPx));
     legacyUrl.searchParams.set('key', apiKey);
-    const redirect = NextResponse.redirect(legacyUrl.toString());
-    redirect.headers.set('Cache-Control', 'private, max-age=3600, stale-while-revalidate=86400');
-    return redirect;
+    const photo = await fetch(legacyUrl.toString(), { next: { revalidate: 86400 } });
+    const contentType = photo.headers.get('content-type') ?? '';
+    if (!photo.ok || !contentType.startsWith('image/')) {
+      return NextResponse.json({ message: `Google Places Foto fehlgeschlagen (${photo.status}).` }, { status: 502 });
+    }
+    return new NextResponse(photo.body, {
+      headers: { 'Content-Type': contentType, 'Cache-Control': CACHE_CONTROL },
+    });
   }
 
   const url = new URL(`https://places.googleapis.com/v1/${name}/media`);
@@ -64,6 +76,6 @@ export async function GET(request: NextRequest) {
   }
 
   const redirect = NextResponse.redirect(data.photoUri);
-  redirect.headers.set('Cache-Control', 'private, max-age=3600, stale-while-revalidate=86400');
+  redirect.headers.set('Cache-Control', CACHE_CONTROL);
   return redirect;
 }

@@ -1,6 +1,7 @@
 // src/app/api/ai/chat/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
 import { streamTextSafe } from '@/lib/ai-config';
@@ -605,15 +606,9 @@ export async function POST(req: NextRequest) {
     const userRole = session.user.role;
     let targetUserId = projectId || userId;
 
-    // Admin-Check für fremde Projekte
-    if (targetUserId !== userId && userRole === 'ADMIN') {
-      const { rows: assignments } = await sql`
-        SELECT 1 FROM project_assignments
-        WHERE user_id::text = ${userId} AND project_id::text = ${targetUserId}
-      `;
-      if (assignments.length === 0) {
-        return NextResponse.json({ error: 'Zugriff verweigert' }, { status: 403 });
-      }
+    // Fremde Projekte nur mit Berechtigung (Kunden ausschließlich das eigene)
+    if (targetUserId !== userId && !(await canAccessProject(session.user, targetUserId))) {
+      return NextResponse.json({ error: 'Zugriff verweigert' }, { status: 403 });
     }
 
     // 3. User-Daten laden
@@ -775,6 +770,9 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get('projectId') || session.user.id;
     const dateRange = normalizeDateRange(searchParams.get('dateRange') || '30d');
+    if (projectId !== session.user.id && !(await canAccessProject(session.user, projectId))) {
+      return NextResponse.json({ error: 'Zugriff verweigert' }, { status: 403 });
+    }
 
     // User laden
     const { rows } = await sql`SELECT * FROM users WHERE id::text = ${projectId}`;

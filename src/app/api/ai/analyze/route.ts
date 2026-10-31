@@ -1,6 +1,7 @@
 // src/app/api/ai/analyze/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
@@ -87,6 +88,9 @@ export async function POST(req: NextRequest) {
 
     if (!projectId || !dateRange) {
       return NextResponse.json({ message: 'Fehlende Parameter' }, { status: 400 });
+    }
+    if (!(await canAccessProject(session.user, projectId))) {
+      return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
     }
 
     // 1. Daten laden

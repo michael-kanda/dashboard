@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { sql, type QueryResult } from '@vercel/postgres';
 import { getGscDataForPagesWithComparison } from '@/lib/google-api';
 import type { User } from '@/types';
@@ -87,14 +88,8 @@ export async function POST(request: NextRequest) {
     console.log(`[GSC Refresh] Starte Abgleich für Projekt ${projectId} über Zeitraum: ${dateRange}`);
 
     // 3. Berechtigungsprüfung
-    if (user.role === 'ADMIN') {
-      const { rows: accessCheck } = await sql`
-        SELECT 1 FROM project_assignments 
-        WHERE user_id::text = ${user.id} AND project_id::text = ${projectId};
-      `;
-      if (accessCheck.length === 0) {
-        return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
-      }
+    if (!(await canAccessProject(user, projectId))) {
+      return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
     }
 
     // 4. Projektdaten laden (GSC URL)

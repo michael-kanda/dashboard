@@ -26,6 +26,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { getAiTrafficExtendedWithComparison } from '@/lib/ai-traffic-extended-v2';
 import {
@@ -212,6 +213,10 @@ export async function GET(request: NextRequest) {
 
     // User & Projekt laden
     let ga4PropertyId: string | null = null;
+
+    if (projectId && !(await canAccessProject(session.user, projectId))) {
+      return NextResponse.json({ error: 'Zugriff verweigert' }, { status: 403 });
+    }
 
     if (projectId) {
       // KORREKTUR: Projekte sind technisch User-Einträge in der 'users'-Tabelle.
