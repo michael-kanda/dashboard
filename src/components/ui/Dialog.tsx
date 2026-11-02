@@ -23,6 +23,9 @@ export function Dialog({
   variant?: 'dialog' | 'sheet';
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
+  // Aktuelles onClose ohne den Effekt neu zu starten (sonst springt der Fokus bei jedem Rendern).
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -33,7 +36,7 @@ export function Dialog({
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== 'Tab' || !panel) return;
@@ -54,7 +57,7 @@ export function Dialog({
       document.removeEventListener('keydown', onKey);
       previous?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 

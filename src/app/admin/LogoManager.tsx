@@ -1,9 +1,12 @@
 // src/app/admin/LogoManager.tsx
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import useSWR, { mutate } from 'swr';
-import { Image as ImageIcon, Trash, Link45deg, ArrowRepeat, CheckCircle, ExclamationTriangleFill } from 'react-bootstrap-icons';
+import { ArrowRepeat, Trash } from 'react-bootstrap-icons';
+import { GroupedSection } from '@/components/ui/GroupedList';
+import { Button, IconButton } from '@/components/ui/Button';
+import { Field, inputClasses } from '@/components/ui/Field';
 
 interface MandantLogo {
   mandant_id: string;
@@ -78,87 +81,67 @@ export default function LogoManager() {
   };
 
   return (
-    <div className="admin-panel h-fit p-5">
-      <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-heading">
-        <ImageIcon size={18} className="text-blue-600" /> Mandanten-Logos
-      </h2>
-      
-      {/* Formular zum Hinzufügen/Aktualisieren */}
-      <form onSubmit={handleSubmit} className="space-y-4 mb-6 pb-6 border-b">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Mandant-ID (Label)</label>
-          <input
-            type="text"
-            value={mandantId}
-            onChange={(e) => setMandantId(e.target.value)}
-            placeholder="z.B. max-online"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Logo-URL (https://...)</label>
-          <input
-            type="url"
-            value={logoUrl}
-            onChange={(e) => setLogoUrl(e.target.value)}
-            placeholder="https://beispiel.com/logo.png"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-50"
-        >
-          {isSubmitting ? <ArrowRepeat className="animate-spin" size={18} /> : <CheckCircle size={18} />}
-          <span>{isSubmitting ? 'Wird gespeichert...' : 'Logo speichern'}</span>
-        </button>
-        
-        {message.text && (
-          <p className={`text-sm p-3 rounded border ${
-            message.type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
-          }`}>
-            {message.text}
-          </p>
-        )}
-      </form>
+    <div className="flex flex-col gap-[22px]">
+      <GroupedSection title="Mandanten-Logos" help="Logo je Label für Sidebar und Berichte">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 px-[18px] py-4">
+          <Field label="Mandant-ID (Label)" htmlFor="logo-mandant">
+            <input
+              id="logo-mandant"
+              type="text"
+              value={mandantId}
+              onChange={(e) => setMandantId(e.target.value)}
+              placeholder="z. B. max-online"
+              required
+              className={inputClasses}
+            />
+          </Field>
+          <Field label="Logo-URL (https://…)" htmlFor="logo-url">
+            <input
+              id="logo-url"
+              type="url"
+              value={logoUrl}
+              onChange={(e) => setLogoUrl(e.target.value)}
+              placeholder="https://beispiel.com/logo.png"
+              required
+              className={inputClasses}
+            />
+          </Field>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <ArrowRepeat className="animate-spin" size={14} aria-hidden="true" />}
+              {isSubmitting ? 'Wird gespeichert …' : 'Logo speichern'}
+            </Button>
+            {message.text && (
+              <p role="status" className={`text-[12px] ${message.type === 'error' ? 'text-danger' : 'text-success'}`}>
+                {message.text}
+              </p>
+            )}
+          </div>
+        </form>
+      </GroupedSection>
 
-      {/* Liste der vorhandenen Logos */}
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-heading">Vorhandene Logos</h3>
-        {isLoading && <p>Lade Logos...</p>}
-        {error && <p className="text-red-600">Fehler beim Laden der Logos.</p>}
-        {logos && logos.length === 0 && <p className="text-sm text-gray-500 italic">Keine Logos konfiguriert.</p>}
-        <div className="max-h-96 space-y-2 overflow-y-auto pr-1 custom-scrollbar">
+      <GroupedSection title="Vorhandene Logos">
+        <div className="max-h-96 overflow-y-auto">
+          {isLoading && <p className="px-[18px] py-3 text-[13px] text-muted">Logos werden geladen …</p>}
+          {error && <p className="px-[18px] py-3 text-[13px] text-danger">Fehler beim Laden der Logos.</p>}
+          {logos && logos.length === 0 && <p className="px-[18px] py-3 text-[13px] text-muted">Keine Logos konfiguriert.</p>}
           {logos?.map(logo => (
-            <div key={logo.mandant_id} className="flex items-center justify-between rounded-md bg-surface-secondary p-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-indigo-700">{logo.mandant_id}</p>
-                <a 
-                  href={logo.logo_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-xs text-gray-500 hover:underline truncate flex items-center gap-1"
-                >
-                  <Link45deg /> {logo.logo_url}
+            <div key={logo.mandant_id} className="flex min-h-11 items-center justify-between gap-3 border-b border-border-subtle px-[18px] py-2.5 last:border-b-0">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[14px] font-semibold text-heading">{logo.mandant_id}</p>
+                <a href={logo.logo_url} target="_blank" rel="noopener noreferrer" className="block truncate text-[12px] text-accent hover:underline">
+                  {logo.logo_url}
                 </a>
               </div>
-              <div className="flex items-center gap-2 ml-4">
-                <img src={logo.logo_url} alt={logo.mandant_id} className="h-8 w-auto bg-gray-100 rounded object-contain" />
-                <button
-                  onClick={() => handleDelete(logo.mandant_id)}
-                  className="bg-red-50 text-red-600 p-2 rounded hover:bg-red-100"
-                  title="Logo-Zuweisung löschen"
-                >
-                  <Trash size={16} />
-                </button>
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={logo.logo_url} alt={logo.mandant_id} className="h-8 w-auto rounded-md bg-surface-secondary object-contain" />
+              <IconButton label={`Logo für ${logo.mandant_id} löschen`} onClick={() => handleDelete(logo.mandant_id)} className="text-danger hover:text-danger">
+                <Trash size={16} aria-hidden="true" />
+              </IconButton>
             </div>
           ))}
         </div>
-      </div>
+      </GroupedSection>
     </div>
   );
 }

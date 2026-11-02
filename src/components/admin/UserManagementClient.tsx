@@ -2,16 +2,33 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, FormEvent } from 'react';
-import Link from 'next/link';
+import { useState, FormEvent, type ReactNode } from 'react';
 import type { User } from '@/lib/schemas';
-import {
-  Pencil, Trash, PersonPlus, ArrowRepeat, People, PersonVideo, Briefcase,
-  Globe, CalendarRange, CheckCircleFill, Circle, Link45deg, Search // ✅ Search importiert
-} from 'react-bootstrap-icons'; 
+import { ArrowRepeat, PersonCircle, PersonPlus } from 'react-bootstrap-icons';
 import { toast } from 'sonner';
 import LogoManager from '@/app/admin/LogoManager';
 import LoginLogbook from '@/app/admin/LoginLogbook';
+import { roleLabel } from '@/lib/ui-labels';
+import { PageContainer, PageHeader } from '@/components/ui/Page';
+import { SearchField } from '@/components/ui/SearchField';
+import { Button, ButtonLink } from '@/components/ui/Button';
+import { DataList, DataListHead, EmptyRow, PrimaryCell, Td, Th, Tr } from '@/components/ui/DataList';
+import { GroupedSection } from '@/components/ui/GroupedList';
+import { StatusPill } from '@/components/ui/Status';
+import { AvatarStack } from '@/components/ui/AvatarStack';
+import { Toggle } from '@/components/ui/Toggle';
+import { Dialog } from '@/components/ui/Dialog';
+import { inputClasses } from '@/components/ui/Field';
+
+// Formularzeile einer Grouped List: Label links, Feld rechts.
+function FormRow({ id, label, children }: { id: string; label: ReactNode; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5 border-b border-border-subtle px-[18px] py-2.5 last:border-b-0 sm:flex-row sm:items-center sm:gap-4">
+      <label htmlFor={id} className="text-[13px] text-heading sm:w-44 sm:flex-shrink-0">{label}</label>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
 
 interface Props {
   initialUsers: User[];
@@ -28,6 +45,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
   const [selectedRole, setSelectedRole] = useState<'BENUTZER' | 'ADMIN'>('BENUTZER');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTimelineActive, setIsTimelineActive] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   
   // ✅ NEU: Such-State
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,15 +59,6 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
     (user.domain && user.domain.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (user.mandant_id && user.mandant_id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  const getRoleStyle = (role: string) => {
-    switch (role) {
-      case 'ADMIN': return 'bg-blue-100 text-blue-800';
-      case 'BENUTZER': return 'bg-green-100 text-green-800';
-      case 'SUPERADMIN': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const refreshUsers = async () => {
     try {
@@ -98,6 +107,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
       (e.target as HTMLFormElement).reset();
       setIsTimelineActive(false);
       setSelectedRole('BENUTZER');
+      setIsCreateOpen(false);
       await refreshUsers();
     } catch (error) {
       toast.dismiss(loadingToast);
@@ -130,246 +140,197 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
   };
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(300px,0.82fr)_minmax(0,2fr)]">
-        
-      {/* CREATE FORMULAR */}
-      <div className="admin-panel h-fit p-5">
-        <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-heading">
-          <PersonPlus size={18} className="text-blue-600" /> Neuen Nutzer anlegen
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
-          <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 space-y-3">
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Zugangsdaten</h3>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Rolle</label>
-                <select
-                  name="role"
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value as 'BENUTZER' | 'ADMIN')}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                  disabled={isSubmitting}
-                >
-                  <option value="BENUTZER">Kunde (Benutzer)</option>
-                  {isSuperAdmin && <option value="ADMIN">Admin</option>}
-                </select>
-              </div>
+    <PageContainer>
+      <PageHeader title="Admin-Bereich" count={users.length} subtitle="Benutzer, Projekte und Mandanten verwalten">
+        <SearchField
+          label="Nutzer durchsuchen"
+          placeholder="E-Mail, Ansprache, Domain oder Label"
+          value={searchTerm}
+          onChange={setSearchTerm}
+        />
+        <Button onClick={() => setIsCreateOpen(true)}>
+          <PersonPlus size={16} aria-hidden="true" />
+          Neuer Nutzer
+        </Button>
+      </PageHeader>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">E-Mail</label>
-                <input name="email" type="email" required placeholder="kunde@firma.at" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Initial-Passwort</label>
-                <input name="password" type="text" required placeholder="Sicheres Passwort" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Mandant-ID (Label)</label>
-                <input name="mandant_id" type="text" required readOnly={!isSuperAdmin} defaultValue={!isSuperAdmin ? sessionUser.mandant_id || '' : undefined} placeholder={isSuperAdmin ? "z.B. max-online" : "Wird geerbt"} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 text-sm placeholder:text-gray-400" disabled={isSubmitting || !isSuperAdmin} />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Ansprache</label>
-                <input name="ansprache" type="text" placeholder="z.B. Herr Muster oder Frau Muster" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
-              </div>
-          </div>
-
-          {isSuperAdmin && selectedRole === 'ADMIN' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Berechtigungen</label>
-              <input name="permissions" type="text" placeholder="z.B. label1, label2" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm" disabled={isSubmitting} />
-            </div>
-          )}
-
-          {selectedRole === 'BENUTZER' && (
-            <>
-              {/* PROJEKT ZEITPLAN */}
-              <div className="pt-2">
-                  <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                          <CalendarRange size={14} className="text-indigo-600"/>
-                          Projekt-Zeitplan
-                      </label>
-                      <button
-                          type="button"
-                          onClick={() => setIsTimelineActive(!isTimelineActive)}
-                          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isTimelineActive ? 'bg-green-500' : 'bg-gray-200'}`}
-                      >
-                          <span className="sr-only">Zeitplan aktivieren</span>
-                          <span aria-hidden="true" className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isTimelineActive ? 'translate-x-5' : 'translate-x-0'}`}>
-                              {isTimelineActive && <CheckCircleFill className="text-green-500 w-3 h-3 absolute top-1 left-1" />}
-                          </span>
-                      </button>
-                  </div>
-
-                  {isTimelineActive ? (
-                      <div className="p-3 bg-green-50 rounded-lg border border-green-100 space-y-3 animate-in fade-in slide-in-from-top-2">
-                          <div className="flex items-center gap-2 text-xs text-green-700 font-medium mb-1">
-                              <CheckCircleFill /> Timeline aktiv
-                          </div>
-                          <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Startdatum</label>
-                              <input name="project_start_date" type="date" className="block w-full px-2 py-1.5 border border-green-200 rounded text-sm focus:border-green-500 focus:ring-green-500" />
-                          </div>
-                          <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Laufzeit (Monate)</label>
-                              <input name="project_duration_months" type="number" defaultValue={6} min={1} className="block w-full px-2 py-1.5 border border-green-200 rounded text-sm focus:border-green-500 focus:ring-green-500" />
-                          </div>
-                      </div>
+      <DataList label="Nutzer" minWidth={960}>
+        <DataListHead>
+          <Th>Nutzer</Th>
+          <Th>Rolle</Th>
+          <Th>Label</Th>
+          <Th>Domain</Th>
+          <Th>Betreuung</Th>
+          <Th className="text-right"><span className="sr-only">Aktionen</span></Th>
+        </DataListHead>
+        <tbody>
+          {filteredUsers.map((user) => {
+            const projects = user.assigned_projects ? user.assigned_projects.split(', ').filter(Boolean) : [];
+            return (
+              <Tr key={user.id}>
+                <Td>
+                  <PrimaryCell icon={<PersonCircle size={16} />} title={user.email} subtitle={user.ansprache || undefined} />
+                </Td>
+                <Td><StatusPill>{roleLabel(user.role)}</StatusPill></Td>
+                <Td className="text-muted">{user.mandant_id || '–'}</Td>
+                <Td>
+                  {user.domain ? (
+                    <a
+                      href={/^https?:\/\//.test(user.domain) ? user.domain : `https://${user.domain}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-accent hover:underline"
+                    >
+                      {user.domain}
+                    </a>
                   ) : (
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 text-center">
-                          <span className="text-xs text-gray-400 flex items-center justify-center gap-1">
-                              <Circle size={10} /> Zeitplan inaktiv (Standard)
-                          </span>
-                      </div>
+                    <span className="text-muted">–</span>
                   )}
-              </div>
-
-              {/* WEB DATEN / APIs */}
-              <div className="pt-2 border-t border-gray-100">
-                  <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                      <Globe size={14} className="text-indigo-600" /> Web-Daten & APIs
-                  </h3>
-                  
-                  <div className="space-y-3">
-                      <div>
-                          <label className="block text-xs font-medium text-gray-700">Domain</label>
-                          <div className="relative mt-1 rounded-md shadow-sm">
-                              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                  <Link45deg className="text-gray-400" size={14} />
-                              </div>
-                              <input name="domain" type="text" required placeholder="z.B. kundendomain.at" className="block w-full rounded-md border-gray-300 pl-9 focus:border-indigo-500 focus:ring-indigo-500 text-sm py-2" disabled={isSubmitting} />
-                          </div>
-                      </div>
-
-                      <div>
-                          <label className="block text-xs font-medium text-gray-700">Favicon URL (Optional)</label>
-                          <input name="favicon_url" type="text" placeholder="https://example.com/icon.png" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
-                      </div>
-
-                      <div>
-                          <label className="block text-xs font-medium text-gray-700">GSC Site URL</label>
-                          <input name="gsc_site_url" type="text" placeholder="sc-domain:example.com" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          <div>
-                              <label className="block text-xs font-medium text-gray-700">GA4 ID</label>
-                              <input name="ga4_property_id" type="text" placeholder="12345678" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
-                          </div>
-                          <div>
-                              <label className="block text-xs font-medium text-gray-700">Semrush Project ID</label>
-                              <input name="semrush_project_id" type="text" placeholder="123456" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
-                          </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          <div>
-                              <label className="block text-xs font-medium text-gray-700">Semrush Tracking-ID (Kampagne 1)</label>
-                              <input name="semrush_tracking_id" type="text" placeholder="Tracking ID 1" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
-                          </div>
-                          <div>
-                              <label className="block text-xs font-medium text-gray-700">Semrush Tracking-ID (Kampagne 2)</label>
-                              <input name="semrush_tracking_id_02" type="text" placeholder="Tracking ID 2" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder:text-gray-400" disabled={isSubmitting} />
-                          </div>
-                      </div>
-                  </div>
-              </div>
-            </>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
-          >
-            {isSubmitting ? <ArrowRepeat className="animate-spin" size={18} /> : <PersonPlus size={18} />}
-            {isSubmitting ? 'Speichere...' : (selectedRole === 'BENUTZER' ? 'Kunden erstellen' : 'Admin erstellen')}
-          </button>
-        </form>
-      </div>
-
-      {/* LISTE (Rechts) */}
-      <div className="admin-panel min-w-0 p-5">
-        
-        {/* ✅ NEU: Header mit Suchfeld */}
-        <div className="mb-5 flex flex-col items-start justify-between gap-4 border-b border-theme-border-subtle pb-4 sm:flex-row sm:items-center">
-            <h2 className="flex items-center gap-2 text-base font-semibold text-heading">
-                <People size={18} className="text-blue-600" /> Vorhandene Nutzer
-                <span className="rounded-md bg-surface-tertiary px-2 py-0.5 text-[11px] text-muted">{filteredUsers.length}</span>
-            </h2>
-            
-            <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                <input
-                  type="text"
-                  placeholder="Suchen..."
-                  className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm bg-gray-50 focus:bg-white"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-        </div>
-
-        {filteredUsers.length === 0 ? (
-          <div className="text-center text-gray-400 p-8">
-            <People size={32} className="mx-auto mb-2" />
-            <p>{users.length === 0 ? 'Keine Benutzer vorhanden.' : 'Keine Ergebnisse für deine Suche.'}</p>
-          </div>
-        ) : (
-          <ul className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-            {filteredUsers.map((user) => ( // ✅ Nutzt jetzt filteredUsers
-                <li key={user.id} className="flex h-full flex-col justify-between gap-3 rounded-md bg-surface-secondary p-4 transition-colors hover:bg-surface-tertiary animate-in fade-in duration-300">
-                  <div className="flex-1 overflow-hidden">
-                    <div className="flex justify-between items-start">
-                      <p className="font-semibold text-gray-900 truncate" title={user.email}>{user.email}</p>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium uppercase ${getRoleStyle(user.role)}`}>
-                        {user.role}
+                </Td>
+                <Td>
+                  {user.role === 'ADMIN' ? (
+                    projects.length > 0 ? (
+                      <span className="text-muted tabular-nums" title={projects.join(', ')}>
+                        {projects.length} {projects.length === 1 ? 'Projekt' : 'Projekte'}
                       </span>
-                    </div>
-                    
-                    {user.mandant_id && <p className="text-xs text-indigo-600 font-medium truncate">Label: {user.mandant_id}</p>}
-                    {user.ansprache && <p className="text-xs text-gray-500 font-medium truncate">Ansprache: {user.ansprache}</p>}
-                    {user.domain && <p className="text-sm text-blue-600 font-medium truncate mt-1">{user.domain}</p>}
-
-                    {user.role === 'BENUTZER' && user.assigned_admins && (
-                      <div className="mt-2 text-xs text-gray-600 flex items-center gap-1">
-                        <PersonVideo size={12} /> <span className="font-medium">Betreuer:</span> {user.assigned_admins}
-                      </div>
-                    )}
-
-                    {user.role === 'ADMIN' && user.assigned_projects && (
-                      <div className="mt-2 text-xs text-gray-600 flex items-start gap-1">
-                        <Briefcase size={12} className="mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-500 line-clamp-2">{user.assigned_projects}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-2 flex gap-2 border-t border-theme-border-subtle pt-3">
-                    <Link href={`/admin/edit/${user.id}`} className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-theme-border-default bg-surface px-3 py-1.5 text-xs font-medium text-body transition hover:bg-surface-secondary">
-                      <Pencil size={14} /> Bearbeiten
-                    </Link>
+                    ) : (
+                      <span className="text-muted">–</span>
+                    )
+                  ) : (
+                    <AvatarStack emails={user.assigned_admins ? user.assigned_admins.split(', ') : []} />
+                  )}
+                </Td>
+                <Td className="text-right">
+                  <div className="flex justify-end gap-1.5">
+                    <ButtonLink href={`/admin/edit/${user.id}`} aria-label={`${user.email} bearbeiten`}>Bearbeiten</ButtonLink>
                     {isSuperAdmin && (
-                      <button onClick={() => void handleDelete(user.id)} className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-red-200 bg-surface px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/30">
-                        <Trash size={14} /> Löschen
-                      </button>
+                      <Button variant="destructive" size="sm" onClick={() => void handleDelete(user.id)} aria-label={`${user.email} löschen`}>
+                        Löschen
+                      </Button>
                     )}
                   </div>
-                </li>
-              ))}
-          </ul>
-        )}
-      </div>
+                </Td>
+              </Tr>
+            );
+          })}
+          {filteredUsers.length === 0 && (
+            <EmptyRow colSpan={6}>{users.length === 0 ? 'Keine Benutzer vorhanden' : 'Keine Ergebnisse für die Suche'}</EmptyRow>
+          )}
+        </tbody>
+      </DataList>
 
       {isSuperAdmin && (
-        <div className="col-span-full mt-1 grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-[22px] xl:grid-cols-2">
           <LogoManager />
           <LoginLogbook />
         </div>
       )}
-    </div>
+
+      <Dialog
+        open={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        title="Neuen Nutzer anlegen"
+        variant="sheet"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>Abbrechen</Button>
+            <Button type="submit" form="create-user-form" disabled={isSubmitting}>
+              {isSubmitting && <ArrowRepeat className="animate-spin" size={14} aria-hidden="true" />}
+              {isSubmitting ? 'Speichere …' : (selectedRole === 'BENUTZER' ? 'Kunden erstellen' : 'Admin erstellen')}
+            </Button>
+          </>
+        }
+      >
+        <form id="create-user-form" onSubmit={handleSubmit} className="flex flex-col gap-[22px]">
+          <GroupedSection title="Zugangsdaten">
+            <FormRow id="new-role" label="Rolle">
+              <select
+                id="new-role"
+                name="role"
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value as 'BENUTZER' | 'ADMIN')}
+                className={inputClasses}
+                disabled={isSubmitting}
+              >
+                <option value="BENUTZER">Kunde (Benutzer)</option>
+                {isSuperAdmin && <option value="ADMIN">Admin</option>}
+              </select>
+            </FormRow>
+            <FormRow id="new-email" label="E-Mail">
+              <input id="new-email" name="email" type="email" required placeholder="kunde@firma.at" className={inputClasses} disabled={isSubmitting} />
+            </FormRow>
+            <FormRow id="new-password" label="Initial-Passwort">
+              <input id="new-password" name="password" type="text" required placeholder="Sicheres Passwort" className={inputClasses} disabled={isSubmitting} />
+            </FormRow>
+            <FormRow id="new-mandant" label="Mandant-ID (Label)">
+              <input
+                id="new-mandant"
+                name="mandant_id"
+                type="text"
+                required
+                readOnly={!isSuperAdmin}
+                defaultValue={!isSuperAdmin ? sessionUser.mandant_id || '' : undefined}
+                placeholder={isSuperAdmin ? 'z. B. max-online' : 'Wird geerbt'}
+                className={inputClasses}
+                disabled={isSubmitting || !isSuperAdmin}
+              />
+            </FormRow>
+            <FormRow id="new-ansprache" label="Ansprache">
+              <input id="new-ansprache" name="ansprache" type="text" placeholder="z. B. Herr Muster oder Frau Muster" className={inputClasses} disabled={isSubmitting} />
+            </FormRow>
+            {isSuperAdmin && selectedRole === 'ADMIN' && (
+              <FormRow id="new-permissions" label="Berechtigungen">
+                <input id="new-permissions" name="permissions" type="text" placeholder="z. B. label1, label2" className={inputClasses} disabled={isSubmitting} />
+              </FormRow>
+            )}
+          </GroupedSection>
+
+          {selectedRole === 'BENUTZER' && (
+            <>
+              <GroupedSection title="Projekt-Zeitplan" help={isTimelineActive ? 'Timeline aktiv' : 'Zeitplan inaktiv (Standard)'}>
+                <div className="flex min-h-11 items-center justify-between gap-4 border-b border-border-subtle px-[18px] py-2.5 last:border-b-0">
+                  <span className="text-[13px] text-heading">Zeitplan aktivieren</span>
+                  <Toggle checked={isTimelineActive} onChange={setIsTimelineActive} label="Zeitplan aktivieren" />
+                </div>
+                {isTimelineActive && (
+                  <>
+                    <FormRow id="new-start" label="Startdatum">
+                      <input id="new-start" name="project_start_date" type="date" className={inputClasses} />
+                    </FormRow>
+                    <FormRow id="new-duration" label="Laufzeit (Monate)">
+                      <input id="new-duration" name="project_duration_months" type="number" defaultValue={6} min={1} className={inputClasses} />
+                    </FormRow>
+                  </>
+                )}
+              </GroupedSection>
+
+              <GroupedSection title="Web-Daten & APIs">
+                <FormRow id="new-domain" label="Domain">
+                  <input id="new-domain" name="domain" type="text" required placeholder="z. B. kundendomain.at" className={inputClasses} disabled={isSubmitting} />
+                </FormRow>
+                <FormRow id="new-favicon" label="Favicon URL (optional)">
+                  <input id="new-favicon" name="favicon_url" type="text" placeholder="https://example.com/icon.png" className={inputClasses} disabled={isSubmitting} />
+                </FormRow>
+                <FormRow id="new-gsc" label="GSC Site URL">
+                  <input id="new-gsc" name="gsc_site_url" type="text" placeholder="sc-domain:example.com" className={inputClasses} disabled={isSubmitting} />
+                </FormRow>
+                <FormRow id="new-ga4" label="GA4 ID">
+                  <input id="new-ga4" name="ga4_property_id" type="text" placeholder="12345678" className={inputClasses} disabled={isSubmitting} />
+                </FormRow>
+                <FormRow id="new-semrush" label="Semrush Project ID">
+                  <input id="new-semrush" name="semrush_project_id" type="text" placeholder="123456" className={inputClasses} disabled={isSubmitting} />
+                </FormRow>
+                <FormRow id="new-semrush-1" label="Semrush Tracking-ID (Kampagne 1)">
+                  <input id="new-semrush-1" name="semrush_tracking_id" type="text" placeholder="Tracking ID 1" className={inputClasses} disabled={isSubmitting} />
+                </FormRow>
+                <FormRow id="new-semrush-2" label="Semrush Tracking-ID (Kampagne 2)">
+                  <input id="new-semrush-2" name="semrush_tracking_id_02" type="text" placeholder="Tracking ID 2" className={inputClasses} disabled={isSubmitting} />
+                </FormRow>
+              </GroupedSection>
+            </>
+          )}
+        </form>
+      </Dialog>
+    </PageContainer>
   );
 }

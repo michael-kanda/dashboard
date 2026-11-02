@@ -3,8 +3,12 @@
 
 import useSWR from 'swr';
 import { useState, useMemo } from 'react';
-import { ClockHistory, PersonCircle, ShieldLock, Search } from 'react-bootstrap-icons';
-import { cn } from '@/lib/utils'; // Importiere cn für bedingte Klassen
+import { PersonCircle } from 'react-bootstrap-icons';
+import { roleLabel } from '@/lib/ui-labels';
+import { SectionTitle } from '@/components/ui/Page';
+import { SearchField } from '@/components/ui/SearchField';
+import { DataList, DataListHead, EmptyRow, PrimaryCell, Td, Th, Tr } from '@/components/ui/DataList';
+import { StatusPill } from '@/components/ui/Status';
 
 // Interface für die Log-Daten
 interface LoginLogEntry {
@@ -39,7 +43,7 @@ export default function LoginLogbook() {
 
   // Formatiert den Zeitstempel
   const formatTimestamp = (ts: string) => {
-    return new Date(ts).toLocaleString('de-DE', {
+    return new Date(ts).toLocaleString('de-AT', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -48,76 +52,33 @@ export default function LoginLogbook() {
     });
   };
 
-  // Hilfsfunktion für Rollen-Styling
-  const getRoleStyle = (role: LoginLogEntry['user_role']) => {
-    switch (role) {
-      case 'ADMIN':
-        return 'bg-blue-100 text-blue-800';
-      case 'BENUTZER':
-        return 'bg-green-100 text-green-800';
-      case 'SUPERADMIN':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   return (
-    // Container für das Logbuch
-    <div className="admin-panel h-fit p-5">
-      <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-heading">
-        <ShieldLock size={18} className="text-blue-600" /> Login-Protokoll
-      </h2>
-      
-      {/* Suchfeld */}
-      <div className="mb-3 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-        <input
-          type="text"
-          placeholder="E-Mail oder Rolle suchen..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-      </div>
-
-      {/* Container mit Scrollbalken */}
-      <div className="max-h-96 overflow-y-auto rounded-md bg-surface-secondary custom-scrollbar">
-        {isLoading && <p className="p-4 text-sm text-gray-500">Lade Login-Logs...</p>}
-        {error && <p className="p-4 text-sm text-red-600">Fehler beim Laden der Logs.</p>}
-        {filteredLogs.length === 0 && !isLoading && !error && (
-          <p className="p-4 text-sm text-gray-500 italic">
-            {searchTerm ? 'Keine Ergebnisse gefunden.' : 'Bisher keine Login-Ereignisse protokolliert.'}
-          </p>
-        )}
-        
-        {/* Log-Liste */}
-        {filteredLogs.length > 0 && (
-          <ul className="divide-y divide-theme-border-subtle">
-            {filteredLogs.map((log) => (
-              <li key={log.id} className="p-3 space-y-2">
-                {/* Benutzer und Rolle */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-900 flex items-center gap-1.5">
-                    <PersonCircle size={14} /> {log.user_email || 'Unbekannt'}
-                  </span>
-                  <span className={cn(
-                    "text-xs font-semibold px-2 py-0.5 rounded-full",
-                    getRoleStyle(log.user_role)
-                  )}>
-                    {log.user_role || 'N/A'}
-                  </span>
-                </div>
-                {/* Zeitstempel */}
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <ClockHistory size={12} />
-                  <span>{formatTimestamp(log.timestamp)}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
+    <section className="min-w-0">
+      <SectionTitle
+        title="Login-Protokoll"
+        actions={<SearchField label="Login-Protokoll durchsuchen" placeholder="E-Mail oder Rolle" value={searchTerm} onChange={setSearchTerm} />}
+      />
+      <DataList label="Login-Protokoll" minWidth={520} className="max-h-[420px] overflow-y-auto">
+        <DataListHead>
+          <Th>Benutzer</Th>
+          <Th>Rolle</Th>
+          <Th className="text-right">Zeitpunkt</Th>
+        </DataListHead>
+        <tbody>
+          {isLoading && <EmptyRow colSpan={3}>Login-Protokoll wird geladen …</EmptyRow>}
+          {error && <EmptyRow colSpan={3}><span className="text-danger">Fehler beim Laden der Logs.</span></EmptyRow>}
+          {!isLoading && !error && filteredLogs.length === 0 && (
+            <EmptyRow colSpan={3}>{searchTerm ? 'Keine Ergebnisse gefunden' : 'Bisher keine Login-Ereignisse protokolliert'}</EmptyRow>
+          )}
+          {filteredLogs.map((log) => (
+            <Tr key={log.id}>
+              <Td><PrimaryCell icon={<PersonCircle size={16} />} title={log.user_email || 'Unbekannt'} /></Td>
+              <Td><StatusPill>{log.user_role ? roleLabel(log.user_role) : 'Unbekannt'}</StatusPill></Td>
+              <Td className="text-right text-muted tabular-nums">{formatTimestamp(log.timestamp)}</Td>
+            </Tr>
+          ))}
+        </tbody>
+      </DataList>
+    </section>
   );
 }
