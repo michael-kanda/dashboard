@@ -59,128 +59,136 @@
   --dp-radius-full: 9999px;     /*       pills, avatars        */
 
 
-  /* ── 03. BRAND & ACCENTS ────────────────────────────────── */
+  /* ── 02b. STIL „B · LISTE“ – RADIEN ──────────────────────── */
+  --dp-radius-container: 14px;   /* Listen, Dialoge, Kacheln     */
+  --dp-radius-control:   8px;    /* Buttons, Inputs              */
+  --dp-radius-pill:      6px;    /* Status-Pills                 */
 
-  /* Brand blue – primary actions, links */
-  --dp-brand:            #188BDB;
-  --dp-brand-hover:      #1279c2;
-  --dp-brand-foreground: #ffffff;
 
-  /* Indigo – active states, focus rings, interactive UI */
-  --dp-accent-indigo:       #6366f1;
-  --dp-accent-indigo-light: #eef2ff;
-  --dp-accent-indigo-hover: #f0f4ff;
+  /* ── 03. ACCENT & STATUS ────────────────────────────────── */
+  --dp-accent:        #0066CC;                 /* Links, Icons, Text-Buttons    */
+  --dp-accent-solid:  #0066CC;                 /* gefüllte Flächen, weißer Text */
+  --dp-accent-tint:   rgba(0, 102, 204, 0.10); /* Tonal-Buttons                 */
 
-  /* Emerald – success, avatars */
-  --dp-accent-emerald:       #10b981;
-  --dp-accent-emerald-light: #d1fae5;
+  --dp-success:     #1B7A35;
+  --dp-success-bg:  #E3F5E8;
+  --dp-success-bar: #34C759;
+  --dp-warning:     #8A4200;
+  --dp-warning-bg:  #FFF0DE;
+  --dp-warning-bar: #FF9F0A;
+  --dp-danger:      #C4001A;
+  --dp-danger-bg:   #FDE8E8;
+  --dp-danger-bar:  #FF3B30;
+  --dp-neutral-fg:  #515154;
+  --dp-dot-off:     #C7C7CC;
 
-  /* Red – danger, destructive, logout */
-  --dp-accent-red:       #ef4444;
-  --dp-accent-red-light: #fef2f2;
+  /* Bestehende Namen zeigen auf die neuen Werte */
+  --dp-brand:            var(--dp-accent);
+  --dp-brand-hover:      #0058B0;
+  --dp-brand-foreground: #FFFFFF;
+
+  --dp-accent-indigo:       var(--dp-accent);
+  --dp-accent-indigo-light: var(--dp-accent-tint);
+  --dp-accent-indigo-hover: var(--dp-accent-tint);
+  --dp-accent-emerald:       var(--dp-success);
+  --dp-accent-emerald-light: var(--dp-success-bg);
+  --dp-accent-red:           var(--dp-danger);
+  --dp-accent-red-light:     var(--dp-danger-bg);
 
 
   /* ── 04. COLORS – LIGHT MODE ───────────────────────────── */
 
-  /* --- Backgrounds --- */
-  --dp-bg-primary:    #ffffff;    /* page surface, cards          */
-  --dp-bg-secondary:  #f9fafb;    /* page body background         */
-  --dp-bg-tertiary:   #f3f4f6;    /* hover states, subtle fills   */
-  --dp-bg-quaternary: #e5e7eb;    /* pressed states, dividers     */
+  /* --- Flächen --- */
+  --dp-page:          #FFFFFF;    /* Inhaltsbereich               */
+  --dp-sidebar:       #F5F5F7;    /* Sidebar                      */
+  --dp-fill:          rgba(118, 118, 128, 0.12); /* Suchfeld, Segment, neutrale Pills */
+  --dp-row-hover:     rgba(0, 0, 0, 0.025);
+
+  --dp-bg-primary:    #FFFFFF;    /* surface: Listen, Dialoge     */
+  --dp-bg-secondary:  #FAFAFC;    /* surface-secondary: Tabellenkopf, ruhige Flächen */
+  --dp-bg-tertiary:   #F2F2F4;    /* Hover, dezente Füllungen     */
+  --dp-bg-quaternary: #E5E5EA;    /* gedrückt, Trenner            */
 
   /* --- Text --- */
-  --dp-text-heading:   #111827;   /* h1–h3, primary labels        */
-  --dp-text-strong:    #1f2937;   /* emphasized body copy         */
-  --dp-text-body:      #374151;   /* standard body copy           */
-  --dp-text-secondary: #4b5563;   /* secondary descriptions       */
-  --dp-text-muted:     #6b7280;   /* placeholders, hints          */
-  --dp-text-faint:     #9ca3af;   /* disabled text, nav labels    */
+  --dp-text-heading:   #1D1D1F;
+  --dp-text-strong:    #1D1D1F;
+  --dp-text-body:      #3A3A3C;
+  --dp-text-secondary: #3A3A3C;
+  --dp-text-muted:     #636366;
+  --dp-text-faint:     #8E8E93;   /* nur Icons/Deko, nie Text < 18 px */
 
-  /* --- Borders --- */
-  --dp-border-subtle:  #f3f4f6;   /* barely-there separators      */
-  --dp-border-default: #e5e7eb;   /* standard borders             */
-  --dp-border-strong:  #d1d5db;   /* inputs, prominent borders    */
+  /* --- Linien --- */
+  --dp-border-subtle:  rgba(0, 0, 0, 0.06);
+  --dp-border-default: rgba(0, 0, 0, 0.08);
+  --dp-border-strong:  rgba(0, 0, 0, 0.14);
 
   /* --- Surfaces --- */
-  --dp-surface-sidebar:      #ffffff;
-  --dp-surface-card:         rgba(255, 255, 255, 0.8);
-  --dp-surface-card-border:  rgba(255, 255, 255, 0.6);
+  --dp-surface-sidebar:      var(--dp-sidebar);
+  --dp-surface-card:         var(--dp-bg-primary);
+  --dp-surface-card-border:  var(--dp-border-default);
   --dp-surface-overlay:      rgba(0, 0, 0, 0.30);
 
-  /* --- Shadows --- */
-  /* The first layer (0 0 0 1px) is a subtle edge ring — replaces hard borders on cards */
-  --dp-shadow-card:    0 0 0 1px rgba(0, 0, 0, 0.06),
-                       0 4px 16px -4px rgba(79, 70, 229, 0.10),
-                       0 2px  4px -1px rgba(0, 0, 0, 0.04);
-  --dp-shadow-sidebar: 2px 0 8px rgba(0, 0, 0, 0.04);
+  /* --- Schatten: keine, nur Linie; Segment und Dialog eigens --- */
+  --dp-shadow-card:    0 0 0 1px var(--dp-border-default);
+  --dp-shadow-sidebar: none;
+  --dp-shadow-segment: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --dp-shadow-dialog:  0 20px 60px rgba(0, 0, 0, 0.18);
 
   /* --- Inputs --- */
-  --dp-input-bg:     #ffffff;
-  --dp-input-border: #d1d5db;
-  --dp-input-text:   #111827;
-  --dp-focus-ring:   #6366f1;
+  --dp-input-bg:     var(--dp-bg-primary);
+  --dp-input-border: var(--dp-border-default);
+  --dp-input-text:   var(--dp-text-heading);
+  --dp-focus-ring:   var(--dp-accent);
 
   /* --- Charts (Recharts) --- */
-  --dp-chart-text:           #6b7280;
-  --dp-chart-grid:           #f3f4f6;
-  --dp-chart-tooltip-bg:     #ffffff;
-  --dp-chart-tooltip-border: #e5e7eb;
-  --dp-chart-tooltip-text:   #111827;
+  --dp-chart-text:           var(--dp-text-muted);
+  --dp-chart-grid:           var(--dp-border-subtle);
+  --dp-chart-tooltip-bg:     var(--dp-bg-primary);
+  --dp-chart-tooltip-border: var(--dp-border-default);
+  --dp-chart-tooltip-text:   var(--dp-text-heading);
 }
 
 
 /* ── 05. COLORS – DARK MODE ─────────────────────────────── */
 .dark {
+  --dp-accent:        #2997FF;
+  --dp-accent-solid:  #0A6FD6;
+  --dp-accent-tint:   rgba(41, 151, 255, 0.16);
+  --dp-brand-hover:   #4AA8FF;
 
-  /* Accents are adjusted for dark backgrounds */
-  --dp-accent-indigo:       #818cf8;
-  --dp-accent-indigo-light: rgba(99, 102, 241, 0.15);
-  --dp-accent-indigo-hover: rgba(99, 102, 241, 0.10);
-  --dp-accent-emerald:       #34d399;
-  --dp-accent-emerald-light: rgba(16, 185, 129, 0.20);
-  --dp-accent-red:           #f87171;
-  --dp-accent-red-light:     rgba(239, 68, 68, 0.15);
+  --dp-success:     #30D158;
+  --dp-success-bg:  rgba(48, 209, 88, 0.16);
+  --dp-success-bar: #30D158;
+  --dp-warning:     #FF9F0A;
+  --dp-warning-bg:  rgba(255, 159, 10, 0.16);
+  --dp-warning-bar: #FF9F0A;
+  --dp-danger:      #FF6961;
+  --dp-danger-bg:   rgba(255, 69, 58, 0.18);
+  --dp-danger-bar:  #FF453A;
+  --dp-neutral-fg:  #C7C7CC;
+  --dp-dot-off:     #48484A;
 
-  /* Backgrounds */
-  --dp-bg-primary:    #111827;
-  --dp-bg-secondary:  #030712;
-  --dp-bg-tertiary:   #0f172a;
-  --dp-bg-quaternary: #1e293b;
+  --dp-page:          #161617;
+  --dp-sidebar:       #1C1C1E;
+  --dp-fill:          rgba(118, 118, 128, 0.24);
+  --dp-row-hover:     rgba(255, 255, 255, 0.03);
 
-  /* Text */
-  --dp-text-heading:   #f1f5f9;
-  --dp-text-strong:    #e2e8f0;
-  --dp-text-body:      #cbd5e1;
-  --dp-text-secondary: #cbd5e1;
-  --dp-text-muted:     #cbd5e1;
-  --dp-text-faint:     #94a3b8;
+  --dp-bg-primary:    #1C1C1E;
+  --dp-bg-secondary:  #232325;
+  --dp-bg-tertiary:   #2C2C2E;
+  --dp-bg-quaternary: #3A3A3C;
 
-  /* Borders */
-  --dp-border-subtle:  #1e293b;
-  --dp-border-default: #1e293b;
-  --dp-border-strong:  #334155;
+  --dp-text-heading:   #F5F5F7;
+  --dp-text-strong:    #F5F5F7;
+  --dp-text-body:      #D1D1D6;
+  --dp-text-secondary: #D1D1D6;
+  --dp-text-muted:     #A1A1A6;
+  --dp-text-faint:     #6E6E73;
 
-  /* Surfaces */
-  --dp-surface-sidebar:     #111827;
-  --dp-surface-card:        rgba(15, 23, 42, 0.95);   /* more opaque = more readable */
-  --dp-surface-card-border: transparent;              /* shadow replaces border in dark */
-  --dp-surface-overlay:     rgba(0, 0, 0, 0.60);
+  --dp-border-subtle:  rgba(255, 255, 255, 0.06);
+  --dp-border-default: rgba(255, 255, 255, 0.10);
+  --dp-border-strong:  rgba(255, 255, 255, 0.16);
 
-  /* Shadows */
-  --dp-shadow-card:    0 0 0 1px rgba(51, 65, 85, 0.40),
-                       0 4px 24px rgba(0, 0, 0, 0.40);
-  --dp-shadow-sidebar: none;
-
-  /* Inputs */
-  --dp-input-bg:     #1e293b;
-  --dp-input-border: #334155;
-  --dp-input-text:   #e2e8f0;
-  --dp-focus-ring:   #818cf8;
-
-  /* Charts */
-  --dp-chart-text:           #94a3b8;
-  --dp-chart-grid:           #1e293b;
-  --dp-chart-tooltip-bg:     #1e293b;
-  --dp-chart-tooltip-border: #334155;
-  --dp-chart-tooltip-text:   #e2e8f0;
+  --dp-surface-overlay: rgba(0, 0, 0, 0.60);
+  --dp-shadow-dialog:   0 20px 60px rgba(0, 0, 0, 0.5);
 }

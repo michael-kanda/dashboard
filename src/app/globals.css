@@ -14,6 +14,73 @@
 @import "./design-tokens.css";        /* ← all colors/sizes/fonts live here */
 @plugin "@tailwindcss/typography";
 
+/*
+ * Tailwind v4 liest tailwind.config.ts nicht. Die semantischen Klassen
+ * (bg-surface, text-heading, border-border …) entstehen erst hier.
+ * "inline", damit die Utilities die Variablen direkt nutzen und der
+ * Dark Mode über .dark mitwechselt.
+ */
+@theme inline {
+  --font-sans: var(--dp-font-sans);
+  --font-mono: var(--dp-font-mono);
+
+  --color-page: var(--dp-page);
+  --color-sidebar: var(--dp-sidebar);
+  --color-fill: var(--dp-fill);
+  --color-surface: var(--dp-bg-primary);
+  --color-surface-secondary: var(--dp-bg-secondary);
+  --color-surface-tertiary: var(--dp-bg-tertiary);
+  --color-surface-quaternary: var(--dp-bg-quaternary);
+
+  --color-heading: var(--dp-text-heading);
+  --color-strong: var(--dp-text-strong);
+  --color-body: var(--dp-text-body);
+  --color-secondary: var(--dp-text-secondary);
+  --color-muted: var(--dp-text-muted);
+  --color-faint: var(--dp-text-faint);
+
+  --color-border: var(--dp-border-default);
+  --color-border-subtle: var(--dp-border-subtle);
+  --color-border-strong: var(--dp-border-strong);
+
+  --color-accent: var(--dp-accent);
+  --color-accent-solid: var(--dp-accent-solid);
+  --color-accent-tint: var(--dp-accent-tint);
+  --color-accent-indigo: var(--dp-accent-indigo);
+  --color-accent-indigo-light: var(--dp-accent-indigo-light);
+  --color-accent-indigo-hover: var(--dp-accent-indigo-hover);
+  --color-accent-emerald: var(--dp-accent-emerald);
+  --color-accent-emerald-light: var(--dp-accent-emerald-light);
+  --color-accent-red: var(--dp-accent-red);
+  --color-accent-red-light: var(--dp-accent-red-light);
+
+  --color-brand: var(--dp-brand);
+  --color-brand-hover: var(--dp-brand-hover);
+  --color-brand-foreground: var(--dp-brand-foreground);
+  --color-primary: var(--dp-brand);
+  --color-primary-foreground: var(--dp-brand-foreground);
+
+  --color-success: var(--dp-success);
+  --color-success-bg: var(--dp-success-bg);
+  --color-success-bar: var(--dp-success-bar);
+  --color-warning: var(--dp-warning);
+  --color-warning-bg: var(--dp-warning-bg);
+  --color-warning-bar: var(--dp-warning-bar);
+  --color-danger: var(--dp-danger);
+  --color-danger-bg: var(--dp-danger-bg);
+  --color-danger-bar: var(--dp-danger-bar);
+  --color-neutral-fg: var(--dp-neutral-fg);
+  --color-dot-off: var(--dp-dot-off);
+
+  --radius-container: var(--dp-radius-container);
+  --radius-control: var(--dp-radius-control);
+  --radius-pill: var(--dp-radius-pill);
+
+  --shadow-card: var(--dp-shadow-card);
+  --shadow-segment: var(--dp-shadow-segment);
+  --shadow-dialog: var(--dp-shadow-dialog);
+}
+
 
 /* ═══════════════════════════════════════════════════════════
    GLOBAL BASE STYLES
@@ -24,7 +91,7 @@
   }
 
   body {
-    background-color: var(--dp-bg-secondary);
+    background-color: var(--dp-page);
     color: var(--dp-text-body);
     font-family: var(--dp-font-sans);
   }
@@ -49,55 +116,36 @@
    ═══════════════════════════════════════════════════════════ */
 @layer components {
 
-  /* ── 1. Dashboard Page Background ─────────────────────── */
+  /* ── 1. Dashboard Page Background (Stil „B · Liste“: ruhig, ohne Verlauf) ── */
   .dashboard-gradient {
-    background-color: var(--dp-bg-secondary);
-    background-image:
-      radial-gradient(at   0%   0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
-      radial-gradient(at 100%   0%, rgba(236, 72, 153, 0.03) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.03) 0px, transparent 50%);
-    background-attachment: fixed;
-  }
-  .dark .dashboard-gradient {
-    background: linear-gradient(135deg,
-      var(--dp-bg-secondary) 0%,
-      var(--dp-bg-tertiary)  50%,
-      var(--dp-bg-secondary) 100%
-    );
+    background: var(--dp-page);
   }
 
   /* ── 2. Glass / Card Surfaces ──────────────────────────── */
   .glass-panel {
-    background: var(--dp-surface-card);
-    border: 1px solid var(--dp-surface-card-border);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--dp-bg-primary);
+    border: 1px solid var(--dp-border-default);
+    border-radius: var(--dp-radius-container);
   }
 
   .card-glass {
-    background: var(--dp-surface-card);
-    border: 1px solid var(--dp-surface-card-border);
-    border-radius: var(--dp-radius-lg);
-    box-shadow: var(--dp-shadow-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--dp-bg-primary);
+    border: 1px solid var(--dp-border-default);
+    border-radius: var(--dp-radius-container);
     color: var(--dp-text-body);
   }
 
   .dashboard-widget-surface {
-    background: #ffffff;
-    border: 0 !important;
-    box-shadow:
-      0 10px 28px -18px rgba(15, 23, 42, 0.35),
-      0 1px 3px rgba(15, 23, 42, 0.08);
+    background: var(--dp-bg-primary);
+    border: 1px solid var(--dp-border-default) !important;
+    border-radius: var(--dp-radius-container);
+    box-shadow: none;
     color: var(--dp-text-body);
   }
 
   .dark .dashboard-widget-surface {
-    background: var(--dp-surface-card);
-    box-shadow:
-      0 0 0 1px rgba(226, 232, 240, 0.14),
-      0 12px 30px rgba(0, 0, 0, 0.34);
+    background: var(--dp-bg-primary);
+    box-shadow: none;
   }
 
   /* ── Dashboard typography ──────────────────────────────── */
@@ -794,16 +842,16 @@
   border-color: transparent !important;
 }
 
-/* Ensure card-glass shadow always uses the token */
+/* Ensure card-glass edge always uses the token */
 .card-glass {
   box-shadow: var(--dp-shadow-card) !important;
 }
 
 /* Gray body backgrounds that leaked through from old hardcoded classes */
-.dark .bg-gray-50  { background-color: var(--dp-bg-primary)    !important; }
+.dark .bg-gray-50  { background-color: var(--dp-page)          !important; }
 .dark .bg-gray-100 { background-color: var(--dp-bg-secondary)  !important; }
 .dark .bg-stone-50 { background-color: var(--dp-bg-primary)    !important; }
-.bg-gray-50        { background-color: var(--dp-bg-secondary)  !important; }
+.bg-gray-50        { background-color: var(--dp-page)          !important; }
 .bg-stone-50       { background-color: var(--dp-bg-secondary)  !important; }
 
 
