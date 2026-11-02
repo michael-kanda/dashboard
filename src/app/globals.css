@@ -69,6 +69,7 @@
   --color-danger: var(--dp-danger);
   --color-danger-bg: var(--dp-danger-bg);
   --color-danger-bar: var(--dp-danger-bar);
+  --color-danger-solid: var(--dp-danger-solid);
   --color-neutral-fg: var(--dp-neutral-fg);
   --color-dot-off: var(--dp-dot-off);
 

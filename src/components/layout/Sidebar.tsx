@@ -14,7 +14,8 @@ import {
   ChevronDown, ChevronUp,
   BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search, Google, GeoAlt
 } from 'react-bootstrap-icons';
-import { initials, roleLabel } from '@/lib/ui-labels';
+import { roleLabel } from '@/lib/ui-labels';
+import { Avatar } from '@/components/ui/AvatarStack';
 
 // ═══════════════════════════════════════════════════════
 // KONFIGURATION
@@ -329,13 +330,7 @@ export default function Sidebar() {
       <div className={`flex flex-shrink-0 items-center gap-2.5 border-t border-border px-3 py-3 ${isCollapsed ? 'flex-col' : ''}`}>
         {status === 'authenticated' && session?.user ? (
           <>
-            <span
-              className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full bg-accent-tint text-[11px] font-bold text-accent"
-              title={session.user.email ?? undefined}
-              aria-hidden="true"
-            >
-              {initials(userLabel)}
-            </span>
+            <Avatar email={session.user.email || userLabel} size={30} />
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[13px] font-semibold text-heading">{userLabel}</div>
@@ -421,9 +416,7 @@ export default function Sidebar() {
           )}
 
           <div className="mt-3 flex items-center gap-2.5 border-t border-border pt-3">
-            <span className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full bg-accent-tint text-[11px] font-bold text-accent" aria-hidden="true">
-              {initials(userLabel)}
-            </span>
+            <Avatar email={session?.user?.email || userLabel} size={30} />
             <div className="min-w-0 flex-1">
               <div className="truncate text-[13px] font-semibold text-heading">{userLabel}</div>
               <div className="truncate text-[11px] text-muted">{roleLabel(session?.user?.role)}</div>

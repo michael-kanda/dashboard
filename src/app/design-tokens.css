@@ -79,8 +79,17 @@
   --dp-danger:      #C4001A;
   --dp-danger-bg:   #FDE8E8;
   --dp-danger-bar:  #FF3B30;
+  --dp-danger-solid: #C4001A;  /* gefüllte Lösch-Buttons mit weißem Text */
   --dp-neutral-fg:  #515154;
   --dp-dot-off:     #C7C7CC;
+
+  /* Avatar-Farbpaare (fest je Person über einen Hash der E-Mail) */
+  --dp-avatar-1-bg: #DCEBFF; --dp-avatar-1-fg: #0B4F9C;
+  --dp-avatar-2-bg: #DDF4E4; --dp-avatar-2-fg: #1B6B34;
+  --dp-avatar-3-bg: #FFE9D6; --dp-avatar-3-fg: #8A4200;
+  --dp-avatar-4-bg: #EFE3FB; --dp-avatar-4-fg: #6A2C9E;
+  --dp-avatar-5-bg: #FDE2E4; --dp-avatar-5-fg: #A3172B;
+  --dp-avatar-6-bg: #E1F3F6; --dp-avatar-6-fg: #0E5E6F;
 
   /* Bestehende Namen zeigen auf die neuen Werte */
   --dp-brand:            var(--dp-accent);
@@ -153,7 +162,7 @@
 .dark {
   --dp-accent:        #2997FF;
   --dp-accent-solid:  #0A6FD6;
-  --dp-accent-tint:   rgba(41, 151, 255, 0.16);
+  --dp-accent-tint:   rgba(41, 151, 255, 0.12);   /* 0.16 laut Vorgabe läge knapp unter 4,5:1 */
   --dp-brand-hover:   #4AA8FF;
 
   --dp-success:     #30D158;
@@ -165,8 +174,16 @@
   --dp-danger:      #FF6961;
   --dp-danger-bg:   rgba(255, 69, 58, 0.18);
   --dp-danger-bar:  #FF453A;
+  --dp-danger-solid: #D70015;
   --dp-neutral-fg:  #C7C7CC;
   --dp-dot-off:     #48484A;
+
+  --dp-avatar-1-bg: rgba(41, 151, 255, 0.22);  --dp-avatar-1-fg: #9CCBFF;
+  --dp-avatar-2-bg: rgba(48, 209, 88, 0.20);   --dp-avatar-2-fg: #8EE3A6;
+  --dp-avatar-3-bg: rgba(255, 159, 10, 0.20);  --dp-avatar-3-fg: #FFC56B;
+  --dp-avatar-4-bg: rgba(191, 90, 242, 0.22);  --dp-avatar-4-fg: #DDB3F7;
+  --dp-avatar-5-bg: rgba(255, 69, 58, 0.20);   --dp-avatar-5-fg: #FF9B94;
+  --dp-avatar-6-bg: rgba(100, 210, 255, 0.20); --dp-avatar-6-fg: #9EE4FF;
 
   --dp-page:          #161617;
   --dp-sidebar:       #1C1C1E;
