@@ -98,7 +98,7 @@ export default function ProjectDashboard({
         />
 
         {data.cacheStale && (
-          <p className="mt-4 text-[13px] text-muted" role="status">
+          <p className="mt-4 text-[14px] text-muted" role="status">
             Gespeicherte Daten{reportingPeriodLabel ? ` für ${reportingPeriodLabel}` : ''}. Aktualisierung ausstehend.
           </p>
         )}

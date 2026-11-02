@@ -181,7 +181,7 @@ const CustomTooltip = ({ active, payload, label, kpi1, kpi2, holidayMap, weather
                 <span className="text-xs font-medium text-body truncate max-w-[130px]">
                   {holiday.name}
                 </span>
-                <span className="text-[10px] font-semibold text-faint ml-1">
+                <span className="text-[11px] font-semibold text-faint ml-1">
                   {holiday.countries.join(' · ')}
                 </span>
               </div>
@@ -397,7 +397,7 @@ export default function KpiTrendChart({
             <XAxis
               dataKey="date"
               tickFormatter={formatXAxisTick}
-              tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
+              tick={{ fontSize: 12, fill: 'var(--dp-chart-text)' }}
               axisLine={false}
               tickLine={false}
               dy={10}
@@ -407,7 +407,7 @@ export default function KpiTrendChart({
             <YAxis
               yAxisId="left"
               tickFormatter={(val) => formatYAxis(val, activeKpi)}
-              tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
+              tick={{ fontSize: 12, fill: 'var(--dp-chart-text)' }}
               axisLine={false}
               tickLine={false}
               dx={-10}
@@ -418,7 +418,7 @@ export default function KpiTrendChart({
                 yAxisId="right"
                 orientation="right"
                 tickFormatter={(val) => formatYAxis(val, compareKpi)}
-                tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
+                tick={{ fontSize: 12, fill: 'var(--dp-chart-text)' }}
                 axisLine={false}
                 tickLine={false}
                 dx={10}

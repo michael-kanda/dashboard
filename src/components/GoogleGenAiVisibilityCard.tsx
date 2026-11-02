@@ -36,7 +36,7 @@ function ChangeBadge({ change }: { change?: number }) {
   const isPositive = change >= 0;
   return (
     <span className={cn(
-      'rounded-md px-2 py-1 text-[11px] font-semibold tabular-nums',
+      'rounded-md px-2 py-1 text-[12px] font-semibold tabular-nums',
       isPositive
         ? 'bg-emerald-500/10 text-success'
         : 'bg-rose-500/10 text-danger'
@@ -286,14 +286,14 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
                   <XAxis
                     dataKey="date"
                     tickFormatter={(value) => format(new Date(value), 'd.MMM', { locale: de })}
-                    tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
+                    tick={{ fontSize: 12, fill: 'var(--dp-chart-text)' }}
                     axisLine={false}
                     tickLine={false}
                     minTickGap={36}
                   />
                   <YAxis
                     tickFormatter={(value) => formatCompact(Number(value))}
-                    tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
+                    tick={{ fontSize: 12, fill: 'var(--dp-chart-text)' }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -323,7 +323,7 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
           <div className="min-w-0">
             <div className="mb-3 flex items-center justify-between gap-3">
               <p className="widget-eyebrow text-muted">Top-Seiten in Google GenAI</p>
-              <span className="text-[11px] font-semibold text-muted tabular-nums">
+              <span className="text-[12px] font-semibold text-muted tabular-nums">
                 {displayedPages.length}{searchTerm ? ` von ${topPages.length}` : ''}
               </span>
             </div>

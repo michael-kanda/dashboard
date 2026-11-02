@@ -89,7 +89,7 @@ export default function EditLandingpagePage() {
 
   return (
     <div className="max-w-2xl px-[clamp(16px,3vw,40px)] pt-7 pb-12">
-      <h1 className="mb-[22px] text-[28px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">Landingpage bearbeiten</h1>
+      <h1 className="mb-[22px] text-[29px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">Landingpage bearbeiten</h1>
       <p className="mb-4 text-muted">
         Domain: <span className="font-semibold">{landingpage.domain}</span>
       </p>

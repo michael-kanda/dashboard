@@ -16,9 +16,9 @@ function formatNumber(value: number) {
 function Metric({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
     <div className="min-w-0 border-l-2 border-border pl-3">
-      <div className="text-[10px] font-semibold text-muted">{label}</div>
+      <div className="text-[11px] font-semibold text-muted">{label}</div>
       <div className="mt-0.5 text-xl font-semibold text-heading">{value}</div>
-      <div className="mt-1 text-[11px] text-muted">{hint}</div>
+      <div className="mt-1 text-[12px] text-muted">{hint}</div>
     </div>
   );
 }
@@ -71,7 +71,7 @@ export default function ContentContextPanel({ context, selectedLinks, onSelected
           {context.keywords.length > 0 ? (
             <div className="max-h-80 overflow-auto border-y border-border-subtle">
               <table className="w-full text-left text-sm">
-                <thead className="sticky top-0 bg-surface text-[10px] text-muted">
+                <thead className="sticky top-0 bg-surface text-[11px] text-muted">
                   <tr>
                     <th className="py-2 pr-3">Query</th>
                     <th className="py-2 text-right">Klicks</th>
@@ -121,7 +121,7 @@ export default function ContentContextPanel({ context, selectedLinks, onSelected
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-heading">{candidate.label}</span>
                       <span className="block truncate text-xs text-secondary">{candidate.path}</span>
-                      <span className="mt-1 block text-[11px] text-muted">{candidate.reason}</span>
+                      <span className="mt-1 block text-[12px] text-muted">{candidate.reason}</span>
                     </span>
                   </button>
                 );
@@ -147,11 +147,11 @@ export default function ContentContextPanel({ context, selectedLinks, onSelected
           {context.existingPage.reachable && (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <div className="rounded border border-border-subtle bg-surface-secondary p-3">
-                <div className="text-[10px] font-semibold text-muted">Title</div>
+                <div className="text-[11px] font-semibold text-muted">Title</div>
                 <div className="mt-1 text-sm text-heading">{context.existingPage.title || 'Nicht vorhanden'}</div>
               </div>
               <div className="rounded border border-border-subtle bg-surface-secondary p-3">
-                <div className="text-[10px] font-semibold text-muted">H1</div>
+                <div className="text-[11px] font-semibold text-muted">H1</div>
                 <div className="mt-1 text-sm text-heading">{context.existingPage.h1 || 'Nicht vorhanden'}</div>
               </div>
             </div>

@@ -59,7 +59,7 @@ function PermissionSection({
         </DataListHead>
         <tbody aria-busy={isLoading}>{children}</tbody>
       </DataList>
-      {footer && <p className="mt-1.5 text-[12px] text-muted">{footer}</p>}
+      {footer && <p className="mt-1.5 text-[13px] text-muted">{footer}</p>}
     </section>
   );
 }
@@ -314,7 +314,7 @@ export default function SystemHealthPage() {
 
   const bulkActions = (onDisable: () => void, onEnable: () => void, loading: boolean, onRefresh: () => void) => (
     <>
-      <span className="text-[12px] text-muted">Superadmins ausgenommen</span>
+      <span className="text-[13px] text-muted">Superadmins ausgenommen</span>
       <Button variant="destructive" size="sm" onClick={onDisable} disabled={loading}>Alle sperren</Button>
       <Button variant="plain" size="sm" onClick={onEnable} disabled={loading}>Alle freigeben</Button>
       {refreshButton(onRefresh, loading)}
@@ -342,7 +342,7 @@ export default function SystemHealthPage() {
     return (
       <PageContainer>
         {header}
-        <p className="text-[13px] text-danger" role="alert">Fehler beim Laden.</p>
+        <p className="text-[14px] text-danger" role="alert">Fehler beim Laden.</p>
       </PageContainer>
     );
   }

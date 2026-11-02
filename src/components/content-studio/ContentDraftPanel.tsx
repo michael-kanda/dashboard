@@ -115,7 +115,7 @@ export default function ContentDraftPanel({ draft, brief, outline, selectedLinks
                 {check.passed ? <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-success" /> : <XCircle size={16} className="mt-0.5 shrink-0 text-rose-500" />}
                 <div>
                   <div className="text-xs font-semibold text-heading">{check.label}</div>
-                  <div className="text-[11px] text-muted">{check.value}</div>
+                  <div className="text-[12px] text-muted">{check.value}</div>
                 </div>
               </div>
             ))}

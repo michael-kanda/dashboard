@@ -169,7 +169,7 @@ export default async function EditUserPage({ params }: PageProps) {
         {/* Benutzerdetails bearbeiten */}
         <div className="rounded-container border border-border bg-surface p-6">
           <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
-            <h1 className="text-[22px] font-bold tracking-[-0.02em] text-heading">
+            <h1 className="text-[23px] font-bold tracking-[-0.02em] text-heading">
               Benutzer <span className="text-accent">{user.email}</span> bearbeiten
             </h1>
              <div className="flex gap-2 items-center">

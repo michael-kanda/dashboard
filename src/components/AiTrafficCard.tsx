@@ -235,7 +235,7 @@ export default function AiTrafficCard({
                     <button
                       type="button"
                       onClick={() => setSelectedModel(undefined)}
-                      className="text-[10px] text-muted hover:text-body underline underline-offset-2 transition-colors"
+                      className="text-[11px] text-muted hover:text-body underline underline-offset-2 transition-colors"
                     >
                       Auswahl zurücksetzen
                     </button>
@@ -312,7 +312,7 @@ export default function AiTrafficCard({
                           </div>
 
                           {hasSubRow && (
-                            <div className="flex items-center justify-between gap-2 pl-4 text-[11px] text-muted">
+                            <div className="flex items-center justify-between gap-2 pl-4 text-[12px] text-muted">
                               {topLp ? (
                                 <span className="truncate font-mono" title={topLp.path}>
                                   {topLp.path === '/' ? '/ (Startseite)' : topLp.path}

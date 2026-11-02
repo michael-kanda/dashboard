@@ -41,7 +41,7 @@ export default function AiTrafficTopQuestions({
 }: AiTrafficTopQuestionsProps) {
   return (
     <div className={className}>
-      <p className="text-[11px] text-muted font-medium mb-2 leading-snug">
+      <p className="text-[12px] text-muted font-medium mb-2 leading-snug">
         {title}
       </p>
 
@@ -59,22 +59,22 @@ export default function AiTrafficTopQuestions({
 
               {/* Suchanfrage */}
               <span
-                className="flex-1 min-w-0 truncate text-[13px] text-body"
+                className="flex-1 min-w-0 truncate text-[14px] text-body"
                 title={item.query}
               >
                 {item.query}
               </span>
 
               {/* Klicks */}
-              <span className="flex-shrink-0 text-[13px] font-medium text-heading tabular-nums">
+              <span className="flex-shrink-0 text-[14px] font-medium text-heading tabular-nums">
                 {item.clicks.toLocaleString('de-DE')}
-                <span className="ml-1 text-[11px] font-normal text-muted">Klicks</span>
+                <span className="ml-1 text-[12px] font-normal text-muted">Klicks</span>
               </span>
 
               {/* Position-Chip — Position ist ein GSC-Float, daher hier fürs Display gerundet */}
               <span
                 className={cn(
-                  'flex-shrink-0 min-w-[46px] text-center text-[11px] font-medium px-1.5 py-0.5 rounded-md tabular-nums whitespace-nowrap',
+                  'flex-shrink-0 min-w-[46px] text-center text-[12px] font-medium px-1.5 py-0.5 rounded-md tabular-nums whitespace-nowrap',
                   positionChipClass(item.position)
                 )}
               >

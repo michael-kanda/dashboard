@@ -286,7 +286,7 @@ export default function AiTrafficModelTrendChart({
             <XAxis
               dataKey="date"
               tickFormatter={formatXAxisTick}
-              tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
+              tick={{ fontSize: 12, fill: 'var(--dp-chart-text)' }}
               axisLine={false}
               tickLine={false}
               dy={10}
@@ -295,7 +295,7 @@ export default function AiTrafficModelTrendChart({
 
             <YAxis
               tickFormatter={formatYAxis}
-              tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }}
+              tick={{ fontSize: 12, fill: 'var(--dp-chart-text)' }}
               axisLine={false}
               tickLine={false}
               dx={-10}

@@ -219,7 +219,7 @@ export default function SemrushKeywordTableBase({
           {lastFetched && !isLoading && (
             <div className="mt-4 pt-4 border-t border-border-subtle text-xs text-muted flex flex-col items-start gap-1">
               Letzter Versuch: {formatLastFetched(lastFetched)}
-              <span className="text-[10px] text-faint">({new Date(lastFetched).toLocaleString('de-DE')})</span>
+              <span className="text-[11px] text-faint">({new Date(lastFetched).toLocaleString('de-DE')})</span>
             </div>
           )}
         </div>
@@ -245,7 +245,7 @@ export default function SemrushKeywordTableBase({
                   </span>
                   <span className="whitespace-nowrap">{formatLastFetched(lastFetched)}</span>
                 </div>
-                <span className={cn("text-[10px]", theme.headerTextMuted)} title={lastFetched}>{new Date(lastFetched).toLocaleString('de-DE')}</span>
+                <span className={cn("text-[11px]", theme.headerTextMuted)} title={lastFetched}>{new Date(lastFetched).toLocaleString('de-DE')}</span>
               </div>
             )}
             <div className={cn("text-xs whitespace-nowrap", theme.headerText)}>

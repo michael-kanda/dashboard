@@ -165,7 +165,7 @@ export default function AiTrafficAnomalyBanner({
                 </span>
               </p>
               {a.topPath && (
-                <p className="text-[11px] text-muted mt-0.5 truncate">
+                <p className="text-[12px] text-muted mt-0.5 truncate">
                   v.a. auf <span className="font-mono">{a.topPath === '/' ? '/ (Startseite)' : a.topPath}</span>
                 </p>
               )}

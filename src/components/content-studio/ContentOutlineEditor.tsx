@@ -86,12 +86,12 @@ export default function ContentOutlineEditor({ outline, onChange }: Props) {
       <aside className="space-y-4">
         <section className="rounded-lg bg-surface p-5">
           <h3 className="text-sm font-semibold text-heading">SEO-Vorschau</h3>
-          <label className="mt-4 block text-[10px] font-semibold text-muted">Meta Title</label>
+          <label className="mt-4 block text-[11px] font-semibold text-muted">Meta Title</label>
           <textarea value={outline.metaTitle} onChange={(event) => onChange({ ...outline, metaTitle: event.target.value })} rows={2} className="mt-1 w-full rounded border border-border bg-surface-secondary p-2 text-sm text-heading" />
-          <div className="mt-1 text-right text-[10px] text-muted">{outline.metaTitle.length}/60</div>
-          <label className="mt-3 block text-[10px] font-semibold text-muted">Meta Description</label>
+          <div className="mt-1 text-right text-[11px] text-muted">{outline.metaTitle.length}/60</div>
+          <label className="mt-3 block text-[11px] font-semibold text-muted">Meta Description</label>
           <textarea value={outline.metaDescription} onChange={(event) => onChange({ ...outline, metaDescription: event.target.value })} rows={4} className="mt-1 w-full rounded border border-border bg-surface-secondary p-2 text-sm text-heading" />
-          <div className="mt-1 text-right text-[10px] text-muted">{outline.metaDescription.length}/155</div>
+          <div className="mt-1 text-right text-[11px] text-muted">{outline.metaDescription.length}/155</div>
         </section>
         <section className="rounded-lg bg-surface p-5">
           <h3 className="text-sm font-semibold text-heading">Keyword-Fokus</h3>

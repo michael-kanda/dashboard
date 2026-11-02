@@ -7,7 +7,7 @@ const Footer = () => {
 
   return (
     <footer className="mt-12 w-full border-t border-border-subtle py-6">
-      <div className="w-full px-6 text-center text-[12px] text-muted">
+      <div className="w-full px-6 text-center text-[13px] text-muted">
         <p>
           &copy; {currentYear}{' '}
           <a

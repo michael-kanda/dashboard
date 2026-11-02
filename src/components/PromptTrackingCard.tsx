@@ -695,26 +695,26 @@ function PromptResearchTool({
           <div key={`${item.rank}-${item.topic}-${item.intent}`} className="grid grid-cols-[44px_1fr] lg:grid-cols-[44px_120px_1fr_110px] gap-3 rounded-md bg-surface p-3">
             <div className="widget-metric-sm text-heading">#{item.rank}</div>
             <div className="hidden lg:block">
-              <div className="text-[10px] font-semibold text-muted">{item.intent}</div>
+              <div className="text-[11px] font-semibold text-muted">{item.intent}</div>
               <div className="text-xs font-medium tabular-nums text-body">Score {item.score}</div>
-              <div className="text-[10px] text-muted">{item.source}</div>
+              <div className="text-[11px] text-muted">{item.source}</div>
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1 lg:hidden">
-                <span className="text-[10px] font-semibold text-muted">{item.intent}</span>
+                <span className="text-[11px] font-semibold text-muted">{item.intent}</span>
                 <span className="text-xs font-medium tabular-nums text-body">Score {item.score}</span>
-                <span className="text-[10px] text-muted">{item.source}</span>
+                <span className="text-[11px] text-muted">{item.source}</span>
               </div>
-              <div className="text-[11px] text-muted mb-1">{item.topic}</div>
+              <div className="text-[12px] text-muted mb-1">{item.topic}</div>
               <p className="text-sm leading-relaxed text-body">{item.prompt}</p>
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-relaxed text-muted">
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[12px] leading-relaxed text-muted">
                 <span>{item.reason}</span>
                 {setup.landingPage && normalizePath(setup.landingPage) !== '/' && (
                   <span>· Zielseite: {normalizePath(setup.landingPage)}</span>
                 )}
               </div>
             </div>
-            <div className="col-span-2 lg:col-span-1 text-[11px] leading-relaxed text-muted lg:text-right">
+            <div className="col-span-2 lg:col-span-1 text-[12px] leading-relaxed text-muted lg:text-right">
               {item.action}
             </div>
           </div>
@@ -822,7 +822,7 @@ function ClassificationRow({
         <div className="text-base font-semibold tabular-nums text-heading">
           {brandShare.toFixed(1)} %
         </div>
-        <div className="text-[10px] text-muted mt-0.5 leading-tight">
+        <div className="text-[11px] text-muted mt-0.5 leading-tight">
           {brandShare < 5
             ? 'Long-Tail ist meist generisch — bei B2B normal'
             : brandShare < 30
@@ -845,7 +845,7 @@ function ClassificationRow({
         <div className="text-base font-semibold tabular-nums text-heading">
           {geoShare.toFixed(1)} %
         </div>
-        <div className="text-[10px] text-muted mt-0.5 leading-tight">
+        <div className="text-[11px] text-muted mt-0.5 leading-tight">
           {geoShare > 30 ? 'Stark lokalbezogene Suchen' :
            geoShare > 10 ? 'Teilweise mit Ortsbezug' :
            'Überwiegend ortsunabhängig'}
@@ -869,7 +869,7 @@ function ClassificationRow({
             {QUESTION_TYPE_LABELS[dominantQuestionType].label}
           </span>
         </div>
-        <div className="text-[10px] text-muted mt-0.5 leading-tight tabular-nums">
+        <div className="text-[11px] text-muted mt-0.5 leading-tight tabular-nums">
           {dominantPct.toFixed(0)} % der Queries
         </div>
       </div>
@@ -939,11 +939,11 @@ function ShareTrendChart({ trend }: { trend: PromptTrackingShareBucket[] }) {
                 className="w-full rounded-t bg-purple-400 group-hover:bg-purple-500 transition relative"
                 style={{ height: `${Math.max(height, 4)}%`, minHeight: '4px' }}
               >
-                <span className="hidden group-hover:block absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] tabular-nums whitespace-nowrap text-body">
+                <span className="hidden group-hover:block absolute -top-5 left-1/2 -translate-x-1/2 text-[11px] tabular-nums whitespace-nowrap text-body">
                   {bucket.sharePercent.toFixed(1)}%
                 </span>
               </div>
-              <span className="text-[10px] text-muted tabular-nums truncate w-full text-center">
+              <span className="text-[11px] text-muted tabular-nums truncate w-full text-center">
                 {bucket.label}
               </span>
             </div>
@@ -1138,12 +1138,12 @@ function KpiTile({ label, value, sub, delta, deltaSuffix = '', tooltip, highligh
       </div>
       <div className="widget-metric-sm mt-0.5 text-heading">{value}</div>
       {delta !== undefined && (
-        <div className={`text-[11px] mt-0.5 tabular-nums flex items-center gap-0.5 ${delta > 0 ? 'text-success' : delta < 0 ? 'text-danger' : 'text-muted'}`}>
+        <div className={`text-[12px] mt-0.5 tabular-nums flex items-center gap-0.5 ${delta > 0 ? 'text-success' : delta < 0 ? 'text-danger' : 'text-muted'}`}>
           {delta > 0 ? <TrendingUp className="w-3 h-3" /> : delta < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
           {delta > 0 ? '+' : ''}{delta.toFixed(1)}{deltaSuffix} vs. Vorperiode
         </div>
       )}
-      {sub && !delta && <div className="text-[11px] text-muted mt-0.5">{sub}</div>}
+      {sub && !delta && <div className="text-[12px] text-muted mt-0.5">{sub}</div>}
     </div>
   );
 }

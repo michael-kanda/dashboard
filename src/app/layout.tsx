@@ -11,7 +11,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 // Auf dem Mac greift SF Pro aus dem Systemstapel, sonst Inter.
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  // Variable Schrift, damit auch Zwischengewichte wie 450 sauber dargestellt werden.
   display: "swap",
   variable: "--font-inter",
 });

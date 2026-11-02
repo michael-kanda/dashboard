@@ -115,16 +115,16 @@ export default function DashboardInfoWidget({
               onChange={(event) => setDraftText(event.target.value)}
               rows={8}
               maxLength={5000}
-              className="w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-[11.2px] leading-relaxed text-body outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
+              className="w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-[12.2px] leading-relaxed text-body outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
             />
-            <div className="flex items-center justify-between text-[11px] text-muted">
+            <div className="flex items-center justify-between text-[12px] text-muted">
               <span>Leer speichern setzt wieder den Standardtext.</span>
               <span>{draftText.length}/5000</span>
             </div>
             {saveError && <p className="text-xs text-danger">{saveError}</p>}
           </div>
         ) : (
-          <div className="whitespace-pre-line text-[9.6px] sm:text-[11.2px] leading-relaxed text-muted">
+          <div className="whitespace-pre-line text-[10.6px] sm:text-[12.2px] leading-relaxed text-muted">
             {infoText}
           </div>
         )}

@@ -41,11 +41,11 @@ export default function GlobalHeader({
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-[28px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">{domain || 'Projekt Dashboard'}</h1>
+            <h1 className="truncate text-[29px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">{domain || 'Projekt Dashboard'}</h1>
             {isAdmin && <StatusPill>Admin</StatusPill>}
           </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted">
-            {isAdmin && projectId && <span className="font-mono text-[12px]">ID: {projectId}</span>}
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] text-muted">
+            {isAdmin && projectId && <span className="font-mono text-[13px]">ID: {projectId}</span>}
             {!isAdmin && <span>{userGreeting}</span>}
             {userEmail && (
               <span className="inline-flex items-center gap-1.5">
@@ -57,7 +57,7 @@ export default function GlobalHeader({
         </div>
 
         <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:items-end">
-          <span className="text-[12px] text-muted">Google Updates: 24 h · Semrush Updates: 14 Tage</span>
+          <span className="text-[13px] text-muted">Google Updates: 24 h · Semrush Updates: 14 Tage</span>
           <DateRangeSelector value={dateRange} onChange={onDateRangeChange} className="w-full sm:w-auto" />
         </div>
       </div>

@@ -397,7 +397,7 @@ export default function IndexingStatusWidget({
               </p>
             )}
             {showDataInfo && (
-              <div className="mt-3 max-w-xl rounded-md border border-border-subtle bg-surface-secondary px-3 py-2.5 text-[11px] leading-5 text-body">
+              <div className="mt-3 max-w-xl rounded-md border border-border-subtle bg-surface-secondary px-3 py-2.5 text-[12px] leading-5 text-body">
                 <p>
                   <span className="font-semibold">Datenbasis:</span> alle URLs der XML-Sitemap,
                   einzeln geprüft über die Google URL-Inspection-API.
@@ -500,7 +500,7 @@ export default function IndexingStatusWidget({
                     </div>
                   </div>
 
-                  <div className="mt-6 space-y-2.5 text-[11px]">
+                  <div className="mt-6 space-y-2.5 text-[12px]">
                     <button
                       type="button"
                       onClick={() => setFilter('indexed')}
@@ -560,7 +560,7 @@ export default function IndexingStatusWidget({
                   </div>
 
                   <div className="indexing-coverage-rail__distribution px-[18px] py-4">
-                    <div className="flex items-center justify-between gap-3 text-[10px] text-muted">
+                    <div className="flex items-center justify-between gap-3 text-[11px] text-muted">
                       <span>{data.isVerificationComplete ? 'Vollständiger Datenstand' : 'Vorläufiger Datenstand'}</span>
                       <span className="tabular-nums">
                         {data.isVerificationComplete && data.recheckPendingUrls > 0
@@ -582,7 +582,7 @@ export default function IndexingStatusWidget({
                           key={item.value}
                           type="button"
                           onClick={() => setFilter(item.value)}
-                          className={`rounded-md px-2.5 py-2 text-[11px] font-medium transition-colors ${
+                          className={`rounded-md px-2.5 py-2 text-[12px] font-medium transition-colors ${
                             filter === item.value
                               ? 'bg-surface-tertiary text-heading'
                               : 'text-muted hover:bg-surface-secondary hover:text-heading'
@@ -597,7 +597,7 @@ export default function IndexingStatusWidget({
                           if (event.target.value) setFilter(event.target.value as FilterValue);
                         }}
                         aria-label="Weitere Statusfilter"
-                        className={`h-8 rounded-md border-0 px-2 text-[11px] font-medium outline-none ${
+                        className={`h-8 rounded-md border-0 px-2 text-[12px] font-medium outline-none ${
                           secondaryFilterValue ? 'bg-surface-tertiary text-heading' : 'bg-transparent text-muted'
                         }`}
                       >
@@ -614,7 +614,7 @@ export default function IndexingStatusWidget({
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="URL suchen"
-                        className="h-9 w-full rounded-md border border-border-subtle bg-surface pl-9 pr-3 text-[11px] text-body outline-none placeholder:text-muted focus:border-accent"
+                        className="h-9 w-full rounded-md border border-border-subtle bg-surface pl-9 pr-3 text-[12px] text-body outline-none placeholder:text-muted focus:border-accent"
                       />
                     </label>
                   </div>
@@ -668,7 +668,7 @@ export default function IndexingStatusWidget({
                 <div className="flex items-center justify-between border-b border-border-subtle bg-surface-secondary px-4 py-2.5">
                   <div>
                     <p className="text-xs font-semibold text-heading">Technisch ausgeschlossene URLs</p>
-                    <p className="mt-0.5 text-[11px] text-muted">Diese Einträge werden nicht per URL Inspection geprüft.</p>
+                    <p className="mt-0.5 text-[12px] text-muted">Diese Einträge werden nicht per URL Inspection geprüft.</p>
                   </div>
                   <button
                     type="button"
@@ -690,12 +690,12 @@ export default function IndexingStatusWidget({
                       >
                         {getUrlLabel(item.url)}
                       </a>
-                      <span className="shrink-0 text-[11px] text-muted">{item.reason}</span>
+                      <span className="shrink-0 text-[12px] text-muted">{item.reason}</span>
                     </div>
                   ))}
                 </div>
                 {data.excludedUrlCount > data.excludedUrls.length && (
-                  <p className="border-t border-border-subtle bg-surface-secondary px-4 py-2 text-[11px] text-muted">
+                  <p className="border-t border-border-subtle bg-surface-secondary px-4 py-2 text-[12px] text-muted">
                     Angezeigt werden die ersten {data.excludedUrls.length} von {data.excludedUrlCount} ausgeschlossenen URLs.
                   </p>
                 )}
@@ -723,7 +723,7 @@ export default function IndexingStatusWidget({
           <summary className="indexing-coverage-rail__table-header flex min-h-12 list-none items-center justify-between gap-4 px-5 py-3 text-left transition-colors hover:bg-surface-secondary [&::-webkit-details-marker]:hidden">
             <span>
               <span className="block text-xs font-medium text-heading">URL-Details</span>
-              <span className="mt-0.5 block text-[10px] text-muted">
+              <span className="mt-0.5 block text-[11px] text-muted">
                 {filteredRows.length} von {data.totalUrls} URLs anzeigen
               </span>
             </span>
@@ -763,7 +763,7 @@ export default function IndexingStatusWidget({
                     <td className="px-4 py-3">
                       <StatusBadge row={row} />
                       {row.status !== 'pending' && row.inspectionPending && (
-                        <span className="mt-1 block text-[10px] font-medium text-muted">
+                        <span className="mt-1 block text-[11px] font-medium text-muted">
                           Erneute Prüfung vorgemerkt
                         </span>
                       )}
@@ -786,7 +786,7 @@ export default function IndexingStatusWidget({
               </tbody>
             </table>
           </div>
-          <div className="indexing-coverage-rail__table-footer flex flex-col gap-1 border-t border-[var(--indexing-line)] px-5 py-3 text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between">
+          <div className="indexing-coverage-rail__table-footer flex flex-col gap-1 border-t border-[var(--indexing-line)] px-5 py-3 text-[12px] text-muted sm:flex-row sm:items-center sm:justify-between">
             <span>{filteredRows.length} von {data.totalUrls} URLs</span>
             <span>Letzter Abgleich: {formatDate(data.lastSyncedAt, true)}</span>
           </div>

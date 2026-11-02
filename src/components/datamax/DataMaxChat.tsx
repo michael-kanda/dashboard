@@ -190,7 +190,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                   >
                     A−
                   </button>
-                  <span className="text-[10px] text-muted w-6 text-center select-none">
+                  <span className="text-[11px] text-muted w-6 text-center select-none">
                     {FONT_SIZES[fontSizeIndex].label}
                   </span>
                   <button

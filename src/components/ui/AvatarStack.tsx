@@ -15,7 +15,7 @@ export function Avatar({ email, size = 26 }: { email: string; size?: number }) {
       style={{
         width: size,
         height: size,
-        fontSize: size >= 30 ? 11 : 10,
+        fontSize: size >= 30 ? 12 : 11,
         backgroundColor: `var(--dp-avatar-${n}-bg)`,
         color: `var(--dp-avatar-${n}-fg)`,
       }}
@@ -27,7 +27,7 @@ export function Avatar({ email, size = 26 }: { email: string; size?: number }) {
 
 export function AvatarStack({ emails, max = 4, emptyLabel = '–' }: { emails: string[]; max?: number; emptyLabel?: string }) {
   const unique = Array.from(new Set(emails.map((e) => e.trim()).filter(Boolean)));
-  if (unique.length === 0) return <span className="text-[13px] text-muted">{emptyLabel}</span>;
+  if (unique.length === 0) return <span className="text-[14px] text-muted">{emptyLabel}</span>;
   const shown = unique.slice(0, max);
   const rest = unique.length - shown.length;
   return (
@@ -37,7 +37,7 @@ export function AvatarStack({ emails, max = 4, emptyLabel = '–' }: { emails: s
           <Avatar email={email} />
         </span>
       ))}
-      {rest > 0 && <span className="ml-1.5 text-[12px] text-muted tabular-nums">+{rest}</span>}
+      {rest > 0 && <span className="ml-1.5 text-[13px] text-muted tabular-nums">+{rest}</span>}
     </span>
   );
 }

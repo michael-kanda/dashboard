@@ -76,7 +76,7 @@ export function Dialog({
             : 'left-1/2 top-1/2 max-h-[90vh] w-[calc(100%-32px)] max-w-[480px] -translate-x-1/2 -translate-y-1/2 rounded-container border border-border'}`}
       >
         <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-3.5">
-          <h2 className="text-[17px] font-semibold tracking-[-0.015em] text-heading">{title}</h2>
+          <h2 className="text-[18px] font-semibold tracking-[-0.015em] text-heading">{title}</h2>
           <IconButton label="Schließen" onClick={onClose}>
             <X size={20} aria-hidden="true" />
           </IconButton>

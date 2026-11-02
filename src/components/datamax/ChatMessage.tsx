@@ -151,7 +151,7 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
 
         {/* Timestamp */}
         <div className={`
-          text-[10px] mt-2 pt-1 border-t
+          text-[11px] mt-2 pt-1 border-t
           ${isUser 
             ? 'text-white/60 border-white/20' 
             : 'text-muted border-border-subtle'

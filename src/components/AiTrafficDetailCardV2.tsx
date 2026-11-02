@@ -418,9 +418,9 @@ export default function AiTrafficDetailCardV2({
                           <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
                           <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05} /></linearGradient></defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--dp-chart-grid)" />
-                        <XAxis dataKey="dateFormatted" tick={{ fontSize: 10, fill: 'var(--dp-chart-text)' }} />
-                        <YAxis tick={{ fontSize: 10, fill: 'var(--dp-chart-text)' }} width={40} />
-                        <Tooltip contentStyle={{ backgroundColor: 'var(--dp-chart-tooltip-bg)', border: '1px solid var(--dp-chart-tooltip-border)', borderRadius: '8px', fontSize: '12px', color: 'var(--dp-chart-tooltip-text)' }} />
+                        <XAxis dataKey="dateFormatted" tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }} />
+                        <YAxis tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }} width={40} />
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--dp-chart-tooltip-bg)', border: '1px solid var(--dp-chart-tooltip-border)', borderRadius: '8px', fontSize: '13px', color: 'var(--dp-chart-tooltip-text)' }} />
                         <Area type="monotone" dataKey="sessions" stroke="#8b5cf6" strokeWidth={2} fill="url(#aiGradV2)" />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -433,8 +433,8 @@ export default function AiTrafficDetailCardV2({
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sourceChartData} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--dp-chart-grid)" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--dp-chart-text)' }} />
-                        <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }} width={80} />
+                        <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }} />
+                        <YAxis dataKey="name" type="category" tick={{ fontSize: 12, fill: 'var(--dp-chart-text)' }} width={80} />
                         <Tooltip contentStyle={{ backgroundColor: 'var(--dp-chart-tooltip-bg)', color: 'var(--dp-chart-tooltip-text)', borderRadius: '8px', border: '1px solid var(--dp-chart-tooltip-border)' }} />
                         <Bar dataKey="sessions" radius={[0, 4, 4, 0]}>
                           {sourceChartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
@@ -571,7 +571,7 @@ export default function AiTrafficDetailCardV2({
                               {page.path === '/' ? '/ (Startseite)' : page.path}</div>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {page.sources.slice(0, 2).map((s, j) => (
-                                <span key={j} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                <span key={j} className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium"
                                   style={{ backgroundColor: `${getSourceColor(s.source)}15`, color: getSourceColor(s.source) }}>
                                   {getSourceLabel(s.source)}</span>
                               ))}
@@ -611,8 +611,8 @@ export default function AiTrafficDetailCardV2({
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sourceChartData} layout="vertical" margin={{ left: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--dp-chart-grid)" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--dp-chart-text)' }} />
-                        <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: 'var(--dp-chart-text)', fontWeight: 500 }} width={100} />
+                        <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--dp-chart-text)' }} />
+                        <YAxis dataKey="name" type="category" tick={{ fontSize: 12, fill: 'var(--dp-chart-text)', fontWeight: 500 }} width={100} />
                         <Tooltip cursor={{ fill: 'rgba(128,128,128,0.08)' }} contentStyle={{ backgroundColor: 'var(--dp-chart-tooltip-bg)', color: 'var(--dp-chart-tooltip-text)', borderRadius: '8px', border: '1px solid var(--dp-chart-tooltip-border)', boxShadow: 'var(--dp-shadow-card)' }} />
                         <Bar dataKey="sessions" radius={[0, 4, 4, 0]} barSize={20}>
                           {sourceChartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}

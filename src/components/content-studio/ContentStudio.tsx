@@ -309,11 +309,11 @@ export default function ContentStudio() {
       <div className="w-full">
         <header className="mb-[22px] flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
           <div>
-            <h1 className="text-[28px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">Content Studio</h1>
-            <p className="mt-1.5 text-[13px] text-muted">Landingpages und Artikel aus echten Projekt- und Leistungsdaten erstellen</p>
+            <h1 className="text-[29px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">Content Studio</h1>
+            <p className="mt-1.5 text-[14px] text-muted">Landingpages und Artikel aus echten Projekt- und Leistungsdaten erstellen</p>
           </div>
           {selectedProject && (
-            <span className="inline-flex items-center gap-2 rounded-pill bg-fill px-2 py-0.5 text-[12px] font-semibold text-neutral-fg">
+            <span className="inline-flex items-center gap-2 rounded-pill bg-fill px-2 py-0.5 text-[13px] font-semibold text-neutral-fg">
               {selectedProject.domain || selectedProject.email}
               {selectedProject.mandant_id && <span className="font-normal text-muted">{selectedProject.mandant_id}</span>}
             </span>
@@ -331,7 +331,7 @@ export default function ContentStudio() {
                 onClick={() => enabled && setStep(item.id)}
                 className={`flex min-h-16 items-center gap-3 border-b-2 px-4 text-left transition-colors sm:border-b-0 sm:border-r-2 ${step === item.id ? 'border-accent bg-accent-tint text-accent' : 'border-border-subtle text-secondary hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-45'}`}
               >
-                <span className="text-[10px] font-bold">{item.number}</span>
+                <span className="text-[11px] font-bold">{item.number}</span>
                 <span className="text-sm font-semibold">{item.label}</span>
               </button>
             );
@@ -433,7 +433,7 @@ export default function ContentStudio() {
                 {versions.length > 0 ? versions.map((version) => (
                   <button key={version.id} type="button" onClick={() => openVersion(version)} className="w-full rounded border border-border-subtle bg-surface-secondary p-3 text-left hover:bg-surface">
                     <div className="truncate text-sm font-semibold text-heading">{version.contentBrief?.topic || version.inputs?.targetUrl || 'Content-Entwurf'}</div>
-                    <div className="mt-1 text-[11px] text-muted">{new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(version.createdAt))}</div>
+                    <div className="mt-1 text-[12px] text-muted">{new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(version.createdAt))}</div>
                     <div className="mt-2 line-clamp-2 text-xs text-secondary">{version.resultText?.replace(/^#+\s*/m, '').slice(0, 130)}</div>
                   </button>
                 )) : <p className="rounded border border-dashed border-border p-4 text-sm text-muted">Noch keine gespeicherten Entwürfe.</p>}

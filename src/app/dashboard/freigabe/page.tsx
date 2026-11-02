@@ -64,7 +64,7 @@ const GscChangeIndicator = ({ change, isPosition = false }: { change: number | s
   const Icon = isPositive ? ArrowUp : ArrowDown;
 
   return (
-    <span className={cn('inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold', colorClasses)}>
+    <span className={cn('inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-[4px] text-[11px] font-bold', colorClasses)}>
       <Icon size={9} />
       {text}
     </span>
@@ -208,7 +208,7 @@ export default function FreigabePage() {
     { label: 'Gesperrt', value: 'Gesperrt', icon: <SlashCircleFill className="inline-block mr-1" size={16}/> },
   ];
 
-  if (authStatus === 'loading') return <div className="p-8 text-center text-[13px] text-muted" role="status">Wird geladen …</div>;
+  if (authStatus === 'loading') return <div className="p-8 text-center text-[14px] text-muted" role="status">Wird geladen …</div>;
   if (authStatus === 'unauthenticated' || session?.user?.role !== 'BENUTZER') {
     router.push('/'); return null;
   }
@@ -219,8 +219,8 @@ export default function FreigabePage() {
 
         <div className="mb-[22px] flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-[28px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">Landingpages Freigabe</h1>
-            <p className="mt-1.5 text-[13px] text-muted">Verwalten Sie den Status Ihrer Landingpages.</p>
+            <h1 className="text-[29px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">Landingpages Freigabe</h1>
+            <p className="mt-1.5 text-[14px] text-muted">Verwalten Sie den Status Ihrer Landingpages.</p>
           </div>
         </div>
 
@@ -327,7 +327,7 @@ export default function FreigabePage() {
                         />
                         {/* ✅ Feedback Badge (1 Minute) */}
                         {savedCommentId === lp.id && (
-                          <div className="absolute top-2 right-2 bg-success-bg text-success text-[10px] font-medium px-2 py-1 rounded border border-border flex items-center gap-1.5 animate-in fade-in zoom-in duration-300 z-10">
+                          <div className="absolute top-2 right-2 bg-success-bg text-success text-[11px] font-medium px-2 py-1 rounded border border-border flex items-center gap-1.5 animate-in fade-in zoom-in duration-300 z-10">
                             <CheckCircleFill size={10} />
                             <span>Gespeichert & Betreuer benachrichtigt</span>
                           </div>

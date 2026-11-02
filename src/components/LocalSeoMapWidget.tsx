@@ -619,14 +619,14 @@ export default function LocalSeoMapWidget({
                 />
               ) : null}
               <div className="px-3 py-2.5">
-                <p className="truncate text-[11px] font-medium text-heading" title={mapProfileLocation.name}>
+                <p className="truncate text-[12px] font-medium text-heading" title={mapProfileLocation.name}>
                   {mapProfilePreview?.displayName || mapProfileLocation.name}
                 </p>
-                <p className="mt-0.5 truncate text-[10px] text-muted">
+                <p className="mt-0.5 truncate text-[11px] text-muted">
                   {mapProfilePreview?.primaryType || 'Google Unternehmensprofil'}
                 </p>
                 {mapProfileRating ? (
-                  <p className="mt-1 flex items-center gap-1.5 text-[10px]">
+                  <p className="mt-1 flex items-center gap-1.5 text-[11px]">
                     <span className="tracking-[1px] text-warning" aria-label="5 Bewertungssterne">★★★★★</span>
                     <span className="text-muted">{mapProfileRating}{mapProfileReviews ? ` (${mapProfileReviews})` : ''}</span>
                   </p>
@@ -636,7 +636,7 @@ export default function LocalSeoMapWidget({
                     href={mapProfileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`mt-1.5 inline-block text-[10px] font-medium hover:underline ${
+                    className={`mt-1.5 inline-block text-[11px] font-medium hover:underline ${
                       mapProfileOpeningLabel === 'Geöffnet' ? 'text-success' : 'text-accent'
                     }`}
                   >
@@ -644,7 +644,7 @@ export default function LocalSeoMapWidget({
                   </a>
                 ) : null}
               </div>
-              <div className="grid grid-cols-2 border-t border-[var(--local-map-line)] px-3 py-2 text-[10px]">
+              <div className="grid grid-cols-2 border-t border-[var(--local-map-line)] px-3 py-2 text-[11px]">
                 <span className="text-muted">Neue Besucher <strong className="font-medium tabular-nums text-heading">{formatNumber(mapProfileLocation.newUsers)}</strong></span>
                 <span className="text-right text-muted">Conversions <strong className="font-medium tabular-nums text-heading">{formatNumber(mapProfileLocation.conversions)}</strong></span>
               </div>
@@ -698,7 +698,7 @@ export default function LocalSeoMapWidget({
                   <text
                     x="12"
                     y="-10"
-                    className="fill-slate-700 text-[11px] font-medium dark:fill-slate-200"
+                    className="fill-slate-700 text-[12px] font-medium dark:fill-slate-200"
                   >
                     {location.city || (location.name.length > 18 ? `${location.name.slice(0, 16)}…` : location.name)}
                   </text>
@@ -706,7 +706,7 @@ export default function LocalSeoMapWidget({
               );
             })}
           </svg>
-          <p className="absolute bottom-4 left-5 text-[10px] text-muted">
+          <p className="absolute bottom-4 left-5 text-[11px] text-muted">
             {isEditingPins ? 'Pins direkt auf der Karte verschieben.' : 'Standorte nach organischer Reichweite'}
           </p>
         </div>
@@ -739,17 +739,17 @@ export default function LocalSeoMapWidget({
                     <span className="widget-meta font-medium tabular-nums text-muted">{String(index + 1).padStart(2, '0')}</span>
                     <span className="min-w-0">
                       <span className="widget-item-title block truncate text-heading">{location.name}</span>
-                      <span className="mt-0.5 block truncate text-[10px] text-muted">
+                      <span className="mt-0.5 block truncate text-[11px] text-muted">
                         {[location.postalCode, location.city].filter(Boolean).join(' ')}
                       </span>
                       {ratingLabel ? (
-                        <span className="mt-1 flex items-center gap-1.5 text-[10px]">
+                        <span className="mt-1 flex items-center gap-1.5 text-[11px]">
                           <span className="tracking-[1px] text-warning" aria-label="5 Bewertungssterne">★★★★★</span>
                           <span className="text-muted">{ratingLabel}{reviewLabel ? ` (${reviewLabel})` : ''}</span>
                         </span>
                       ) : null}
                     </span>
-                    <span className="text-[13px] font-medium tabular-nums text-heading">{formatNumber(location.sessions)}</span>
+                    <span className="text-[14px] font-medium tabular-nums text-heading">{formatNumber(location.sessions)}</span>
                   </button>
                 );
               })}
@@ -760,9 +760,9 @@ export default function LocalSeoMapWidget({
             <div className="local-signal-map__detail">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-semibold text-muted">Ausgewählter Standort</p>
+                  <p className="text-[11px] font-semibold text-muted">Ausgewählter Standort</p>
                   <h4 className="widget-item-title mt-1 truncate text-heading">{selected.name}</h4>
-                  <p className="mt-0.5 text-[10px] text-muted">
+                  <p className="mt-0.5 text-[11px] text-muted">
                   {[selected.postalCode, selected.city, selected.country].filter(Boolean).join(' · ')}
                   </p>
                 </div>
@@ -771,12 +771,12 @@ export default function LocalSeoMapWidget({
                     href={selectedProfileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 text-[10px] font-medium text-accent hover:underline"
+                    className="shrink-0 text-[11px] font-medium text-accent hover:underline"
                   >
                     {selectedOpeningLabel || 'Profil öffnen'}
                   </a>
                 ) : (
-                  <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] text-muted">
+                  <span className="inline-flex shrink-0 items-center gap-1.5 text-[11px] text-muted">
                     <span className="h-2 w-2 rounded-full bg-success-bar" />Aktiv
                   </span>
                 )}
@@ -794,7 +794,7 @@ export default function LocalSeoMapWidget({
                     role="tab"
                     aria-selected={detailTab === tab}
                     onClick={() => setDetailTab(tab)}
-                    className={`shrink-0 rounded-md border-0 px-2.5 py-2 text-[10px] font-medium transition-colors ${
+                    className={`shrink-0 rounded-md border-0 px-2.5 py-2 text-[11px] font-medium transition-colors ${
                       detailTab === tab
                         ? 'bg-surface-tertiary text-heading'
                         : 'bg-transparent text-muted hover:bg-surface-secondary hover:text-heading'
@@ -822,7 +822,7 @@ export default function LocalSeoMapWidget({
                     {selected.topQueries.length > 0 ? selected.topQueries.map((query) => (
                       <div key={`${selected.id}-${query.query}`} className="py-2">
                         <p className="truncate text-xs font-medium text-body" title={query.query}>{query.query}</p>
-                        <p className="text-[11px] text-muted">
+                        <p className="text-[12px] text-muted">
                           {formatNumber(query.impressions)} Impr. · {formatNumber(query.clicks)} Klicks
                         </p>
                       </div>
@@ -835,7 +835,7 @@ export default function LocalSeoMapWidget({
                     {selected.topLandingPages.length > 0 ? selected.topLandingPages.map((page) => (
                       <div key={`${selected.id}-${page.path}`} className="py-2">
                         <p className="truncate font-mono text-xs text-body" title={page.path}>{page.path}</p>
-                        <p className="text-[11px] text-muted">
+                        <p className="text-[12px] text-muted">
                           {formatNumber(page.sessions || 0)} Sessions · {formatNumber(page.conversions || 0)} Conv.
                         </p>
                       </div>

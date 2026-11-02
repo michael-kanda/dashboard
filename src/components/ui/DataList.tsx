@@ -31,7 +31,7 @@ export function DataListHead({ children }: { children: ReactNode }) {
 
 export function Th({ children, className = '', ...rest }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <th scope="col" className={`px-[18px] py-2.5 text-[12px] font-semibold text-muted ${className}`} {...rest}>
+    <th scope="col" className={`px-[18px] py-2.5 text-[13px] font-semibold text-muted ${className}`} {...rest}>
       {children}
     </th>
   );
@@ -47,7 +47,7 @@ export function Tr({ children, className = '' }: { children: ReactNode; classNam
 
 export function Td({ children, className = '', ...rest }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={`px-[18px] py-3 align-middle text-[13px] text-body ${className}`} {...rest}>
+    <td className={`px-[18px] py-3 align-middle text-[14px] text-body ${className}`} {...rest}>
       {children}
     </td>
   );
@@ -74,8 +74,8 @@ export function PrimaryCell({
 }) {
   const content = (
     <>
-      <span className="block truncate text-[14px] font-semibold text-heading">{title}</span>
-      {subtitle && <span className="block truncate text-[12px] text-muted">{subtitle}</span>}
+      <span className="block truncate text-[15px] font-semibold text-heading">{title}</span>
+      {subtitle && <span className="block truncate text-[13px] text-muted">{subtitle}</span>}
     </>
   );
   return (
@@ -91,7 +91,7 @@ export function PrimaryCell({
 export function EmptyRow({ colSpan, children = 'Keine Einträge gefunden' }: { colSpan: number; children?: ReactNode }) {
   return (
     <tr>
-      <td colSpan={colSpan} className="px-[18px] py-6 text-[13px] text-muted">
+      <td colSpan={colSpan} className="px-[18px] py-6 text-[14px] text-muted">
         {children}
       </td>
     </tr>

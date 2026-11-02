@@ -21,26 +21,26 @@
 --dp-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), Inter, system-ui, sans-serif;
    --dp-font-mono: 'Courier New', Courier, monospace;
 
-  --dp-text-xs:   0.625rem;   /*  10px  labels, badges        */
-  --dp-text-sm:   0.75rem;    /*  12px  captions, fine print  */
-  --dp-text-base: 0.875rem;   /*  14px  body copy             */
-  --dp-text-md:   1rem;       /*  16px  subheadings           */
-  --dp-text-lg:   1.125rem;   /*  18px  section titles        */
-  --dp-text-xl:   1.25rem;    /*  20px  page titles           */
-  --dp-text-2xl:  1.5rem;     /*  24px  hero text             */
+  --dp-text-xs:   11px;   /* labels, badges */
+  --dp-text-sm:   13px;   /* captions, fine print */
+  --dp-text-base: 15px;   /* body copy */
+  --dp-text-md:   17px;   /* subheadings */
+  --dp-text-lg:   19px;   /* section titles */
+  --dp-text-xl:   21px;   /* page titles */
+  --dp-text-2xl:  25px;   /* hero text */
 
-  /* Dashboard widget typography */
-  --dp-widget-eyebrow:     0.625rem;   /* 10px */
-  --dp-widget-meta:        0.6875rem;  /* 11px */
-  --dp-widget-control:     0.75rem;    /* 12px */
-  --dp-widget-item-title:  0.8125rem;  /* 13px */
-  --dp-widget-body:        0.875rem;   /* 14px */
-  --dp-widget-title:       1.0625rem;  /* 17px */
-  --dp-widget-metric-sm:   1.125rem;   /* 18px */
-  --dp-widget-metric:      1.6875rem;  /* 27px */
-  --dp-widget-score:       2.875rem;   /* 46px */
+  /* Dashboard widget typography (alle Größen 1 px über dem ursprünglichen Raster) */
+  --dp-widget-eyebrow:     11px;
+  --dp-widget-meta:        12px;
+  --dp-widget-control:     13px;
+  --dp-widget-item-title:  14px;
+  --dp-widget-body:        15px;
+  --dp-widget-title:       18px;
+  --dp-widget-metric-sm:   19px;
+  --dp-widget-metric:      28px;
+  --dp-widget-score:       47px;
 
-  --dp-weight-normal:   400;
+  --dp-weight-normal:   450;   /* hell: etwas kräftiger, damit Fließtext lesbar bleibt */
   --dp-weight-medium:   500;
   --dp-weight-semibold: 600;
   --dp-weight-bold:     700;
@@ -200,6 +200,8 @@
   --dp-bg-secondary:  #232325;
   --dp-bg-tertiary:   #2C2C2E;
   --dp-bg-quaternary: #3A3A3C;
+
+  --dp-weight-normal:  400;
 
   --dp-text-heading:   #F5F5F7;
   --dp-text-strong:    #F5F5F7;

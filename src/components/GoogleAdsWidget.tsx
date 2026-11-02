@@ -599,7 +599,7 @@ function TableRow({
           <tr key={sub.label} className={isExpanded ? 'bg-surface-secondary/50' : ''}>
             <td className="px-2 py-2">
               <div className="ml-3.5 pl-3.5 border-l-2 border-border-subtle text-xs text-body">
-                <span className="text-[10px] text-faint mr-1.5 font-medium">
+                <span className="text-[11px] text-faint mr-1.5 font-medium">
                   {nextDim!.label}
                 </span>
                 <span className="truncate" title={sub.label}>

@@ -112,7 +112,7 @@ export default function LogoManager() {
               {isSubmitting ? 'Wird gespeichert …' : 'Logo speichern'}
             </Button>
             {message.text && (
-              <p role="status" className={`text-[12px] ${message.type === 'error' ? 'text-danger' : 'text-success'}`}>
+              <p role="status" className={`text-[13px] ${message.type === 'error' ? 'text-danger' : 'text-success'}`}>
                 {message.text}
               </p>
             )}
@@ -122,14 +122,14 @@ export default function LogoManager() {
 
       <GroupedSection title="Vorhandene Logos">
         <div className="max-h-96 overflow-y-auto">
-          {isLoading && <p className="px-[18px] py-3 text-[13px] text-muted">Logos werden geladen …</p>}
-          {error && <p className="px-[18px] py-3 text-[13px] text-danger">Fehler beim Laden der Logos.</p>}
-          {logos && logos.length === 0 && <p className="px-[18px] py-3 text-[13px] text-muted">Keine Logos konfiguriert.</p>}
+          {isLoading && <p className="px-[18px] py-3 text-[14px] text-muted">Logos werden geladen …</p>}
+          {error && <p className="px-[18px] py-3 text-[14px] text-danger">Fehler beim Laden der Logos.</p>}
+          {logos && logos.length === 0 && <p className="px-[18px] py-3 text-[14px] text-muted">Keine Logos konfiguriert.</p>}
           {logos?.map(logo => (
             <div key={logo.mandant_id} className="flex min-h-11 items-center justify-between gap-3 border-b border-border-subtle px-[18px] py-2.5 last:border-b-0">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[14px] font-semibold text-heading">{logo.mandant_id}</p>
-                <a href={logo.logo_url} target="_blank" rel="noopener noreferrer" className="block truncate text-[12px] text-accent hover:underline">
+                <p className="truncate text-[15px] font-semibold text-heading">{logo.mandant_id}</p>
+                <a href={logo.logo_url} target="_blank" rel="noopener noreferrer" className="block truncate text-[13px] text-accent hover:underline">
                   {logo.logo_url}
                 </a>
               </div>

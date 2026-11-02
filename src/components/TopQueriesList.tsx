@@ -281,7 +281,7 @@ export default function TopQueriesList({
                       {formattedPath ? (
                         <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted" title={query.url}>
                           <Link45deg size={12} className="flex-shrink-0 text-faint" />
-                          <span className="truncate font-mono text-[11px]">{formattedPath}</span>
+                          <span className="truncate font-mono text-[12px]">{formattedPath}</span>
                         </div>
                       ) : (
                         <div className="text-xs italic text-faint">Keine Landingpage zugeordnet</div>
@@ -292,7 +292,7 @@ export default function TopQueriesList({
                       <div className="widget-item-title leading-tight text-strong">
                         {query.clicks.toLocaleString('de-DE')}
                       </div>
-                      <div className="mt-1 text-[11px] text-faint">Klicks</div>
+                      <div className="mt-1 text-[12px] text-faint">Klicks</div>
                     </div>
                   </div>
 

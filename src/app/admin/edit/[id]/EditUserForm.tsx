@@ -850,7 +850,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
                             className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary placeholder:text-muted"
                             disabled={isSubmitting}
                           />
-                          <p className="mt-1 text-[11px] text-muted">
+                          <p className="mt-1 text-[12px] text-muted">
                             Optional, aber empfohlen. Echte Place IDs beginnen meist mit ChIJ. Reine Zahlen sind CIDs und werden ignoriert.
                           </p>
                         </div>

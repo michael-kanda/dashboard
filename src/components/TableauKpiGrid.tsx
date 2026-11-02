@@ -42,10 +42,10 @@ function KpiSectionHeader({
   return (
     <div className="kpi-quiet-grid__section flex items-center justify-between gap-4 border-y px-4 py-[13px] sm:px-6">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="text-[11px] font-medium text-faint">{index}</span>
+        <span className="text-[12px] font-medium text-faint">{index}</span>
         <h3 className="widget-section-title truncate text-heading">{title}</h3>
       </div>
-      <span className="shrink-0 text-[11px] font-medium text-faint">{rangeLabel}</span>
+      <span className="shrink-0 text-[12px] font-medium text-faint">{rangeLabel}</span>
     </div>
   );
 }

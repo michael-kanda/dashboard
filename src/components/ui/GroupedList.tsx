@@ -38,10 +38,10 @@ export function GroupedRow({
   return (
     <div className="flex min-h-11 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border-subtle px-[18px] py-2.5 last:border-b-0">
       <div className="min-w-0">
-        <LabelTag {...(htmlFor ? { htmlFor } : {})} className="block text-[14px] text-heading">{label}</LabelTag>
-        {description && <div className="text-[12px] text-muted">{description}</div>}
+        <LabelTag {...(htmlFor ? { htmlFor } : {})} className="block text-[15px] text-heading">{label}</LabelTag>
+        {description && <div className="text-[13px] text-muted">{description}</div>}
       </div>
-      {children !== undefined && <div className="flex min-w-0 items-center gap-2 text-[13px] text-body">{children}</div>}
+      {children !== undefined && <div className="flex min-w-0 items-center gap-2 text-[14px] text-body">{children}</div>}
     </div>
   );
 }

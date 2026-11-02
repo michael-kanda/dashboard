@@ -257,7 +257,7 @@ const handleGscRefresh = async () => {
       </PageHeader>
 
       {message && (
-        <p role="status" className={`text-[13px] ${message.startsWith('Fehler') ? 'text-danger' : 'text-success'}`}>
+        <p role="status" className={`text-[14px] ${message.startsWith('Fehler') ? 'text-danger' : 'text-success'}`}>
           {message}
         </p>
       )}
@@ -309,12 +309,12 @@ const handleGscRefresh = async () => {
               {filteredPages.map((lp) => (
                 <Tr key={lp.id} className="align-top">
                   <Td className="align-top">
-                    <div className="max-w-[280px] truncate text-[14px] font-semibold text-heading" title={lp.haupt_keyword || undefined}>
+                    <div className="max-w-[280px] truncate text-[15px] font-semibold text-heading" title={lp.haupt_keyword || undefined}>
                       {lp.haupt_keyword || <span className="font-normal text-muted">Kein Keyword</span>}
                     </div>
-                    <a href={lp.url} target="_blank" rel="noopener noreferrer" className="block max-w-[280px] truncate text-[12px] text-accent hover:underline" title={lp.url}>{lp.url}</a>
+                    <a href={lp.url} target="_blank" rel="noopener noreferrer" className="block max-w-[280px] truncate text-[13px] text-accent hover:underline" title={lp.url}>{lp.url}</a>
                   </Td>
-                  <Td className="whitespace-nowrap align-top text-[12px] text-muted">
+                  <Td className="whitespace-nowrap align-top text-[13px] text-muted">
                     <div>Erstellt: {formatDateOnly(lp.created_at)}</div>
                     <div>Update: {formatDateOnly(lp.updated_at)}</div>
                   </Td>
@@ -352,7 +352,7 @@ const handleGscRefresh = async () => {
                       }}
                     />
                     {savedCommentId === lp.id && (
-                      <div role="status" className="absolute right-[26px] top-5 z-10 inline-flex items-center gap-1.5 rounded-pill bg-success-bg px-2 py-0.5 text-[12px] font-semibold text-success">
+                      <div role="status" className="absolute right-[26px] top-5 z-10 inline-flex items-center gap-1.5 rounded-pill bg-success-bg px-2 py-0.5 text-[13px] font-semibold text-success">
                         <CheckCircleFill size={10} aria-hidden="true" />
                         Gespeichert & Kunde benachrichtigt
                       </div>
@@ -370,7 +370,7 @@ const handleGscRefresh = async () => {
                             aria-pressed={lp.status === status}
                             aria-label={`Status auf „${status}“ setzen`}
                             title={status}
-                            className={`h-7 w-7 rounded-[7px] text-[12px] transition-colors duration-150 ease-out ${lp.status === status ? 'bg-surface font-semibold text-heading shadow-segment' : 'font-medium text-secondary hover:text-heading'}`}
+                            className={`h-7 w-7 rounded-[7px] text-[13px] transition-colors duration-150 ease-out ${lp.status === status ? 'bg-surface font-semibold text-heading shadow-segment' : 'font-medium text-secondary hover:text-heading'}`}
                           >
                             {status.substring(0, 1)}
                           </button>

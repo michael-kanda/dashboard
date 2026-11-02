@@ -23,13 +23,13 @@ export function PageHeader({
   return (
     <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div className="min-w-0">
-        <h1 className="text-[28px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">
+        <h1 className="text-[29px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">
           {title}
           {typeof count === 'number' && (
             <span className="ml-2 font-semibold text-muted tabular-nums">{count}</span>
           )}
         </h1>
-        {subtitle && <p className="mt-1.5 text-[13px] text-muted">{subtitle}</p>}
+        {subtitle && <p className="mt-1.5 text-[14px] text-muted">{subtitle}</p>}
       </div>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </header>
@@ -50,8 +50,8 @@ export function SectionTitle({
   return (
     <div className="mb-2.5 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
       <div className="min-w-0">
-        <Tag className="text-[17px] font-semibold tracking-[-0.015em] text-heading">{title}</Tag>
-        {help && <p className="mt-0.5 text-[12px] text-muted">{help}</p>}
+        <Tag className="text-[18px] font-semibold tracking-[-0.015em] text-heading">{title}</Tag>
+        {help && <p className="mt-0.5 text-[13px] text-muted">{help}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>

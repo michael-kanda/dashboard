@@ -13,7 +13,7 @@ const TONES: Record<StatusTone, string> = {
 
 export function StatusPill({ tone = 'neutral', children, className = '' }: { tone?: StatusTone; children: ReactNode; className?: string }) {
   return (
-    <span className={`inline-flex items-center whitespace-nowrap rounded-pill px-2 py-0.5 text-[12px] font-semibold ${TONES[tone]} ${className}`}>
+    <span className={`inline-flex items-center whitespace-nowrap rounded-pill px-2 py-0.5 text-[13px] font-semibold ${TONES[tone]} ${className}`}>
       {children}
     </span>
   );
@@ -34,7 +34,7 @@ const DOTS: Record<'success' | 'warning' | 'danger' | 'off' | 'accent', string> 
 
 export function StatusDot({ tone = 'success', children }: { tone?: keyof typeof DOTS; children: ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-2 text-[13px] text-body">
+    <span className="inline-flex items-center gap-2 text-[14px] text-body">
       <span className={`h-[7px] w-[7px] flex-shrink-0 rounded-full ${DOTS[tone]}`} aria-hidden="true" />
       {children}
     </span>
@@ -75,7 +75,7 @@ export function StackedStatusBar({
           ) : null,
         )}
       </div>
-      <div className="mt-1 text-[12px] text-muted tabular-nums">
+      <div className="mt-1 text-[13px] text-muted tabular-nums">
         {approved} von {total} freigegeben
       </div>
     </div>
@@ -85,9 +85,9 @@ export function StackedStatusBar({
 export function MetricTile({ label, value, hint }: { label: ReactNode; value: ReactNode; hint?: ReactNode }) {
   return (
     <div className="rounded-container border border-border bg-surface px-[18px] py-4">
-      <div className="text-[12px] text-muted">{label}</div>
-      <div className="mt-1 text-[28px] font-semibold leading-tight text-heading tabular-nums">{value}</div>
-      {hint && <div className="mt-1 text-[12px] text-muted">{hint}</div>}
+      <div className="text-[13px] text-muted">{label}</div>
+      <div className="mt-1 text-[29px] font-semibold leading-tight text-heading tabular-nums">{value}</div>
+      {hint && <div className="mt-1 text-[13px] text-muted">{hint}</div>}
     </div>
   );
 }
