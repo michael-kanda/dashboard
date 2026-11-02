@@ -16,9 +16,9 @@
 :root {
 /* ── 01. TYPOGRAPHY ─────────────────────────────────────── */
 /*
- * Font wechseln = Stylesheet-Link in layout.tsx und diese Variable anpassen.
+ * Systemschrift (SF Pro auf dem Mac), sonst Inter aus next/font (layout.tsx).
  */
---dp-font-sans: 'Poppins', Arial, Helvetica, sans-serif;
+--dp-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), Inter, system-ui, sans-serif;
    --dp-font-mono: 'Courier New', Courier, monospace;
 
   --dp-text-xs:   0.625rem;   /*  10px  labels, badges        */

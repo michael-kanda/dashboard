@@ -87,13 +87,28 @@
    ═══════════════════════════════════════════════════════════ */
 @layer base {
   html {
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 160ms ease-out, color 160ms ease-out;
   }
 
   body {
     background-color: var(--dp-page);
     color: var(--dp-text-body);
     font-family: var(--dp-font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .tabular-nums,
+  table td {
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
   }
 
   /* Inputs inherit theme variables automatically */
