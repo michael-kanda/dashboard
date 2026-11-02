@@ -16,7 +16,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   if (!showLayout) {
     return (
       <ThemeProvider>
-        <div className="flex flex-col min-h-screen bg-surface-secondary">
+        <div className="flex flex-col min-h-screen bg-page">
           <main className="flex-grow">{children}</main>
         </div>
       </ThemeProvider>
@@ -24,12 +24,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }
 
   // ─── Layout mit Sidebar ───
-  // WICHTIG: Keine dark: Klassen hier!
-  // Das globale CSS (dark-mode-globals.css) überschreibt bg-gray-50 automatisch
-  // wenn html.dark gesetzt ist.
+  // Mobil liegt der Kopf der Sidebar über dem Inhalt, ab md daneben.
   return (
     <ThemeProvider>
-      <div className="flex min-h-screen bg-surface-secondary">
+      <div className="flex min-h-screen flex-col bg-page md:flex-row">
         <Sidebar />
         <div className="flex flex-col flex-1 min-w-0">
           <main className="flex-grow">{children}</main>

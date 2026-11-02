@@ -10,10 +10,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { 
   List, X, Briefcase, CalendarCheck, ShieldLock, Speedometer2, 
   BoxArrowRight, BoxArrowInRight, HddNetwork, Magic,
-  ChevronLeft, ChevronRight, SunFill, MoonStarsFill,
+  LayoutSidebarInset, SunFill, MoonStarsFill,
   ChevronDown, ChevronUp,
   BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search, Google, GeoAlt
 } from 'react-bootstrap-icons';
+import { initials, roleLabel } from '@/lib/ui-labels';
 
 // ═══════════════════════════════════════════════════════
 // KONFIGURATION
@@ -24,21 +25,20 @@ interface NavItem {
   label: string;
   icon: React.ReactNode;
   visible?: boolean;
-  className?: string;
 }
 
 // Wir lagern die Sektionen aus, damit sie übersichtlich an einem Ort sind
 const DASHBOARD_SECTIONS = [
-  { id: 'section-kpis',         label: 'Traffic & Reichweite',  icon: <BarChartFill size={13} /> },
-  { id: 'section-verlauf',      label: 'Verlauf & Analyse',     icon: <GraphUpArrow size={13} /> },
-  { id: 'section-local-seo',    label: 'Lokale Sichtbarkeit',   icon: <GeoAlt size={13} /> },
-  { id: 'section-google-genai', label: 'Google GenAI Sichtbarkeit', icon: <Google size={13} /> },
-  { id: 'section-ki-traffic',   label: 'KI-Traffic',            icon: <Robot size={13} /> },
-  { id: 'section-top-queries',  label: 'Top Suchanfragen',      icon: <Search size={13} /> },
-  { id: 'section-landingpages', label: 'Top Landingpages',      icon: <FileEarmarkText size={13} /> },
-  { id: 'section-zugriffe',     label: 'Zugriffe nach Quelle',  icon: <PieChartFill size={13} /> },
-  { id: 'section-google-ads',   label: 'Google Ads Performance', icon: <Google size={13} /> },
-  { id: 'section-semrush',      label: 'Semrush Keywords',      icon: <Search size={13} /> },
+  { id: 'section-kpis',         label: 'Traffic & Reichweite',  icon: <BarChartFill size={14} /> },
+  { id: 'section-verlauf',      label: 'Verlauf & Analyse',     icon: <GraphUpArrow size={14} /> },
+  { id: 'section-local-seo',    label: 'Lokale Sichtbarkeit',   icon: <GeoAlt size={14} /> },
+  { id: 'section-google-genai', label: 'Google GenAI Sichtbarkeit', icon: <Google size={14} /> },
+  { id: 'section-ki-traffic',   label: 'KI-Traffic',            icon: <Robot size={14} /> },
+  { id: 'section-top-queries',  label: 'Top Suchanfragen',      icon: <Search size={14} /> },
+  { id: 'section-landingpages', label: 'Top Landingpages',      icon: <FileEarmarkText size={14} /> },
+  { id: 'section-zugriffe',     label: 'Zugriffe nach Quelle',  icon: <PieChartFill size={14} /> },
+  { id: 'section-google-ads',   label: 'Google Ads Performance', icon: <Google size={14} /> },
+  { id: 'section-semrush',      label: 'Semrush Keywords',      icon: <Search size={14} /> },
 ];
 
 export default function Sidebar() {
@@ -131,9 +131,8 @@ export default function Sidebar() {
   // ═══════════════════════════════════════════════════════
   // LOGO-KONFIGURATION (DATEITAUSCH)
   // ═══════════════════════════════════════════════════════
-  const systemLogo = "/logo-data-peak-dark.webp";
-  const logoSrc = session?.user?.logo_url || systemLogo;
-  const priorityLoad = true;
+  // Mandanten-Logo (White Label) bleibt erhalten; ohne Logo erscheint die DataPeak-Marke.
+  const tenantLogo = session?.user?.logo_url || null;
 
   // ═══════════════════════════════════════════════════════
   // EFFEKTE
@@ -186,16 +185,16 @@ export default function Sidebar() {
   const shouldShowRedaktionsplanForUser = isUser && hasLandingpages && !isCheckingLandingpages;
 
   const mainNavItems: NavItem[] = [
-    { href: '/', label: 'Projekte', icon: <Briefcase size={18} />, visible: isAdmin },
-    { href: '/', label: 'Dashboard', icon: <Speedometer2 size={18} />, visible: isUser },
-    { href: '/admin/redaktionsplan', label: 'Redaktionspläne', icon: <CalendarCheck size={18} />, visible: isAdmin },
-    { href: '/dashboard/freigabe', label: 'Redaktionsplan', icon: <CalendarCheck size={18} />, visible: shouldShowRedaktionsplanForUser },
-    { href: '/admin/ki-tool', label: 'Content Studio', icon: <Magic size={18} />, visible: shouldShowKiTool },
+    { href: '/', label: 'Projekte', icon: <Briefcase size={16} />, visible: isAdmin },
+    { href: '/', label: 'Dashboard', icon: <Speedometer2 size={16} />, visible: isUser },
+    { href: '/admin/redaktionsplan', label: 'Redaktionspläne', icon: <CalendarCheck size={16} />, visible: isAdmin },
+    { href: '/dashboard/freigabe', label: 'Redaktionsplan', icon: <CalendarCheck size={16} />, visible: shouldShowRedaktionsplanForUser },
+    { href: '/admin/ki-tool', label: 'Content Studio', icon: <Magic size={16} />, visible: shouldShowKiTool },
   ];
 
   const adminNavItems: NavItem[] = [
-    { href: '/admin', label: 'Admin-Bereich', icon: <ShieldLock size={18} />, visible: isAdmin },
-    { href: '/admin/system', label: 'System', icon: <HddNetwork size={18} />, visible: isSuperAdmin, className: 'accent-indigo-text' },
+    { href: '/admin', label: 'Admin-Bereich', icon: <ShieldLock size={16} />, visible: isAdmin },
+    { href: '/admin/system', label: 'System', icon: <HddNetwork size={16} />, visible: isSuperAdmin },
   ];
 
   const isActive = (href: string): boolean => {
@@ -203,202 +202,169 @@ export default function Sidebar() {
     return pathname === href || pathname.startsWith(href + '/');
   };
 
-  const renderNavLink = (item: NavItem, index: number) => {
-    if (item.visible === false) return null;
-    const active = isActive(item.href);
-    return (
-      <Link key={`${item.href}-${index}`} href={item.href} onClick={handleLinkClick}
-        title={isCollapsed ? item.label : undefined}
-        className={`
-          group relative flex items-center gap-3 px-3 py-2.5 rounded-xl
-          transition-all duration-150 text-sm font-medium
-          ${active
-            ? 'nav-active shadow-sm'
-            : 'text-muted hover:bg-surface-secondary hover:text-heading nav-hover'
-          }
-          ${item.className || ''}
-        `}
-      >
-        <span className={`flex-shrink-0 flex items-center justify-center w-5 h-5 ${active ? 'accent-indigo-text' : ''}`}>
-          {item.icon}
-        </span>
-        <span className={`whitespace-nowrap transition-all duration-200 ${isCollapsed ? 'md:opacity-0 md:w-0 md:overflow-hidden' : 'opacity-100'}`}>
-          {item.label}
-        </span>
-        {isCollapsed && (
-          <span className="hidden md:group-hover:flex absolute left-full ml-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg z-[100] pointer-events-none after:content-[''] after:absolute after:right-full after:top-1/2 after:-translate-y-1/2 after:border-[5px] after:border-transparent after:border-r-gray-900">
-            {item.label}
-          </span>
-        )}
-      </Link>
-    );
-  };
+  const visibleSections = DASHBOARD_SECTIONS.filter(section => availableSectionIds.includes(section.id));
+  const userLabel = session?.user?.name ?? session?.user?.email ?? '';
+  const themeLabel = theme === 'dark' ? 'Heller Modus' : 'Dunkler Modus';
 
-  const renderMobileNavLink = (item: NavItem, index: number) => {
-    if (item.visible === false) return null;
-    const active = isActive(item.href);
-    return (
-      <Link key={`mobile-${item.href}-${index}`} href={item.href} passHref onClick={handleLinkClick}>
-        <button className={`
-          w-full flex items-center justify-start gap-2 px-4 py-2.5 rounded-lg
-          text-sm font-medium transition-all
-          ${active
-            ? 'bg-indigo-600 text-white shadow-sm'
-            : 'bg-surface text-body border border-border hover:bg-surface-secondary'
-          }
-          ${item.className || ''}
-        `}>
-          {item.icon}
-          {item.label}
-        </button>
-      </Link>
-    );
-  };
-
-  const renderThemeToggle = () => (
-    <button onClick={toggleTheme}
-      className="group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 text-sm font-medium text-muted hover:bg-surface-secondary hover:text-heading nav-hover w-full"
-    >
-      <span className="flex-shrink-0 flex items-center justify-center w-5 h-5">
-        {theme === 'dark' ? <SunFill size={18} /> : <MoonStarsFill size={18} />}
-      </span>
-      <span className={`whitespace-nowrap transition-all duration-200 ${isCollapsed ? 'md:opacity-0 md:w-0 md:overflow-hidden' : 'opacity-100'}`}>
-        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-      </span>
-    </button>
+  const groupTitle = (label: string) => (
+    <div className="px-3 pt-4 pb-1.5 text-[11px] font-semibold text-muted">{label}</div>
   );
+
+  const renderNavLink = (item: NavItem, index: number, collapsed: boolean) => {
+    if (item.visible === false) return null;
+    const active = isActive(item.href);
+    return (
+      <Link
+        key={`${item.href}-${index}`}
+        href={item.href}
+        onClick={handleLinkClick}
+        aria-current={active ? 'page' : undefined}
+        title={collapsed ? item.label : undefined}
+        className={`group flex h-9 items-center gap-2.5 rounded-lg px-3 text-[13px] transition-colors duration-150 ease-out
+          ${collapsed ? 'md:justify-center md:px-0' : ''}
+          ${active
+            ? 'bg-accent-solid font-semibold text-white'
+            : 'font-medium text-secondary hover:bg-fill'
+          }`}
+      >
+        <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center ${active ? 'text-white' : 'text-accent'}`}>
+          {item.icon}
+        </span>
+        <span className={collapsed ? 'md:sr-only' : 'truncate'}>{item.label}</span>
+      </Link>
+    );
+  };
+
+  const renderSections = (onSelect?: () => void) => (
+    <div className="mt-1">
+      <button
+        type="button"
+        onClick={() => setDashboardSubmenuOpen(!dashboardSubmenuOpen)}
+        aria-expanded={dashboardSubmenuOpen}
+        className="flex w-full items-center justify-between rounded-lg px-3 pt-4 pb-1.5 text-[11px] font-semibold text-muted hover:text-heading"
+      >
+        <span>Abschnitte</span>
+        {dashboardSubmenuOpen ? <ChevronUp size={11} aria-hidden="true" /> : <ChevronDown size={11} aria-hidden="true" />}
+      </button>
+      {dashboardSubmenuOpen && (
+        <div className="space-y-0.5">
+          {visibleSections.map(({ id, label, icon }) => {
+            const isActiveSection = activeSection === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => { scrollToSection(id); onSelect?.(); }}
+                aria-current={isActiveSection ? 'location' : undefined}
+                className={`flex h-8 w-full items-center gap-2.5 rounded-lg px-3 text-left text-[12px] transition-colors duration-150 ease-out
+                  ${isActiveSection ? 'bg-accent-tint font-semibold text-accent' : 'font-medium text-muted hover:bg-fill hover:text-heading'}`}
+              >
+                <span className="flex-shrink-0 text-accent" aria-hidden="true">{icon}</span>
+                <span className="truncate">{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderBrand = (collapsed: boolean) => (
+    <Link href="/" onClick={handleLinkClick} className="flex min-w-0 items-center gap-2.5" aria-label="Zur Startseite">
+      {tenantLogo ? (
+        <span className={`relative block h-[26px] ${collapsed ? 'w-[26px]' : 'w-[150px]'}`}>
+          <Image src={tenantLogo} alt="Logo" fill priority className="object-contain object-left" sizes="150px" />
+        </span>
+      ) : (
+        <>
+          <span className="flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-[7px] bg-accent-solid text-[11px] font-bold text-white">
+            DP
+          </span>
+          {!collapsed && <span className="truncate text-[15px] font-semibold text-heading">DataPeak</span>}
+        </>
+      )}
+    </Link>
+  );
+
+  const iconButton = 'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors duration-150 ease-out hover:bg-fill';
 
   // ═══════════════════════════════════════════════════════
   // DESKTOP SIDEBAR
   // ═══════════════════════════════════════════════════════
 
   const renderDesktopSidebar = () => (
-    <aside data-sidebar className={`
-      dark
-      hidden md:flex flex-col sidebar-bg
-      ${/* border-r border-border */ ''}
-      rounded-2xl shadow-xl m-3
-      transition-all duration-200 ease-in-out relative flex-shrink-0 sticky top-3 h-[calc(100vh-1.5rem)]
-      ${isCollapsed ? 'w-[72px]' : 'w-[260px]'}
-    `}>
-      <button onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-[28px] z-50 w-6 h-6 sidebar-bg border border-border rounded-full flex items-center justify-center shadow-sm hover:shadow-md hover-border-indigo transition-all duration-150 text-white hover:text-indigo-300"
-      >
-        {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-      </button>
-
-      {/* Logo Bereich */}
-      <div className="flex items-center h-[80px] px-4 border-b border-border-subtle flex-shrink-0">
-        <Link href="/" onClick={handleLinkClick} className="flex items-center justify-center w-full">
-          <div className={`relative h-[50px] transition-all duration-200 ${isCollapsed ? 'w-[40px]' : 'w-full'}`}>
-            <Image 
-              src={logoSrc} 
-              alt="Dashboard Logo" 
-              fill 
-              priority={priorityLoad}
-              onError={(e) => { 
-                const target = e.target as HTMLImageElement;
-                if (logoSrc !== systemLogo) target.src = systemLogo;
-              }}
-              className="object-contain transition-all duration-300"
-              sizes={isCollapsed ? "40px" : "240px"} 
-            />
-          </div>
-        </Link>
+    <aside
+      data-sidebar
+      aria-label="Hauptnavigation"
+      className={`sticky top-0 hidden h-screen flex-shrink-0 flex-col border-r border-border bg-sidebar transition-[width] duration-200 ease-out md:flex print:hidden
+        ${isCollapsed ? 'w-[64px]' : 'w-[232px]'}`}
+    >
+      <div className={`flex h-14 flex-shrink-0 items-center gap-2 px-4 ${isCollapsed ? 'flex-col justify-center gap-1 px-2 h-auto py-3' : 'justify-between'}`}>
+        {renderBrand(isCollapsed)}
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          aria-label={isCollapsed ? 'Seitenleiste ausklappen' : 'Seitenleiste einklappen'}
+          aria-expanded={!isCollapsed}
+          className={`${iconButton} text-muted`}
+        >
+          <LayoutSidebarInset size={16} aria-hidden="true" />
+        </button>
       </div>
 
-      {status === 'authenticated' && session?.user && (
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border-subtle flex-shrink-0">
-          <div className="w-9 h-9 rounded-xl accent-emerald-avatar border flex items-center justify-center flex-shrink-0 text-sm font-semibold">
-            {(session.user.name || session.user.email || '?').charAt(0).toUpperCase()}
-          </div>
-          {!isCollapsed && (
-            <div className="overflow-hidden">
-              <div className="text-sm font-semibold text-heading truncate">
-                {session.user?.name ?? session.user?.email}
-              </div>
-              <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider accent-indigo-text">
-                {isAdmin && <ShieldLock size={9} />}
-                <span>{session.user.role}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      <nav className="flex-1 overflow-y-auto px-2.5 pb-3 scrollbar-thin">
+        {!isCollapsed && groupTitle('Arbeit')}
+        <div className="space-y-0.5">{mainNavItems.map((item, i) => renderNavLink(item, i, isCollapsed))}</div>
 
-      <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-thin">
-        {!isCollapsed && <div className="px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-faint">Navigation</div>}
-        {mainNavItems.map((item, i) => renderNavLink(item, i))}
-        
-        {/* ── Dashboard Sektions-Untermenü ── */}
-        {isDashboardPage && !isCollapsed && (
-          <div className="ml-3 mt-1">
-            <button 
-              onClick={() => setDashboardSubmenuOpen(!dashboardSubmenuOpen)}
-              className="flex items-center gap-2 w-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-faint hover:text-muted transition-colors"
-            >
-              <span>Sektionen</span>
-              {dashboardSubmenuOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-            </button>
-            {dashboardSubmenuOpen && (
-              <div className="space-y-0.5 mt-0.5">
-                {/* NEU: Wir filtern hier nach vorhandenen Sektionen */}
-                {DASHBOARD_SECTIONS
-                  .filter(section => availableSectionIds.includes(section.id))
-                  .map(({ id, label, icon }) => {
-                    const isActiveSection = activeSection === id;
-                    return (
-                      <button
-                        key={id}
-                        onClick={() => scrollToSection(id)}
-                        className={`
-                          flex items-center gap-2.5 w-full px-3 py-1.5 rounded-lg text-xs
-                          transition-all duration-200 text-left relative
-                          ${isActiveSection
-                            ? 'nav-active font-semibold'
-                            : 'text-faint hover:bg-surface-secondary hover:text-body nav-hover font-medium'
-                          }
-                        `}
-                      >
-                        {isActiveSection && (
-                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-full accent-indigo-indicator" />
-                        )}
-                        <span className={`flex-shrink-0 ${isActiveSection ? 'accent-indigo-text' : ''}`}>{icon}</span>
-                        <span className="truncate">{label}</span>
-                      </button>
-                    );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-        
+        {isDashboardPage && !isCollapsed && visibleSections.length > 0 && renderSections()}
+
         {adminNavItems.some(item => item.visible !== false) && (
           <>
-            {!isCollapsed && <div className="px-3 pt-5 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-faint">Administration</div>}
-            {isCollapsed && <div className="my-2 mx-3 h-px bg-border-subtle" />}
-            {adminNavItems.map((item, i) => renderNavLink(item, i))}
+            {isCollapsed ? <div className="mx-3 my-3 h-px bg-border-subtle" /> : groupTitle('Verwaltung')}
+            <div className="space-y-0.5">{adminNavItems.map((item, i) => renderNavLink(item, i, isCollapsed))}</div>
           </>
         )}
-
-        <div className="my-2 mx-3 h-px bg-border-subtle" />
-        
-        {renderThemeToggle()}
       </nav>
 
-      <div className="px-2.5 py-3 border-t border-border-subtle flex-shrink-0">
-        {status === 'authenticated' ? (
-          <button onClick={() => signOut({ callbackUrl: '/login' })}
-            className="group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover-red-bg"
-          >
-            <BoxArrowRight size={18} className="flex-shrink-0" />
-            {!isCollapsed && <span>Abmelden</span>}
-          </button>
+      <div className={`flex flex-shrink-0 items-center gap-2.5 border-t border-border px-3 py-3 ${isCollapsed ? 'flex-col' : ''}`}>
+        {status === 'authenticated' && session?.user ? (
+          <>
+            <span
+              className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full bg-accent-tint text-[11px] font-bold text-accent"
+              title={session.user.email ?? undefined}
+              aria-hidden="true"
+            >
+              {initials(userLabel)}
+            </span>
+            {!isCollapsed && (
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[13px] font-semibold text-heading">{userLabel}</div>
+                <div className="truncate text-[11px] text-muted">{roleLabel(session.user.role)}</div>
+              </div>
+            )}
+            <button type="button" onClick={toggleTheme} aria-label={themeLabel} title={themeLabel} className={`${iconButton} text-muted hover:text-heading`}>
+              {theme === 'dark' ? <SunFill size={16} aria-hidden="true" /> : <MoonStarsFill size={16} aria-hidden="true" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              aria-label="Abmelden"
+              title="Abmelden"
+              className={`${iconButton} text-danger`}
+            >
+              <BoxArrowRight size={16} aria-hidden="true" />
+            </button>
+          </>
         ) : (
-          <Link href="/login" className="group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium accent-indigo-text hover:bg-indigo-50">
-            <BoxArrowInRight size={18} className="flex-shrink-0" />
-            {!isCollapsed && <span>Anmelden</span>}
-          </Link>
+          <>
+            <Link href="/login" className="flex h-9 flex-1 items-center gap-2.5 rounded-lg px-3 text-[13px] font-medium text-accent hover:bg-fill">
+              <BoxArrowInRight size={16} aria-hidden="true" />
+              {!isCollapsed && <span>Anmelden</span>}
+            </Link>
+            <button type="button" onClick={toggleTheme} aria-label={themeLabel} title={themeLabel} className={`${iconButton} text-muted hover:text-heading`}>
+              {theme === 'dark' ? <SunFill size={16} aria-hidden="true" /> : <MoonStarsFill size={16} aria-hidden="true" />}
+            </button>
+          </>
         )}
       </div>
     </aside>
@@ -409,76 +375,68 @@ export default function Sidebar() {
   // ═══════════════════════════════════════════════════════
 
   const renderMobileHeader = () => (
-    <header className="dark md:hidden sidebar-bg shadow-md relative print:hidden">
-      <nav className="w-full px-6 py-3 flex justify-between items-center">
-        <Link href="/" onClick={handleLinkClick}>
-          <div className="relative h-[45px] w-[180px]">
-            <Image 
-              src={logoSrc} 
-              alt="Dashboard Logo" 
-              fill 
-              priority={priorityLoad}
-              onError={(e) => { 
-                const target = e.target as HTMLImageElement;
-                if (logoSrc !== systemLogo) target.src = systemLogo;
-              }}
-              className="object-contain transition-all duration-300" 
-              sizes="180px" 
-            />
-          </div>
-        </Link>
-        <div className="flex items-center gap-2">
-          <button onClick={toggleTheme} className="p-2 text-muted">
-            {theme === 'dark' ? <SunFill size={18} /> : <MoonStarsFill size={18} />}
+    <header className="relative border-b border-border bg-sidebar md:hidden print:hidden">
+      <div className="flex h-14 items-center justify-between px-4">
+        {renderBrand(false)}
+        <div className="flex items-center gap-1">
+          <button type="button" onClick={toggleTheme} aria-label={themeLabel} className={`${iconButton} text-muted`}>
+            {theme === 'dark' ? <SunFill size={18} aria-hidden="true" /> : <MoonStarsFill size={18} aria-hidden="true" />}
           </button>
-          
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-secondary">
-            {isMobileMenuOpen ? <X size={28} /> : <List size={28} />}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? 'Menü schließen' : 'Menü öffnen'}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-navigation"
+            className={`${iconButton} text-heading`}
+          >
+            {isMobileMenuOpen ? <X size={22} aria-hidden="true" /> : <List size={22} aria-hidden="true" />}
           </button>
         </div>
-      </nav>
+      </div>
 
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 overlay-backdrop z-40 md:hidden backdrop-blur-[1px]"
+          className="fixed inset-0 z-40 bg-[var(--dp-surface-overlay)] md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
           aria-hidden="true"
         />
       )}
       {isMobileMenuOpen && status === 'authenticated' && (
-        <div className="absolute top-full left-0 w-full sidebar-bg shadow-xl border-t border-border-subtle z-50 p-4 flex flex-col gap-2 max-h-[80vh] overflow-y-auto">
-          {mainNavItems.map((item, i) => renderMobileNavLink(item, i))}
-          
-          {/* Mobile: Dashboard Sektionen */}
-          {isDashboardPage && (
-            <div className="space-y-1 ml-2 mt-1 mb-1">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-faint px-2">Sektionen</div>
-              {/* NEU: Filterung auch hier im mobilen Menü */}
-              {DASHBOARD_SECTIONS
-                .filter(section => availableSectionIds.includes(section.id))
-                .map(({ id, label, icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => { scrollToSection(id); setIsMobileMenuOpen(false); }}
-                    className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-all
-                      ${activeSection === id
-                        ? 'nav-active'
-                        : 'text-muted hover:bg-surface-secondary nav-hover'}`}
-                  >
-                    {icon}
-                    <span>{label}</span>
-                  </button>
-              ))}
-            </div>
+        <nav
+          id="mobile-navigation"
+          aria-label="Hauptnavigation"
+          className="absolute left-0 top-full z-50 max-h-[80vh] w-full overflow-y-auto border-b border-border bg-sidebar px-3 pb-4"
+        >
+          {groupTitle('Arbeit')}
+          <div className="space-y-0.5">{mainNavItems.map((item, i) => renderNavLink(item, i, false))}</div>
+
+          {isDashboardPage && visibleSections.length > 0 && renderSections(() => setIsMobileMenuOpen(false))}
+
+          {adminNavItems.some(item => item.visible !== false) && (
+            <>
+              {groupTitle('Verwaltung')}
+              <div className="space-y-0.5">{adminNavItems.map((item, i) => renderNavLink(item, i, false))}</div>
+            </>
           )}
-          
-          {adminNavItems.map((item, i) => renderMobileNavLink(item, i))}
-          <hr className="my-2 border-border" />
-          <button className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-surface text-body border border-border"
-            onClick={() => signOut({ callbackUrl: '/login' })}>
-            <BoxArrowRight size={16} /> Abmelden
-          </button>
-        </div>
+
+          <div className="mt-3 flex items-center gap-2.5 border-t border-border pt-3">
+            <span className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full bg-accent-tint text-[11px] font-bold text-accent" aria-hidden="true">
+              {initials(userLabel)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[13px] font-semibold text-heading">{userLabel}</div>
+              <div className="truncate text-[11px] text-muted">{roleLabel(session?.user?.role)}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="flex h-9 items-center gap-2 rounded-lg px-3 text-[13px] font-medium text-danger hover:bg-fill"
+            >
+              <BoxArrowRight size={16} aria-hidden="true" /> Abmelden
+            </button>
+          </div>
+        </nav>
       )}
     </header>
   );
