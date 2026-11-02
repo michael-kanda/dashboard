@@ -7,12 +7,12 @@ export const metadata: Metadata = {
 
 export default function ImpressumPage() {
   return (
-    <div className="bg-surface py-12">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-6">
-        <h1 className="text-3xl font-bold text-heading">Impressum</h1>
+    <div className="bg-page px-[clamp(16px,3vw,40px)] pt-7 pb-12">
+      <div className="max-w-[680px] space-y-6 text-[15px] leading-[1.6]">
+        <h1 className="text-[28px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">Impressum</h1>
 
         <section>
-          <h2 className="text-xl font-semibold text-heading mb-2">
+          <h2 className="text-[17px] font-semibold tracking-[-0.015em] text-heading mb-2">
             Medieninhaber und für den Inhalt verantwortlich:
           </h2>
           <p className="text-body">
@@ -25,7 +25,7 @@ export default function ImpressumPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-heading mb-2">
+          <h2 className="text-[17px] font-semibold tracking-[-0.015em] text-heading mb-2">
             Kontakt:
           </h2>
           <p className="text-body">
@@ -36,7 +36,7 @@ export default function ImpressumPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-heading mb-2">
+          <h2 className="text-[17px] font-semibold tracking-[-0.015em] text-heading mb-2">
             Grundlegende Richtung der Webseite (&quot;Blattlinie&quot;):
           </h2>
           <p className="text-body">
@@ -46,12 +46,12 @@ export default function ImpressumPage() {
           </p>
         </section>
 
-        <section className="border-t pt-6 mt-8">
-          <h2 className="text-2xl font-bold text-heading mb-4">
+        <section className="border-t border-border-subtle pt-6 mt-8">
+          <h2 className="text-[22px] font-semibold tracking-[-0.015em] text-heading mb-3">
             Disclaimer & Nutzungsbedingungen
           </h2>
 
-          <h3 className="text-lg font-semibold text-heading mt-4 mb-2">
+          <h3 className="text-[17px] font-semibold tracking-[-0.015em] text-heading mt-4 mb-2">
             1. Abgrenzung zum Arbeitgeber
           </h3>
           <p className="text-body">
@@ -62,7 +62,7 @@ export default function ImpressumPage() {
             sind ausschließlich meine eigenen.
           </p>
 
-          <h3 className="text-lg font-semibold text-heading mt-4 mb-2">
+          <h3 className="text-[17px] font-semibold tracking-[-0.015em] text-heading mt-4 mb-2">
             2. Haftung für Inhalte
           </h3>
           <p className="text-body">
@@ -72,7 +72,7 @@ export default function ImpressumPage() {
             bezogenen Daten) übernehme ich jedoch keine Gewähr.
           </p>
 
-          <h3 className="text-lg font-semibold text-heading mt-4 mb-2">
+          <h3 className="text-[17px] font-semibold tracking-[-0.015em] text-heading mt-4 mb-2">
             3. Haftung für Links
           </h3>
           <p className="text-body">
@@ -82,7 +82,7 @@ export default function ImpressumPage() {
             jeweilige Anbieter oder Betreiber der Seiten verantwortlich.
           </p>
 
-          <h3 className="text-lg font-semibold text-heading mt-4 mb-2">
+          <h3 className="text-[17px] font-semibold tracking-[-0.015em] text-heading mt-4 mb-2">
             4. Urheberrecht
           </h3>
           <p className="text-body">
@@ -92,7 +92,7 @@ export default function ImpressumPage() {
             schriftlichen Zustimmung erlaubt.
           </p>
 
-          <h3 className="text-lg font-semibold text-heading mt-4 mb-2">
+          <h3 className="text-[17px] font-semibold tracking-[-0.015em] text-heading mt-4 mb-2">
             5. Nutzung des Dienstes
           </h3>
           <p className="text-body">
@@ -103,7 +103,7 @@ export default function ImpressumPage() {
             ununterbrochene Verfügbarkeit.
           </p>
 
-          <h3 className="text-lg font-semibold text-heading mt-4 mb-2">
+          <h3 className="text-[17px] font-semibold tracking-[-0.015em] text-heading mt-4 mb-2">
             6. Schlussbestimmung
           </h3>
           <p className="text-body">
@@ -113,7 +113,7 @@ export default function ImpressumPage() {
           </p>
         </section>
 
-        <p className="text-muted italic mt-8">Stand: 03. November 2025</p>
+        <p className="text-[13px] text-muted mt-8">Stand: 03. November 2025</p>
       </div>
     </div>
   );

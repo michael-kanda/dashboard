@@ -5,116 +5,7 @@ import Image from 'next/image';
 import { getSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import {
-  BoxArrowInRight,
-  ExclamationTriangleFill,
-  Eye,
-  EyeSlash,
-  Envelope,
-  Lock,
-} from 'react-bootstrap-icons';
-
-function MiniTrend({ color }: { color: string }) {
-  return (
-    <div className="relative mt-2 h-[18px] w-[70px] overflow-hidden" aria-hidden="true">
-      <span className="absolute bottom-[3px] left-0 h-[2px] w-[25px] origin-left -rotate-[8deg] rounded-full" style={{ backgroundColor: color }} />
-      <span className="absolute bottom-[6px] left-[23px] h-[2px] w-[25px] origin-left rotate-[5deg] rounded-full" style={{ backgroundColor: color }} />
-      <span className="absolute bottom-[4px] left-[46px] h-[2px] w-[24px] origin-left -rotate-[14deg] rounded-full" style={{ backgroundColor: color }} />
-    </div>
-  );
-}
-
-function LoginVisualCard() {
-  return (
-    <aside className="hidden h-full w-full bg-surface p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
-      <div
-        className="relative h-full overflow-hidden rounded-xl bg-accent-solid"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,0.075) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.075) 1px, transparent 1px)',
-          backgroundSize: '42px 42px',
-        }}
-      >
-        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30" aria-hidden="true">
-          <span className="absolute bottom-[27%] left-[-8%] h-[34%] w-[116%] -rotate-[11deg] rounded-[50%] border-t-2 border-white/45" />
-          <span className="absolute bottom-[20%] left-[-6%] h-[29%] w-[112%] -rotate-[8deg] rounded-[50%] border-t border-dashed border-white/35" />
-        </div>
-
-        <div className="absolute left-[7%] top-[7%] z-10 text-white">
-          <p className="mb-2 text-[11px] font-bold tracking-[0.08em] text-white/75">
-            DataPeak Live
-          </p>
-          <h2 className="text-[clamp(16px,1.25vw,22px)] font-bold leading-tight">
-            Aus Daten werden Entscheidungen.
-          </h2>
-          <div className="mt-3 flex h-[5px] w-[150px] overflow-hidden rounded-full" aria-hidden="true">
-            <span className="w-1/4 bg-surface" />
-            <span className="w-1/4 bg-warning-bar" />
-            <span className="w-1/4 bg-success-bar" />
-            <span className="w-1/4 bg-[#8b5cf6]" />
-          </div>
-        </div>
-
-        <div className="absolute inset-x-[10%] bottom-[12%] top-[9%]">
-          <div className="relative h-full w-full">
-            <Image
-              src="/login-image.webp"
-              alt="Vorschau des DataPeak Dashboards"
-              fill
-              className="object-contain drop-shadow-[0_18px_22px_rgba(15,23,42,0.25)]"
-              sizes="50vw"
-              priority
-            />
-
-            <div className="absolute left-[-5%] top-[61%] w-[118px] rounded-lg border border-white/60 bg-white/95 p-3 text-body shadow-[0_10px_28px_rgba(15,23,42,0.2)] xl:w-[132px]">
-              <p className="text-[11px] font-medium text-muted">Conversions</p>
-              <p className="mt-0.5 text-[18px] font-bold leading-none">184</p>
-              <p className="mt-1.5 text-[12px] font-semibold text-success">+18,9 %</p>
-              <MiniTrend color="#16a05d" />
-            </div>
-
-            <div className="absolute right-[-6%] top-[17%] w-[118px] rounded-lg border border-white/60 bg-white/95 p-3 text-body shadow-[0_10px_28px_rgba(15,23,42,0.2)] xl:w-[132px]">
-              <p className="text-[11px] font-medium text-muted">KI-Traffic</p>
-              <p className="mt-0.5 text-[15px] font-bold leading-tight">84 Sitzungen</p>
-              <p className="mt-1.5 text-[12px] font-semibold text-success">+22,4 %</p>
-              <MiniTrend color="#8b5cf6" />
-            </div>
-
-            <div className="absolute bottom-[5%] right-[-6%] w-[clamp(216px,19vw,250px)] rounded-lg border border-white/70 bg-white/95 p-4 text-body shadow-[0_12px_30px_rgba(15,23,42,0.2)]">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-[13px] font-bold">Indexierungsstatus</p>
-                <span className="whitespace-nowrap text-[11px] text-muted">Heute geprüft</span>
-              </div>
-              <div className="mt-2.5 flex items-center gap-3.5">
-                <div
-                  role="img"
-                  aria-label="61 Prozent der Sitemap-URLs sind indexiert"
-                  className="relative h-16 w-16 shrink-0 rounded-full"
-                  style={{ background: 'conic-gradient(#34a853 0 61%, #fee2e2 61% 100%)' }}
-                >
-                  <div className="absolute inset-[7px] flex flex-col items-center justify-center rounded-full bg-surface">
-                    <strong className="text-[12px] leading-none">61 %</strong>
-                    <span className="mt-1 text-[6px] font-bold text-muted">INDEXIERT</span>
-                  </div>
-                </div>
-                <div className="min-w-0 flex-1 space-y-2 text-[11px]">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-success-bar" />Indexiert</span>
-                    <strong>122</strong>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-[#ef4444]" />Handlungsbedarf</span>
-                    <strong>77</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </aside>
-  );
-}
+import { Eye, EyeSlash, Lock } from 'react-bootstrap-icons';
 
 interface LoginFormProps {
   callbackUrl?: string;
@@ -170,143 +61,94 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
     }
   };
 
+  const rowClasses =
+    'flex min-h-11 items-center gap-3 border-b border-border-subtle px-4 last:border-b-0 focus-within:bg-surface-secondary';
+  const fieldClasses =
+    'h-11 min-w-0 flex-1 bg-transparent text-[14px] text-heading placeholder:text-muted focus:outline-none disabled:opacity-60';
+
   return (
-    <div className="h-screen w-screen overflow-hidden bg-surface text-heading">
-      <div className="grid h-full w-full grid-cols-1 lg:grid-cols-2">
-        <section className="flex h-full w-full items-center justify-center px-6 py-8 sm:px-10 lg:px-14">
-          <div className="w-full max-w-[390px]">
-            {!isSuccess ? (
-              <>
-                <div className="mb-14">
-                  <div className="relative h-[74px] w-[230px]">
-                    <Image
-                      src="/logo-data-peak.webp"
-                      alt="DataPeak"
-                      fill
-                      className="object-contain"
-                      priority
-                    />
-                  </div>
-                  <h1 className="m-0 text-left text-[21px] font-bold leading-tight text-body">
-                    Willkommen zurück
-                  </h1>
-                  <p className="mt-1 text-left text-[15px] font-medium text-muted">
-                    Ihre aktuellen Daten warten bereits.
-                  </p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="block text-[14px] font-semibold text-body">
-                      E-Mail Adresse
-                    </label>
-                    <div className="relative">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-muted">
-                        <Envelope size={19} />
-                      </div>
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={handleEmailChange}
-                        className="block h-[51px] w-full rounded-lg border border-border bg-surface py-3 pl-10 pr-3 text-[16px] font-medium text-heading outline-none transition-all placeholder:text-muted focus:border-accent focus:ring-4 focus:ring-accent/10"
-                        placeholder="name@firma.de"
-                        disabled={isLoading || isSuccess}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-[14px] font-semibold text-body">
-                      Passwort
-                    </label>
-                    <div className="relative">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-muted">
-                        <Lock size={19} />
-                      </div>
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        value={password}
-                        onChange={handlePasswordChange}
-                        className="block h-[51px] w-full rounded-lg border border-border bg-surface py-3 pl-10 pr-10 text-[16px] font-medium text-heading outline-none transition-all placeholder:text-muted focus:border-accent focus:ring-4 focus:ring-accent/10"
-                        placeholder="••••••••"
-                        disabled={isLoading || isSuccess}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted transition-colors hover:text-muted focus:outline-none"
-                        disabled={isLoading || isSuccess}
-                        aria-label={showPassword ? 'Passwort ausblenden' : 'Passwort anzeigen'}
-                      >
-                        {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="flex items-start gap-2 rounded-lg border border-border bg-danger-bg p-3 text-sm text-danger">
-                    <ExclamationTriangleFill size={16} className="mt-0.5 shrink-0" />
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  className="mt-6 flex h-[51px] w-full items-center justify-center gap-2 rounded-lg border border-transparent bg-accent-solid px-4 text-[16px] font-semibold text-white shadow-[0_10px_18px_rgba(24,139,219,0.24)] transition-all duration-200 hover:bg-accent-solid focus:outline-none focus:ring-4 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-70"
-                  disabled={isLoading || isSuccess}
-                >
-                  {isLoading ? (
-                    <>
-                      <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                      <span>Prüfe Daten...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Anmelden</span>
-                      <BoxArrowInRight size={18} />
-                    </>
-                  )}
-                </button>
-                <p className="flex items-center justify-center gap-1.5 pt-1 text-[11px] font-medium text-muted">
-                  <Lock size={11} aria-hidden="true" />
-                  Sichere Verbindung
-                </p>
-              </form>
-            </>
-          ) : (
-            <div className="flex min-h-[430px] flex-col items-center justify-center text-center">
-              <div className="relative mb-12 h-[145px] w-[210px]">
-                <Image
-                  src="/data-max.webp"
-                  alt="DataMax"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="flex items-center justify-center gap-2 text-[21px] font-bold text-heading">
-                  <span className="h-5 w-5 rounded-full border-2 border-accent border-t-[#188bdb] animate-spin" />
-                  Login erfolgreich{successAnsprache ? ` ${successAnsprache}` : ''}
-                </h3>
-                <p className="text-[17px] font-semibold text-accent">
-                  Dateninitialisierung läuft...
-                </p>
-                <p className="text-[15px] font-medium text-muted">
-                  Sie werden gleich weitergeleitet.
-                </p>
-              </div>
+    <div className="flex min-h-screen w-full items-center justify-center bg-page px-4 py-10">
+      <div className="w-full max-w-[360px]">
+        {!isSuccess ? (
+          <>
+            <div className="mb-8 flex flex-col items-center text-center">
+              <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-[11px] bg-accent-solid text-[17px] font-bold text-white" aria-hidden="true">
+                DP
+              </span>
+              <h1 className="text-[22px] font-bold tracking-[-0.02em] text-heading">Willkommen zurück</h1>
+              <p className="mt-1 text-[13px] text-muted">Ihre aktuellen Daten warten bereits.</p>
             </div>
-          )}
-          </div>
-        </section>
 
-        <LoginVisualCard />
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="overflow-hidden rounded-container border border-border bg-surface">
+                <div className={rowClasses}>
+                  <label htmlFor="login-email" className="w-[72px] flex-shrink-0 text-[13px] text-heading">E-Mail</label>
+                  <input
+                    id="login-email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={handleEmailChange}
+                    className={fieldClasses}
+                    placeholder="name@firma.de"
+                    disabled={isLoading || isSuccess}
+                  />
+                </div>
+                <div className={rowClasses}>
+                  <label htmlFor="login-password" className="w-[72px] flex-shrink-0 text-[13px] text-heading">Passwort</label>
+                  <input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={handlePasswordChange}
+                    className={fieldClasses}
+                    placeholder="Passwort"
+                    disabled={isLoading || isSuccess}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="-mr-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-control text-muted transition-colors duration-150 ease-out hover:bg-fill hover:text-heading"
+                    disabled={isLoading || isSuccess}
+                    aria-label={showPassword ? 'Passwort ausblenden' : 'Passwort anzeigen'}
+                  >
+                    {showPassword ? <EyeSlash size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+                  </button>
+                </div>
+              </div>
+
+              {error && <p className="text-[12px] text-danger" role="alert">{error}</p>}
+
+              <button
+                type="submit"
+                className="flex h-9 w-full items-center justify-center gap-2 rounded-control bg-accent-solid px-4 text-[13px] font-semibold text-white transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-60"
+                disabled={isLoading || isSuccess}
+              >
+                {isLoading && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" aria-hidden="true" />}
+                {isLoading ? 'Prüfe Daten …' : 'Anmelden'}
+              </button>
+              <p className="flex items-center justify-center gap-1.5 text-[12px] text-muted">
+                <Lock size={11} aria-hidden="true" />
+                Sichere Verbindung
+              </p>
+            </form>
+          </>
+        ) : (
+          <div className="flex min-h-[360px] flex-col items-center justify-center text-center" role="status">
+            <div className="relative mb-8 h-[120px] w-[180px]">
+              <Image src="/data-max.webp" alt="DataMax" fill className="object-contain" priority />
+            </div>
+            <h1 className="flex items-center justify-center gap-2 text-[22px] font-bold tracking-[-0.02em] text-heading">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent-tint border-t-accent" aria-hidden="true" />
+              Login erfolgreich{successAnsprache ? ` ${successAnsprache}` : ''}
+            </h1>
+            <p className="mt-2 text-[14px] font-semibold text-accent">Dateninitialisierung läuft …</p>
+            <p className="mt-1 text-[13px] text-muted">Sie werden gleich weitergeleitet.</p>
+          </div>
+        )}
       </div>
     </div>
   );
