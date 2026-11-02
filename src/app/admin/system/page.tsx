@@ -1,15 +1,68 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { 
-  DatabaseCheck, ShieldLock, ArrowRepeat,
-  CheckCircleFill, XCircleFill, ExclamationTriangleFill,
-  HddNetwork, Search, BarChartLine,
-  ConeStriped, PersonFillLock, Magic,
-  ToggleOn, ToggleOff, PersonCheck,
-  Robot, ChatQuoteFill // Neue Icons für DataMax
-} from 'react-bootstrap-icons';
+import React, { useEffect, useState, useCallback, type ReactNode } from 'react';
+import { ArrowRepeat, PersonCircle } from 'react-bootstrap-icons';
 import LoginLogbook from '@/app/admin/LoginLogbook';
+import { roleLabel } from '@/lib/ui-labels';
+import { PageContainer, PageHeader, SectionTitle } from '@/components/ui/Page';
+import { GroupedSection, GroupedRow } from '@/components/ui/GroupedList';
+import { DataList, DataListHead, EmptyRow, ListSkeleton, PrimaryCell, Td, Th, Tr } from '@/components/ui/DataList';
+import { SearchField } from '@/components/ui/SearchField';
+import { Button } from '@/components/ui/Button';
+import { StatusDot, StatusPill } from '@/components/ui/Status';
+import { Toggle } from '@/components/ui/Toggle';
+
+const SERVICE_STATUS: Record<string, { tone: 'success' | 'warning' | 'danger' | 'off'; label: string }> = {
+  ok: { tone: 'success', label: 'Verbunden' },
+  warning: { tone: 'warning', label: 'Warnung' },
+  error: { tone: 'danger', label: 'Fehler' },
+  pending: { tone: 'off', label: 'Wird geprüft' },
+};
+
+function serviceStatus(value?: string) {
+  return SERVICE_STATUS[value || 'pending'] ?? SERVICE_STATUS.error;
+}
+
+// Abschnitt mit Nutzerliste und Schalter je Nutzer (Wartung, KI-Tool, DataMax).
+function PermissionSection({
+  title,
+  statusLine,
+  actions,
+  search,
+  onSearch,
+  searchLabel,
+  isLoading,
+  children,
+  footer,
+}: {
+  title: string;
+  statusLine: string;
+  actions: ReactNode;
+  search: string;
+  onSearch: (value: string) => void;
+  searchLabel: string;
+  isLoading: boolean;
+  children: ReactNode;
+  footer?: ReactNode;
+}) {
+  return (
+    <section className="min-w-0">
+      <SectionTitle title={title} help={statusLine} actions={actions} />
+      <div className="mb-2.5">
+        <SearchField label={searchLabel} placeholder="E-Mail oder Domain" value={search} onChange={onSearch} />
+      </div>
+      <DataList label={title} minWidth={480} className="max-h-72 overflow-y-auto">
+        <DataListHead>
+          <Th>Nutzer</Th>
+          <Th>Rolle</Th>
+          <Th className="text-right">Zugang</Th>
+        </DataListHead>
+        <tbody aria-busy={isLoading}>{children}</tbody>
+      </DataList>
+      {footer && <p className="mt-1.5 text-[12px] text-muted">{footer}</p>}
+    </section>
+  );
+}
 
 // Typen erweitert
 type UserStatus = {
@@ -232,12 +285,6 @@ export default function SystemHealthPage() {
     } finally { setIsSchedulingRefresh(false); }
   };
 
-  const getStatusIcon = (s: string) => {
-    if (s === 'ok') return <CheckCircleFill className="text-emerald-500 dark:text-emerald-400 text-xl" />;
-    if (s === 'warning') return <ExclamationTriangleFill className="text-amber-500 dark:text-amber-400 text-xl" />;
-    return <XCircleFill className="text-red-500 dark:text-red-400 text-xl" />;
-  };
-
   // --- FILTERS ---
   const filteredKiUsers = kiToolUsers.filter(u => 
     u.email.toLowerCase().includes(kiToolSearchTerm.toLowerCase()) || 
@@ -254,358 +301,188 @@ export default function SystemHealthPage() {
     (u.domain && u.domain.toLowerCase().includes(dataMaxSearchTerm.toLowerCase()))
   );
 
-  if (isLoading) return <div className="admin-clean p-10 text-center text-sm text-muted animate-pulse">Lade System-Status...</div>;
-  if (!status) return <div className="admin-clean p-10 text-center text-red-500 dark:text-red-400">Fehler beim Laden.</div>;
+  const userCell = (user: UserStatus) => (
+    <PrimaryCell icon={<PersonCircle size={16} />} title={user.email} subtitle={user.domain || undefined} />
+  );
+
+  const refreshButton = (onClick: () => void, loading: boolean) => (
+    <Button variant="plain" size="sm" onClick={onClick} disabled={loading}>
+      <ArrowRepeat className={loading ? 'animate-spin' : ''} size={14} aria-hidden="true" />
+      Aktualisieren
+    </Button>
+  );
+
+  const bulkActions = (onDisable: () => void, onEnable: () => void, loading: boolean, onRefresh: () => void) => (
+    <>
+      <span className="text-[12px] text-muted">Superadmins ausgenommen</span>
+      <Button variant="destructive" size="sm" onClick={onDisable} disabled={loading}>Alle sperren</Button>
+      <Button variant="plain" size="sm" onClick={onEnable} disabled={loading}>Alle freigeben</Button>
+      {refreshButton(onRefresh, loading)}
+    </>
+  );
+
+  const header = (
+    <PageHeader title="System" subtitle="Dienste, Zugriffe und Systemfunktionen überwachen">
+      {status?.aiModel && (
+        <StatusPill>KI: {status.aiModel.activeModel || serviceStatus(status.aiModel.status).label}</StatusPill>
+      )}
+      {maintenanceCount > 0 && <StatusPill tone="danger">{maintenanceCount} gesperrt</StatusPill>}
+    </PageHeader>
+  );
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        {header}
+        <ListSkeleton rows={5} label="System-Status wird geladen …" />
+      </PageContainer>
+    );
+  }
+  if (!status) {
+    return (
+      <PageContainer>
+        {header}
+        <p className="text-[13px] text-danger" role="alert">Fehler beim Laden.</p>
+      </PageContainer>
+    );
+  }
+
+  const services: { label: string; data?: { status?: string; message?: string }; detail?: string }[] = [
+    { label: 'Datenbank', data: status.database },
+    { label: 'Google Auth', data: status.google },
+    {
+      label: 'KI Modell',
+      data: status.aiModel,
+      detail: [
+        status.aiModel?.activeModel && `Aktiv: ${status.aiModel.activeModel}`,
+        status.aiModel?.fallbackModel && `Fallback: ${status.aiModel.fallbackModel}`,
+        typeof status.aiModel?.latency === 'number' && `${status.aiModel.latency} ms`,
+      ].filter(Boolean).join(' · '),
+    },
+    { label: 'Semrush API', data: status.semrush },
+    { label: 'GSC API', data: status.gscApi },
+  ];
 
   return (
-    <div className="admin-clean mx-auto max-w-[1540px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-      
-      {/* HEADER */}
-      <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-end">
-        <div>
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">Administration</p>
-          <h1 className="text-2xl font-semibold text-heading">System-Kontrollzentrum</h1>
-          <p className="mt-1 text-sm text-muted">Dienste, Zugriffe und Systemfunktionen überwachen.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {maintenanceCount > 0 && (
-            <div className="flex items-center gap-1.5 rounded-md bg-red-500/10 px-2.5 py-1.5 text-xs font-semibold text-red-700 dark:text-red-300">
-              <ConeStriped /> {maintenanceCount} Gesperrt
-            </div>
-          )}
-          {kiToolDisabledCount > 0 && (
-            <div className="flex items-center gap-1.5 rounded-md bg-violet-500/10 px-2.5 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
-              <Magic /> {kiToolDisabledCount} KI aus
-            </div>
-          )}
-          {dataMaxDisabledCount > 0 && (
-            <div className="flex items-center gap-1.5 rounded-md bg-sky-500/10 px-2.5 py-1.5 text-xs font-semibold text-sky-700 dark:text-sky-300">
-              <Robot /> {dataMaxDisabledCount} Chat aus
-            </div>
-          )}
-        </div>
-      </div>
+    <PageContainer>
+      {header}
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        
-        {/* LINKER BEREICH: VERWALTUNG */}
-        <div className="xl:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-[22px] xl:grid-cols-3">
+        <div className="flex min-w-0 flex-col gap-[22px] xl:col-span-2">
+          <GroupedSection title="Dienste">
+            {services.map(({ label, data, detail }) => {
+              const state = serviceStatus(data?.status);
+              return (
+                <GroupedRow
+                  key={label}
+                  label={label}
+                  description={[data?.message || 'Prüfe …', detail].filter(Boolean).join(' · ')}
+                >
+                  <StatusDot tone={state.tone}>{state.label}</StatusDot>
+                </GroupedRow>
+              );
+            })}
+          </GroupedSection>
 
-          {/* 1. WARTUNGSMODUS VERWALTUNG */}
-          <div className="admin-panel p-5">
-            <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-              <div className="flex items-center gap-3">
-                <div className={`rounded-md p-2.5 ${maintenanceCount > 0 ? 'bg-red-100 dark:bg-red-900/30' : 'bg-surface-tertiary'}`}>
-                  <PersonFillLock className={`text-xl ${maintenanceCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-body'}`} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-heading">Wartungsmodus & Zugangssperre</h3>
-                  <p className="text-sm text-muted">
-                    {maintenanceCount > 0 
-                      ? `${maintenanceCount} Benutzer gesperrt.`
-                      : 'Alle Benutzer haben freien Zugang.'}
-                  </p>
-                </div>
-              </div>
-              <button onClick={fetchMaintenanceStatus} disabled={isLoadingMaintenance} className="flex items-center gap-2 rounded-md bg-surface-tertiary px-2.5 py-1.5 text-xs font-medium text-body transition hover:bg-surface-quaternary">
-                <ArrowRepeat className={isLoadingMaintenance ? 'animate-spin' : ''} /> Aktualisieren
-              </button>
-            </div>
-            
-            <div className="mb-4 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" size={14} />
-              <input
-                type="text"
-                placeholder="Benutzer für Wartung suchen..."
-                value={maintSearchTerm}
-                onChange={(e) => setMaintSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-            </div>
-
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-              {filteredMaintUsers.length === 0 ? (
-                <div className="text-center py-4 text-faint text-sm">Keine Benutzer gefunden</div>
-              ) : (
-                filteredMaintUsers.map((user) => (
-                  <div key={user.id} className={`flex flex-col items-start justify-between gap-3 rounded-md border p-3 transition-all sm:flex-row sm:items-center ${user.maintenance_mode ? 'bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800' : 'bg-surface border-border-subtle hover:border-border'}`}>
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className={`w-2.5 h-2.5 rounded-full ${user.maintenance_mode ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
-                      <div className="min-w-0 flex-1">
-                        <span className={`font-medium truncate block ${user.maintenance_mode ? 'text-red-900 dark:text-red-200' : 'text-heading'}`}>{user.email}</span>
-                        <div className="flex items-center gap-2 text-xs text-muted">
-                          {user.domain && <span>{user.domain}</span>}
-                          <span className={`px-1.5 py-0.5 rounded ${user.role === 'SUPERADMIN' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 font-bold' : user.role === 'ADMIN' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'bg-surface-tertiary text-body'}`}>{user.role}</span>
-                          {user.maintenance_mode && <span className="text-red-600 dark:text-red-400 font-bold uppercase">GESPERRT</span>}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => toggleMaintenance(user.id, user.maintenance_mode)}
-                      disabled={togglingMaintId === user.id}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 ${
-                        user.maintenance_mode ? 'bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-200 dark:hover:bg-emerald-800/40 text-emerald-700 dark:text-emerald-300' : 'bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-800/40 text-red-700 dark:text-red-300'
-                      }`}
-                    >
-                      {togglingMaintId === user.id ? <ArrowRepeat className="animate-spin" size={14} /> : (
-                        user.maintenance_mode ? <><PersonCheck size={16} /> Freigeben</> : <><ConeStriped size={16} /> Sperren</>
-                      )}
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* 2. KI-TOOL VERWALTUNG */}
-          <div className="admin-panel p-5">
-            <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-              <div className="flex items-center gap-3">
-                <div className={`rounded-md p-2.5 ${kiToolDisabledCount > 0 ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-surface-tertiary'}`}>
-                  <Magic className={`text-xl ${kiToolDisabledCount > 0 ? 'text-purple-600 dark:text-purple-400' : 'text-body'}`} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-heading">KI-Tool Berechtigung</h3>
-                  <p className="text-sm text-muted">
-                    {kiToolDisabledCount > 0 ? `${kiToolDisabledCount} User ohne KI-Tool.` : 'Alle User haben KI-Tool Zugriff.'}
-                  </p>
-                </div>
-              </div>
-              <button onClick={fetchKiToolStatus} disabled={isLoadingKiTool} className="flex items-center gap-2 rounded-md bg-surface-tertiary px-2.5 py-1.5 text-xs font-medium text-body transition hover:bg-surface-quaternary">
-                <ArrowRepeat className={isLoadingKiTool ? 'animate-spin' : ''} /> Aktualisieren
-              </button>
-            </div>
-
-            {/* NEU: Bulk Actions */}
-            <div className="flex gap-2 mb-4">
-              <button
-                onClick={bulkDisableKiTool}
-                disabled={isLoadingKiTool}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-800/40 text-red-700 dark:text-red-300 transition-all disabled:opacity-50"
-              >
-                <ToggleOff size={14} /> Alle sperren
-              </button>
-              <button
-                onClick={bulkEnableKiTool}
-                disabled={isLoadingKiTool}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-800/40 text-green-700 dark:text-green-300 transition-all disabled:opacity-50"
-              >
-                <ToggleOn size={14} /> Alle freigeben
-              </button>
-              <span className="text-[10px] text-faint self-center ml-1">Superadmins ausgenommen</span>
-            </div>
-            
-            <div className="mb-4 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" size={14} />
-              <input
-                type="text"
-                placeholder="Benutzer für KI suchen..."
-                value={kiToolSearchTerm}
-                onChange={(e) => setKiToolSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-              {filteredKiUsers.length === 0 ? <div className="text-center py-4 text-faint text-sm">Nichts gefunden</div> : filteredKiUsers.map((user) => (
-                <div key={user.id} className={`flex flex-col items-start justify-between gap-3 rounded-md border p-3 transition-all sm:flex-row sm:items-center ${user.ki_tool_enabled === false ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800' : 'bg-surface border-border-subtle hover:border-border'}`}>
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className={`w-2 h-2 rounded-full ${user.ki_tool_enabled === false ? 'bg-gray-300 dark:bg-gray-600' : 'bg-purple-500'}`} />
-                    <div className="min-w-0 flex-1">
-                      <span className="font-medium text-heading truncate block">{user.email}</span>
-                      <div className="flex items-center gap-2 text-xs text-muted">
-                        {user.domain && <span>{user.domain}</span>}
-                        <span className={`px-1.5 py-0.5 rounded ${user.role === 'SUPERADMIN' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 font-bold' : user.role === 'ADMIN' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'bg-surface-tertiary text-body'}`}>{user.role}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => toggleKiTool(user.id, user.ki_tool_enabled !== false)}
-                    disabled={togglingKiId === user.id || user.role === 'SUPERADMIN'}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 ${
-                      user.role === 'SUPERADMIN' ? 'bg-surface-secondary text-faint cursor-not-allowed' :
-                      user.ki_tool_enabled === false ? 'bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-800/40 text-green-700 dark:text-green-300' : 'bg-surface-tertiary hover:bg-surface-quaternary text-body'
-                    }`}
-                  >
-                    {user.role === 'SUPERADMIN' ? <><ShieldLock size={14} /> Geschützt</> :
-                    togglingKiId === user.id ? <ArrowRepeat className="animate-spin" size={14} /> : (
-                      user.ki_tool_enabled === false ? <><ToggleOn size={16} /> Aktivieren</> : <><ToggleOff size={16} /> Deaktivieren</>
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 3. NEU: DATAMAX CHAT VERWALTUNG */}
-          <div className="admin-panel p-5">
-            <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-              <div className="flex items-center gap-3">
-                <div className={`rounded-md p-2.5 ${dataMaxDisabledCount > 0 ? 'bg-sky-100 dark:bg-sky-900/30' : 'bg-surface-tertiary'}`}>
-                  <Robot className={`text-xl ${dataMaxDisabledCount > 0 ? 'text-sky-600 dark:text-sky-400' : 'text-body'}`} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-heading">DataMax Chat Berechtigung</h3>
-                  <p className="text-sm text-muted">
-                    {dataMaxDisabledCount > 0 ? `${dataMaxDisabledCount} User ohne Chat Zugriff.` : 'Alle User dürfen DataMax nutzen.'}
-                  </p>
-                </div>
-              </div>
-              <button onClick={fetchDataMaxStatus} disabled={isLoadingDataMax} className="flex items-center gap-2 rounded-md bg-surface-tertiary px-2.5 py-1.5 text-xs font-medium text-body transition hover:bg-surface-quaternary">
-                <ArrowRepeat className={isLoadingDataMax ? 'animate-spin' : ''} /> Aktualisieren
-              </button>
-            </div>
-
-            {/* NEU: Bulk Actions */}
-            <div className="flex gap-2 mb-4">
-              <button
-                onClick={bulkDisableDataMax}
-                disabled={isLoadingDataMax}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-800/40 text-red-700 dark:text-red-300 transition-all disabled:opacity-50"
-              >
-                <ToggleOff size={14} /> Alle sperren
-              </button>
-              <button
-                onClick={bulkEnableDataMax}
-                disabled={isLoadingDataMax}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-800/40 text-green-700 dark:text-green-300 transition-all disabled:opacity-50"
-              >
-                <ToggleOn size={14} /> Alle freigeben
-              </button>
-              <span className="text-[10px] text-faint self-center ml-1">Superadmins ausgenommen</span>
-            </div>
-            
-            <div className="mb-4 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" size={14} />
-              <input
-                type="text"
-                placeholder="Benutzer für DataMax suchen..."
-                value={dataMaxSearchTerm}
-                onChange={(e) => setDataMaxSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-              />
-            </div>
-
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-              {filteredDataMaxUsers.length === 0 ? <div className="text-center py-4 text-faint text-sm">Nichts gefunden</div> : filteredDataMaxUsers.map((user) => (
-                <div key={user.id} className={`flex flex-col items-start justify-between gap-3 rounded-md border p-3 transition-all sm:flex-row sm:items-center ${user.data_max_enabled === false ? 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800' : 'bg-surface border-border-subtle hover:border-border'}`}>
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className={`w-2 h-2 rounded-full ${user.data_max_enabled === false ? 'bg-gray-300 dark:bg-gray-600' : 'bg-sky-500'}`} />
-                    <div className="min-w-0 flex-1">
-                      <span className="font-medium text-heading truncate block">{user.email}</span>
-                      <div className="flex items-center gap-2 text-xs text-muted">
-                        {user.domain && <span>{user.domain}</span>}
-                        <span className={`px-1.5 py-0.5 rounded ${user.role === 'SUPERADMIN' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 font-bold' : user.role === 'ADMIN' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'bg-surface-tertiary text-body'}`}>{user.role}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => toggleDataMax(user.id, user.data_max_enabled)}
-                    disabled={togglingDataMaxId === user.id || user.role === 'SUPERADMIN'}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 ${
-                      user.role === 'SUPERADMIN' ? 'bg-surface-secondary text-faint cursor-not-allowed' :
-                      user.data_max_enabled === false ? 'bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-800/40 text-green-700 dark:text-green-300' : 'bg-surface-tertiary hover:bg-surface-quaternary text-body'
-                    }`}
-                  >
-                    {user.role === 'SUPERADMIN' ? <><ShieldLock size={14} /> Geschützt</> :
-                    togglingDataMaxId === user.id ? <ArrowRepeat className="animate-spin" size={14} /> : (
-                      user.data_max_enabled === false ? <><ToggleOn size={16} /> Aktivieren</> : <><ToggleOff size={16} /> Deaktivieren</>
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
-             <div className="mt-3 text-[10px] text-faint text-right">
-                Standardmäßig haben alle User Zugriff (Default: Aktiv).
-             </div>
-          </div>
-
-          {/* STATUS GRID */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="admin-panel p-5">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg"><DatabaseCheck className="text-blue-600 dark:text-blue-400 text-xl" /></div>
-                {getStatusIcon(status.database.status)}
-              </div>
-              <h3 className="font-semibold text-heading">Datenbank</h3>
-              <p className="text-xs text-muted mt-1">{status.database.message}</p>
-            </div>
-
-            <div className="admin-panel p-5">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg"><ShieldLock className="text-orange-600 dark:text-orange-400 text-xl" /></div>
-                {getStatusIcon(status.google.status)}
-              </div>
-              <h3 className="font-semibold text-heading">Google Auth</h3>
-              <p className="text-xs text-muted mt-1">{status.google.message}</p>
-            </div>
-
-            <div className="admin-panel p-5">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-sky-50 dark:bg-sky-900/20 rounded-lg"><Robot className="text-sky-600 dark:text-sky-400 text-xl" /></div>
-                {getStatusIcon(status.aiModel?.status || 'pending')}
-              </div>
-              <h3 className="font-semibold text-heading">KI Modell</h3>
-              <p className="text-xs text-muted mt-1">{status.aiModel?.message || 'Prüfe...'}</p>
-              <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-medium">
-                <span className="rounded-md bg-surface-tertiary px-2 py-1 text-body">
-                  Aktiv: {status.aiModel?.activeModel || '-'}
-                </span>
-                <span className="rounded-md bg-surface-tertiary px-2 py-1 text-body">
-                  Fallback: {status.aiModel?.fallbackModel || '-'}
-                </span>
-                {typeof status.aiModel?.latency === 'number' && (
-                  <span className="rounded-md bg-surface-tertiary px-2 py-1 text-body">
-                    {status.aiModel.latency} ms
+          <PermissionSection
+            title="Wartungsmodus & Zugangssperre"
+            statusLine={maintenanceCount > 0 ? `${maintenanceCount} Benutzer gesperrt.` : 'Alle Benutzer haben freien Zugang.'}
+            actions={refreshButton(fetchMaintenanceStatus, isLoadingMaintenance)}
+            search={maintSearchTerm}
+            onSearch={setMaintSearchTerm}
+            searchLabel="Benutzer für Wartung durchsuchen"
+            isLoading={isLoadingMaintenance}
+          >
+            {filteredMaintUsers.length === 0 && <EmptyRow colSpan={3}>Keine Benutzer gefunden</EmptyRow>}
+            {filteredMaintUsers.map((user) => (
+              <Tr key={user.id}>
+                <Td>{userCell(user)}</Td>
+                <Td>
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <StatusPill>{roleLabel(user.role)}</StatusPill>
+                    {user.maintenance_mode && <StatusPill tone="danger">Gesperrt</StatusPill>}
                   </span>
-                )}
-              </div>
-            </div>
-            
-             <div className="admin-panel p-5">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg"><HddNetwork className="text-purple-600 dark:text-purple-400 text-xl" /></div>
-                {getStatusIcon(status.semrush.status)}
-              </div>
-              <h3 className="font-semibold text-heading">Semrush API</h3>
-              <p className="text-xs text-muted mt-1">{status.semrush.message}</p>
-            </div>
-            
-            <div className="admin-panel p-5">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg"><Search className="text-indigo-600 dark:text-indigo-400 text-xl" /></div>
-                {getStatusIcon(status.gscApi?.status || 'pending')}
-              </div>
-              <h3 className="font-semibold text-heading">GSC API</h3>
-              <p className="text-xs text-muted mt-1">{status.gscApi?.message || 'Prüfe...'}</p>
-            </div>
-          </div>
-          
-           {/* CACHE MANAGEMENT */}
-          <div className="admin-panel p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-surface-tertiary rounded-lg"><ArrowRepeat className="text-body" /></div>
-              <h3 className="font-semibold">Cache Management</h3>
-            </div>
-            <div className="flex flex-col items-start justify-between gap-3 rounded-md bg-surface-secondary p-4 sm:flex-row sm:items-center">
-              <div><span className="text-sm text-body font-medium">Einträge:</span><span className="ml-2 text-lg font-bold text-heading">{status.cache.count}</span></div>
-              <button onClick={handleScheduleRefresh} disabled={isSchedulingRefresh} className="flex items-center gap-2 rounded-md border border-theme-border-subtle bg-surface px-4 py-2.5 text-sm font-medium text-heading shadow-sm hover:bg-surface-secondary disabled:opacity-50">
-                <ArrowRepeat className={isSchedulingRefresh ? 'animate-spin' : undefined} /> Aktualisierung vormerken
-              </button>
-            </div>
-            {cacheNotice && <p className="mt-3 text-sm text-secondary" role="status">{cacheNotice}</p>}
-          </div>
+                </Td>
+                <Td className="text-right">
+                  <Toggle
+                    checked={!user.maintenance_mode}
+                    onChange={() => toggleMaintenance(user.id, user.maintenance_mode)}
+                    label={`Zugang für ${user.email}`}
+                    disabled={togglingMaintId === user.id}
+                  />
+                </Td>
+              </Tr>
+            ))}
+          </PermissionSection>
 
+          <PermissionSection
+            title="KI-Tool Berechtigung"
+            statusLine={kiToolDisabledCount > 0 ? `${kiToolDisabledCount} User ohne KI-Tool.` : 'Alle User haben KI-Tool Zugriff.'}
+            actions={bulkActions(bulkDisableKiTool, bulkEnableKiTool, isLoadingKiTool, fetchKiToolStatus)}
+            search={kiToolSearchTerm}
+            onSearch={setKiToolSearchTerm}
+            searchLabel="Benutzer für KI-Tool durchsuchen"
+            isLoading={isLoadingKiTool}
+          >
+            {filteredKiUsers.length === 0 && <EmptyRow colSpan={3}>Keine Benutzer gefunden</EmptyRow>}
+            {filteredKiUsers.map((user) => (
+              <Tr key={user.id}>
+                <Td>{userCell(user)}</Td>
+                <Td><StatusPill>{roleLabel(user.role)}</StatusPill></Td>
+                <Td className="text-right">
+                  <Toggle
+                    checked={user.role === 'SUPERADMIN' || user.ki_tool_enabled !== false}
+                    onChange={() => toggleKiTool(user.id, user.ki_tool_enabled !== false)}
+                    label={user.role === 'SUPERADMIN' ? `KI-Tool für ${user.email} (geschützt)` : `KI-Tool für ${user.email}`}
+                    disabled={togglingKiId === user.id || user.role === 'SUPERADMIN'}
+                  />
+                </Td>
+              </Tr>
+            ))}
+          </PermissionSection>
+
+          <PermissionSection
+            title="DataMax Chat Berechtigung"
+            statusLine={dataMaxDisabledCount > 0 ? `${dataMaxDisabledCount} User ohne Chat Zugriff.` : 'Alle User dürfen DataMax nutzen.'}
+            actions={bulkActions(bulkDisableDataMax, bulkEnableDataMax, isLoadingDataMax, fetchDataMaxStatus)}
+            search={dataMaxSearchTerm}
+            onSearch={setDataMaxSearchTerm}
+            searchLabel="Benutzer für DataMax durchsuchen"
+            isLoading={isLoadingDataMax}
+            footer="Standardmäßig haben alle User Zugriff."
+          >
+            {filteredDataMaxUsers.length === 0 && <EmptyRow colSpan={3}>Keine Benutzer gefunden</EmptyRow>}
+            {filteredDataMaxUsers.map((user) => (
+              <Tr key={user.id}>
+                <Td>{userCell(user)}</Td>
+                <Td><StatusPill>{roleLabel(user.role)}</StatusPill></Td>
+                <Td className="text-right">
+                  <Toggle
+                    checked={user.role === 'SUPERADMIN' || user.data_max_enabled !== false}
+                    onChange={() => toggleDataMax(user.id, user.data_max_enabled)}
+                    label={user.role === 'SUPERADMIN' ? `DataMax für ${user.email} (geschützt)` : `DataMax für ${user.email}`}
+                    disabled={togglingDataMaxId === user.id || user.role === 'SUPERADMIN'}
+                  />
+                </Td>
+              </Tr>
+            ))}
+          </PermissionSection>
+
+          <GroupedSection title="Cache Management" help={cacheNotice ? <span role="status">{cacheNotice}</span> : undefined}>
+            <GroupedRow label="Einträge">
+              <span className="font-semibold text-heading tabular-nums">{status.cache.count}</span>
+              <Button variant="plain" size="sm" onClick={handleScheduleRefresh} disabled={isSchedulingRefresh}>
+                <ArrowRepeat className={isSchedulingRefresh ? 'animate-spin' : undefined} size={14} aria-hidden="true" />
+                Aktualisierung vormerken
+              </Button>
+            </GroupedRow>
+          </GroupedSection>
         </div>
 
-        {/* LOGBOOK */}
-        <div className="xl:col-span-1">
-           <div>
-             <LoginLogbook />
-           </div>
+        <div className="min-w-0 xl:col-span-1">
+          <LoginLogbook />
         </div>
-
       </div>
-    </div>
+    </PageContainer>
   );
 }
