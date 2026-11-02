@@ -150,6 +150,12 @@
   --dp-focus-ring:   var(--dp-accent);
 
   /* --- Charts (Recharts) --- */
+  --dp-chart-1: #0066CC;   /* Hauptreihe, Klicks */
+  --dp-chart-2: #34C759;
+  --dp-chart-3: #FF9F0A;
+  --dp-chart-4: #FF3B30;
+  --dp-chart-5: #AF52DE;
+  --dp-chart-6: #32ADE6;
   --dp-chart-text:           var(--dp-text-muted);
   --dp-chart-grid:           var(--dp-border-subtle);
   --dp-chart-tooltip-bg:     var(--dp-bg-primary);
@@ -207,5 +213,12 @@
   --dp-border-strong:  rgba(255, 255, 255, 0.16);
 
   --dp-surface-overlay: rgba(0, 0, 0, 0.60);
+
+  --dp-chart-1: #2997FF;
+  --dp-chart-2: #30D158;
+  --dp-chart-3: #FF9F0A;
+  --dp-chart-4: #FF453A;
+  --dp-chart-5: #BF5AF2;
+  --dp-chart-6: #64D2FF;
   --dp-shadow-dialog:   0 20px 60px rgba(0, 0, 0, 0.5);
 }

@@ -242,7 +242,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
     <div className="dashboard-widget-surface rounded-lg p-6 lg:p-8 print-timeline">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 border-b border-theme-border-default/50 pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 border-b border-border/50 pb-4">
         <div>
           <h2 className="widget-title text-heading flex items-center gap-2">
             <ClockHistory className="text-accent" size={22} />
@@ -269,7 +269,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
               </div>
               <span className="widget-control text-muted">{Math.round(timeElapsedPercentage)}% vergangen</span>
             </div>
-            <div className="relative h-10 w-full bg-surface-tertiary/80 rounded-lg border border-theme-border-default/60 overflow-hidden">
+            <div className="relative h-10 w-full bg-surface-tertiary/80 rounded-lg border border-border/60 overflow-hidden">
               <div className="absolute top-0 left-0 h-full bg-indigo-200 border-r-2 border-accent transition-all duration-1000" style={{ width: `${timeElapsedPercentage}%` }} />
               <div className="absolute inset-0 flex justify-between items-center px-4 text-xs font-medium text-muted pointer-events-none">
                 <div className="flex flex-col items-start z-10"><span className="text-[10px] text-muted">Start</span><span className="text-strong">{format(startDate, 'dd.MM.yyyy')}</span></div>
@@ -287,7 +287,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
               </div>
               <div className="flex items-baseline gap-1"><span className="widget-metric text-heading">{Math.round(percentage)}%</span><span className="widget-control text-muted">fertig</span></div>
             </div>
-            <div className="h-6 w-full bg-surface-tertiary/80 rounded-full overflow-hidden flex shadow-inner border border-theme-border-default/60">
+            <div className="h-6 w-full bg-surface-tertiary/80 rounded-full overflow-hidden flex shadow-inner border border-border/60">
               {counts.Total > 0 ? (
                 <>
                   <div className="bg-green-500 h-full" style={{ width: `${(counts.Freigegeben / counts.Total) * 100}%` }} />
@@ -403,23 +403,23 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
             </div>
           </div>
 
-          <div className="bg-surface-secondary/50 rounded-xl border border-theme-border-default/60 p-4 h-full min-h-[200px] flex flex-col shadow-inner backdrop-blur-sm">
+          <div className="bg-surface-secondary/50 rounded-xl border border-border/60 p-4 h-full min-h-[200px] flex flex-col shadow-inner backdrop-blur-sm">
             <div className="flex-grow w-full relative">
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorImpressions" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="var(--dp-chart-1)" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="var(--dp-chart-1)" stopOpacity={0}/>
                       </linearGradient>
                       <linearGradient id="colorAi" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="var(--dp-chart-5)" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="var(--dp-chart-5)" stopOpacity={0}/>
                       </linearGradient>
                       <linearGradient id="colorGenAi" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4285f4" stopOpacity={0.25}/>
-                        <stop offset="95%" stopColor="#4285f4" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="var(--dp-chart-1)" stopOpacity={0.25}/>
+                        <stop offset="95%" stopColor="var(--dp-chart-1)" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
@@ -428,13 +428,13 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
                       tickFormatter={(t) => format(new Date(t), 'd.MM', { locale: de })}
                       type="number"
                       domain={[dataMinDate, dataMaxDate]}
-                      tick={{ fontSize: 9, fill: '#6b7280' }}
+                      tick={{ fontSize: 9, fill: 'var(--dp-text-muted)' }}
                       tickMargin={5}
                       minTickGap={30}
                     />
                     <YAxis 
                       tickFormatter={(v) => new Intl.NumberFormat('de-DE', { notation: 'compact' }).format(v)}
-                      tick={{ fontSize: 9, fill: '#6b7280' }}
+                      tick={{ fontSize: 9, fill: 'var(--dp-text-muted)' }}
                       width={35}
                       axisLine={false}
                       tickLine={false}
@@ -454,7 +454,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
                       type="monotone" 
                       dataKey="impressions" 
                       name="impressions" 
-                      stroke="#3b82f6" 
+                      stroke="var(--dp-chart-1)" 
                       strokeWidth={2} 
                       fillOpacity={1} 
                       fill="url(#colorImpressions)" 
@@ -464,7 +464,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
                       type="monotone" 
                       dataKey="aiTraffic" 
                       name="aiTraffic" 
-                      stroke="#8b5cf6" 
+                      stroke="var(--dp-chart-5)" 
                       strokeWidth={2} 
                       fillOpacity={1} 
                       fill="url(#colorAi)" 
@@ -473,7 +473,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
                       type="monotone"
                       dataKey="genAiImpressions"
                       name="genAiImpressions"
-                      stroke="#4285f4"
+                      stroke="var(--dp-chart-1)"
                       strokeWidth={2}
                       strokeDasharray="4 4"
                       fillOpacity={1}
@@ -482,12 +482,12 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
                     {/* Reference Line für HEUTE */}
                     <ReferenceLine 
                       x={today.getTime()} 
-                      stroke="#f59e0b" 
+                      stroke="var(--dp-chart-3)" 
                       strokeDasharray="3 3" 
                       label={{ 
                         value: 'Heute', 
                         position: 'top', 
-                        fill: '#f59e0b', 
+                        fill: 'var(--dp-chart-3)', 
                         fontSize: 10 
                       }} 
                     />

@@ -278,8 +278,8 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
                 <AreaChart data={chartData} margin={{ top: 8, right: 10, left: -18, bottom: 0 }}>
                   <defs>
                     <linearGradient id="googleGenAiArea" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4285F4" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#4285F4" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--dp-chart-1)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="var(--dp-chart-1)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--dp-chart-grid)" />
@@ -310,10 +310,10 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
                   <Area
                     type="monotone"
                     dataKey="impressions"
-                    stroke="#4285F4"
+                    stroke="var(--dp-chart-1)"
                     strokeWidth={3}
                     fill="url(#googleGenAiArea)"
-                    activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff', fill: '#4285F4' }}
+                    activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff', fill: 'var(--dp-chart-1)' }}
                   />
                 </AreaChart>
               </ResponsiveContainer>

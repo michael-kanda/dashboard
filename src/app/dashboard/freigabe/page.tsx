@@ -208,19 +208,19 @@ export default function FreigabePage() {
     { label: 'Gesperrt', value: 'Gesperrt', icon: <SlashCircleFill className="inline-block mr-1" size={16}/> },
   ];
 
-  if (authStatus === 'loading') return <div className="p-8 text-center">Lade...</div>;
+  if (authStatus === 'loading') return <div className="p-8 text-center text-[13px] text-muted" role="status">Wird geladen …</div>;
   if (authStatus === 'unauthenticated' || session?.user?.role !== 'BENUTZER') {
     router.push('/'); return null;
   }
 
   return (
-    <div className="min-h-screen bg-surface-secondary p-8">
-      <div className="max-w-full mx-auto"> 
-        
-        <div className="mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+    <div className="min-h-screen bg-page px-[clamp(16px,3vw,40px)] pt-7 pb-12">
+      <div className="w-full">
+
+        <div className="mb-[22px] flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-heading">Landingpages Freigabe</h1>
-            <p className="text-muted mt-2">Verwalten Sie den Status Ihrer Landingpages.</p>
+            <h1 className="text-[28px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">Landingpages Freigabe</h1>
+            <p className="mt-1.5 text-[13px] text-muted">Verwalten Sie den Status Ihrer Landingpages.</p>
           </div>
         </div>
 

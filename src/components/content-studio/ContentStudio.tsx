@@ -69,17 +69,6 @@ const DEFAULT_BRIEF: ContentBrief = {
   dateRange: '3m',
 };
 
-function GoogleUnderline() {
-  return (
-    <div className="mt-2 flex h-1.5 w-[220px] overflow-hidden rounded-full" aria-hidden="true">
-      <span className="w-1/4 bg-accent-solid" />
-      <span className="w-1/4 bg-danger-bar" />
-      <span className="w-1/4 bg-warning-bar" />
-      <span className="w-1/4 bg-success-bar" />
-    </div>
-  );
-}
-
 function getProjectUrl(domain: string | null) {
   if (!domain) return '';
   return domain.startsWith('http') ? domain : `https://${domain}`;
@@ -316,20 +305,18 @@ export default function ContentStudio() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-secondary px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1540px]">
-        <header className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+    <div className="min-h-screen bg-page px-[clamp(16px,3vw,40px)] pt-7 pb-12">
+      <div className="w-full">
+        <header className="mb-[22px] flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
           <div>
-            <p className="text-[11px] font-semibold text-muted">Redaktion</p>
-            <h1 className="mt-1 text-2xl font-semibold text-heading">KI Content Studio</h1>
-            <GoogleUnderline />
-            <p className="mt-3 text-sm text-muted">Landingpages und Artikel aus echten Projekt- und Leistungsdaten erstellen</p>
+            <h1 className="text-[28px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">Content Studio</h1>
+            <p className="mt-1.5 text-[13px] text-muted">Landingpages und Artikel aus echten Projekt- und Leistungsdaten erstellen</p>
           </div>
           {selectedProject && (
-            <div className="rounded border border-border bg-surface px-4 py-2 text-sm text-secondary">
-              <span className="font-semibold text-heading">{selectedProject.domain || selectedProject.email}</span>
-              {selectedProject.mandant_id && <span className="ml-2 text-xs text-muted">{selectedProject.mandant_id}</span>}
-            </div>
+            <span className="inline-flex items-center gap-2 rounded-pill bg-fill px-2 py-0.5 text-[12px] font-semibold text-neutral-fg">
+              {selectedProject.domain || selectedProject.email}
+              {selectedProject.mandant_id && <span className="font-normal text-muted">{selectedProject.mandant_id}</span>}
+            </span>
           )}
         </header>
 

@@ -88,8 +88,8 @@ export default function EditLandingpagePage() {
   if (!landingpage) return <div className="p-8 text-center text-danger">{message || 'Landingpage nicht gefunden.'}</div>;
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Landingpage bearbeiten</h1>
+    <div className="max-w-2xl px-[clamp(16px,3vw,40px)] pt-7 pb-12">
+      <h1 className="mb-[22px] text-[28px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">Landingpage bearbeiten</h1>
       <p className="mb-4 text-muted">
         Domain: <span className="font-semibold">{landingpage.domain}</span>
       </p>

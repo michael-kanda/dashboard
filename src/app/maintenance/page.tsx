@@ -7,8 +7,8 @@ import Image from 'next/image';
 
 export default function MaintenancePage() {
   return (
-    <div className="min-h-screen bg-surface-secondary flex flex-col items-center justify-center p-4">
-      <div className="bg-surface max-w-md w-full p-8 rounded-2xl shadow-xl text-center border border-border">
+    <div className="min-h-screen bg-page flex flex-col items-center justify-center p-4">
+      <div className="bg-surface max-w-md w-full p-8 rounded-container text-center border border-border">
         
         {/* Data Max Bild zentriert */}
         <div className="flex justify-center mb-6">

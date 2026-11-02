@@ -83,10 +83,10 @@ export default function ProjectDashboard({
   };
 
   return (
-    <div className="min-h-screen flex flex-col dashboard-gradient relative">
+    <div className="relative flex min-h-screen flex-col bg-page">
       {isUpdating && !isLoading && <DashboardLoadingOverlay />}
 
-      <div className="flex-grow w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="w-full flex-grow px-[clamp(16px,3vw,40px)] pt-7 pb-12">
         <GlobalHeader
           domain={domain}
           projectId={projectId}
@@ -98,7 +98,7 @@ export default function ProjectDashboard({
         />
 
         {data.cacheStale && (
-          <p className="mt-4 text-sm text-secondary" role="status">
+          <p className="mt-4 text-[13px] text-muted" role="status">
             Gespeicherte Daten{reportingPeriodLabel ? ` für ${reportingPeriodLabel}` : ''}. Aktualisierung ausstehend.
           </p>
         )}

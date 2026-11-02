@@ -2,7 +2,8 @@
 'use client';
 
 import React from 'react';
-import { Globe, ShieldLock } from 'react-bootstrap-icons';
+import { StatusPill } from '@/components/ui/Status';
+import { Avatar } from '@/components/ui/AvatarStack';
 import DateRangeSelector, { type DateRangeOption } from '@/components/DateRangeSelector';
 
 interface GlobalHeaderProps {
@@ -36,74 +37,30 @@ export default function GlobalHeader({
   const userGreeting = trimmedAnsprache ? `${greeting}, ${trimmedAnsprache}` : greeting;
 
   return (
-    <div className="relative sm:sticky sm:top-0 z-40 card-glass p-4 sm:p-6 mb-6 print:hidden backdrop-blur-md transition-all duration-200 border-b border-border-subtle">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        
-        {/* LINKE SEITE: Projekt-Kontext */}
-        <div className="flex items-center gap-5">
-          <div className="flex items-center gap-2 accent-indigo-box p-3 rounded-xl backdrop-blur-sm border">
-            <Globe size={28} />
+    <header className="z-40 -mx-[clamp(16px,3vw,40px)] mb-[22px] border-b border-border-subtle bg-page px-[clamp(16px,3vw,40px)] pb-4 pt-1 print:hidden sm:sticky sm:top-0">
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="truncate text-[28px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">{domain || 'Projekt Dashboard'}</h1>
+            {isAdmin && <StatusPill>Admin</StatusPill>}
           </div>
-
-          <div className="h-12 w-px bg-theme-border-default/60 mx-1 hidden sm:block"></div>
-
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-xl font-bold text-theme-heading tracking-tight">{domain || 'Projekt Dashboard'}</h1>
-              {isAdmin && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-surface-tertiary text-secondary border border-border">
-                  <ShieldLock size={10} />
-                  <span>Admin</span>
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-1">
-              {/* Projekt-ID */}
-              {isAdmin && projectId && (
-                <span className="text-[10px] text-theme-muted font-mono">
-                  ID: {projectId}
-                </span>
-              )}
-
-              {!isAdmin && (
-                <span className="text-sm text-theme-muted font-medium">
-                  {userGreeting}
-                </span>
-              )}
-
-              {/* Betreut durch */}
-              {userEmail && (
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 mt-1 rounded-full text-[10px] font-bold accent-emerald-badge border w-fit">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                  </span>
-                  <span className="">Betreut durch:</span>
-                  <span className="lowercase font-medium">{userEmail}</span>
-                </div>
-              )}
-            </div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted">
+            {isAdmin && projectId && <span className="font-mono text-[12px]">ID: {projectId}</span>}
+            {!isAdmin && <span>{userGreeting}</span>}
+            {userEmail && (
+              <span className="inline-flex items-center gap-1.5">
+                <Avatar email={userEmail} size={22} />
+                <span>Betreut durch {userEmail.toLowerCase()}</span>
+              </span>
+            )}
           </div>
         </div>
 
-        {/* RECHTE SEITE: Date Range + Update-Info */}
-        <div className="w-full sm:w-auto flex flex-col gap-2 sm:items-end">
-
-          {/* Update-Info (über dem Picker) */}
-          <span className="text-theme-muted text-[10px] flex items-center gap-1">
-            <span>Google Updates: 24h</span>
-            <span className="text-faint">•</span>
-            <span>Semrush Updates: 14 Tage</span>
-          </span>
-
-          <DateRangeSelector
-            value={dateRange}
-            onChange={onDateRangeChange}
-            className="w-full sm:w-auto" // <-- Hier wurde shadow-sm entfernt!
-          />
+        <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:items-end">
+          <span className="text-[12px] text-muted">Google Updates: 24 h · Semrush Updates: 14 Tage</span>
+          <DateRangeSelector value={dateRange} onChange={onDateRangeChange} className="w-full sm:w-auto" />
         </div>
       </div>
-    </div>
+    </header>
   );
 }

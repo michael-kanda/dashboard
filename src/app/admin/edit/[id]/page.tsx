@@ -122,7 +122,7 @@ export default async function EditUserPage({ params }: PageProps) {
 
   if (!id || typeof id !== 'string' || id.length !== 36) {
     return (
-        <div className="min-h-screen bg-surface-secondary p-8">
+        <div className="min-h-screen bg-page px-[clamp(16px,3vw,40px)] pt-7 pb-12">
             <div className="p-8 text-center bg-surface rounded-lg max-w-2xl mx-auto mt-10">
                 <h2 className="text-xl font-bold text-danger mb-4">❌ Ungültige ID</h2>
                 <p>Die angegebene Benutzer-ID ist ungültig.</p>
@@ -146,7 +146,7 @@ export default async function EditUserPage({ params }: PageProps) {
 
   if (!user || loadError) {
      return (
-        <div className="min-h-screen bg-surface-secondary p-8">
+        <div className="min-h-screen bg-page px-[clamp(16px,3vw,40px)] pt-7 pb-12">
             <div className="p-8 bg-surface rounded-lg max-w-2xl mx-auto mt-10">
                 <h2 className="text-xl font-bold text-danger mb-4">Benutzer nicht gefunden</h2>
                 <p>Der Benutzer mit der ID {id} konnte nicht geladen werden.</p>
@@ -163,15 +163,15 @@ export default async function EditUserPage({ params }: PageProps) {
   const userBeingEditedIsAdmin = user.role === 'ADMIN';
 
   return (
-    <div className="min-h-screen bg-surface-secondary p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-page px-[clamp(16px,3vw,40px)] pt-7 pb-12">
+      <div className="max-w-4xl space-y-[22px]">
         
         {/* Benutzerdetails bearbeiten */}
-        <div className="bg-surface p-8 rounded-lg">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">
+        <div className="rounded-container border border-border bg-surface p-6">
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+            <h1 className="text-[22px] font-bold tracking-[-0.02em] text-heading">
               Benutzer <span className="text-accent">{user.email}</span> bearbeiten
-            </h2>
+            </h1>
              <div className="flex gap-2 items-center">
               {user.mandant_id && (
                 <span className="bg-accent-tint text-accent px-3 py-1 rounded-full text-xs font-medium">

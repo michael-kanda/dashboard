@@ -25,15 +25,15 @@ const AiTrafficModelTrendChart = dynamic(
 // Brand-Farben für KI-Quellen-Dots (konsistent mit AiTrafficModelTrendChart)
 const SOURCE_DOT_COLORS: Record<string, string> = {
   chatgpt: '#10a37f',
-  claude: '#d97706',
-  perplexity: '#6366f1',
-  gemini: '#4285f4',
-  bard: '#4285f4',
+  claude: 'var(--dp-chart-3)',
+  perplexity: 'var(--dp-chart-1)',
+  gemini: 'var(--dp-chart-1)',
+  bard: 'var(--dp-chart-1)',
   copilot: '#00a4ef',
   bing: '#00a4ef',
-  you: '#8b5cf6',
-  poe: '#7c3aed',
-  character: '#ec4899',
+  you: 'var(--dp-chart-5)',
+  poe: 'var(--dp-chart-5)',
+  character: 'var(--dp-chart-5)',
 };
 
 function getSourceDotColor(source: string): string {
@@ -41,7 +41,7 @@ function getSourceDotColor(source: string): string {
   for (const [key, color] of Object.entries(SOURCE_DOT_COLORS)) {
     if (lower.includes(key)) return color;
   }
-  return '#9ca3af'; // Neutral grau für unbekannte Quellen
+  return 'var(--dp-text-muted)'; // Neutral grau für unbekannte Quellen
 }
 
 /** Normalisiert einen rohen Quellnamen auf den kanonischen Modell-Key. */
@@ -169,14 +169,14 @@ export default function AiTrafficCard({
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
               <defs>
                 <linearGradient id="google-clean-gradient-ai-traffic" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#4285F4" />
-                  <stop offset="25%" stopColor="#4285F4" />
-                  <stop offset="25%" stopColor="#EA4335" />
-                  <stop offset="50%" stopColor="#EA4335" />
-                  <stop offset="50%" stopColor="#FBBC05" />
-                  <stop offset="75%" stopColor="#FBBC05" />
-                  <stop offset="75%" stopColor="#34A853" />
-                  <stop offset="100%" stopColor="#34A853" />
+                  <stop offset="0%" stopColor="var(--dp-chart-1)" />
+                  <stop offset="25%" stopColor="var(--dp-chart-1)" />
+                  <stop offset="25%" stopColor="var(--dp-chart-4)" />
+                  <stop offset="50%" stopColor="var(--dp-chart-4)" />
+                  <stop offset="50%" stopColor="var(--dp-chart-3)" />
+                  <stop offset="75%" stopColor="var(--dp-chart-3)" />
+                  <stop offset="75%" stopColor="var(--dp-chart-2)" />
+                  <stop offset="100%" stopColor="var(--dp-chart-2)" />
                 </linearGradient>
               </defs>
               <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-ai-traffic)" />

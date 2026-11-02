@@ -88,7 +88,7 @@ type AustriaFeature = {
 };
 
 const MAP_VIEWBOX = { width: 820, height: 420, padding: 34 };
-const GOOGLE_BLUE = '#4285F4';
+const GOOGLE_BLUE = 'var(--dp-chart-1)';
 const austriaFeatures = (austriaGeoJson as unknown as { features: AustriaFeature[] }).features;
 
 const austriaBounds = (() => {
@@ -689,7 +689,7 @@ export default function LocalSeoMapWidget({
                 >
                   <title>{location.name}</title>
                   <g transform="scale(0.44) translate(-50 -30)">
-                    <ellipse cx="50" cy="78" rx="32" ry="13" fill={isActive ? GOOGLE_BLUE : '#6B7280'} opacity={isActive ? '0.22' : '0.25'} />
+                    <ellipse cx="50" cy="78" rx="32" ry="13" fill={isActive ? GOOGLE_BLUE : 'var(--dp-text-muted)'} opacity={isActive ? '0.22' : '0.25'} />
                     <g fill={isActive ? GOOGLE_BLUE : '#4B5563'}>
                       <rect x="46.5" y="44" width="7" height="30" rx="3.5" />
                       <circle cx="50" cy="30" r="18" />

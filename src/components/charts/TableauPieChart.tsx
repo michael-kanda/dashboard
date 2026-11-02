@@ -19,16 +19,16 @@ import { formatReportingPeriod, type ReportingPeriod } from '@/lib/reporting-per
 
 // Farben definieren
 const KPI_COLORS = [
-  '#3b82f6', // Blue
-  '#8b5cf6', // Purple
-  '#10b981', // Emerald
-  '#f59e0b', // Amber
-  '#ec4899', // Pink
-  '#6366f1', // Indigo
-  '#06b6d4', // Cyan
+  'var(--dp-chart-1)', // Blue
+  'var(--dp-chart-5)', // Purple
+  'var(--dp-chart-2)', // Emerald
+  'var(--dp-chart-3)', // Amber
+  'var(--dp-chart-5)', // Pink
+  'var(--dp-chart-1)', // Indigo
+  'var(--dp-chart-6)', // Cyan
 ];
 
-const LIGHT_COLORS = ['#f59e0b', '#06b6d4', '#10b981', '#fcd34d'];
+const LIGHT_COLORS = ['var(--dp-chart-3)', 'var(--dp-chart-6)', 'var(--dp-chart-2)', '#fcd34d'];
 
 interface TableauPieChartProps {
   data?: ChartEntry[];
@@ -198,14 +198,14 @@ export default function TableauPieChart({
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
               <defs>
                 <linearGradient id="google-clean-gradient-pie-error" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#4285F4" />
-                  <stop offset="25%" stopColor="#4285F4" />
-                  <stop offset="25%" stopColor="#EA4335" />
-                  <stop offset="50%" stopColor="#EA4335" />
-                  <stop offset="50%" stopColor="#FBBC05" />
-                  <stop offset="75%" stopColor="#FBBC05" />
-                  <stop offset="75%" stopColor="#34A853" />
-                  <stop offset="100%" stopColor="#34A853" />
+                  <stop offset="0%" stopColor="var(--dp-chart-1)" />
+                  <stop offset="25%" stopColor="var(--dp-chart-1)" />
+                  <stop offset="25%" stopColor="var(--dp-chart-4)" />
+                  <stop offset="50%" stopColor="var(--dp-chart-4)" />
+                  <stop offset="50%" stopColor="var(--dp-chart-3)" />
+                  <stop offset="75%" stopColor="var(--dp-chart-3)" />
+                  <stop offset="75%" stopColor="var(--dp-chart-2)" />
+                  <stop offset="100%" stopColor="var(--dp-chart-2)" />
                 </linearGradient>
               </defs>
               <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-pie-error)" />
@@ -229,14 +229,14 @@ export default function TableauPieChart({
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
               <defs>
                 <linearGradient id="google-clean-gradient-pie-empty" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#4285F4" />
-                  <stop offset="25%" stopColor="#4285F4" />
-                  <stop offset="25%" stopColor="#EA4335" />
-                  <stop offset="50%" stopColor="#EA4335" />
-                  <stop offset="50%" stopColor="#FBBC05" />
-                  <stop offset="75%" stopColor="#FBBC05" />
-                  <stop offset="75%" stopColor="#34A853" />
-                  <stop offset="100%" stopColor="#34A853" />
+                  <stop offset="0%" stopColor="var(--dp-chart-1)" />
+                  <stop offset="25%" stopColor="var(--dp-chart-1)" />
+                  <stop offset="25%" stopColor="var(--dp-chart-4)" />
+                  <stop offset="50%" stopColor="var(--dp-chart-4)" />
+                  <stop offset="50%" stopColor="var(--dp-chart-3)" />
+                  <stop offset="75%" stopColor="var(--dp-chart-3)" />
+                  <stop offset="75%" stopColor="var(--dp-chart-2)" />
+                  <stop offset="100%" stopColor="var(--dp-chart-2)" />
                 </linearGradient>
               </defs>
               <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-pie-empty)" />
@@ -258,14 +258,14 @@ export default function TableauPieChart({
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
             <defs>
               <linearGradient id="google-clean-gradient-pie-default" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#4285F4" />
-                <stop offset="25%" stopColor="#4285F4" />
-                <stop offset="25%" stopColor="#EA4335" />
-                <stop offset="50%" stopColor="#EA4335" />
-                <stop offset="50%" stopColor="#FBBC05" />
-                <stop offset="75%" stopColor="#FBBC05" />
-                <stop offset="75%" stopColor="#34A853" />
-                <stop offset="100%" stopColor="#34A853" />
+                <stop offset="0%" stopColor="var(--dp-chart-1)" />
+                <stop offset="25%" stopColor="var(--dp-chart-1)" />
+                <stop offset="25%" stopColor="var(--dp-chart-4)" />
+                <stop offset="50%" stopColor="var(--dp-chart-4)" />
+                <stop offset="50%" stopColor="var(--dp-chart-3)" />
+                <stop offset="75%" stopColor="var(--dp-chart-3)" />
+                <stop offset="75%" stopColor="var(--dp-chart-2)" />
+                <stop offset="100%" stopColor="var(--dp-chart-2)" />
               </linearGradient>
             </defs>
             <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-pie-default)" />

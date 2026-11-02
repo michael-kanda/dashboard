@@ -112,7 +112,7 @@ export default function TableauKpiGrid({
           value={kpis.impressions.value}
           change={kpis.impressions.change}
           data={allChartData?.impressions}
-          color="#8b5cf6"
+          color="var(--dp-chart-5)"
           error={gscError}
           isLoading={isLoading}
           comparison={getComparison(kpis.impressions)}
@@ -124,7 +124,7 @@ export default function TableauKpiGrid({
           value={kpis.clicks.value}
           change={kpis.clicks.change}
           data={allChartData?.clicks}
-          color="#3b82f6"
+          color="var(--dp-chart-1)"
           error={gscError}
           isLoading={isLoading}
           comparison={getComparison(kpis.clicks)}
@@ -137,7 +137,7 @@ export default function TableauKpiGrid({
             value={kpis.newUsers.value}
             change={kpis.newUsers.change}
             data={allChartData?.newUsers}
-            color="#6366f1"
+            color="var(--dp-chart-1)"
             error={ga4Error}
             isLoading={isLoading}
             comparison={getComparison(kpis.newUsers)}
@@ -167,7 +167,7 @@ export default function TableauKpiGrid({
             value={kpis.engagementRate.value}
             change={kpis.engagementRate.change}
             data={allChartData?.engagementRate}
-            color="#ec4899"
+            color="var(--dp-chart-5)"
             error={ga4Error}
             isLoading={isLoading}
             formatValue={formatPercent}
@@ -182,7 +182,7 @@ export default function TableauKpiGrid({
             value={kpis.conversions.value}
             change={kpis.conversions.change}
             data={allChartData?.conversions}
-            color="#10b981"
+            color="var(--dp-chart-2)"
             error={ga4Error}
             isLoading={isLoading}
             comparison={getComparison(kpis.conversions)}
@@ -196,7 +196,7 @@ export default function TableauKpiGrid({
             value={kpis.avgEngagementTime.value}
             change={kpis.avgEngagementTime.change}
             data={allChartData?.avgEngagementTime}
-            color="#f59e0b"
+            color="var(--dp-chart-3)"
             error={ga4Error}
             isLoading={isLoading}
             formatValue={formatTime}
@@ -211,7 +211,7 @@ export default function TableauKpiGrid({
             value={kpis.bounceRate.value}
             change={kpis.bounceRate.change}
             data={allChartData?.bounceRate}
-            color="#f43f5e"
+            color="var(--dp-chart-4)"
             error={ga4Error}
             isLoading={isLoading}
             formatValue={formatPercent}

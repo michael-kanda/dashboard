@@ -23,17 +23,17 @@ import { formatReportingPeriod, type ReportingPeriod } from '@/lib/reporting-per
 
 // --- KONFIGURATION ---
 const KPI_CONFIG: Record<string, { label: string; color: string; gradientId: string; source: string }> = {
-  impressions: { label: 'Impressionen', color: '#8b5cf6', gradientId: 'gradPurple', source: 'GSC' },
-  clicks: { label: 'Google Klicks', color: '#3b82f6', gradientId: 'gradBlue', source: 'GSC' },
-  newUsers: { label: 'Neue Besucher', color: '#6366f1', gradientId: 'gradIndigo', source: 'GA4' },
+  impressions: { label: 'Impressionen', color: 'var(--dp-chart-5)', gradientId: 'gradPurple', source: 'GSC' },
+  clicks: { label: 'Google Klicks', color: 'var(--dp-chart-1)', gradientId: 'gradBlue', source: 'GSC' },
+  newUsers: { label: 'Neue Besucher', color: 'var(--dp-chart-1)', gradientId: 'gradIndigo', source: 'GA4' },
   totalUsers: { label: 'Besucher', color: '#0ea5e9', gradientId: 'gradSky', source: 'GA4' },
-  sessions: { label: 'Sessions', color: '#06b6d4', gradientId: 'gradCyan', source: 'GA4' },
-  aiTraffic: { label: 'KI-Traffic', color: '#7c3aed', gradientId: 'gradAi', source: 'GA4' },
-  genAiImpressions: { label: 'Google GenAI', color: '#4285f4', gradientId: 'gradGoogleGenAi', source: 'Search Console' },
-  engagementRate: { label: 'Interaktionsrate', color: '#ec4899', gradientId: 'gradPink', source: 'GA4' },
-  conversions: { label: 'Conversions', color: '#10b981', gradientId: 'gradEmerald', source: 'GA4' },
-  avgEngagementTime: { label: 'Ø Verweildauer', color: '#f59e0b', gradientId: 'gradAmber', source: 'GA4' },
-  bounceRate: { label: 'Absprungrate', color: '#f43f5e', gradientId: 'gradRose', source: 'GA4' },
+  sessions: { label: 'Sessions', color: 'var(--dp-chart-6)', gradientId: 'gradCyan', source: 'GA4' },
+  aiTraffic: { label: 'KI-Traffic', color: 'var(--dp-chart-5)', gradientId: 'gradAi', source: 'GA4' },
+  genAiImpressions: { label: 'Google GenAI', color: 'var(--dp-chart-1)', gradientId: 'gradGoogleGenAi', source: 'Search Console' },
+  engagementRate: { label: 'Interaktionsrate', color: 'var(--dp-chart-5)', gradientId: 'gradPink', source: 'GA4' },
+  conversions: { label: 'Conversions', color: 'var(--dp-chart-2)', gradientId: 'gradEmerald', source: 'GA4' },
+  avgEngagementTime: { label: 'Ø Verweildauer', color: 'var(--dp-chart-3)', gradientId: 'gradAmber', source: 'GA4' },
+  bounceRate: { label: 'Absprungrate', color: 'var(--dp-chart-4)', gradientId: 'gradRose', source: 'GA4' },
   paidSearch: { label: 'Paid Search', color: '#14b8a6', gradientId: 'gradTeal', source: 'GA4' },
 };
 
@@ -313,14 +313,14 @@ export default function KpiTrendChart({
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12" width="100%" height="12">
               <defs>
                 <linearGradient id="google-clean-gradient-verlauf" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#4285F4" />
-                  <stop offset="25%" stopColor="#4285F4" />
-                  <stop offset="25%" stopColor="#EA4335" />
-                  <stop offset="50%" stopColor="#EA4335" />
-                  <stop offset="50%" stopColor="#FBBC05" />
-                  <stop offset="75%" stopColor="#FBBC05" />
-                  <stop offset="75%" stopColor="#34A853" />
-                  <stop offset="100%" stopColor="#34A853" />
+                  <stop offset="0%" stopColor="var(--dp-chart-1)" />
+                  <stop offset="25%" stopColor="var(--dp-chart-1)" />
+                  <stop offset="25%" stopColor="var(--dp-chart-4)" />
+                  <stop offset="50%" stopColor="var(--dp-chart-4)" />
+                  <stop offset="50%" stopColor="var(--dp-chart-3)" />
+                  <stop offset="75%" stopColor="var(--dp-chart-3)" />
+                  <stop offset="75%" stopColor="var(--dp-chart-2)" />
+                  <stop offset="100%" stopColor="var(--dp-chart-2)" />
                 </linearGradient>
               </defs>
               <rect width="100%" height="12" rx="6" fill="url(#google-clean-gradient-verlauf)" />
