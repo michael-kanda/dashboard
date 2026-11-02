@@ -44,7 +44,7 @@ export default function GlobalHeader({
             <h1 className="truncate text-[29px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">{domain || 'Projekt Dashboard'}</h1>
             {isAdmin && <StatusPill>Admin</StatusPill>}
           </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] text-muted">
+          <div className="mt-1.5 flex flex-col items-start gap-1 text-[14px] text-muted">
             {isAdmin && projectId && <span className="font-mono text-[13px]">ID: {projectId}</span>}
             {!isAdmin && <span>{userGreeting}</span>}
             {userEmail && (
