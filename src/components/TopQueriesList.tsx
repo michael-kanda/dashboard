@@ -165,7 +165,7 @@ export default function TopQueriesList({
               placeholder="Query oder Pfad..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="widget-control pl-8 pr-8 py-1.5 border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint bg-surface"
+              className="widget-control pl-8 pr-8 py-1.5 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-accent w-56 text-body placeholder-faint bg-surface"
             />
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
             {searchTerm && (
@@ -182,7 +182,7 @@ export default function TopQueriesList({
             type="button"
             onClick={handleExportCsv}
             disabled={!displayedQueries.length}
-            className="widget-control inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-theme-border-default rounded-md text-body hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors print:hidden"
+            className="widget-control inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-border rounded-md text-body hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors print:hidden"
             title="Als CSV herunterladen"
           >
             <Download size={12} />
@@ -214,7 +214,7 @@ export default function TopQueriesList({
       <div className={cn("dashboard-widget-surface rounded-xl p-5 flex flex-col", className)}>
         {renderHeader('Quelle GSC')}
         <div className="py-12 text-center flex flex-col items-center gap-2">
-          <ExclamationTriangleFill className="text-red-500" size={24} />
+          <ExclamationTriangleFill className="text-danger" size={24} />
           <span className="widget-section-title text-strong">Fehler bei GSC-Daten</span>
           <p className="text-xs text-muted max-w-md" title={error}>
             Die Suchanfragen konnten nicht geladen werden.
@@ -271,7 +271,7 @@ export default function TopQueriesList({
               return (
                 <div
                   key={`${query.query}-${index}`}
-                  className="group border-t border-theme-border-subtle py-3 first:border-t-0"
+                  className="group border-t border-border-subtle py-3 first:border-t-0"
                 >
                   <div className="mb-2 flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
@@ -334,7 +334,7 @@ export default function TopQueriesList({
 
       {/* Footer */}
       {displayedQueries.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-theme-border-subtle flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted">
+        <div className="mt-4 pt-3 border-t border-border-subtle flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted">
           <span>
             <span className="text-faint">Klicks gesamt</span>{' '}
             <span className="text-strong font-medium ml-1">{totalClicks.toLocaleString('de-DE')}</span>

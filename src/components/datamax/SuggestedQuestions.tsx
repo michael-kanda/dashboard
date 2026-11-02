@@ -30,11 +30,11 @@ export function SuggestedQuestions({
         transition={{ type: 'spring', damping: 15 }}
         className="
           w-16 h-16 rounded-lg mb-4
-          bg-[#188BDB]/10
+          bg-accent-solid/10
           flex items-center justify-center
         "
       >
-        <Robot size={32} className="text-[#188BDB]" />
+        <Robot size={32} className="text-accent" />
       </motion.div>
 
       {/* Greeting */}
@@ -63,7 +63,7 @@ export function SuggestedQuestions({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-xs text-muted uppercase mb-3"
+            className="text-xs text-muted mb-3"
           >
             Vorschläge basierend auf deinen Daten
           </motion.p>
@@ -80,7 +80,7 @@ export function SuggestedQuestions({
                 w-full p-3 rounded-md
                 bg-surface border border-border-subtle
                 text-left text-sm text-body
-                hover:border-[#188BDB]/50 hover:bg-[#188BDB]/5
+                hover:border-accent/50 hover:bg-accent-solid/5
                 disabled:opacity-50 disabled:cursor-not-allowed
                 transition-all duration-200
                 flex items-center gap-2
@@ -89,7 +89,7 @@ export function SuggestedQuestions({
             >
               <Lightning 
                 size={14} 
-                className="text-[#188BDB] shrink-0 transition-colors"
+                className="text-accent shrink-0 transition-colors"
               />
               <span className="group-hover:text-heading transition-colors">
                 {question}

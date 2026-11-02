@@ -49,8 +49,8 @@ export default function DateRangeSelector({
           onClick={() => onChange(option)}
           className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 text-center ${
             value === option
-              ? 'bg-[#188BDB] text-white shadow-sm'
-              : 'text-body hover:bg-surface-secondary border border-theme-border-default'
+              ? 'bg-accent-solid text-white'
+              : 'text-body hover:bg-surface-secondary border border-border'
           }`}
         >
           {shortLabels[option]}

@@ -52,7 +52,7 @@ export default function UserLogbook({ userId }: UserLogbookProps) {
 
     return (
         // Container für das Logbuch
-        <div className="bg-surface p-8 rounded-lg shadow-md">
+        <div className="bg-surface p-8 rounded-lg">
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-strong">
                 <ClockHistory size={20} />
                 Aktivitäts-Logbuch (Redaktionsplan)
@@ -60,7 +60,7 @@ export default function UserLogbook({ userId }: UserLogbookProps) {
             {/* Container mit Scrollbalken, falls die Liste lang wird */}
             <div className="border rounded-lg max-h-96 overflow-y-auto">
                 {isLoading && <p className="p-4 text-sm text-muted">Lade Logs...</p>}
-                {error && <p className="p-4 text-sm text-red-600">Fehler beim Laden der Logs.</p>}
+                {error && <p className="p-4 text-sm text-danger">Fehler beim Laden der Logs.</p>}
                 {logs && logs.length === 0 && (
                     <p className="p-4 text-sm text-muted italic">
                         Für diesen Benutzer sind noch keine Log-Einträge vorhanden.
@@ -68,7 +68,7 @@ export default function UserLogbook({ userId }: UserLogbookProps) {
                 )}
                 {/* Wenn Logs vorhanden sind, zeige sie als Liste an */}
                 {logs && logs.length > 0 && (
-                    <ul className="divide-y divide-theme-border-default">
+                    <ul className="divide-y divide-border-subtle">
                         {logs.map((log) => (
                             <li key={log.id} className="p-4 space-y-2">
                                 {/* Die Aktion, z.B. "Status geändert..." */}

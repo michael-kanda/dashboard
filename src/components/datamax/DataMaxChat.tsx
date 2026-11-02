@@ -123,9 +123,9 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
         className={`
           fixed bottom-6 right-6 z-50
           w-14 h-14 rounded-full
-          bg-[#188BDB] text-white shadow-lg
+          bg-accent-solid text-white shadow-lg
           flex items-center justify-center
-          hover:scale-105 hover:bg-[#1479BF] hover:shadow-xl
+          hover:scale-105 hover:bg-accent-solid hover:shadow-xl
           transition-all duration-200
           ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}
           ${className}
@@ -167,7 +167,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
               <div className="flex items-center gap-3">
                 <div className="
                   w-10 h-10 rounded-md
-                  bg-[#188BDB]/10 text-[#188BDB]
+                  bg-accent-solid/10 text-accent
                   flex items-center justify-center
                 ">
                   <Robot size={20} />
@@ -277,7 +277,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                     bg-surface-secondary border border-border-subtle rounded-md
                     ${fontSizeClass} text-heading
                     placeholder:text-muted
-                    focus:outline-none focus:border-[#188BDB] focus:ring-2 focus:ring-[#188BDB]/15
+                    focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15
                     disabled:opacity-50
                     transition-all
                   `}
@@ -301,8 +301,8 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                     disabled={!inputValue.trim()}
                     className="
                       p-2.5 rounded-md
-                      bg-[#188BDB] text-white
-                      hover:bg-[#1479BF]
+                      bg-accent-solid text-white
+                      hover:bg-accent-solid
                       disabled:opacity-50 disabled:cursor-not-allowed
                       transition-colors
                     "

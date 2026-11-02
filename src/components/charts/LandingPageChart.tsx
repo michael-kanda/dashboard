@@ -244,7 +244,7 @@ export default function LandingPageChart({
                   placeholder="Seite oder Suchbegriff..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="widget-control pl-8 pr-3 py-1.5 border border-theme-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56 text-body placeholder-faint bg-surface"
+                  className="widget-control pl-8 pr-3 py-1.5 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-accent w-56 text-body placeholder-faint bg-surface"
                 />
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
               </div>
@@ -252,7 +252,7 @@ export default function LandingPageChart({
                 type="button"
                 onClick={handleExportCsv}
                 disabled={!sortedData.length}
-                className="widget-control inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-theme-border-default rounded-md text-body hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors print:hidden"
+                className="widget-control inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-border rounded-md text-body hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors print:hidden"
                 title="Als CSV herunterladen"
               >
                 <Download size={12} />
@@ -295,13 +295,13 @@ export default function LandingPageChart({
               return (
                 <div
                   key={i}
-                  className="py-3 border-t border-theme-border-subtle first:border-t-0 group"
+                  className="py-3 border-t border-border-subtle first:border-t-0 group"
                 >
                   {/* Pfad + Hero-Metrik */}
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex-1 min-w-0">
                       <div
-                        className={`widget-item-title text-heading truncate mb-1 ${hasQueries ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}
+                        className={`widget-item-title text-heading truncate mb-1 ${hasQueries ? 'cursor-pointer hover:text-accent transition-colors' : ''}`}
                         onClick={() => hasQueries && toggleExpanded(page.path)}
                         title={page.path}
                       >
@@ -381,7 +381,7 @@ export default function LandingPageChart({
                           e.stopPropagation();
                           loadFollowUpPaths(page.path);
                         }}
-                        className="flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition-colors hover:border-blue-300 hover:bg-blue-100 dark:border-blue-900/70 dark:bg-blue-950/30 dark:text-blue-300 dark:hover:bg-blue-950/50"
+                        className="flex items-center gap-1.5 rounded-md border border-border bg-accent-tint px-2.5 py-1 text-xs font-medium text-accent transition-colors hover:border-border hover:bg-accent-tint"
                         title="Folgepfade anzeigen"
                       >
                         Folgepfade
@@ -392,8 +392,8 @@ export default function LandingPageChart({
 
                   {/* Expanded: weitere Suchbegriffe */}
                   {isExpanded && additionalQueries.length > 0 && (
-                    <div className="ml-3 mt-3 pl-3 border-l-2 border-theme-border-subtle">
-                      <div className="text-[10px] text-faint mb-1.5 uppercase tracking-wider font-medium">Weitere Suchbegriffe</div>
+                    <div className="ml-3 mt-3 pl-3 border-l-2 border-border-subtle">
+                      <div className="text-[10px] text-faint mb-1.5 font-medium">Weitere Suchbegriffe</div>
                       <div className="text-xs text-body flex flex-wrap gap-x-3 gap-y-1">
                         {additionalQueries.map((q, qi) => (
                           <span
@@ -417,7 +417,7 @@ export default function LandingPageChart({
         )}
 
         {sortedData.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-theme-border-subtle flex flex-wrap items-center justify-between gap-x-5 gap-y-2 text-xs text-muted">
+          <div className="mt-4 pt-3 border-t border-border-subtle flex flex-wrap items-center justify-between gap-x-5 gap-y-2 text-xs text-muted">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
               <span>
                 <span className="text-faint">Neue Nutzer gesamt</span>{' '}
@@ -456,10 +456,10 @@ export default function LandingPageChart({
           <div className="dashboard-widget-surface w-full max-w-3xl flex flex-col overflow-hidden max-h-[85vh] rounded-lg animate-in zoom-in-95 duration-200">
 
             {/* Modal Header */}
-            <div className="flex items-start justify-between px-6 py-5 border-b border-theme-border-subtle bg-surface flex-shrink-0">
+            <div className="flex items-start justify-between px-6 py-5 border-b border-border-subtle bg-surface flex-shrink-0">
               <div className="flex items-center gap-3 overflow-hidden">
-                <div className="w-9 h-9 rounded-md bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center flex-shrink-0">
-                  <Diagram3Fill className="text-blue-600 dark:text-blue-300" size={18} />
+                <div className="w-9 h-9 rounded-md bg-accent-tint flex items-center justify-center flex-shrink-0">
+                  <Diagram3Fill className="text-accent" size={18} />
                 </div>
                 <div className="min-w-0">
                   <h4 className="widget-title text-heading">
@@ -515,19 +515,19 @@ export default function LandingPageChart({
               {/* Loading State */}
               {isLoadingFollowUp && (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <div className="w-8 h-8 border-3 border-accent border-t-transparent rounded-full animate-spin mb-4"></div>
                   <span className="text-muted font-medium">Analysiere Nutzerverhalten...</span>
                 </div>
               )}
 
               {/* Error State */}
               {followUpError && !isLoadingFollowUp && (
-                <div className="bg-red-50 border border-red-100 rounded-xl p-6 text-center">
-                  <p className="text-red-600 font-medium mb-2">Fehler beim Laden der Daten</p>
-                  <p className="text-red-500 text-sm mb-4">{followUpError}</p>
+                <div className="bg-danger-bg border border-border rounded-xl p-6 text-center">
+                  <p className="text-danger font-medium mb-2">Fehler beim Laden der Daten</p>
+                  <p className="text-danger text-sm mb-4">{followUpError}</p>
                   <button
                     onClick={() => selectedLandingPage && loadFollowUpPaths(selectedLandingPage)}
-                    className="px-4 py-2 bg-surface text-red-600 text-sm font-medium rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
+                    className="px-4 py-2 bg-surface text-danger text-sm font-medium rounded-lg border border-border hover:bg-danger-bg transition-colors"
                   >
                     Erneut versuchen
                   </button>
@@ -538,15 +538,15 @@ export default function LandingPageChart({
               {followUpData && !isLoadingFollowUp && !followUpError && (
                 <div className="space-y-4">
                   {/* Summary */}
-                  <div className="grid grid-cols-2 gap-6 border-b border-theme-border-subtle pb-5 mb-5">
+                  <div className="grid grid-cols-2 gap-6 border-b border-border-subtle pb-5 mb-5">
                     <div>
-                      <div className="text-xs text-muted uppercase font-semibold tracking-wider mb-1">Einstiege</div>
+                      <div className="text-xs text-muted font-semibold mb-1">Einstiege</div>
                       <div className="widget-metric text-heading">
                         {followUpData.landingPageSessions.toLocaleString()}
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-muted uppercase font-semibold tracking-wider mb-1">Verschiedene Folgepfade</div>
+                      <div className="text-xs text-muted font-semibold mb-1">Verschiedene Folgepfade</div>
                       <div className="widget-metric text-heading">
                         {followUpData.followUpPaths.length}
                       </div>
@@ -554,7 +554,7 @@ export default function LandingPageChart({
                   </div>
 
                   {followUpData.followUpPaths.length === 0 ? (
-                    <div className="text-center py-12 bg-surface-secondary rounded-xl border border-dashed border-theme-border-default">
+                    <div className="text-center py-12 bg-surface-secondary rounded-xl border border-dashed border-border">
                       <div className="text-faint mb-2">📉</div>
                       <h5 className="text-body font-medium mb-1">Keine Folgepfade gefunden</h5>
                       <p className="text-muted text-sm max-w-md mx-auto">
@@ -573,9 +573,9 @@ export default function LandingPageChart({
                         return (
                           <div
                             key={idx}
-                            className="flex items-center gap-4 p-3 bg-surface-secondary border border-theme-border-subtle rounded-md transition-colors hover:border-theme-border-strong group"
+                            className="flex items-center gap-4 p-3 bg-surface-secondary border border-border-subtle rounded-md transition-colors hover:border-theme-border-strong group"
                           >
-                            <div className="widget-control w-8 h-8 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 rounded-md flex items-center justify-center flex-shrink-0">
+                            <div className="widget-control w-8 h-8 bg-accent-tint text-accent rounded-md flex items-center justify-center flex-shrink-0">
                               {idx + 1}
                             </div>
 
@@ -587,14 +587,14 @@ export default function LandingPageChart({
                               </div>
                               <div className="h-2 bg-surface-tertiary rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-blue-500 rounded-full"
+                                  className="h-full bg-accent-solid rounded-full"
                                   style={{ width: `${barWidth}%` }}
                                 />
                               </div>
                             </div>
 
                             <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                              <div className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs font-semibold min-w-[80px] text-center">
+                              <div className="bg-accent-solid text-white px-3 py-1.5 rounded-md text-xs font-semibold min-w-[80px] text-center">
                                 {fp.sessions.toLocaleString()} Sess.
                               </div>
                               <div className="bg-surface-tertiary text-body px-3 py-1.5 rounded-md text-xs font-medium min-w-[65px] text-center" title="Anteil der Landingpage-Besucher">
@@ -612,7 +612,7 @@ export default function LandingPageChart({
 
             {/* Modal Footer */}
             {followUpData && !isLoadingFollowUp && !followUpError && (
-              <div className="px-6 py-4 border-t border-theme-border-subtle bg-surface-secondary text-[11px] text-muted">
+              <div className="px-6 py-4 border-t border-border-subtle bg-surface-secondary text-[11px] text-muted">
                 Die Prozentangabe rechts zeigt, wie viel Prozent der gesamten Einstiege auf diesen speziellen Folgepfad weitergeklickt haben.
               </div>
             )}

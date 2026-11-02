@@ -6,13 +6,13 @@ import SemrushKeywordTableBase, { type SemrushTheme } from './SemrushKeywordTabl
 
 // Definition des Farbschemas für Kampagne 1 (Österreich) - ORANGE
 const themeKampagne1: SemrushTheme = {
-  headerGradient: "from-orange-600 to-orange-500",
+  headerGradient: "",
   headerText: "text-orange-100",
   headerTextMuted: "text-orange-50 opacity-75",
   tableHeaderBg: "bg-orange-600",
   tableHeaderBorder: "border-orange-500",
   tableHeaderHover: "hover:bg-orange-700",
-  tableRowHover: "hover:bg-orange-50",
+  tableRowHover: "hover:bg-warning-bg",
   // Hex-Farben für inline-styles
   tableHeaderBgColor: "#ea580c", // orange-600
   tableHeaderHoverColor: "#c2410c", // orange-700
@@ -34,7 +34,7 @@ export default function SemrushTopKeywords({ projectId }: SemrushTopKeywordsProp
       theme={themeKampagne1}
       debugInfo={{
         title: "Debug (Kampagne 1)",
-        classes: "bg-blue-50 border-blue-200"
+        classes: "bg-accent-tint border-border"
       }}
     />
   );

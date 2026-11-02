@@ -26,7 +26,7 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
         flex items-center justify-center
         ${isUser 
           ? 'bg-surface-tertiary text-muted'
-          : 'bg-[#188BDB]/10 text-[#188BDB]'
+          : 'bg-accent-solid/10 text-accent'
         }
       `}>
         {isUser ? <Person size={14} /> : <Robot size={14} />}
@@ -36,8 +36,8 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
       <div className={`
         max-w-[85%] px-4 py-3 rounded-lg
         ${isUser 
-          ? 'bg-[#188BDB] text-white rounded-br-sm'
-          : 'bg-surface text-body rounded-bl-sm shadow-sm border border-border-subtle'
+          ? 'bg-accent-solid text-white rounded-br-sm'
+          : 'bg-surface text-body rounded-bl-sm border border-border-subtle'
         }
       `}>
         {/* Content mit Markdown */}
@@ -91,7 +91,7 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
                     const isOrdered = (props as any).ordered;
                     return (
                       <li className="flex gap-2 text-body">
-                        <span className={`shrink-0 mt-0.5 ${isOrdered ? 'text-[#188BDB] font-semibold' : 'text-[#188BDB]'}`}>
+                        <span className={`shrink-0 mt-0.5 ${isOrdered ? 'text-accent font-semibold' : 'text-accent'}`}>
                           {isOrdered ? '•' : '•'}
                         </span>
                         <span className="flex-1">{children}</span>
@@ -103,7 +103,7 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
                   code: ({ children, className }) => {
                     const isInline = !className;
                     return isInline ? (
-                      <code className="bg-surface-tertiary text-[#1479BF] px-1.5 py-0.5 rounded font-mono" style={{ fontSize: '0.85em' }}>
+                      <code className="bg-surface-tertiary text-accent px-1.5 py-0.5 rounded font-mono" style={{ fontSize: '0.85em' }}>
                         {children}
                       </code>
                     ) : (
@@ -122,7 +122,7 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
                       href={href} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                    className="text-[#188BDB] hover:text-[#1479BF] underline underline-offset-2"
+                    className="text-accent hover:text-accent underline underline-offset-2"
                     >
                       {children}
                     </a>
@@ -130,7 +130,7 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
                   
                   // Blockquote
                   blockquote: ({ children }) => (
-                    <blockquote className="border-l-3 border-[#188BDB]/40 pl-3 my-2 text-muted italic">
+                    <blockquote className="border-l-3 border-accent/40 pl-3 my-2 text-muted italic">
                       {children}
                     </blockquote>
                   ),

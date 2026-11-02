@@ -79,7 +79,7 @@ export default function DashboardInfoWidget({
                     type="button"
                     onClick={save}
                     disabled={isSaving}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-success-bg px-2.5 py-1.5 text-xs font-medium text-success transition-colors hover:bg-success-bg disabled:opacity-50"
                   >
                     <Check2 size={14} />
                     {isSaving ? 'Speichert...' : 'Speichern'}
@@ -115,13 +115,13 @@ export default function DashboardInfoWidget({
               onChange={(event) => setDraftText(event.target.value)}
               rows={8}
               maxLength={5000}
-              className="w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-[11.2px] leading-relaxed text-body outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-[11.2px] leading-relaxed text-body outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
             />
             <div className="flex items-center justify-between text-[11px] text-muted">
               <span>Leer speichern setzt wieder den Standardtext.</span>
               <span>{draftText.length}/5000</span>
             </div>
-            {saveError && <p className="text-xs text-red-500">{saveError}</p>}
+            {saveError && <p className="text-xs text-danger">{saveError}</p>}
           </div>
         ) : (
           <div className="whitespace-pre-line text-[9.6px] sm:text-[11.2px] leading-relaxed text-muted">

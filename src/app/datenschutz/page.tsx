@@ -7,25 +7,25 @@ export const metadata: Metadata = {
 
 export default function DatenschutzPage() {
   return (
-    <div className="bg-white py-12">
+    <div className="bg-surface py-12">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-heading">
           Datenschutzerklärung
         </h1>
 
         <section>
-          <p className="text-gray-700">
+          <p className="text-body">
             Verantwortlicher im Sinne der Datenschutzgesetze, insbesondere der
             EU-Datenschutzgrundverordnung (DSGVO), ist:
           </p>
-          <p className="text-gray-700 mt-4">
+          <p className="text-body mt-4">
             Michael Kanda
             <br />
             Schlachthammerstraße 86/6
             <br />
             1220 Wien, Österreich
           </p>
-          <p className="text-gray-700 mt-4">
+          <p className="text-body mt-4">
             E-Mail: michael@designare.at
             <br />
             Telefon: +43 664 94 60 890
@@ -33,10 +33,10 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-heading mt-8 mb-4">
             1. Allgemeines
           </h2>
-          <p className="text-gray-700">
+          <p className="text-body">
             Der Schutz Ihrer persönlichen Daten ist mir ein besonderes Anliegen.
             Ich verarbeite Ihre Daten daher ausschließlich auf Grundlage der
             gesetzlichen Bestimmungen (DSGVO, TKG 2021). Diese
@@ -47,14 +47,14 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-heading mt-8 mb-4">
             2. Art der verarbeiteten Daten
           </h2>
-          <p className="text-gray-700 mb-4">
+          <p className="text-body mb-4">
             Im Rahmen der Nutzung dieses Dienstes werden folgende Datenkategorien
             verarbeitet:
           </p>
-          <ul className="list-disc list-outside space-y-2 pl-6 text-gray-700">
+          <ul className="list-disc list-outside space-y-2 pl-6 text-body">
             <li>
               <strong>Bestandsdaten:</strong> E-Mail-Adresse, Passwort
               (verschlüsselt gespeichert), zugewiesene Rolle (z.B. ADMIN,
@@ -84,13 +84,13 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-heading mt-8 mb-4">
             3. Zweck und Rechtsgrundlage der Verarbeitung
           </h2>
-          <p className="text-gray-700 mb-4">
+          <p className="text-body mb-4">
             Die Verarbeitung Ihrer Daten dient folgenden Zwecken:
           </p>
-          <ul className="list-disc list-outside space-y-2 pl-6 text-gray-700">
+          <ul className="list-disc list-outside space-y-2 pl-6 text-body">
             <li>
               <strong>Zurverfügungstellung des Dienstes:</strong> Um Ihnen den
               Login und die Nutzung der Dashboard-Funktionen zu ermöglichen
@@ -120,14 +120,14 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-heading mt-8 mb-4">
             4. Empfänger der Daten / Drittanbieter
           </h2>
-          <p className="text-gray-700 mb-4">
+          <p className="text-body mb-4">
             Ihre Daten werden nur weitergegeben, wenn dies zur Erbringung des
             Dienstes technisch notwendig ist.
           </p>
-          <ul className="list-disc list-outside space-y-2 pl-6 text-gray-700">
+          <ul className="list-disc list-outside space-y-2 pl-6 text-body">
             <li>
               <strong>Vercel (Hosting & Datenbank):</strong> Diese Webseite und
               die dazugehörige Datenbank (`@vercel/postgres`) werden bei Vercel
@@ -153,10 +153,10 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-heading mt-8 mb-4">
             5. Cookies
           </h2>
-          <p className="text-gray-700">
+          <p className="text-body">
             Diese Website verwendet `next-auth` für die Authentifizierung.
             `next-auth` setzt technisch notwendige Cookies (Session-Cookies), um
             Ihre Sitzung aufrechtzuerhalten und Sie als eingeloggten Benutzer zu
@@ -167,10 +167,10 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-heading mt-8 mb-4">
             6. Speicherdauer
           </h2>
-          <p className="text-gray-700">
+          <p className="text-body">
             Ihre Bestands- und Konfigurationsdaten werden gespeichert, solange
             Ihr Benutzerkonto für das &quot;Data Peak&quot; Dashboard besteht. Daten in
             Caches (z.B. Google-Daten) werden periodisch, spätestens nach 48
@@ -180,10 +180,10 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-heading mt-8 mb-4">
             7. Ihre Rechte
           </h2>
-          <p className="text-gray-700">
+          <p className="text-body">
             Ihnen stehen grundsätzlich die Rechte auf Auskunft, Berichtigung,
             Löschung, Einschränkung, Datenübertragbarkeit, Widerruf und
             Widerspruch zu. Wenn Sie glauben, dass die Verarbeitung Ihrer Daten
@@ -193,7 +193,7 @@ export default function DatenschutzPage() {
           </p>
         </section>
 
-        <p className="text-gray-600 italic mt-8">Stand: 03. November 2025</p>
+        <p className="text-muted italic mt-8">Stand: 03. November 2025</p>
       </div>
     </div>
   );

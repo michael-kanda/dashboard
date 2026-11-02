@@ -272,13 +272,13 @@ export default function PromptTrackingCard({
       )}
 
       {clusterError && (
-        <div className="mb-5 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+        <div className="mb-5 rounded-lg border border-border bg-danger-bg p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-red-900 dark:text-red-200">KI-Analyse fehlgeschlagen</p>
-            <p className="text-xs text-red-700 dark:text-red-300 mt-0.5">{clusterError}</p>
+            <p className="text-sm font-medium text-red-900">KI-Analyse fehlgeschlagen</p>
+            <p className="text-xs text-danger mt-0.5">{clusterError}</p>
           </div>
-          <button onClick={() => setClusterError(null)} className="text-red-600 dark:text-red-400 hover:opacity-70">
+          <button onClick={() => setClusterError(null)} className="text-danger hover:opacity-70">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -361,7 +361,7 @@ export default function PromptTrackingCard({
       <div className="overflow-x-auto -mx-2">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wider text-muted border-b border-border">
+            <tr className="text-left text-xs text-muted border-b border-border">
               <th className="px-2 py-2 font-medium">Query</th>
               <th className="px-2 py-2 font-medium text-center">W</th>
               <th className="px-2 py-2 font-medium text-center">Typ</th>
@@ -392,7 +392,7 @@ export default function PromptTrackingCard({
         <div className="mt-4 text-center">
           <button
             onClick={() => setLimit((l) => l + 25)}
-            className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+            className="text-sm text-accent hover:underline"
           >
             +25 weitere anzeigen ({filtered.length - limit} verbleiben)
           </button>
@@ -406,7 +406,7 @@ export default function PromptTrackingCard({
           href="https://seybold.de/prompt-tracking-in-google-search-console/"
           target="_blank"
           rel="noopener noreferrer"
-          className="underline hover:text-purple-600"
+          className="underline hover:text-accent"
         >Seybold (2026)</a>.
       </p>
 
@@ -626,13 +626,13 @@ function PromptResearchTool({
       </div>
 
       {researchError && (
-        <div className="mb-4 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 p-3 text-xs text-red-700 dark:text-red-300">
+        <div className="mb-4 rounded-md border border-border bg-danger-bg p-3 text-xs text-danger">
           {researchError}
         </div>
       )}
 
       {/* Setup fields */}
-      <div className="rounded-md shadow-sm bg-surface p-3 mb-4">
+      <div className="rounded-md bg-surface p-3 mb-4">
         <div className="text-xs font-semibold text-heading mb-3">Setup-Felder</div>
         <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr_150px] gap-3 mb-3">
           <SetupField
@@ -692,16 +692,16 @@ function PromptResearchTool({
 
       <div className="space-y-2">
         {displayedOpportunities.map((item) => (
-          <div key={`${item.rank}-${item.topic}-${item.intent}`} className="grid grid-cols-[44px_1fr] lg:grid-cols-[44px_120px_1fr_110px] gap-3 rounded-md shadow-sm bg-surface p-3">
+          <div key={`${item.rank}-${item.topic}-${item.intent}`} className="grid grid-cols-[44px_1fr] lg:grid-cols-[44px_120px_1fr_110px] gap-3 rounded-md bg-surface p-3">
             <div className="widget-metric-sm text-heading">#{item.rank}</div>
             <div className="hidden lg:block">
-              <div className="text-[10px] uppercase tracking-wide font-semibold text-muted">{item.intent}</div>
+              <div className="text-[10px] font-semibold text-muted">{item.intent}</div>
               <div className="text-xs font-medium tabular-nums text-body">Score {item.score}</div>
               <div className="text-[10px] text-muted">{item.source}</div>
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1 lg:hidden">
-                <span className="text-[10px] uppercase tracking-wide font-semibold text-muted">{item.intent}</span>
+                <span className="text-[10px] font-semibold text-muted">{item.intent}</span>
                 <span className="text-xs font-medium tabular-nums text-body">Score {item.score}</span>
                 <span className="text-[10px] text-muted">{item.source}</span>
               </div>
@@ -726,7 +726,7 @@ function PromptResearchTool({
 
 function ResearchStep({ step, title, lines }: { step: string; title: string; lines: string[] }) {
   return (
-    <div className="rounded-md shadow-sm bg-surface p-3">
+    <div className="rounded-md bg-surface p-3">
       <div className="flex items-center gap-2 mb-2">
         <span className="widget-eyebrow text-muted tabular-nums">{step}</span>
         <span className="widget-section-title text-heading">{title}</span>
@@ -759,7 +759,7 @@ function SetupField({
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="px-3 py-2 text-sm rounded-md border border-border bg-surface text-body focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        className="px-3 py-2 text-sm rounded-md border border-border bg-surface text-body focus:outline-none focus:ring-2 focus:ring-accent"
       />
     </label>
   );
@@ -767,7 +767,7 @@ function SetupField({
 
 function ResearchInsight({ label, items }: { label: string; items: ResearchOpportunity[] }) {
   return (
-    <div className="rounded-md shadow-sm bg-surface p-3">
+    <div className="rounded-md bg-surface p-3">
       <div className="text-xs font-semibold text-heading mb-2">{label}</div>
       {items.length > 0 ? (
         <ul className="space-y-1.5">
@@ -811,7 +811,7 @@ function ClassificationRow({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-      <div className="rounded-md shadow-sm bg-surface-secondary p-3">
+      <div className="rounded-md bg-surface-secondary p-3">
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted mb-1">
           <Sparkles className="w-3.5 h-3.5" />
           <span>Brand-Impressions</span>
@@ -831,7 +831,7 @@ function ClassificationRow({
         </div>
       </div>
 
-      <div className="rounded-md shadow-sm bg-surface-secondary p-3">
+      <div className="rounded-md bg-surface-secondary p-3">
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted mb-1">
           <MapPin className="w-3.5 h-3.5" />
           <span>Geo-Impressions</span>
@@ -852,7 +852,7 @@ function ClassificationRow({
         </div>
       </div>
 
-      <div className="rounded-md shadow-sm bg-surface-secondary p-3">
+      <div className="rounded-md bg-surface-secondary p-3">
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted mb-1">
           <MessageCircleQuestionMark className="w-3.5 h-3.5" />
           <span>Dominanter Frage-Typ</span>
@@ -914,15 +914,15 @@ function ShareTrendChart({ trend }: { trend: PromptTrackingShareBucket[] }) {
     last.sharePercent < first.sharePercent * 0.95 ? 'down' : 'flat';
 
   return (
-    <div className="mb-4 rounded-md shadow-sm bg-surface-secondary p-3">
+    <div className="mb-4 rounded-md bg-surface-secondary p-3">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-muted uppercase tracking-wider">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-muted">
           <Info className="w-3 h-3" />
           Anteil prompt-Queries über Zeit
         </div>
         <div className="flex items-center gap-1 text-xs">
-          {direction === 'up' && <><TrendingUp className="w-3 h-3 text-green-600" /><span className="text-green-700 dark:text-green-400 font-medium">steigend</span></>}
-          {direction === 'down' && <><TrendingDown className="w-3 h-3 text-red-600" /><span className="text-red-700 dark:text-red-400 font-medium">fallend</span></>}
+          {direction === 'up' && <><TrendingUp className="w-3 h-3 text-success" /><span className="text-success font-medium">steigend</span></>}
+          {direction === 'down' && <><TrendingDown className="w-3 h-3 text-danger" /><span className="text-danger font-medium">fallend</span></>}
           {direction === 'flat' && <><Minus className="w-3 h-3 text-muted" /><span className="text-muted">stabil</span></>}
         </div>
       </div>
@@ -936,7 +936,7 @@ function ShareTrendChart({ trend }: { trend: PromptTrackingShareBucket[] }) {
               title={`${bucket.label}: ${bucket.sharePercent.toFixed(1)} %`}
             >
               <div
-                className="w-full rounded-t bg-purple-400 dark:bg-purple-600 group-hover:bg-purple-500 dark:group-hover:bg-purple-500 transition relative"
+                className="w-full rounded-t bg-purple-400 group-hover:bg-purple-500 transition relative"
                 style={{ height: `${Math.max(height, 4)}%`, minHeight: '4px' }}
               >
                 <span className="hidden group-hover:block absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] tabular-nums whitespace-nowrap text-body">
@@ -957,8 +957,8 @@ function ShareTrendChart({ trend }: { trend: PromptTrackingShareBucket[] }) {
 function WordCountHistogram({ buckets }: { buckets: PromptWordCountBucket[] }) {
   const maxCount = Math.max(...buckets.map((b) => b.count), 1);
   return (
-    <div className="mb-4 rounded-md shadow-sm bg-surface-secondary p-3">
-      <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-muted uppercase tracking-wider">
+    <div className="mb-4 rounded-md bg-surface-secondary p-3">
+      <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-muted">
         <Info className="w-3 h-3" />
         Wortzahl-Verteilung
       </div>
@@ -969,7 +969,7 @@ function WordCountHistogram({ buckets }: { buckets: PromptWordCountBucket[] }) {
             <div key={b.range} className="flex items-center gap-2 text-xs">
               <span className="w-12 text-muted tabular-nums shrink-0">{b.range} W</span>
               <div className="flex-1 h-4 bg-surface-tertiary rounded overflow-hidden">
-                <div className="h-full bg-purple-400/70 dark:bg-purple-600/70 rounded" style={{ width: `${pct}%` }} />
+                <div className="h-full bg-purple-400/70 rounded" style={{ width: `${pct}%` }} />
               </div>
               <span className="w-12 text-right tabular-nums text-body">{b.count}</span>
             </div>
@@ -1004,10 +1004,10 @@ function ClusterDisplay({
   };
 
   return (
-    <div className="mb-5 rounded-lg border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/50 to-blue-50/50 dark:from-purple-950/20 dark:to-blue-950/20 p-5">
+    <div className="mb-5 rounded-lg border border-border p-5">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <WandSparkles className="w-5 h-5 text-purple-600" />
+          <WandSparkles className="w-5 h-5 text-accent" />
           <h4 className="widget-section-title text-heading">KI-Analyse: {clusters.length} Cluster erkannt</h4>
           <span className="text-xs text-muted">
             {meta.queriesAnalyzed} Queries · {(meta.elapsedMs / 1000).toFixed(1)}s · {meta.model}
@@ -1023,9 +1023,9 @@ function ClusterDisplay({
           </button>
         </div>
       </div>
-      <div className="mb-5 rounded-md shadow-sm bg-surface p-4">
+      <div className="mb-5 rounded-md bg-surface p-4">
         <div className="flex items-center gap-2 mb-2">
-          <Lightbulb className="w-4 h-4 text-amber-500" />
+          <Lightbulb className="w-4 h-4 text-warning" />
           <span className="font-medium text-sm text-heading">Gesamtbild</span>
         </div>
         <p className="text-sm leading-relaxed mb-3 text-body">{insights.summary}</p>
@@ -1082,7 +1082,7 @@ function ClusterCard({ cluster, allQueries, isExpanded, onToggleExpand }: {
   const totalClicks = clusterQueries.reduce((s, q) => s + q.clicks, 0);
 
   return (
-    <div className="rounded-md shadow-sm bg-surface p-4">
+    <div className="rounded-md bg-surface p-4">
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -1108,7 +1108,7 @@ function ClusterCard({ cluster, allQueries, isExpanded, onToggleExpand }: {
           </span>
         ))}
       </div>
-      <button onClick={onToggleExpand} className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 hover:underline">
+      <button onClick={onToggleExpand} className="flex items-center gap-1 text-xs text-accent hover:underline">
         {isExpanded ? <><ChevronUp className="w-3 h-3" /> verbergen</> : <><ChevronDown className="w-3 h-3" /> {clusterQueries.length} Queries anzeigen</>}
       </button>
       {isExpanded && (
@@ -1131,14 +1131,14 @@ function KpiTile({ label, value, sub, delta, deltaSuffix = '', tooltip, highligh
   { label: string; value: string; sub?: string; delta?: number; deltaSuffix?: string; tooltip?: string; highlight?: boolean; }
 ) {
   return (
-    <div className={`rounded-lg border bg-surface p-3 relative ${highlight ? 'border-purple-300 dark:border-purple-700 ring-1 ring-purple-200 dark:ring-purple-900/30' : 'border-border'}`}>
+    <div className={`rounded-lg border bg-surface p-3 relative ${highlight ? 'border-purple-300 ring-1 ring-purple-200' : 'border-border'}`}>
       <div className="flex items-center gap-1 text-xs text-muted">
         <span>{label}</span>
         {tooltip && <span title={tooltip} className="cursor-help"><Info className="w-3 h-3 opacity-60" /></span>}
       </div>
       <div className="widget-metric-sm mt-0.5 text-heading">{value}</div>
       {delta !== undefined && (
-        <div className={`text-[11px] mt-0.5 tabular-nums flex items-center gap-0.5 ${delta > 0 ? 'text-green-600 dark:text-green-400' : delta < 0 ? 'text-red-600 dark:text-red-400' : 'text-muted'}`}>
+        <div className={`text-[11px] mt-0.5 tabular-nums flex items-center gap-0.5 ${delta > 0 ? 'text-success' : delta < 0 ? 'text-danger' : 'text-muted'}`}>
           {delta > 0 ? <TrendingUp className="w-3 h-3" /> : delta < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
           {delta > 0 ? '+' : ''}{delta.toFixed(1)}{deltaSuffix} vs. Vorperiode
         </div>
@@ -1154,7 +1154,7 @@ function PromptRow({ q }: { q: PromptQueryData }) {
     <tr className="border-b border-border-subtle hover:bg-surface-tertiary transition">
       <td className="px-2 py-2 max-w-[380px]">
         <div className="flex items-center gap-1.5">
-          {q.hasGeoReference && <MapPin className="w-3 h-3 text-emerald-500 shrink-0" aria-label="Geo-Bezug" />}
+          {q.hasGeoReference && <MapPin className="w-3 h-3 text-success shrink-0" aria-label="Geo-Bezug" />}
           <span className="truncate text-body" title={q.query}>{q.query}</span>
         </div>
       </td>

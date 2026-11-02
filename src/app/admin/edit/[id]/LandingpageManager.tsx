@@ -99,20 +99,20 @@ export default function LandingpageManager({ userId }: Props) {
   };
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-md mt-8 border border-gray-200">
+    <div className="bg-surface p-8 rounded-lg mt-8 border border-border">
       <div className="flex items-center gap-3 mb-6 border-b pb-4">
-        <FileEarmarkSpreadsheet className="text-indigo-600" size={24} />
-        <h3 className="text-xl font-bold text-gray-800">Redaktionsplan Import</h3>
+        <FileEarmarkSpreadsheet className="text-accent" size={24} />
+        <h3 className="text-xl font-bold text-heading">Redaktionsplan Import</h3>
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-2 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
+      <div className="flex space-x-2 mb-6 bg-surface-tertiary p-1 rounded-lg w-fit">
         <button
           onClick={() => { setMode('file'); setMessage({ text: '', type: '' }); }}
           className={`px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${
             mode === 'file'
-              ? 'bg-white text-indigo-600 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-surface text-accent'
+              : 'text-muted hover:text-body'
           }`}
         >
           <FileEarmarkExcel size={16} /> Datei (Excel/CSV)
@@ -121,8 +121,8 @@ export default function LandingpageManager({ userId }: Props) {
           onClick={() => { setMode('sheet'); setMessage({ text: '', type: '' }); }}
           className={`px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${
             mode === 'sheet'
-              ? 'bg-white text-green-600 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-surface text-success'
+              : 'text-muted hover:text-body'
           }`}
         >
           <Google size={16} /> Google Sheet
@@ -134,7 +134,7 @@ export default function LandingpageManager({ userId }: Props) {
         {/* Modus: DATEI */}
         {mode === 'file' && (
           <div className="animate-in fade-in slide-in-from-left-2 duration-200">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-body mb-2">
               Datei auswählen (.xlsx oder .csv)
             </label>
             <div className="flex items-center gap-3">
@@ -142,10 +142,10 @@ export default function LandingpageManager({ userId }: Props) {
                 type="file"
                 accept=".xlsx, .csv"
                 onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer border border-gray-300 rounded-md"
+                className="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-accent-tint file:text-accent hover:file:bg-accent-tint cursor-pointer border border-border rounded-md"
               />
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-muted mt-2">
               Format: Landingpage-URL, Haupt-Keyword, Weitere Keywords, Suchvolumen, Aktuelle Pos.
             </p>
           </div>
@@ -154,7 +154,7 @@ export default function LandingpageManager({ userId }: Props) {
         {/* Modus: GOOGLE SHEET */}
         {mode === 'sheet' && (
           <div className="animate-in fade-in slide-in-from-right-2 duration-200">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-body mb-2">
               Google Sheet Link
             </label>
             <input
@@ -162,17 +162,17 @@ export default function LandingpageManager({ userId }: Props) {
               value={sheetUrl}
               onChange={(e) => setSheetUrl(e.target.value)}
               placeholder="https://docs.google.com/spreadsheets/d/..."
-              className="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+              className="block w-full px-4 py-2 border border-border rounded-md focus:ring-accent focus:border-accent text-sm"
             />
             
-            <div className="mt-3 bg-blue-50 border border-blue-100 rounded-md p-3">
-              <h4 className="text-sm font-semibold text-blue-800 flex items-center gap-1 mb-1">
+            <div className="mt-3 bg-accent-tint border border-border rounded-md p-3">
+              <h4 className="text-sm font-semibold text-accent flex items-center gap-1 mb-1">
                 <ExclamationTriangle size={14} /> Wichtig: Freigabe erforderlich
               </h4>
-              <p className="text-xs text-blue-700">
+              <p className="text-xs text-accent">
                 Damit das Dashboard die Daten lesen kann, müssen Sie das Google Sheet für die folgende Service-E-Mail freigeben (Lesezugriff genügt):
               </p>
-              <code className="block mt-2 bg-white px-2 py-1 rounded border border-blue-200 text-xs font-mono text-blue-900 break-all select-all">
+              <code className="block mt-2 bg-surface px-2 py-1 rounded border border-border text-xs font-mono text-blue-900 break-all select-all">
                 {serviceEmail}
               </code>
             </div>
@@ -184,9 +184,9 @@ export default function LandingpageManager({ userId }: Props) {
           <button
             onClick={handleImport}
             disabled={isUploading || (mode === 'file' ? !file : !sheetUrl)}
-            className={`px-6 py-2.5 rounded-md text-white font-medium transition-all shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`px-6 py-2.5 rounded-md text-white font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
               mode === 'file' 
-                ? 'bg-indigo-600 hover:bg-indigo-700' 
+                ? 'bg-accent-solid hover:opacity-90' 
                 : 'bg-green-600 hover:bg-green-700'
             }`}
           >
@@ -206,7 +206,7 @@ export default function LandingpageManager({ userId }: Props) {
           {mode === 'file' && (
             <button
               onClick={downloadTemplate}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+              className="px-4 py-2 text-sm font-medium text-muted bg-surface-tertiary hover:bg-surface-quaternary rounded-md transition-colors"
             >
               Vorlage herunterladen
             </button>
@@ -217,8 +217,8 @@ export default function LandingpageManager({ userId }: Props) {
         {message.text && (
           <div className={`mt-4 p-3 rounded-md flex items-start gap-2 border ${
             message.type === 'error' 
-              ? 'bg-red-50 text-red-700 border-red-200' 
-              : 'bg-green-50 text-green-700 border-green-200'
+              ? 'bg-danger-bg text-danger border-border' 
+              : 'bg-success-bg text-success border-border'
           }`}>
             {message.type === 'success' ? <CheckCircle className="mt-0.5 shrink-0" /> : <ExclamationTriangle className="mt-0.5 shrink-0" />}
             <span className="text-sm">{message.text}</span>

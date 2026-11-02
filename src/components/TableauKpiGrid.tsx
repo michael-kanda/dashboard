@@ -45,7 +45,7 @@ function KpiSectionHeader({
         <span className="text-[11px] font-medium text-faint">{index}</span>
         <h3 className="widget-section-title truncate text-heading">{title}</h3>
       </div>
-      <span className="shrink-0 text-[11px] font-medium uppercase text-faint">{rangeLabel}</span>
+      <span className="shrink-0 text-[11px] font-medium text-faint">{rangeLabel}</span>
     </div>
   );
 }
@@ -93,10 +93,10 @@ export default function TableauKpiGrid({
           <p className="widget-eyebrow text-faint">Performance Dashboard</p>
           <h2 className="widget-title text-heading">Kennzahlen im Überblick</h2>
           <div className="mt-[7px] flex h-1 w-[152px] overflow-hidden rounded-sm" aria-hidden="true">
-            <span className="w-1/4 bg-[#4285F4]" />
-            <span className="w-1/4 bg-[#EA4335]" />
-            <span className="w-1/4 bg-[#FBBC05]" />
-            <span className="w-1/4 bg-[#34A853]" />
+            <span className="w-1/4 bg-accent-solid" />
+            <span className="w-1/4 bg-danger-bar" />
+            <span className="w-1/4 bg-warning-bar" />
+            <span className="w-1/4 bg-success-bar" />
           </div>
         </div>
         <p className="widget-meta whitespace-nowrap text-muted sm:pt-1">

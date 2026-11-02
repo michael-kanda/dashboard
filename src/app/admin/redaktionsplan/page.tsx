@@ -6,28 +6,17 @@ import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { User } from '@/types';
 import DateRangeSelector, { type DateRangeOption } from '@/components/DateRangeSelector';
-import { cn } from '@/lib/utils'; 
+import { PageContainer, PageHeader } from '@/components/ui/Page';
+import { GroupedSection, GroupedRow } from '@/components/ui/GroupedList';
+import { SearchField } from '@/components/ui/SearchField';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { Button, IconButton } from '@/components/ui/Button';
+import { DataList, DataListHead, EmptyRow, ListSkeleton, Td, Th, Tr } from '@/components/ui/DataList';
+import { StatusPill, type StatusTone } from '@/components/ui/Status';
+import { inputClasses, textareaClasses } from '@/components/ui/Field';
 
 // Icons
-import {
-  FileEarmarkText,
-  Search,
-  SlashCircleFill,
-  CheckCircleFill,
-  InfoCircle,
-  ExclamationTriangleFill,
-  ArrowRepeat,
-  InfoCircleFill,
-  ListTask,
-  Filter,
-  Trash,
-  ArrowUp,
-  ArrowDown,
-  CalendarEvent, 
-  ClockHistory,
-  ChatSquareText,
-  EnvelopeCheck 
-} from 'react-bootstrap-icons';
+import { ArrowRepeat, ArrowUp, ArrowDown, CheckCircleFill, Search, Trash } from 'react-bootstrap-icons';
 
 // Typdefinition
 type Landingpage = {
@@ -64,14 +53,13 @@ const GscChangeIndicator = ({ change, isPosition = false }: { change: number | s
     ? (numChange > 0 ? `+${numChange.toFixed(2)}` : numChange.toFixed(2)) 
     : (numChange > 0 ? `+${numChange.toLocaleString('de-DE')}` : numChange.toLocaleString('de-DE'));
   
-  const colorClasses = isPositive ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100';
   const Icon = isPositive ? ArrowUp : ArrowDown;
 
   return (
-    <span className={cn('inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold tracking-wide', colorClasses)}>
-      <Icon size={9} />
+    <StatusPill tone={isPositive ? 'success' : 'danger'} className="gap-0.5 tabular-nums">
+      <Icon size={9} aria-hidden="true" />
       {text}
-    </span>
+    </StatusPill>
   );
 };
 
@@ -221,7 +209,7 @@ const handleGscRefresh = async () => {
 
     // ✅ Erfolgsmeldung erst JETZT setzen
     const updatedCount = result.updatedCount || 0;
-    setMessage(`✅ GSC-Daten erfolgreich abgeglichen! ${updatedCount} Seiten aktualisiert.`);
+    setMessage(`GSC-Daten erfolgreich abgeglichen! ${updatedCount} Seiten aktualisiert.`);
     
     // Auto-Hide nach 5 Sekunden
     setTimeout(() => setMessage(''), 5000);
@@ -234,223 +222,178 @@ const handleGscRefresh = async () => {
   }
 };
 
-  // Styles
-  const getStatusStyle = (status: LandingpageStatus) => {
-    switch (status) {
-      case 'Offen': return 'text-blue-700 border-blue-300 bg-blue-50';
-      case 'In Prüfung': return 'text-yellow-700 border-yellow-300 bg-yellow-50';
-      case 'Gesperrt': return 'text-red-700 border-red-300 bg-red-50';
-      case 'Freigegeben': return 'text-green-700 border-green-300 bg-green-50';
-      default: return 'text-gray-700 border-gray-300 bg-gray-50';
-    }
+  const STATUS_TONES: Record<LandingpageStatus, StatusTone> = {
+    'Offen': 'accent',
+    'In Prüfung': 'warning',
+    'Gesperrt': 'danger',
+    'Freigegeben': 'success',
   };
-  const getStatusIcon = (status: LandingpageStatus) => {
-    switch (status) {
-      case 'Offen': return <FileEarmarkText className="inline-block mr-1" size={16} />;
-      case 'In Prüfung': return <Search className="inline-block mr-1" size={16} />;
-      case 'Gesperrt': return <SlashCircleFill className="inline-block mr-1" size={16} />;
-      case 'Freigegeben': return <CheckCircleFill className="inline-block mr-1" size={16} />;
-      default: return <InfoCircle className="inline-block mr-1" size={16} />;
-    }
-  };
-  const filterOptions: { label: string; value: LandingpageStatus | 'alle'; icon: ReactNode }[] = [
-    { label: 'Alle', value: 'alle', icon: <ListTask className="inline-block mr-1" size={16}/> },
-    { label: 'Offen', value: 'Offen', icon: <FileEarmarkText className="inline-block mr-1" size={16}/> },
-    { label: 'In Prüfung', value: 'In Prüfung', icon: <Search className="inline-block mr-1" size={16}/> },
-    { label: 'Freigegeben', value: 'Freigegeben', icon: <CheckCircleFill className="inline-block mr-1" size={16}/> },
-    { label: 'Gesperrt', value: 'Gesperrt', icon: <SlashCircleFill className="inline-block mr-1" size={16}/> },
-  ];
+  const filterOptions: { label: string; value: LandingpageStatus | 'alle' }[] = (
+    ['alle', 'Offen', 'In Prüfung', 'Freigegeben', 'Gesperrt'] as (LandingpageStatus | 'alle')[]
+  ).map((value) => ({
+    value,
+    label: `${value === 'alle' ? 'Alle' : value} ${value === 'alle' ? landingpages.length : landingpages.filter(lp => lp.status === value).length}`,
+  }));
 
-  if (authStatus === 'loading') return <div className="p-8 text-center">Lade...</div>;
+  if (authStatus === 'loading') return <PageContainer><ListSkeleton rows={3} label="Wird geladen …" /></PageContainer>;
   if (authStatus === 'unauthenticated' || (session?.user?.role !== 'ADMIN' && session?.user?.role !== 'SUPERADMIN')) {
     router.push('/'); return null;
   }
 
+  const visibleProjects = projects.filter(p => {
+    if (!projectSearch) return true;
+    const searchLower = projectSearch.toLowerCase();
+    const domain = p.domain?.toLowerCase() || '';
+    const email = p.email?.toLowerCase() || '';
+    return domain.includes(searchLower) || email.includes(searchLower);
+  });
+
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-full mx-auto"> 
-        <div className="mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Redaktionsplan (Admin)</h1>
-            <p className="text-gray-600 mt-2">Verwalten Sie Landingpages und Anmerkungen.</p>
-          </div>
-        </div>
-
-        {message && (
-          <div className={`mb-6 p-4 border rounded-md ${message.startsWith('Fehler') ? 'bg-red-50 border-red-200 text-red-800' : 'bg-blue-50 border-blue-200 text-blue-800'} flex items-center gap-2`}>
-            {message.startsWith('Fehler') ? <ExclamationTriangleFill size={18}/> : <InfoCircleFill size={18}/>}
-            {message}
-          </div>
+    <PageContainer>
+      <PageHeader title="Redaktionspläne" subtitle="Landingpages und Anmerkungen verwalten">
+        {selectedProject && (
+          <SegmentedControl label="Nach Status filtern" options={filterOptions} value={filterStatus} onChange={setFilterStatus} />
         )}
+      </PageHeader>
 
-        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-          
-          {/* NEU: Suchfeld für Projekte */}
-          <div className="mb-4">
-            <label htmlFor="projectSearch" className="block text-sm font-semibold text-gray-700 mb-2">
-              Projekt suchen
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="text-gray-400" size={16} />
-              </div>
-              <input
-                id="projectSearch"
-                type="text"
-                value={projectSearch}
-                onChange={(e) => setProjectSearch(e.target.value)}
-                placeholder="Domain oder E-Mail suchen..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
+      {message && (
+        <p role="status" className={`text-[13px] ${message.startsWith('Fehler') ? 'text-danger' : 'text-success'}`}>
+          {message}
+        </p>
+      )}
 
-          <label htmlFor="projectSelect" className="block text-sm font-semibold text-gray-700 mb-2">Projekt auswählen</label>
+      <GroupedSection title="Projekt">
+        <GroupedRow label="Projekt suchen">
+          <SearchField label="Projekte durchsuchen" placeholder="Domain oder E-Mail" value={projectSearch} onChange={setProjectSearch} />
+        </GroupedRow>
+        <GroupedRow label="Projekt auswählen" htmlFor="projectSelect">
           <select
             id="projectSelect"
             value={selectedProject}
             onChange={(e) => setSelectedProject(e.target.value)}
             disabled={isLoadingProjects}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className={`${inputClasses} min-w-[240px]`}
           >
-            <option value="">{isLoadingProjects ? 'Lade Projekte...' : '-- Bitte wählen --'}</option>
-            {projects
-              .filter(p => {
-                if (!projectSearch) return true;
-                const searchLower = projectSearch.toLowerCase();
-                const domain = p.domain?.toLowerCase() || '';
-                const email = p.email?.toLowerCase() || '';
-                return domain.includes(searchLower) || email.includes(searchLower);
-              })
-              .map((p) => <option key={p.id} value={p.id}>{p.domain || p.email}</option>)}
+            <option value="">{isLoadingProjects ? 'Projekte werden geladen …' : 'Bitte wählen'}</option>
+            {visibleProjects.map((p) => <option key={p.id} value={p.id}>{p.domain || p.email}</option>)}
           </select>
-        </div>
-
+        </GroupedRow>
         {selectedProject && (
-          <>
-            <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">GSC-Daten Abgleich</h3>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <DateRangeSelector value={dateRange} onChange={setDateRange} className="w-full sm:w-auto" />
-                <button onClick={handleGscRefresh} disabled={isRefreshing || isLoading} className="px-4 py-2 rounded-md text-white bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center gap-2 w-full sm:w-auto disabled:opacity-50">
-                  {isRefreshing ? <ArrowRepeat className="animate-spin" size={18} /> : <Search size={16} />}
-                  <span>{isRefreshing ? 'Wird abgeglichen...' : 'GSC-Daten abgleichen'}</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-               <h3 className="text-sm font-semibold text-gray-500 mb-3 flex items-center gap-1"><Filter size={16}/> Filtern nach Status</h3>
-               <div className="flex gap-2 flex-wrap">
-                  {filterOptions.map((option: any) => (
-                    <button key={option.value} onClick={() => setFilterStatus(option.value)} className={`px-3 py-1.5 text-sm rounded-md border transition-colors flex items-center gap-1 ${filterStatus === option.value ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
-                        {option.icon} {option.label} ({option.value === 'alle' ? landingpages.length : landingpages.filter(lp => lp.status === option.value).length})
-                    </button>
-                 ))}
-              </div>
-            </div>
-
-            {isLoading ? (
-              <div className="text-center py-12"><ArrowRepeat className="animate-spin inline-block text-indigo-600 mr-2" size={24}/><p className="text-gray-600 inline-block">Lade Landingpages...</p></div>
-            ) : filteredPages.length === 0 ? (
-              <div className="bg-white p-12 rounded-lg shadow-md text-center"><p className="text-gray-500">Keine Landingpages gefunden.</p></div>
-            ) : (
-              <div className="bg-white rounded-lg shadow-md overflow-x-auto">
-                 <table className="w-full min-w-[1400px]">
-                   <thead className="bg-gray-50 border-b border-gray-200">
-                     <tr>
-                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">URL / Keyword</th>
-                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><div className="flex items-center gap-1"><CalendarEvent/> Daten</div></th>
-                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">GSC Klicks</th>
-                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">GSC Impr.</th>
-                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">GSC Pos.</th>
-                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[35%]">
-                         <div className="flex items-center gap-1"><ChatSquareText/> Anmerkung</div>
-                       </th>
-                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aktionen</th>
-                     </tr>
-                   </thead>
-                   <tbody className="bg-white divide-y divide-gray-200">
-                     {filteredPages.map((lp) => (
-                       <tr key={lp.id} className="hover:bg-gray-50 transition-colors">
-                         {/* (Spalten 1-6 bleiben gleich) */}
-                         <td className="px-6 py-4 whitespace-nowrap align-top">
-                           <div className="text-sm font-medium text-gray-900 truncate" title={lp.haupt_keyword || undefined}>{lp.haupt_keyword || <span className="text-gray-400 italic">Kein Keyword</span>}</div>
-                           <a href={lp.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 text-xs truncate block" title={lp.url}>{lp.url}</a>
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 align-top">
-                           <div className="text-xs">Erstellt: {formatDateOnly(lp.created_at)}</div>
-                           <div className="text-xs">Update: {formatDateOnly(lp.updated_at)}</div>
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right align-top">
-                           <div className="flex flex-col items-end gap-1">
-                             <span className="font-medium text-gray-900">{lp.gsc_klicks?.toLocaleString('de-DE') || '-'}</span>
-                             <GscChangeIndicator change={lp.gsc_klicks_change} />
-                           </div>
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right align-top">
-                           <div className="flex flex-col items-end gap-1">
-                             <span className="font-medium text-gray-900">{lp.gsc_impressionen?.toLocaleString('de-DE') || '-'}</span>
-                             <GscChangeIndicator change={lp.gsc_impressionen_change} />
-                           </div>
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right align-top">
-                           <div className="flex flex-col items-end gap-1">
-                             <span className="font-medium text-gray-900">{lp.gsc_position ? parseFloat(String(lp.gsc_position)).toFixed(2) : '-'}</span>
-                             <GscChangeIndicator change={lp.gsc_position_change} isPosition={true} />
-                           </div>
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap align-top">
-                           <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${getStatusStyle(lp.status)}`}>{getStatusIcon(lp.status)} {lp.status}</span>
-                         </td>
-
-                         {/* ✅ Anmerkung mit Badge für Admin */}
-                         <td className="px-6 py-4 align-top relative">
-                            <textarea
-                              className="w-full text-sm p-2 border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-                              rows={3}
-                              defaultValue={lp.comment || ''}
-                              placeholder="Anmerkung hinzufügen..."
-                              onBlur={(e) => {
-                                if (e.target.value !== (lp.comment || '')) {
-                                  saveComment(lp.id, e.target.value);
-                                }
-                              }}
-                            />
-                            {/* ✅ Feedback Badge (1 Minute) */}
-                            {savedCommentId === lp.id && (
-                              <div className="absolute top-2 right-2 bg-green-50 text-green-700 text-[10px] font-medium px-2 py-1 rounded border border-green-200 shadow-sm flex items-center gap-1.5 animate-in fade-in zoom-in duration-300 z-10">
-                                <CheckCircleFill size={10} />
-                                <span>Gespeichert & Kunde benachrichtigt</span>
-                              </div>
-                            )}
-                         </td>
-
-                         <td className="px-6 py-4 whitespace-nowrap align-top">
-                           <div className="flex flex-wrap gap-1 w-32">
-                             {(['Offen', 'In Prüfung', 'Freigegeben', 'Gesperrt'] as LandingpageStatus[]).map(status => (
-                               <button key={status} onClick={() => updateStatus(lp.id, status)} disabled={lp.status === status} className={`px-2 py-1 text-[10px] font-medium rounded border flex-grow ${lp.status === status ? 'bg-gray-200 text-gray-500' : 'bg-white text-gray-600 hover:bg-gray-100'}`}>{status.substring(0,1)}</button>
-                             ))}
-                             <button onClick={() => deleteLandingpage(lp.id, lp.url)} className="px-2 py-1 text-xs font-medium rounded border border-red-600 bg-red-50 text-red-700 hover:bg-red-100 w-full mt-1"><Trash size={14} /></button>
-                           </div>
-                         </td>
-                       </tr>
-                     ))}
-                   </tbody>
-                 </table>
-              </div>
-            )}
-          </>
+          <GroupedRow label="GSC-Daten abgleichen" description="Klicks, Impressionen und Position für den gewählten Zeitraum">
+            <DateRangeSelector value={dateRange} onChange={setDateRange} className="w-full sm:w-auto" />
+            <Button variant="plain" size="sm" onClick={handleGscRefresh} disabled={isRefreshing || isLoading}>
+              {isRefreshing ? <ArrowRepeat className="animate-spin" size={14} aria-hidden="true" /> : <Search size={14} aria-hidden="true" />}
+              {isRefreshing ? 'Wird abgeglichen …' : 'Abgleichen'}
+            </Button>
+          </GroupedRow>
         )}
-      </div>
-    </div>
+      </GroupedSection>
+
+      {selectedProject && (
+        isLoading ? (
+          <ListSkeleton rows={4} label="Landingpages werden geladen …" />
+        ) : (
+          <DataList label="Landingpages" minWidth={1320}>
+            <DataListHead>
+              <Th className="w-[20%]">URL / Keyword</Th>
+              <Th>Daten</Th>
+              <Th className="text-right">GSC Klicks</Th>
+              <Th className="text-right">GSC Impr.</Th>
+              <Th className="text-right">GSC Pos.</Th>
+              <Th>Status</Th>
+              <Th className="w-[32%]">Anmerkung</Th>
+              <Th className="text-right">Aktionen</Th>
+            </DataListHead>
+            <tbody>
+              {filteredPages.length === 0 && <EmptyRow colSpan={8}>Keine Landingpages gefunden</EmptyRow>}
+              {filteredPages.map((lp) => (
+                <Tr key={lp.id} className="align-top">
+                  <Td className="align-top">
+                    <div className="max-w-[280px] truncate text-[14px] font-semibold text-heading" title={lp.haupt_keyword || undefined}>
+                      {lp.haupt_keyword || <span className="font-normal text-muted">Kein Keyword</span>}
+                    </div>
+                    <a href={lp.url} target="_blank" rel="noopener noreferrer" className="block max-w-[280px] truncate text-[12px] text-accent hover:underline" title={lp.url}>{lp.url}</a>
+                  </Td>
+                  <Td className="whitespace-nowrap align-top text-[12px] text-muted">
+                    <div>Erstellt: {formatDateOnly(lp.created_at)}</div>
+                    <div>Update: {formatDateOnly(lp.updated_at)}</div>
+                  </Td>
+                  <Td className="whitespace-nowrap text-right align-top">
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="font-medium text-heading tabular-nums">{lp.gsc_klicks?.toLocaleString('de-AT') || '–'}</span>
+                      <GscChangeIndicator change={lp.gsc_klicks_change} />
+                    </div>
+                  </Td>
+                  <Td className="whitespace-nowrap text-right align-top">
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="font-medium text-heading tabular-nums">{lp.gsc_impressionen?.toLocaleString('de-AT') || '–'}</span>
+                      <GscChangeIndicator change={lp.gsc_impressionen_change} />
+                    </div>
+                  </Td>
+                  <Td className="whitespace-nowrap text-right align-top">
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="font-medium text-heading tabular-nums">{lp.gsc_position ? parseFloat(String(lp.gsc_position)).toLocaleString('de-AT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '–'}</span>
+                      <GscChangeIndicator change={lp.gsc_position_change} isPosition={true} />
+                    </div>
+                  </Td>
+                  <Td className="whitespace-nowrap align-top"><StatusPill tone={STATUS_TONES[lp.status] ?? 'neutral'}>{lp.status}</StatusPill></Td>
+                  <Td className="relative align-top">
+                    <label htmlFor={`comment-${lp.id}`} className="sr-only">Anmerkung zu {lp.url}</label>
+                    <textarea
+                      id={`comment-${lp.id}`}
+                      className={`${textareaClasses} resize-y`}
+                      rows={3}
+                      defaultValue={lp.comment || ''}
+                      placeholder="Anmerkung hinzufügen …"
+                      onBlur={(e) => {
+                        if (e.target.value !== (lp.comment || '')) {
+                          saveComment(lp.id, e.target.value);
+                        }
+                      }}
+                    />
+                    {savedCommentId === lp.id && (
+                      <div role="status" className="absolute right-[26px] top-5 z-10 inline-flex items-center gap-1.5 rounded-pill bg-success-bg px-2 py-0.5 text-[12px] font-semibold text-success">
+                        <CheckCircleFill size={10} aria-hidden="true" />
+                        Gespeichert & Kunde benachrichtigt
+                      </div>
+                    )}
+                  </Td>
+                  <Td className="whitespace-nowrap align-top">
+                    <div className="flex items-center justify-end gap-1">
+                      <div role="group" aria-label="Status setzen" className="inline-flex rounded-[9px] bg-fill p-0.5">
+                        {(['Offen', 'In Prüfung', 'Freigegeben', 'Gesperrt'] as LandingpageStatus[]).map(status => (
+                          <button
+                            key={status}
+                            type="button"
+                            onClick={() => updateStatus(lp.id, status)}
+                            disabled={lp.status === status}
+                            aria-pressed={lp.status === status}
+                            aria-label={`Status auf „${status}“ setzen`}
+                            title={status}
+                            className={`h-7 w-7 rounded-[7px] text-[12px] transition-colors duration-150 ease-out ${lp.status === status ? 'bg-surface font-semibold text-heading shadow-segment' : 'font-medium text-secondary hover:text-heading'}`}
+                          >
+                            {status.substring(0, 1)}
+                          </button>
+                        ))}
+                      </div>
+                      <IconButton label={`Landingpage ${lp.url} löschen`} onClick={() => deleteLandingpage(lp.id, lp.url)} className="text-danger hover:text-danger">
+                        <Trash size={15} aria-hidden="true" />
+                      </IconButton>
+                    </div>
+                  </Td>
+                </Tr>
+              ))}
+            </tbody>
+          </DataList>
+        )
+      )}
+    </PageContainer>
   );
 }
 
 export default function RedaktionsplanPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500">Lade Redaktionsplan...</div>}>
+    <Suspense fallback={<PageContainer><ListSkeleton rows={3} label="Redaktionsplan wird geladen …" /></PageContainer>}>
       <RedaktionsplanContent />
     </Suspense>
   );

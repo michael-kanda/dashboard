@@ -68,7 +68,7 @@ const CustomTooltip: React.FC<TooltipPayload> = ({ active, payload, label, model
 
   return (
     <div className="bg-surface px-4 py-3 rounded-xl shadow-xl border border-border text-sm z-50 min-w-[220px] max-w-[300px]">
-      <p className="text-faint font-medium text-xs tracking-wide uppercase mb-2">
+      <p className="text-faint font-medium text-xs mb-2">
         {dateLabel}
       </p>
       {payload.map((entry, index) => {
@@ -208,7 +208,7 @@ export default function AiTrafficModelTrendChart({
   if (error) {
     return (
       <div className={cn('dashboard-widget-surface rounded-lg p-4', className)}>
-        <p className="text-sm text-red-600 dark:text-red-400">
+        <p className="text-sm text-danger">
           Fehler beim Laden der KI-Trend-Daten: {error}
         </p>
       </div>

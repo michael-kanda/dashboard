@@ -85,46 +85,46 @@ export default function EditLandingpagePage() {
   }
   
   if (isLoading) return <div className="p-8 text-center">Lade Landingpage-Daten...</div>;
-  if (!landingpage) return <div className="p-8 text-center text-red-500">{message || 'Landingpage nicht gefunden.'}</div>;
+  if (!landingpage) return <div className="p-8 text-center text-danger">{message || 'Landingpage nicht gefunden.'}</div>;
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Landingpage bearbeiten</h1>
-      <p className="mb-4 text-gray-600">
+      <p className="mb-4 text-muted">
         Domain: <span className="font-semibold">{landingpage.domain}</span>
       </p>
 
       {message && (
-        <p className="my-4 text-center p-3 bg-yellow-100 border border-yellow-300 rounded-md">{message}</p>
+        <p className="my-4 text-center p-3 bg-warning-bg border border-yellow-300 rounded-md">{message}</p>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-md">
+      <form onSubmit={handleSubmit} className="space-y-4 bg-surface p-6 rounded-lg">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Titel</label>
+          <label className="block text-sm font-medium text-body">Titel</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">URL (Relativ, z.B. /seo-text)</label>
+          <label className="block text-sm font-medium text-body">URL (Relativ, z.B. /seo-text)</label>
           <input
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Status (Redaktionsplan)</label>
+          <label className="block text-sm font-medium text-body">Status (Redaktionsplan)</label>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as Landingpage['status'])}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent"
           >
             {/* Diese Status basieren auf deinem DB-Schema */}
             <option value="Offen">Offen</option>
@@ -134,7 +134,7 @@ export default function EditLandingpagePage() {
           </select>
         </div>
 
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+        <button type="submit" className="w-full bg-accent-solid text-white py-2 px-4 rounded-md hover:opacity-90">
           Änderungen speichern
         </button>
       </form>

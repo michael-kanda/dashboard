@@ -159,7 +159,7 @@ const CustomTooltip = ({ active, payload, label, kpi1, kpi2, holidayMap, weather
     return (
       <div className="bg-surface px-4 py-3 rounded-xl shadow-xl border border-border text-sm z-50 min-w-[220px] max-w-[300px]">
         {/* Datum */}
-        <p className="text-faint font-medium text-xs tracking-wide uppercase mb-2">
+        <p className="text-faint font-medium text-xs mb-2">
           {dateLabel}
         </p>
         
@@ -181,7 +181,7 @@ const CustomTooltip = ({ active, payload, label, kpi1, kpi2, holidayMap, weather
                 <span className="text-xs font-medium text-body truncate max-w-[130px]">
                   {holiday.name}
                 </span>
-                <span className="text-[10px] font-semibold text-faint tracking-wide ml-1">
+                <span className="text-[10px] font-semibold text-faint ml-1">
                   {holiday.countries.join(' · ')}
                 </span>
               </div>
@@ -344,7 +344,7 @@ export default function KpiTrendChart({
             <select
               value={activeKpi}
               onChange={(e) => onKpiChange(e.target.value)}
-              className="widget-control appearance-none bg-surface-secondary hover:bg-surface border border-border hover:border-border text-body rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 pr-10 py-2 cursor-pointer transition-colors"
+              className="widget-control appearance-none bg-surface-secondary hover:bg-surface border border-border hover:border-border text-body rounded-md focus:ring-accent focus:border-accent block w-full pl-3 pr-10 py-2 cursor-pointer transition-colors"
             >
               {Object.keys(KPI_CONFIG).map((key) => (
                 <option key={key} value={key}>
@@ -352,7 +352,7 @@ export default function KpiTrendChart({
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-faint group-hover:text-blue-500 transition-colors">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-faint group-hover:text-accent transition-colors">
               <Filter size={12} />
             </div>
           </div>

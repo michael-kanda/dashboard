@@ -23,7 +23,7 @@ import type {
 } from '@/lib/indexing-status';
 import { readIndexingStatusResponse } from '@/lib/indexing-response';
 
-const NOTICE_CLASS = 'mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200';
+const NOTICE_CLASS = 'mt-4 rounded-md border border-border bg-warning-bg px-3 py-2 text-xs text-warning';
 
 type FilterValue = 'all' | IndexingUrlStatus | 'canonical' | 'action' | 'intentional' | 'stale';
 
@@ -36,10 +36,10 @@ interface IndexingStatusWidgetProps {
 function GoogleUnderline() {
   return (
     <div className="mt-2.5 flex h-1 w-[152px] overflow-hidden rounded-full" aria-hidden="true">
-      <span className="w-1/4 bg-[#4285F4]" />
-      <span className="w-1/4 bg-[#EA4335]" />
-      <span className="w-1/4 bg-[#FBBC05]" />
-      <span className="w-1/4 bg-[#34A853]" />
+      <span className="w-1/4 bg-accent-solid" />
+      <span className="w-1/4 bg-danger-bar" />
+      <span className="w-1/4 bg-warning-bar" />
+      <span className="w-1/4 bg-success-bar" />
     </div>
   );
 }
@@ -70,34 +70,34 @@ function getUrlLabel(url: string) {
 function StatusBadge({ row }: { row: IndexingStatusRow }) {
   if (row.status === 'indexed' && !row.hasCanonicalIssue) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-300">
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-success">
         <CheckCircle2 size={14} /> Indexiert
       </span>
     );
   }
   if (row.status === 'pending') {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 dark:text-sky-300">
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent">
         <Clock3 size={14} /> Ausstehend
       </span>
     );
   }
   if (row.isIntentional) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted dark:text-muted">
         <MinusCircle size={14} /> {CATEGORY_LABELS[row.category]}
       </span>
     );
   }
   if (row.hasCanonicalIssue) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-300">
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-warning">
         <AlertCircle size={14} /> Canonical prüfen
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-300">
+    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-danger">
       <XCircle size={14} /> {CATEGORY_LABELS[row.category]}
     </span>
   );
@@ -426,7 +426,7 @@ export default function IndexingStatusWidget({
                   type="button"
                   onClick={exportCsv}
                   disabled={!filteredRows.length}
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body shadow-sm transition-colors hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body transition-colors hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Download size={15} />
                   CSV
@@ -436,7 +436,7 @@ export default function IndexingStatusWidget({
                     type="button"
                     onClick={runSync}
                     disabled={showSyncProgress}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body shadow-sm transition-colors hover:bg-surface-secondary disabled:cursor-wait disabled:opacity-60"
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body transition-colors hover:bg-surface-secondary disabled:cursor-wait disabled:opacity-60"
                   >
                     <RefreshCw size={15} className={showSyncProgress ? 'animate-spin' : ''} />
                     {syncButtonLabel}
@@ -446,7 +446,7 @@ export default function IndexingStatusWidget({
               {showSyncProgress && (
                 <div
                   aria-live="polite"
-                  className="w-full rounded-md border border-[#4285F4]/30 bg-[#4285F4]/5 px-3 py-2"
+                  className="w-full rounded-md border border-accent/30 bg-accent-solid/5 px-3 py-2"
                 >
                   <>
                     <p className="text-left text-xs font-semibold text-body">
@@ -455,7 +455,7 @@ export default function IndexingStatusWidget({
                     {data.progressStage === 'inspection' && data.progressTotal > 0 && (
                       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-tertiary">
                         <div
-                          className="h-full rounded-full bg-[#4285F4] transition-[width]"
+                          className="h-full rounded-full bg-accent-solid transition-[width]"
                           style={{ width: `${runProgress}%` }}
                         />
                       </div>
@@ -494,7 +494,7 @@ export default function IndexingStatusWidget({
                     </p>
                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--indexing-muted)]">
                       <div
-                        className="h-full rounded-full bg-[#34A853] transition-[width]"
+                        className="h-full rounded-full bg-success-bar transition-[width]"
                         style={{ width: `${indexShare}%` }}
                       />
                     </div>
@@ -506,7 +506,7 @@ export default function IndexingStatusWidget({
                       onClick={() => setFilter('indexed')}
                       className="flex w-full items-center justify-between gap-3 text-left text-muted hover:text-heading"
                     >
-                      <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#34A853]" />Indexiert</span>
+                      <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-success-bar" />Indexiert</span>
                       <strong className="font-medium tabular-nums text-heading">{data.indexedUrls}</strong>
                     </button>
                     <button
@@ -514,7 +514,7 @@ export default function IndexingStatusWidget({
                       onClick={() => setFilter('not_indexed')}
                       className="flex w-full items-center justify-between gap-3 text-left text-muted hover:text-heading"
                     >
-                      <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#EA4335]" />Nicht indexiert</span>
+                      <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-danger-bar" />Nicht indexiert</span>
                       <strong className="font-medium tabular-nums text-heading">{data.notIndexedUrls}</strong>
                     </button>
                     <button
@@ -569,9 +569,9 @@ export default function IndexingStatusWidget({
                       </span>
                     </div>
                     <div className="mt-2.5 flex h-2 overflow-hidden rounded-full bg-[var(--indexing-muted)]" aria-label="Verteilung der Indexierungsstatus">
-                      <span className="h-full bg-[#34A853]" style={{ width: `${indexedWidth}%` }} />
-                      <span className="h-full bg-[#EA4335]" style={{ width: `${notIndexedWidth}%` }} />
-                      <span className="h-full bg-[#4285F4]" style={{ width: `${pendingWidth}%` }} />
+                      <span className="h-full bg-success-bar" style={{ width: `${indexedWidth}%` }} />
+                      <span className="h-full bg-danger-bar" style={{ width: `${notIndexedWidth}%` }} />
+                      <span className="h-full bg-accent-solid" style={{ width: `${pendingWidth}%` }} />
                     </div>
                   </div>
 
@@ -614,7 +614,7 @@ export default function IndexingStatusWidget({
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="URL suchen"
-                        className="h-9 w-full rounded-md border border-border-subtle bg-surface pl-9 pr-3 text-[11px] text-body outline-none placeholder:text-muted focus:border-[#4285F4]"
+                        className="h-9 w-full rounded-md border border-border-subtle bg-surface pl-9 pr-3 text-[11px] text-body outline-none placeholder:text-muted focus:border-accent"
                       />
                     </label>
                   </div>
@@ -623,10 +623,10 @@ export default function IndexingStatusWidget({
             )}
 
             {data.totalUrls > 0 && !data.isVerificationComplete && (
-              <div className="mt-5 rounded-md border border-[#4285F4]/30 bg-[#4285F4]/5 px-4 py-3">
+              <div className="mt-5 rounded-md border border-accent/30 bg-accent-solid/5 px-4 py-3">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <p className="widget-section-title text-heading">Vorläufiger Datenstand</p>
-                  <p className="text-xs font-semibold tabular-nums text-[#4285F4]">
+                  <p className="text-xs font-semibold tabular-nums text-accent">
                     {data.verifiedUrls} von {data.totalUrls} URLs klassifiziert
                   </p>
                 </div>
@@ -636,7 +636,7 @@ export default function IndexingStatusWidget({
                 </p>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-tertiary">
                   <div
-                    className="h-full rounded-full bg-[#4285F4] transition-[width]"
+                    className="h-full rounded-full bg-accent-solid transition-[width]"
                     style={{ width: `${data.verificationCoverage}%` }}
                   />
                 </div>
@@ -685,7 +685,7 @@ export default function IndexingStatusWidget({
                         href={item.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="truncate text-xs font-medium text-heading hover:text-[#4285F4]"
+                        className="truncate text-xs font-medium text-heading hover:text-accent"
                         title={item.url}
                       >
                         {getUrlLabel(item.url)}
@@ -709,7 +709,7 @@ export default function IndexingStatusWidget({
             )}
 
             {(syncError || data.errorMessage) && (
-              <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
+              <div className="mt-4 rounded-md border border-rose-200 bg-danger-bg px-3 py-2 text-xs text-danger">
                 {syncError || data.errorMessage}
               </div>
             )}
@@ -753,7 +753,7 @@ export default function IndexingStatusWidget({
                         href={row.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex max-w-full items-center gap-1.5 text-xs font-medium text-heading hover:text-[#4285F4]"
+                        className="inline-flex max-w-full items-center gap-1.5 text-xs font-medium text-heading hover:text-accent"
                         title={row.url}
                       >
                         <span className="truncate">{getUrlLabel(row.url)}</span>

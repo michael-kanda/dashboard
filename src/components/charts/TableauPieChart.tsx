@@ -72,7 +72,7 @@ const CustomTooltip = ({ active, payload, totalValue }: CustomTooltipProps) => {
         {/* Header */}
         <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border-subtle">
           <div 
-            className="w-2.5 h-2.5 rounded-full shadow-sm" 
+            className="w-2.5 h-2.5 rounded-full" 
             style={{ backgroundColor: color }}
           />
           <span className="widget-item-title text-body">{data.name}</span>
@@ -100,7 +100,7 @@ const CustomTooltip = ({ active, payload, totalValue }: CustomTooltipProps) => {
                 <GraphUp size={11} className="text-purple-500" />
                 <span className="text-[11px] font-medium text-secondary">{data.subLabel}:</span>
               </div>
-              <span className="widget-meta font-medium text-purple-700">
+              <span className="widget-meta font-medium text-accent">
                 {data.subValue}
               </span>
             </div>
@@ -110,10 +110,10 @@ const CustomTooltip = ({ active, payload, totalValue }: CustomTooltipProps) => {
           {data.subValue2 !== undefined && (
              <div className="flex justify-between items-center">
               <div className="flex items-center gap-1.5">
-                <CheckCircleFill size={11} className="text-emerald-600" />
+                <CheckCircleFill size={11} className="text-success" />
                 <span className="text-[11px] font-medium text-secondary">{data.subLabel2}:</span>
               </div>
-              <span className="widget-meta font-medium text-emerald-700">
+              <span className="widget-meta font-medium text-success">
                 {new Intl.NumberFormat('de-DE').format(data.subValue2)}
               </span>
             </div>
@@ -212,7 +212,7 @@ export default function TableauPieChart({
             </svg>
           </div>
         </div>
-        <div className="flex-grow flex flex-col items-center justify-center text-red-500 gap-2">
+        <div className="flex-grow flex flex-col items-center justify-center text-danger gap-2">
           <ExclamationTriangleFill size={24} />
           <p className="text-sm font-medium text-center">{error}</p>
         </div>

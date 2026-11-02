@@ -341,7 +341,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
       </div>
 
       {/* ── Tabs + Search ───────────────────────────────────── */}
-      <div className="flex items-end justify-between gap-3 border-b border-theme-border-subtle mb-1 flex-wrap">
+      <div className="flex items-end justify-between gap-3 border-b border-border-subtle mb-1 flex-wrap">
         <div className="flex gap-0.5 -mb-px">
           {visibleModes.map((mode) => {
             const isActive = viewMode === mode;
@@ -376,7 +376,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Suchen..."
-              className="widget-control w-40 pl-7 pr-2.5 py-1 h-7 rounded-md border border-theme-border-subtle bg-surface text-body placeholder:text-faint focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+              className="widget-control w-40 pl-7 pr-2.5 py-1 h-7 rounded-md border border-border-subtle bg-surface text-body placeholder:text-faint focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
         </div>
@@ -387,12 +387,12 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
         <table className="w-full">
           <thead>
             <tr>
-              <th className="widget-table-head text-left px-2 py-2.5 tracking-wider text-faint">
+              <th className="widget-table-head text-left px-2 py-2.5 text-faint">
                 {viewModeLabels[viewMode]}
               </th>
               <th
                 onClick={() => handleSort('cost')}
-                className={`widget-table-head text-right px-2 py-2.5 tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                className={`widget-table-head text-right px-2 py-2.5 cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
                   sortField === 'cost' ? 'text-body' : 'text-faint'
                 }`}
               >
@@ -400,7 +400,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
               </th>
               <th
                 onClick={() => handleSort('clicks')}
-                className={`widget-table-head text-right px-2 py-2.5 tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                className={`widget-table-head text-right px-2 py-2.5 cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
                   sortField === 'clicks' ? 'text-body' : 'text-faint'
                 }`}
               >
@@ -408,7 +408,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
               </th>
               <th
                 onClick={() => handleSort('cpc')}
-                className={`widget-table-head text-right px-2 py-2.5 tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                className={`widget-table-head text-right px-2 py-2.5 cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
                   sortField === 'cpc' ? 'text-body' : 'text-faint'
                 }`}
               >
@@ -417,7 +417,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
               {!hideConv && (
                 <th
                   onClick={() => handleSort('conversions')}
-                  className={`widget-table-head text-right px-2 py-2.5 tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                  className={`widget-table-head text-right px-2 py-2.5 cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
                     sortField === 'conversions' ? 'text-body' : 'text-faint'
                   }`}
                 >
@@ -427,7 +427,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
               {!isSheet && (
                 <th
                   onClick={() => handleSort('sessions')}
-                  className={`widget-table-head text-right px-2 py-2.5 tracking-wider cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
+                  className={`widget-table-head text-right px-2 py-2.5 cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
                     sortField === 'sessions' ? 'text-body' : 'text-faint'
                   }`}
                 >
@@ -483,7 +483,7 @@ function KpiMini({
 }) {
   return (
     <div className="bg-surface-secondary/60 rounded-md px-3.5 py-3" title={tooltip}>
-      <div className="widget-eyebrow text-faint tracking-wider mb-1.5">
+      <div className="widget-eyebrow text-faint mb-1.5">
         {label}
       </div>
       <div className="widget-metric-sm text-heading">
@@ -556,7 +556,7 @@ function TableRow({
     <>
       <tr
         onClick={hasSubRows ? onToggle : undefined}
-        className={`border-t border-theme-border-subtle transition-colors ${
+        className={`border-t border-border-subtle transition-colors ${
           hasSubRows ? 'cursor-pointer hover:bg-surface-secondary/40' : ''
         } ${isExpanded ? 'bg-surface-secondary/50' : ''}`}
       >
@@ -598,8 +598,8 @@ function TableRow({
         aggregatedSubRows.map((sub) => (
           <tr key={sub.label} className={isExpanded ? 'bg-surface-secondary/50' : ''}>
             <td className="px-2 py-2">
-              <div className="ml-3.5 pl-3.5 border-l-2 border-theme-border-subtle text-xs text-body">
-                <span className="text-[10px] uppercase tracking-wider text-faint mr-1.5 font-medium">
+              <div className="ml-3.5 pl-3.5 border-l-2 border-border-subtle text-xs text-body">
+                <span className="text-[10px] text-faint mr-1.5 font-medium">
                   {nextDim!.label}
                 </span>
                 <span className="truncate" title={sub.label}>

@@ -118,7 +118,7 @@ const TabButton: React.FC<{
 }> = ({ active, onClick, icon, label }) => (
   <button onClick={onClick} className={cn(
     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
-    active ? "bg-surface-tertiary text-heading shadow-sm" : "text-secondary hover:bg-surface-tertiary"
+    active ? "bg-surface-tertiary text-heading" : "text-secondary hover:bg-surface-tertiary"
   )}>
     {icon}{label}
   </button>
@@ -130,7 +130,7 @@ const IntentCard: React.FC<{
   conversionRate: number; avgEngagementTime: number; engagementRate: number;
   percentage: number; topPages: Array<{ path: string; sessions: number }>;
 }> = ({ intent, sessions, conversions, conversionRate, avgEngagementTime, engagementRate, percentage, topPages }) => (
-  <div className="p-4 rounded-xl border border-border-subtle hover:border-purple-200 hover:shadow-md transition-all bg-surface"
+  <div className="p-4 rounded-xl border border-border-subtle hover:border-border transition-all bg-surface"
     style={{ borderLeftColor: intent.color, borderLeftWidth: '4px' }}>
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-2">
@@ -148,10 +148,10 @@ const IntentCard: React.FC<{
       <div><div className="text-xs text-muted">Conversions</div>
         <div className="widget-metric-sm text-heading">{conversions}</div></div>
       <div><div className="text-xs text-muted">Conv. Rate</div>
-        <div className={cn("widget-metric-sm", conversionRate > 5 ? "text-green-600" : conversionRate > 2 ? "text-amber-600" : "text-secondary")}>
+        <div className={cn("widget-metric-sm", conversionRate > 5 ? "text-success" : conversionRate > 2 ? "text-warning" : "text-secondary")}>
           {conversionRate.toFixed(1)}%</div></div>
       <div><div className="text-xs text-muted">Interaktionsrate</div>
-        <div className={cn("widget-metric-sm", engagementRate > 60 ? "text-green-600" : engagementRate > 40 ? "text-amber-600" : "text-secondary")}>
+        <div className={cn("widget-metric-sm", engagementRate > 60 ? "text-success" : engagementRate > 40 ? "text-warning" : "text-secondary")}>
           {engagementRate.toFixed(1)}%</div></div>
     </div>
     {topPages.length > 0 && (
@@ -177,7 +177,7 @@ const JourneyFlowCard: React.FC<{
   engagementRate: number; avgSessionDuration: number;
   nextPages: Array<{ path: string; sessions: number; percentage: number }>;
 }> = ({ landingPage, totalSessions, conversionRate, engagementRate, avgSessionDuration, nextPages }) => (
-  <div className="p-4 rounded-xl border border-border-subtle bg-surface hover:shadow-md transition-all">
+  <div className="p-4 rounded-xl border border-border-subtle bg-surface transition-all">
     <div className="flex items-start justify-between mb-3">
       <div className="flex-1 min-w-0">
         <div className="text-xs text-muted mb-1">Einstiegsseite</div>
@@ -185,13 +185,13 @@ const JourneyFlowCard: React.FC<{
           {landingPage === '/' ? '/ (Startseite)' : landingPage}</div>
       </div>
       <div className="text-right ml-4">
-        <div className="widget-metric-sm text-purple-600">{totalSessions}</div>
+        <div className="widget-metric-sm text-accent">{totalSessions}</div>
         <div className="text-xs text-muted">Sessions</div>
       </div>
     </div>
     <div className="flex items-center gap-4 mb-3 text-xs">
       <div className="flex items-center gap-1">
-        <CheckCircle2 className="text-green-500" size={12} />
+        <CheckCircle2 className="text-success" size={12} />
         <span className="text-secondary">Conv: </span>
         <span className="font-semibold">{conversionRate.toFixed(1)}%</span>
       </div>
@@ -201,7 +201,7 @@ const JourneyFlowCard: React.FC<{
         <span className="font-semibold">{engagementRate.toFixed(1)}%</span>
       </div>
       <div className="flex items-center gap-1">
-        <Clock className="text-blue-500" size={12} />
+        <Clock className="text-accent" size={12} />
         <span className="text-secondary">Zeit: </span>
         <span className="font-semibold">{formatDuration(avgSessionDuration)}</span>
       </div>
@@ -290,7 +290,7 @@ export default function AiTrafficDetailCardV2({
   if (error) return (
     <div className={cn("dashboard-widget-surface rounded-2xl p-6", className)}>
       <div className="flex flex-col items-center justify-center text-center py-8">
-        <AlertTriangle className="text-red-500 w-12 h-12 mb-4" />
+        <AlertTriangle className="text-danger w-12 h-12 mb-4" />
         <h3 className="widget-title text-heading mb-2">Fehler beim Laden</h3>
         <p className="text-sm text-muted mb-4 max-w-md">{error}</p>
         {onRefresh && <button onClick={onRefresh} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"><RefreshCcw size={16} />Erneut versuchen</button>}
@@ -302,7 +302,7 @@ export default function AiTrafficDetailCardV2({
   if (!data || data.totalSessions === 0) return (
     <div className={cn("dashboard-widget-surface rounded-2xl p-6", className)}>
       <div className="flex flex-col items-center justify-center text-center py-12">
-        <div className="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-4"><Bot className="text-purple-400" size={32} /></div>
+        <div className="w-16 h-16 rounded-2xl bg-accent-tint flex items-center justify-center mb-4"><Bot className="text-purple-400" size={32} /></div>
         <h3 className="widget-title text-heading mb-2">Keine KI-Traffic Daten</h3>
         <p className="text-sm text-muted max-w-md">Im ausgewählten Zeitraum wurden keine Besuche von KI-Plattformen erfasst.</p>
       </div>
@@ -355,40 +355,40 @@ export default function AiTrafficDetailCardV2({
           {/* KPI GRID */}
           <div className="py-5">
             <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border border-purple-200/60 dark:border-purple-700/30">
-                <div className="flex items-center gap-2 mb-1"><TrendingUp className="text-purple-600" size={16} />
-                  <span className="text-xs font-medium text-purple-700 dark:text-purple-300">Sessions</span></div>
+              <div className="bg-accent-tint rounded-xl p-4 border border-purple-200/60">
+                <div className="flex items-center gap-2 mb-1"><TrendingUp className="text-accent" size={16} />
+                  <span className="text-xs font-medium text-accent">Sessions</span></div>
                 <div className="flex items-baseline gap-2">
-                  <span className="widget-metric text-purple-900 dark:text-purple-100">{data.totalSessions.toLocaleString('de-DE')}</span>
-                  {data.totalSessionsChange !== undefined && <span className={cn("text-xs font-semibold", data.totalSessionsChange >= 0 ? "text-green-600" : "text-red-600")}>
+                  <span className="widget-metric text-purple-900">{data.totalSessions.toLocaleString('de-DE')}</span>
+                  {data.totalSessionsChange !== undefined && <span className={cn("text-xs font-semibold", data.totalSessionsChange >= 0 ? "text-success" : "text-danger")}>
                     {data.totalSessionsChange >= 0 ? '+' : ''}{data.totalSessionsChange.toFixed(1)}%</span>}
                 </div>
               </div>
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-200/60 dark:border-indigo-700/30">
-                <div className="flex items-center gap-2 mb-1"><Users className="text-indigo-600" size={16} />
-                  <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">Nutzer</span></div>
-                <span className="widget-metric text-indigo-900 dark:text-indigo-100">{data.totalUsers.toLocaleString('de-DE')}</span>
+              <div className="bg-accent-tint rounded-xl p-4 border border-indigo-200/60">
+                <div className="flex items-center gap-2 mb-1"><Users className="text-accent" size={16} />
+                  <span className="text-xs font-medium text-accent">Nutzer</span></div>
+                <span className="widget-metric text-indigo-900">{data.totalUsers.toLocaleString('de-DE')}</span>
               </div>
-              <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-4 border border-teal-200/60 dark:border-teal-700/30">
-                <div className="flex items-center gap-2 mb-1"><Clock className="text-teal-600" size={16} />
-                  <span className="text-xs font-medium text-teal-700 dark:text-teal-300">Ø Verweildauer</span></div>
-                <span className="widget-metric text-teal-900 dark:text-teal-100">{formatDuration(data.avgEngagementTime)}</span>
+              <div className="bg-success-bg rounded-xl p-4 border border-teal-200/60">
+                <div className="flex items-center gap-2 mb-1"><Clock className="text-success" size={16} />
+                  <span className="text-xs font-medium text-success">Ø Verweildauer</span></div>
+                <span className="widget-metric text-teal-900">{formatDuration(data.avgEngagementTime)}</span>
               </div>
-              <div className="bg-rose-50 dark:bg-rose-900/20 rounded-xl p-4 border border-rose-200/60 dark:border-rose-700/30">
-                <div className="flex items-center gap-2 mb-1"><Activity className="text-rose-600" size={16} />
-                  <span className="text-xs font-medium text-rose-700 dark:text-rose-300">Interaktionsrate</span></div>
-                <span className={cn("widget-metric", data.engagementRate > 60 ? "text-green-600" : data.engagementRate > 40 ? "text-amber-600" : "text-rose-900")}>
+              <div className="bg-danger-bg rounded-xl p-4 border border-rose-200/60">
+                <div className="flex items-center gap-2 mb-1"><Activity className="text-danger" size={16} />
+                  <span className="text-xs font-medium text-danger">Interaktionsrate</span></div>
+                <span className={cn("widget-metric", data.engagementRate > 60 ? "text-success" : data.engagementRate > 40 ? "text-warning" : "text-rose-900")}>
                   {data.engagementRate.toFixed(1)}%</span>
               </div>
-              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200/60 dark:border-amber-700/30">
-                <div className="flex items-center gap-2 mb-1"><Target className="text-amber-600" size={16} />
-                  <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Conversions</span></div>
-                <span className="widget-metric text-amber-900 dark:text-amber-100">{data.conversions.toLocaleString('de-DE')}</span>
+              <div className="bg-warning-bg rounded-xl p-4 border border-amber-200/60">
+                <div className="flex items-center gap-2 mb-1"><Target className="text-warning" size={16} />
+                  <span className="text-xs font-medium text-warning">Conversions</span></div>
+                <span className="widget-metric text-amber-900">{data.conversions.toLocaleString('de-DE')}</span>
               </div>
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200/60 dark:border-blue-700/30">
-                <div className="flex items-center gap-2 mb-1"><BarChart3 className="text-blue-600" size={16} />
-                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Ø Seiten/Session</span></div>
-                <span className="widget-metric text-blue-900 dark:text-blue-100">{data.userJourney.avgPagesPerSession.toFixed(1)}</span>
+              <div className="bg-accent-tint rounded-xl p-4 border border-blue-200/60">
+                <div className="flex items-center gap-2 mb-1"><BarChart3 className="text-accent" size={16} />
+                  <span className="text-xs font-medium text-accent">Ø Seiten/Session</span></div>
+                <span className="widget-metric text-blue-900">{data.userJourney.avgPagesPerSession.toFixed(1)}</span>
               </div>
             </div>
           </div>
@@ -448,7 +448,7 @@ export default function AiTrafficDetailCardV2({
                     <Target size={14} className="text-purple-500" />Intent-Verteilung</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                     {data.intentBreakdown.map((item, i) => (
-                      <div key={i} className="p-3 rounded-lg border border-border-subtle hover:border-purple-200 transition-all cursor-pointer"
+                      <div key={i} className="p-3 rounded-lg border border-border-subtle hover:border-border transition-all cursor-pointer"
                         style={{ borderLeftColor: item.intent.color, borderLeftWidth: '3px' }}
                         onClick={() => { setSelectedIntent(item.intent.key); setActiveTab('pages'); }}>
                         <div className="flex items-center gap-1.5 mb-1">
@@ -553,13 +553,13 @@ export default function AiTrafficDetailCardV2({
                       <tr className="bg-surface-secondary text-xs text-secondary">
                         <th className="px-4 py-3 text-left font-semibold">Seite</th>
                         <th className="px-4 py-3 text-left font-semibold">Intent</th>
-                        <th className="px-4 py-3 text-right font-semibold cursor-pointer hover:text-purple-600" onClick={() => handleSort('sessions')}>
+                        <th className="px-4 py-3 text-right font-semibold cursor-pointer hover:text-accent" onClick={() => handleSort('sessions')}>
                           Sessions {sortField === 'sessions' && (sortDirection === 'desc' ? <ArrowDown size={12} className="inline"/> : <ArrowUp size={12} className="inline"/>)}</th>
-                        <th className="px-4 py-3 text-right font-semibold cursor-pointer hover:text-purple-600" onClick={() => handleSort('engagementRate')}>
+                        <th className="px-4 py-3 text-right font-semibold cursor-pointer hover:text-accent" onClick={() => handleSort('engagementRate')}>
                           Interaktion {sortField === 'engagementRate' && (sortDirection === 'desc' ? <ArrowDown size={12} className="inline"/> : <ArrowUp size={12} className="inline"/>)}</th>
-                        <th className="px-4 py-3 text-right font-semibold cursor-pointer hover:text-purple-600" onClick={() => handleSort('avgEngagementTime')}>
+                        <th className="px-4 py-3 text-right font-semibold cursor-pointer hover:text-accent" onClick={() => handleSort('avgEngagementTime')}>
                           Ø Zeit {sortField === 'avgEngagementTime' && (sortDirection === 'desc' ? <ArrowDown size={12} className="inline"/> : <ArrowUp size={12} className="inline"/>)}</th>
-                        <th className="px-4 py-3 text-right font-semibold cursor-pointer hover:text-purple-600" onClick={() => handleSort('conversions')}>
+                        <th className="px-4 py-3 text-right font-semibold cursor-pointer hover:text-accent" onClick={() => handleSort('conversions')}>
                           Conv. {sortField === 'conversions' && (sortDirection === 'desc' ? <ArrowDown size={12} className="inline"/> : <ArrowUp size={12} className="inline"/>)}</th>
                       </tr>
                     </thead>
@@ -584,13 +584,13 @@ export default function AiTrafficDetailCardV2({
                           </td>
                           <td className="widget-table-cell px-4 py-3 text-right font-medium text-heading">{page.sessions.toLocaleString('de-DE')}</td>
                           <td className="px-4 py-3 text-right text-sm">
-                            <span className={cn("font-medium", page.engagementRate > 60 ? "text-green-600" : page.engagementRate > 40 ? "text-amber-600" : "text-secondary")}>
+                            <span className={cn("font-medium", page.engagementRate > 60 ? "text-success" : page.engagementRate > 40 ? "text-warning" : "text-secondary")}>
                               {page.engagementRate.toFixed(1)}%</span>
                           </td>
                           <td className="px-4 py-3 text-right text-sm text-secondary">{formatDuration(page.avgEngagementTime)}</td>
                           <td className="px-4 py-3 text-right">
                             <span className={cn("inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded text-sm font-semibold",
-                              page.conversions > 0 ? "bg-green-100 text-green-700" : "bg-surface-tertiary text-muted")}>{page.conversions}</span>
+                              page.conversions > 0 ? "bg-success-bg text-success" : "bg-surface-tertiary text-muted")}>{page.conversions}</span>
                           </td>
                         </tr>
                       ))}
@@ -623,7 +623,7 @@ export default function AiTrafficDetailCardV2({
                 </div>
                 <div>
                   <h3 className="widget-section-title text-strong mb-3 flex items-center gap-2">
-                    <Sparkles size={14} className="text-amber-500" />Performance nach Plattform</h3>
+                    <Sparkles size={14} className="text-warning" />Performance nach Plattform</h3>
                   <div className="overflow-hidden rounded-xl border border-border-subtle">
                     <table className="w-full">
                       <thead className="bg-surface-secondary text-xs text-muted">
@@ -646,7 +646,7 @@ export default function AiTrafficDetailCardV2({
                             <td className="px-4 py-3 text-right text-sm text-secondary">{source.sessions.toLocaleString('de-DE')}</td>
                             <td className="px-4 py-3 text-right text-sm text-secondary">{source.users.toLocaleString('de-DE')}</td>
                             <td className="px-4 py-3 text-right text-sm">
-                              <span className={cn("font-medium", source.engagementRate > 50 ? "text-green-600" : "text-secondary")}>
+                              <span className={cn("font-medium", source.engagementRate > 50 ? "text-success" : "text-secondary")}>
                                 {source.engagementRate.toFixed(1)}%</span>
                             </td>
                           </tr>

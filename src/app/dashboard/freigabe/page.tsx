@@ -60,11 +60,11 @@ const GscChangeIndicator = ({ change, isPosition = false }: { change: number | s
     ? (numChange > 0 ? `+${numChange.toFixed(2)}` : numChange.toFixed(2)) 
     : (numChange > 0 ? `+${numChange.toLocaleString('de-DE')}` : numChange.toLocaleString('de-DE'));
   
-  const colorClasses = isPositive ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100';
+  const colorClasses = isPositive ? 'text-success bg-success-bg' : 'text-danger bg-danger-bg';
   const Icon = isPositive ? ArrowUp : ArrowDown;
 
   return (
-    <span className={cn('inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold tracking-wide', colorClasses)}>
+    <span className={cn('inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold', colorClasses)}>
       <Icon size={9} />
       {text}
     </span>
@@ -184,11 +184,11 @@ export default function FreigabePage() {
 
   const getStatusStyle = (status: LandingpageStatus) => {
     switch (status) {
-      case 'Offen': return 'text-blue-700 border-blue-300 bg-blue-50';
-      case 'In Prüfung': return 'text-yellow-700 border-yellow-300 bg-yellow-50';
-      case 'Gesperrt': return 'text-red-700 border-red-300 bg-red-50';
-      case 'Freigegeben': return 'text-green-700 border-green-300 bg-green-50';
-      default: return 'text-gray-700 border-gray-300 bg-gray-50';
+      case 'Offen': return 'text-accent border-border bg-accent-tint';
+      case 'In Prüfung': return 'text-warning border-yellow-300 bg-warning-bg';
+      case 'Gesperrt': return 'text-danger border-border bg-danger-bg';
+      case 'Freigegeben': return 'text-success border-border bg-success-bg';
+      default: return 'text-body border-border bg-surface-secondary';
     }
   };
   const getStatusIcon = (status: LandingpageStatus): ReactNode => {
@@ -214,39 +214,39 @@ export default function FreigabePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-surface-secondary p-8">
       <div className="max-w-full mx-auto"> 
         
         <div className="mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Landingpages Freigabe</h1>
-            <p className="text-gray-600 mt-2">Verwalten Sie den Status Ihrer Landingpages.</p>
+            <h1 className="text-3xl font-bold text-heading">Landingpages Freigabe</h1>
+            <p className="text-muted mt-2">Verwalten Sie den Status Ihrer Landingpages.</p>
           </div>
         </div>
 
         {message && (
-          <div className={`mb-6 p-4 border rounded-md flex items-center gap-2 ${message.startsWith('Fehler') ? 'bg-red-50 border-red-200 text-red-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
+          <div className={`mb-6 p-4 border rounded-md flex items-center gap-2 ${message.startsWith('Fehler') ? 'bg-danger-bg border-border text-danger' : 'bg-accent-tint border-border text-accent'}`}>
             {message.startsWith('Fehler') ? <ExclamationTriangleFill size={18}/> : <InfoCircleFill size={18}/>}
             {message}
           </div>
         )}
 
-        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">GSC-Daten Abgleich</h3>
+        <div className="bg-surface p-6 rounded-lg mb-6">
+          <h3 className="text-lg font-semibold text-heading mb-4">GSC-Daten Abgleich</h3>
           <div className="flex flex-col sm:flex-row gap-4">
             <DateRangeSelector value={dateRange} onChange={setDateRange} className="w-full sm:w-auto" />
-            <button onClick={handleGscRefresh} disabled={isRefreshing || isLoading} className="px-4 py-2 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-wait flex items-center justify-center gap-2 w-full sm:w-auto">
+            <button onClick={handleGscRefresh} disabled={isRefreshing || isLoading} className="px-4 py-2 font-medium rounded-md text-white bg-accent-solid hover:opacity-90 disabled:bg-gray-400 disabled:cursor-wait flex items-center justify-center gap-2 w-full sm:w-auto">
               {isRefreshing ? <ArrowRepeat className="animate-spin" size={18} /> : <Search size={16} />}
               <span>{isRefreshing ? 'Wird abgeglichen...' : 'GSC-Daten abgleichen'}</span>
             </button>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-           <h3 className="text-sm font-semibold text-gray-500 mb-3 flex items-center gap-1"><Filter size={16}/> Filtern nach Status</h3>
+        <div className="bg-surface p-4 rounded-lg mb-6">
+           <h3 className="text-sm font-semibold text-muted mb-3 flex items-center gap-1"><Filter size={16}/> Filtern nach Status</h3>
            <div className="flex gap-2 flex-wrap">
               {filterOptions.map(option => (
-                <button key={option.value} onClick={() => setFilterStatus(option.value as any)} className={`px-3 py-1.5 text-sm rounded-md font-medium border transition-colors flex items-center gap-1 ${filterStatus === option.value ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
+                <button key={option.value} onClick={() => setFilterStatus(option.value as any)} className={`px-3 py-1.5 text-sm rounded-md font-medium border transition-colors flex items-center gap-1 ${filterStatus === option.value ? 'bg-accent-solid text-white border-accent' : 'bg-surface text-body border-border hover:bg-surface-secondary'}`}>
                     {option.icon} {option.label} ({option.value === 'alle' ? landingpages.length : landingpages.filter(lp => lp.status === option.value).length})
                 </button>
              ))}
@@ -254,57 +254,57 @@ export default function FreigabePage() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-12"><ArrowRepeat className="animate-spin inline-block text-indigo-600 mr-2" size={24}/><p className="text-gray-600 inline-block">Lade Landingpages...</p></div>
+          <div className="text-center py-12"><ArrowRepeat className="animate-spin inline-block text-accent mr-2" size={24}/><p className="text-muted inline-block">Lade Landingpages...</p></div>
         ) : filteredPages.length === 0 ? (
-          <div className="bg-white p-12 rounded-lg shadow-md text-center">
-             <p className="text-gray-500">{landingpages.length === 0 ? 'Sie haben noch keine Landingpages.' : `Keine Landingpages mit Status "${filterStatus}" gefunden.`}</p>
+          <div className="bg-surface p-12 rounded-lg text-center">
+             <p className="text-muted">{landingpages.length === 0 ? 'Sie haben noch keine Landingpages.' : `Keine Landingpages mit Status "${filterStatus}" gefunden.`}</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+          <div className="bg-surface rounded-lg overflow-x-auto">
             <table className="w-full min-w-[1400px]">
-               <thead className="bg-gray-50 border-b border-gray-200">
+               <thead className="bg-surface-secondary border-b border-border">
                  <tr>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">URL / Keyword</th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><div className="flex items-center gap-1"><CalendarEvent/> Daten</div></th>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-muted w-[20%]">URL / Keyword</th>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-muted"><div className="flex items-center gap-1"><CalendarEvent/> Daten</div></th>
                    
-                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">GSC Klicks</th>
-                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">GSC Impr.</th>
-                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">GSC Pos.</th>
+                   <th className="px-6 py-3 text-right text-xs font-medium text-muted">GSC Klicks</th>
+                   <th className="px-6 py-3 text-right text-xs font-medium text-muted">GSC Impr.</th>
+                   <th className="px-6 py-3 text-right text-xs font-medium text-muted">GSC Pos.</th>
                    
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[35%]">
+                   <th className="px-6 py-3 text-left text-xs font-medium text-muted">Status</th>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-muted w-[35%]">
                      <div className="flex items-center gap-1"><ChatSquareText/> Anmerkung</div>
                    </th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aktionen</th>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-muted">Aktionen</th>
                  </tr>
                </thead>
-               <tbody className="bg-white divide-y divide-gray-200">
+               <tbody className="bg-surface divide-y divide-border-subtle">
                  {filteredPages.map((lp) => (
-                   <tr key={lp.id} className="hover:bg-gray-50 transition-colors">
+                   <tr key={lp.id} className="hover:bg-surface-secondary transition-colors">
                      {/* (Spalten 1-6 bleiben gleich) */}
                      <td className="px-6 py-4 whitespace-nowrap align-top">
-                       <div className="text-sm font-medium text-gray-900 truncate" title={lp.haupt_keyword || undefined}>{lp.haupt_keyword || <span className="text-gray-400 italic">Kein Keyword</span>}</div>
-                       <a href={lp.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 text-xs truncate block" title={lp.url}>{lp.url}</a>
+                       <div className="text-sm font-medium text-heading truncate" title={lp.haupt_keyword || undefined}>{lp.haupt_keyword || <span className="text-muted italic">Kein Keyword</span>}</div>
+                       <a href={lp.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent text-xs truncate block" title={lp.url}>{lp.url}</a>
                      </td>
-                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 align-top">
+                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted align-top">
                        <div className="text-xs">Erstellt: {formatDateOnly(lp.created_at)}</div>
                        <div className="text-xs">Update: {formatDateOnly(lp.updated_at)}</div>
                      </td>
-                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right align-top">
+                     <td className="px-6 py-4 whitespace-nowrap text-sm text-body text-right align-top">
                        <div className="flex flex-col items-end gap-1">
-                         <span className="font-medium text-gray-900">{lp.gsc_klicks?.toLocaleString('de-DE') || '-'}</span>
+                         <span className="font-medium text-heading">{lp.gsc_klicks?.toLocaleString('de-DE') || '-'}</span>
                          <GscChangeIndicator change={lp.gsc_klicks_change} />
                        </div>
                      </td>
-                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right align-top">
+                     <td className="px-6 py-4 whitespace-nowrap text-sm text-body text-right align-top">
                        <div className="flex flex-col items-end gap-1">
-                         <span className="font-medium text-gray-900">{lp.gsc_impressionen?.toLocaleString('de-DE') || '-'}</span>
+                         <span className="font-medium text-heading">{lp.gsc_impressionen?.toLocaleString('de-DE') || '-'}</span>
                          <GscChangeIndicator change={lp.gsc_impressionen_change} />
                        </div>
                      </td>
-                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right align-top">
+                     <td className="px-6 py-4 whitespace-nowrap text-sm text-body text-right align-top">
                        <div className="flex flex-col items-end gap-1">
-                         <span className="font-medium text-gray-900">{lp.gsc_position ? parseFloat(String(lp.gsc_position)).toFixed(2) : '-'}</span>
+                         <span className="font-medium text-heading">{lp.gsc_position ? parseFloat(String(lp.gsc_position)).toFixed(2) : '-'}</span>
                          <GscChangeIndicator change={lp.gsc_position_change} isPosition={true} />
                        </div>
                      </td>
@@ -315,7 +315,7 @@ export default function FreigabePage() {
                      {/* ✅ Anmerkung mit Badge für Kunde */}
                      <td className="px-6 py-4 align-top relative">
                         <textarea
-                          className="w-full text-sm p-2 border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+                          className="w-full text-sm p-2 border border-border rounded focus:ring-accent focus:border-accent resize-y"
                           rows={3}
                           defaultValue={lp.comment || ''}
                           placeholder="Anmerkung hinzufügen..."
@@ -327,7 +327,7 @@ export default function FreigabePage() {
                         />
                         {/* ✅ Feedback Badge (1 Minute) */}
                         {savedCommentId === lp.id && (
-                          <div className="absolute top-2 right-2 bg-green-50 text-green-700 text-[10px] font-medium px-2 py-1 rounded border border-green-200 shadow-sm flex items-center gap-1.5 animate-in fade-in zoom-in duration-300 z-10">
+                          <div className="absolute top-2 right-2 bg-success-bg text-success text-[10px] font-medium px-2 py-1 rounded border border-border flex items-center gap-1.5 animate-in fade-in zoom-in duration-300 z-10">
                             <CheckCircleFill size={10} />
                             <span>Gespeichert & Betreuer benachrichtigt</span>
                           </div>
@@ -337,7 +337,7 @@ export default function FreigabePage() {
                      <td className="px-6 py-4 whitespace-nowrap align-top">
                        <div className="flex flex-col gap-2">
                           <button onClick={() => updateStatus(lp.id, 'Freigegeben')} className="px-3 py-1.5 text-xs font-medium rounded bg-green-600 border border-green-600 text-white hover:bg-green-700 flex items-center gap-1 justify-center"><CheckCircleFill size={14} /> Freigeben</button>
-                          <button onClick={() => updateStatus(lp.id, 'Gesperrt')} className="px-3 py-1.5 text-xs font-medium rounded border border-red-600 text-red-700 hover:bg-red-50 flex items-center gap-1 justify-center"><SlashCircleFill size={14} /> Sperren</button>
+                          <button onClick={() => updateStatus(lp.id, 'Gesperrt')} className="px-3 py-1.5 text-xs font-medium rounded border border-red-600 text-danger hover:bg-danger-bg flex items-center gap-1 justify-center"><SlashCircleFill size={14} /> Sperren</button>
                        </div>
                      </td>
                    </tr>

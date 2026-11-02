@@ -30,7 +30,7 @@ export default function ContentOutlineEditor({ outline, onChange }: Props) {
 
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-      <section className="rounded-lg bg-surface p-5 shadow-sm">
+      <section className="rounded-lg bg-surface p-5">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-heading">Gliederung bearbeiten</h2>
@@ -42,7 +42,7 @@ export default function ContentOutlineEditor({ outline, onChange }: Props) {
               ...outline,
               sections: [...outline.sections, { id: nextId(outline.sections), level: 2, title: 'Neue Sektion', purpose: 'Inhalt und Ziel festlegen' }],
             })}
-            className="inline-flex items-center gap-1.5 rounded border border-theme-border-default px-3 py-2 text-xs font-semibold text-heading hover:bg-surface-secondary"
+            className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-2 text-xs font-semibold text-heading hover:bg-surface-secondary"
           >
             <Plus size={14} /> Sektion
           </button>
@@ -50,11 +50,11 @@ export default function ContentOutlineEditor({ outline, onChange }: Props) {
 
         <div className="space-y-2">
           {outline.sections.map((section, index) => (
-            <div key={section.id} className="grid grid-cols-[64px_minmax(0,1fr)_auto] gap-2 rounded border border-theme-border-subtle bg-surface-secondary p-3">
+            <div key={section.id} className="grid grid-cols-[64px_minmax(0,1fr)_auto] gap-2 rounded border border-border-subtle bg-surface-secondary p-3">
               <select
                 value={section.level}
                 onChange={(event) => updateSection(index, { level: Number(event.target.value) as 2 | 3 })}
-                className="h-10 rounded border border-theme-border-default bg-surface px-2 text-sm text-heading"
+                className="h-10 rounded border border-border bg-surface px-2 text-sm text-heading"
               >
                 <option value={2}>H2</option>
                 <option value={3}>H3</option>
@@ -63,13 +63,13 @@ export default function ContentOutlineEditor({ outline, onChange }: Props) {
                 <input
                   value={section.title}
                   onChange={(event) => updateSection(index, { title: event.target.value })}
-                  className="h-10 rounded border border-theme-border-default bg-surface px-3 text-sm font-medium text-heading"
+                  className="h-10 rounded border border-border bg-surface px-3 text-sm font-medium text-heading"
                   aria-label="Überschrift"
                 />
                 <input
                   value={section.purpose}
                   onChange={(event) => updateSection(index, { purpose: event.target.value })}
-                  className="h-10 rounded border border-theme-border-default bg-surface px-3 text-sm text-secondary"
+                  className="h-10 rounded border border-border bg-surface px-3 text-sm text-secondary"
                   aria-label="Zweck der Sektion"
                 />
               </div>
@@ -84,21 +84,21 @@ export default function ContentOutlineEditor({ outline, onChange }: Props) {
       </section>
 
       <aside className="space-y-4">
-        <section className="rounded-lg bg-surface p-5 shadow-sm">
+        <section className="rounded-lg bg-surface p-5">
           <h3 className="text-sm font-semibold text-heading">SEO-Vorschau</h3>
-          <label className="mt-4 block text-[10px] font-semibold uppercase text-muted">Meta Title</label>
-          <textarea value={outline.metaTitle} onChange={(event) => onChange({ ...outline, metaTitle: event.target.value })} rows={2} className="mt-1 w-full rounded border border-theme-border-default bg-surface-secondary p-2 text-sm text-heading" />
+          <label className="mt-4 block text-[10px] font-semibold text-muted">Meta Title</label>
+          <textarea value={outline.metaTitle} onChange={(event) => onChange({ ...outline, metaTitle: event.target.value })} rows={2} className="mt-1 w-full rounded border border-border bg-surface-secondary p-2 text-sm text-heading" />
           <div className="mt-1 text-right text-[10px] text-muted">{outline.metaTitle.length}/60</div>
-          <label className="mt-3 block text-[10px] font-semibold uppercase text-muted">Meta Description</label>
-          <textarea value={outline.metaDescription} onChange={(event) => onChange({ ...outline, metaDescription: event.target.value })} rows={4} className="mt-1 w-full rounded border border-theme-border-default bg-surface-secondary p-2 text-sm text-heading" />
+          <label className="mt-3 block text-[10px] font-semibold text-muted">Meta Description</label>
+          <textarea value={outline.metaDescription} onChange={(event) => onChange({ ...outline, metaDescription: event.target.value })} rows={4} className="mt-1 w-full rounded border border-border bg-surface-secondary p-2 text-sm text-heading" />
           <div className="mt-1 text-right text-[10px] text-muted">{outline.metaDescription.length}/155</div>
         </section>
-        <section className="rounded-lg bg-surface p-5 shadow-sm">
+        <section className="rounded-lg bg-surface p-5">
           <h3 className="text-sm font-semibold text-heading">Keyword-Fokus</h3>
-          <p className="mt-3 text-sm font-semibold text-[#4285F4]">{outline.primaryKeyword}</p>
+          <p className="mt-3 text-sm font-semibold text-accent">{outline.primaryKeyword}</p>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {outline.secondaryKeywords.map((keyword) => (
-              <span key={keyword} className="rounded border border-theme-border-default px-2 py-1 text-xs text-secondary">{keyword}</span>
+              <span key={keyword} className="rounded border border-border px-2 py-1 text-xs text-secondary">{keyword}</span>
             ))}
           </div>
           <p className="mt-4 text-xs text-muted">Suchintention: {outline.searchIntent}</p>

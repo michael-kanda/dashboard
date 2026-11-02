@@ -87,7 +87,7 @@ export default function ProjectAssignmentManager({
   const projectsToDisplay = availableProjects;
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200">
+    <div className="bg-surface p-8 rounded-lg border border-border">
       <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
         <Pencil size={20} /> Projektzuweisungen für {user.email}
       </h2>
@@ -95,9 +95,9 @@ export default function ProjectAssignmentManager({
       <form onSubmit={handleSubmit} className="space-y-6">
         
         {/* Projektliste */}
-        <div className="border border-gray-300 rounded-lg p-4 max-h-96 overflow-y-auto bg-gray-50">
+        <div className="border border-border rounded-lg p-4 max-h-96 overflow-y-auto bg-surface-secondary">
           {projectsToDisplay.length === 0 ? (
-            <p className="text-gray-500 text-sm">Keine Projekte verfügbar</p>
+            <p className="text-muted text-sm">Keine Projekte verfügbar</p>
           ) : (
             <div className="space-y-3">
               {projectsToDisplay.map(project => (
@@ -108,15 +108,15 @@ export default function ProjectAssignmentManager({
                     checked={selectedProjects.includes(project.id)}
                     onChange={() => handleToggleProject(project.id)}
                     disabled={isSubmitting}
-                    className="w-4 h-4 text-indigo-600 border-gray-300 rounded cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-4 h-4 text-accent border-border rounded cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                   />
                   <label 
                     htmlFor={`project-${project.id}`}
-                    className="flex-1 cursor-pointer text-sm text-gray-700"
+                    className="flex-1 cursor-pointer text-sm text-body"
                   >
                     <span className="font-medium">{project.name}</span>
                     {project.mandant_id && (
-                      <span className="ml-2 text-xs text-gray-500">
+                      <span className="ml-2 text-xs text-muted">
                         ({project.mandant_id})
                       </span>
                     )}
@@ -128,7 +128,7 @@ export default function ProjectAssignmentManager({
         </div>
 
         {/* Summary */}
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+        <div className="p-3 bg-accent-tint border border-border rounded text-sm text-accent">
           <span className="font-medium">{selectedProjects.length}</span> von <span className="font-medium">{projectsToDisplay.length}</span> Projekten ausgewählt
         </div>
 
@@ -136,7 +136,7 @@ export default function ProjectAssignmentManager({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full px-4 py-2 font-normal text-white bg-[#188bdb] border-[3px] border-[#188bdb] rounded-[3px] hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#188bdb] disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
+          className="w-full px-4 py-2 font-normal text-white bg-accent-solid border-[3px] border-accent rounded-[3px] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <ArrowRepeat className="animate-spin" size={18} />
@@ -148,12 +148,12 @@ export default function ProjectAssignmentManager({
 
         {/* Messages */}
         {successMessage && (
-          <p className="text-sm text-green-600 font-medium p-3 bg-green-50 rounded border border-green-200">
+          <p className="text-sm text-success font-medium p-3 bg-success-bg rounded border border-border">
             {successMessage}
           </p>
         )}
         {message && !successMessage && (
-          <p className="text-sm text-red-600 font-medium p-3 bg-red-50 rounded border border-red-200">
+          <p className="text-sm text-danger font-medium p-3 bg-danger-bg rounded border border-border">
             {message}
           </p>
         )}

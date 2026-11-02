@@ -69,12 +69,12 @@ export default function ExportButton({
     <button 
       onClick={handleDownload} 
       disabled={isGenerating}
-      className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#188BDB] bg-[#188BDB]/10 hover:bg-[#188BDB]/20 border border-[#188BDB]/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-accent bg-accent-solid/10 hover:bg-accent-solid/20 border border-accent/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       title="PDF Report herunterladen"
     >
       {isGenerating ? (
         <>
-          <div className="animate-spin h-3 w-3 border-2 border-[#188BDB] border-t-transparent rounded-full"></div>
+          <div className="animate-spin h-3 w-3 border-2 border-accent border-t-transparent rounded-full"></div>
           <span>Erstelle PDF...</span>
         </>
       ) : (

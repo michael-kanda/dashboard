@@ -26,9 +26,9 @@ function MiniTrend({ color }: { color: string }) {
 
 function LoginVisualCard() {
   return (
-    <aside className="hidden h-full w-full bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
+    <aside className="hidden h-full w-full bg-surface p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] lg:block">
       <div
-        className="relative h-full overflow-hidden rounded-xl bg-[#188bdb]"
+        className="relative h-full overflow-hidden rounded-xl bg-accent-solid"
         style={{
           backgroundImage:
             'linear-gradient(rgba(255,255,255,0.075) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.075) 1px, transparent 1px)',
@@ -41,16 +41,16 @@ function LoginVisualCard() {
         </div>
 
         <div className="absolute left-[7%] top-[7%] z-10 text-white">
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-white/75">
+          <p className="mb-2 text-[11px] font-bold tracking-[0.08em] text-white/75">
             DataPeak Live
           </p>
           <h2 className="text-[clamp(16px,1.25vw,22px)] font-bold leading-tight">
             Aus Daten werden Entscheidungen.
           </h2>
           <div className="mt-3 flex h-[5px] w-[150px] overflow-hidden rounded-full" aria-hidden="true">
-            <span className="w-1/4 bg-white" />
-            <span className="w-1/4 bg-[#fbbc04]" />
-            <span className="w-1/4 bg-[#34a853]" />
+            <span className="w-1/4 bg-surface" />
+            <span className="w-1/4 bg-warning-bar" />
+            <span className="w-1/4 bg-success-bar" />
             <span className="w-1/4 bg-[#8b5cf6]" />
           </div>
         </div>
@@ -66,24 +66,24 @@ function LoginVisualCard() {
               priority
             />
 
-            <div className="absolute left-[-5%] top-[61%] w-[118px] rounded-lg border border-white/60 bg-white/95 p-3 text-[#344054] shadow-[0_10px_28px_rgba(15,23,42,0.2)] xl:w-[132px]">
-              <p className="text-[11px] font-medium text-[#667085]">Conversions</p>
+            <div className="absolute left-[-5%] top-[61%] w-[118px] rounded-lg border border-white/60 bg-white/95 p-3 text-body shadow-[0_10px_28px_rgba(15,23,42,0.2)] xl:w-[132px]">
+              <p className="text-[11px] font-medium text-muted">Conversions</p>
               <p className="mt-0.5 text-[18px] font-bold leading-none">184</p>
-              <p className="mt-1.5 text-[12px] font-semibold text-[#16a05d]">+18,9 %</p>
+              <p className="mt-1.5 text-[12px] font-semibold text-success">+18,9 %</p>
               <MiniTrend color="#16a05d" />
             </div>
 
-            <div className="absolute right-[-6%] top-[17%] w-[118px] rounded-lg border border-white/60 bg-white/95 p-3 text-[#344054] shadow-[0_10px_28px_rgba(15,23,42,0.2)] xl:w-[132px]">
-              <p className="text-[11px] font-medium text-[#667085]">KI-Traffic</p>
+            <div className="absolute right-[-6%] top-[17%] w-[118px] rounded-lg border border-white/60 bg-white/95 p-3 text-body shadow-[0_10px_28px_rgba(15,23,42,0.2)] xl:w-[132px]">
+              <p className="text-[11px] font-medium text-muted">KI-Traffic</p>
               <p className="mt-0.5 text-[15px] font-bold leading-tight">84 Sitzungen</p>
-              <p className="mt-1.5 text-[12px] font-semibold text-[#16a05d]">+22,4 %</p>
+              <p className="mt-1.5 text-[12px] font-semibold text-success">+22,4 %</p>
               <MiniTrend color="#8b5cf6" />
             </div>
 
-            <div className="absolute bottom-[5%] right-[-6%] w-[clamp(216px,19vw,250px)] rounded-lg border border-white/70 bg-white/95 p-4 text-[#344054] shadow-[0_12px_30px_rgba(15,23,42,0.2)]">
+            <div className="absolute bottom-[5%] right-[-6%] w-[clamp(216px,19vw,250px)] rounded-lg border border-white/70 bg-white/95 p-4 text-body shadow-[0_12px_30px_rgba(15,23,42,0.2)]">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-[13px] font-bold">Indexierungsstatus</p>
-                <span className="whitespace-nowrap text-[11px] text-[#667085]">Heute geprüft</span>
+                <span className="whitespace-nowrap text-[11px] text-muted">Heute geprüft</span>
               </div>
               <div className="mt-2.5 flex items-center gap-3.5">
                 <div
@@ -92,14 +92,14 @@ function LoginVisualCard() {
                   className="relative h-16 w-16 shrink-0 rounded-full"
                   style={{ background: 'conic-gradient(#34a853 0 61%, #fee2e2 61% 100%)' }}
                 >
-                  <div className="absolute inset-[7px] flex flex-col items-center justify-center rounded-full bg-white">
+                  <div className="absolute inset-[7px] flex flex-col items-center justify-center rounded-full bg-surface">
                     <strong className="text-[12px] leading-none">61 %</strong>
-                    <span className="mt-1 text-[6px] font-bold text-[#667085]">INDEXIERT</span>
+                    <span className="mt-1 text-[6px] font-bold text-muted">INDEXIERT</span>
                   </div>
                 </div>
                 <div className="min-w-0 flex-1 space-y-2 text-[11px]">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-[#34a853]" />Indexiert</span>
+                    <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-success-bar" />Indexiert</span>
                     <strong>122</strong>
                   </div>
                   <div className="flex items-center justify-between gap-2">
@@ -171,7 +171,7 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-white text-[#111827]">
+    <div className="h-screen w-screen overflow-hidden bg-surface text-heading">
       <div className="grid h-full w-full grid-cols-1 lg:grid-cols-2">
         <section className="flex h-full w-full items-center justify-center px-6 py-8 sm:px-10 lg:px-14">
           <div className="w-full max-w-[390px]">
@@ -187,10 +187,10 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
                       priority
                     />
                   </div>
-                  <h1 className="m-0 text-left text-[21px] font-bold leading-tight text-[#344054]">
+                  <h1 className="m-0 text-left text-[21px] font-bold leading-tight text-body">
                     Willkommen zurück
                   </h1>
-                  <p className="mt-1 text-left text-[15px] font-medium text-[#667085]">
+                  <p className="mt-1 text-left text-[15px] font-medium text-muted">
                     Ihre aktuellen Daten warten bereits.
                   </p>
                 </div>
@@ -198,11 +198,11 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
                 <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="block text-[14px] font-semibold text-[#344054]">
+                    <label className="block text-[14px] font-semibold text-body">
                       E-Mail Adresse
                     </label>
                     <div className="relative">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-[#98a2b3]">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-muted">
                         <Envelope size={19} />
                       </div>
                       <input
@@ -210,7 +210,7 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
                         required
                         value={email}
                         onChange={handleEmailChange}
-                        className="block h-[51px] w-full rounded-lg border border-[#d9dee7] bg-white py-3 pl-10 pr-3 text-[16px] font-medium text-[#111827] outline-none transition-all placeholder:text-[#98a2b3] focus:border-[#188bdb] focus:ring-4 focus:ring-[#188bdb]/10"
+                        className="block h-[51px] w-full rounded-lg border border-border bg-surface py-3 pl-10 pr-3 text-[16px] font-medium text-heading outline-none transition-all placeholder:text-muted focus:border-accent focus:ring-4 focus:ring-accent/10"
                         placeholder="name@firma.de"
                         disabled={isLoading || isSuccess}
                       />
@@ -218,11 +218,11 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-[14px] font-semibold text-[#344054]">
+                    <label className="block text-[14px] font-semibold text-body">
                       Passwort
                     </label>
                     <div className="relative">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-[#98a2b3]">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-muted">
                         <Lock size={19} />
                       </div>
                       <input
@@ -230,14 +230,14 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
                         required
                         value={password}
                         onChange={handlePasswordChange}
-                        className="block h-[51px] w-full rounded-lg border border-[#d9dee7] bg-white py-3 pl-10 pr-10 text-[16px] font-medium text-[#111827] outline-none transition-all placeholder:text-[#98a2b3] focus:border-[#188bdb] focus:ring-4 focus:ring-[#188bdb]/10"
+                        className="block h-[51px] w-full rounded-lg border border-border bg-surface py-3 pl-10 pr-10 text-[16px] font-medium text-heading outline-none transition-all placeholder:text-muted focus:border-accent focus:ring-4 focus:ring-accent/10"
                         placeholder="••••••••"
                         disabled={isLoading || isSuccess}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#98a2b3] transition-colors hover:text-[#667085] focus:outline-none"
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted transition-colors hover:text-muted focus:outline-none"
                         disabled={isLoading || isSuccess}
                         aria-label={showPassword ? 'Passwort ausblenden' : 'Passwort anzeigen'}
                       >
@@ -248,7 +248,7 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
                 </div>
 
                 {error && (
-                  <div className="flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-700">
+                  <div className="flex items-start gap-2 rounded-lg border border-border bg-danger-bg p-3 text-sm text-danger">
                     <ExclamationTriangleFill size={16} className="mt-0.5 shrink-0" />
                     <span>{error}</span>
                   </div>
@@ -256,7 +256,7 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
 
                 <button
                   type="submit"
-                  className="mt-6 flex h-[51px] w-full items-center justify-center gap-2 rounded-lg border border-transparent bg-[#188bdb] px-4 text-[16px] font-semibold text-white shadow-[0_10px_18px_rgba(24,139,219,0.24)] transition-all duration-200 hover:bg-[#1479bf] focus:outline-none focus:ring-4 focus:ring-[#188bdb]/20 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="mt-6 flex h-[51px] w-full items-center justify-center gap-2 rounded-lg border border-transparent bg-accent-solid px-4 text-[16px] font-semibold text-white shadow-[0_10px_18px_rgba(24,139,219,0.24)] transition-all duration-200 hover:bg-accent-solid focus:outline-none focus:ring-4 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-70"
                   disabled={isLoading || isSuccess}
                 >
                   {isLoading ? (
@@ -271,7 +271,7 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
                     </>
                   )}
                 </button>
-                <p className="flex items-center justify-center gap-1.5 pt-1 text-[11px] font-medium text-[#98a2b3]">
+                <p className="flex items-center justify-center gap-1.5 pt-1 text-[11px] font-medium text-muted">
                   <Lock size={11} aria-hidden="true" />
                   Sichere Verbindung
                 </p>
@@ -290,14 +290,14 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
               </div>
 
               <div className="space-y-3">
-                <h3 className="flex items-center justify-center gap-2 text-[21px] font-bold text-[#111827]">
-                  <span className="h-5 w-5 rounded-full border-2 border-[#8fd0ff] border-t-[#188bdb] animate-spin" />
+                <h3 className="flex items-center justify-center gap-2 text-[21px] font-bold text-heading">
+                  <span className="h-5 w-5 rounded-full border-2 border-accent border-t-[#188bdb] animate-spin" />
                   Login erfolgreich{successAnsprache ? ` ${successAnsprache}` : ''}
                 </h3>
-                <p className="text-[17px] font-semibold text-[#5bb3f0]">
+                <p className="text-[17px] font-semibold text-accent">
                   Dateninitialisierung läuft...
                 </p>
-                <p className="text-[15px] font-medium text-[#98a2b3]">
+                <p className="text-[15px] font-medium text-muted">
                   Sie werden gleich weitergeleitet.
                 </p>
               </div>

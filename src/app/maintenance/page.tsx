@@ -7,8 +7,8 @@ import Image from 'next/image';
 
 export default function MaintenancePage() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="bg-white max-w-md w-full p-8 rounded-2xl shadow-xl text-center border border-gray-100">
+    <div className="min-h-screen bg-surface-secondary flex flex-col items-center justify-center p-4">
+      <div className="bg-surface max-w-md w-full p-8 rounded-2xl shadow-xl text-center border border-border">
         
         {/* Data Max Bild zentriert */}
         <div className="flex justify-center mb-6">
@@ -22,16 +22,16 @@ export default function MaintenancePage() {
            />
         </div>
         
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Data Max ist im Wartungsmodus</h1>
+        <h1 className="text-2xl font-bold text-heading mb-2">Data Max ist im Wartungsmodus</h1>
         
-        <p className="text-gray-500 mb-8 leading-relaxed">
+        <p className="text-muted mb-8 leading-relaxed">
           Wir führen aktuell wichtige Updates am System durch, um die Plattform noch besser zu machen. 
           <br /><br />
           Das System ist in Kürze wieder für dich verfügbar.
         </p>
 
-        <div className="text-sm text-gray-400 border-t pt-6">
-          Superadmin Zugriff? <Link href="/login" className="text-amber-600 hover:underline font-medium">Hier einloggen</Link>
+        <div className="text-sm text-muted border-t pt-6">
+          Superadmin Zugriff? <Link href="/login" className="text-warning hover:underline font-medium">Hier einloggen</Link>
         </div>
       </div>
     </div>

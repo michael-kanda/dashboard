@@ -167,10 +167,10 @@ export default function AiAnalysisWidget({
   if (!statusContent && !isLoading && !error) {
     return (
       <div className="relative group mb-6">
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl opacity-5 group-hover:opacity-15 transition duration-700 blur-sm"></div>
+        <div className="absolute -inset-0.5 rounded-2xl opacity-5 group-hover:opacity-15 transition duration-700 blur-sm"></div>
         <div className="relative dashboard-widget-surface rounded-xl p-6 flex flex-col sm:flex-row items-center gap-6">
           <div className="relative shrink-0">
-            <div className={`absolute inset-0 rounded-2xl opacity-10 animate-pulse ${isPrefetched ? 'bg-emerald-500' : 'bg-indigo-500'}`}></div>
+            <div className={`absolute inset-0 rounded-2xl opacity-10 animate-pulse ${isPrefetched ? 'bg-emerald-500' : 'bg-accent-solid'}`}></div>
             <div className={`relative p-1 rounded-2xl border-2 ${isPrefetched ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-indigo-500/10 border-indigo-500/30'}`}>
               <div className="relative w-20 h-20">
                 <Image src="/data-max.webp" alt="Data Max AI Analyst" fill className="object-contain drop-shadow-sm" sizes="80px" priority />
@@ -178,13 +178,13 @@ export default function AiAnalysisWidget({
             </div>
             <span className={`absolute -top-1 -right-1 flex h-3 w-3`}>
               <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-50 ${isPrefetched ? 'bg-emerald-400' : 'bg-indigo-400'}`}></span>
-              <span className={`relative inline-flex rounded-full h-3 w-3 ${isPrefetched ? 'bg-emerald-500' : 'bg-indigo-500'}`}></span>
+              <span className={`relative inline-flex rounded-full h-3 w-3 ${isPrefetched ? 'bg-emerald-500' : 'bg-accent-solid'}`}></span>
             </span>
           </div>
           <div className="flex-1 text-center sm:text-left">
             <div className="flex items-center justify-center sm:justify-start gap-3 mb-2">
               <h3 className="widget-title text-heading">Data Max</h3>
-              <span className="widget-eyebrow px-2.5 py-0.5 rounded-full text-indigo-400 bg-indigo-500/10 tracking-wider border border-indigo-500/20">AI Analyst</span>
+              <span className="widget-eyebrow px-2.5 py-0.5 rounded-full text-indigo-400 bg-indigo-500/10 border border-indigo-500/20">AI Analyst</span>
             </div>
             <p className="widget-body text-secondary max-w-xl">
               {isPrefetched && teaserText
@@ -192,7 +192,7 @@ export default function AiAnalysisWidget({
                 : <span>Soll ich die Performance der letzten <span className="font-medium text-body">{rangeLabel}</span> analysieren?</span>}
             </p>
           </div>
-          <button onClick={handleAnalyze} className="widget-control shrink-0 px-6 py-3 bg-[#188BDB] hover:bg-[#1479BF] text-white rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 group">
+          <button onClick={handleAnalyze} className="widget-control shrink-0 px-6 py-3 bg-accent-solid hover:bg-accent-solid text-white rounded-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 group">
             <Lightbulb size={18} className="text-white/90 group-hover:text-yellow-200 transition-colors" />
             <span>Jetzt analysieren</span>
           </button>
@@ -204,30 +204,30 @@ export default function AiAnalysisWidget({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="dashboard-widget-surface rounded-2xl flex flex-col h-full">
-        <div className="p-5 border-b border-theme-border-subtle rounded-t-2xl flex justify-between items-center">
+        <div className="p-5 border-b border-border-subtle rounded-t-2xl flex justify-between items-center">
           <h3 className="widget-section-title text-heading flex items-center gap-2">
-            {isLoading ? <ArrowRepeat className="animate-spin text-indigo-500" /> : <InfoCircle className="text-indigo-500" />}
+            {isLoading ? <ArrowRepeat className="animate-spin text-accent" /> : <InfoCircle className="text-accent" />}
             Status ({rangeLabel})
           </h3>
         </div>
-        <div className="p-5 text-sm text-body leading-relaxed flex-grow [&_strong]:text-strong [&_b]:text-strong [&_h1]:text-heading [&_h2]:text-heading [&_h3]:text-heading [&_h4]:text-heading [&_a]:text-indigo-500 hover:[&_a]:text-indigo-400 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:marker:text-indigo-500/60">
+        <div className="p-5 text-sm text-body leading-relaxed flex-grow [&_strong]:text-strong [&_b]:text-strong [&_h1]:text-heading [&_h2]:text-heading [&_h3]:text-heading [&_h4]:text-heading [&_a]:text-accent hover:[&_a]:text-indigo-400 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:marker:text-indigo-500/60">
            <div dangerouslySetInnerHTML={{ __html: sanitizeAiHtml(statusContent) }} />
            {isLoading && !analysisContent && (
-             <div className="inline-flex items-center gap-2 mt-2 text-emerald-500 font-medium animate-pulse opacity-80">
+             <div className="inline-flex items-center gap-2 mt-2 text-success font-medium animate-pulse opacity-80">
                <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                </span>
-               <span className="text-xs uppercase tracking-wider">Analysiert...</span>
+               <span className="text-xs">Analysiert...</span>
              </div>
            )}
         </div>
       </div>
 
       <div className="dashboard-widget-surface rounded-2xl flex flex-col h-full">
-        <div className="p-5 border-b border-theme-border-subtle flex justify-between items-center">
+        <div className="p-5 border-b border-border-subtle flex justify-between items-center">
           <h3 className="widget-section-title text-heading flex items-center gap-2">
-            <GraphUpArrow className="text-emerald-500" />
+            <GraphUpArrow className="text-success" />
             Analyse & Fazit
           </h3>
           
@@ -244,16 +244,16 @@ export default function AiAnalysisWidget({
           )}
         </div>
         
-        <div className="p-5 text-sm text-body leading-relaxed flex-grow [&_strong]:text-strong [&_b]:text-strong [&_h1]:text-heading [&_h2]:text-heading [&_h3]:text-heading [&_h4]:text-heading [&_a]:text-indigo-500 hover:[&_a]:text-indigo-400 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:marker:text-indigo-500/60">
+        <div className="p-5 text-sm text-body leading-relaxed flex-grow [&_strong]:text-strong [&_b]:text-strong [&_h1]:text-heading [&_h2]:text-heading [&_h3]:text-heading [&_h4]:text-heading [&_a]:text-accent hover:[&_a]:text-indigo-400 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:marker:text-indigo-500/60">
            {analysisContent ? (
              <div dangerouslySetInnerHTML={{ __html: sanitizeAiHtml(analysisContent) }} />
            ) : (
              isLoading && !statusContent ? <p className="text-faint italic">Warte auf Datenverarbeitung...</p> : null
            )}
            {isLoading && analysisContent && (
-             <div className="inline-flex items-center gap-2 mt-2 text-emerald-500 font-medium animate-pulse opacity-80">
+             <div className="inline-flex items-center gap-2 mt-2 text-success font-medium animate-pulse opacity-80">
                <span className="w-1.5 h-3 bg-emerald-500 rounded-sm"></span>
-               <span className="text-xs uppercase tracking-wider">Schreibt...</span>
+               <span className="text-xs">Schreibt...</span>
              </div>
            )}
            {error && (

@@ -20,10 +20,10 @@ export interface TopQuestionItem {
 function positionChipClass(position: number): string {
   const p = Math.round(position);
   if (p > 0 && p <= 3) {
-    return 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400';
+    return 'bg-success-bg text-success';
   }
   if (p > 0 && p <= 10) {
-    return 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400';
+    return 'bg-warning-bg text-warning';
   }
   return 'bg-surface-tertiary text-muted';
 }
@@ -41,7 +41,7 @@ export default function AiTrafficTopQuestions({
 }: AiTrafficTopQuestionsProps) {
   return (
     <div className={className}>
-      <p className="text-[11px] text-muted font-medium uppercase tracking-wide mb-2 leading-snug">
+      <p className="text-[11px] text-muted font-medium mb-2 leading-snug">
         {title}
       </p>
 

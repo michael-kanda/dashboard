@@ -325,10 +325,10 @@ function LocationMetric({ label, value }: { label: string; value: string }) {
 function GoogleRule() {
   return (
     <div className="mt-2.5 flex h-1 w-[152px] overflow-hidden rounded-full" aria-hidden="true">
-      <span className="w-1/4 bg-[#4285F4]" />
-      <span className="w-1/4 bg-[#EA4335]" />
-      <span className="w-1/4 bg-[#FBBC05]" />
-      <span className="w-1/4 bg-[#34A853]" />
+      <span className="w-1/4 bg-accent-solid" />
+      <span className="w-1/4 bg-danger-bar" />
+      <span className="w-1/4 bg-warning-bar" />
+      <span className="w-1/4 bg-success-bar" />
     </div>
   );
 }
@@ -568,7 +568,7 @@ export default function LocalSeoMapWidget({
           <p className="widget-meta mt-1 text-muted">
             Quelle: GSC + GA4{reportingPeriodLabel ? ` · ${reportingPeriodLabel}` : ''} · {displayLocations.length} Standorte
           </p>
-          {pinSaveError ? <p className="mt-2 text-xs font-medium text-red-600 dark:text-red-400">{pinSaveError}</p> : null}
+          {pinSaveError ? <p className="mt-2 text-xs font-medium text-danger">{pinSaveError}</p> : null}
         </div>
         {canEditPins ? (
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
@@ -576,7 +576,7 @@ export default function LocalSeoMapWidget({
                 <button
                   type="button"
                   onClick={startPinEditing}
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-medium text-body shadow-sm hover:bg-surface-tertiary"
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-medium text-body hover:bg-surface-tertiary"
                 >
                   <MapPin size={15} />
                   Standorte bearbeiten
@@ -587,7 +587,7 @@ export default function LocalSeoMapWidget({
                     type="button"
                     onClick={savePinPositions}
                     disabled={isSavingPins}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-slate-900 px-3 text-xs font-medium text-white shadow-sm hover:bg-slate-800 disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-slate-900 px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-60 dark:bg-surface-tertiary dark:text-heading dark:hover:bg-surface"
                   >
                     <Save size={15} />
                     {isSavingPins ? 'Speichern…' : 'Position speichern'}
@@ -596,7 +596,7 @@ export default function LocalSeoMapWidget({
                     type="button"
                     onClick={resetPinEditing}
                     disabled={isSavingPins}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-medium text-body shadow-sm hover:bg-surface-tertiary disabled:opacity-60"
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-medium text-body hover:bg-surface-tertiary disabled:opacity-60"
                   >
                     <X size={15} />
                     Abbrechen
@@ -627,7 +627,7 @@ export default function LocalSeoMapWidget({
                 </p>
                 {mapProfileRating ? (
                   <p className="mt-1 flex items-center gap-1.5 text-[10px]">
-                    <span className="tracking-[1px] text-amber-500" aria-label="5 Bewertungssterne">★★★★★</span>
+                    <span className="tracking-[1px] text-warning" aria-label="5 Bewertungssterne">★★★★★</span>
                     <span className="text-muted">{mapProfileRating}{mapProfileReviews ? ` (${mapProfileReviews})` : ''}</span>
                   </p>
                 ) : null}
@@ -637,7 +637,7 @@ export default function LocalSeoMapWidget({
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`mt-1.5 inline-block text-[10px] font-medium hover:underline ${
-                      mapProfileOpeningLabel === 'Geöffnet' ? 'text-emerald-600 dark:text-emerald-300' : 'text-[#4285F4]'
+                      mapProfileOpeningLabel === 'Geöffnet' ? 'text-success' : 'text-accent'
                     }`}
                   >
                     {mapProfileOpeningLabel ? `${mapProfileOpeningLabel} · Profil öffnen` : 'Profil öffnen'}
@@ -744,7 +744,7 @@ export default function LocalSeoMapWidget({
                       </span>
                       {ratingLabel ? (
                         <span className="mt-1 flex items-center gap-1.5 text-[10px]">
-                          <span className="tracking-[1px] text-amber-500" aria-label="5 Bewertungssterne">★★★★★</span>
+                          <span className="tracking-[1px] text-warning" aria-label="5 Bewertungssterne">★★★★★</span>
                           <span className="text-muted">{ratingLabel}{reviewLabel ? ` (${reviewLabel})` : ''}</span>
                         </span>
                       ) : null}
@@ -760,7 +760,7 @@ export default function LocalSeoMapWidget({
             <div className="local-signal-map__detail">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase text-muted">Ausgewählter Standort</p>
+                  <p className="text-[10px] font-semibold text-muted">Ausgewählter Standort</p>
                   <h4 className="widget-item-title mt-1 truncate text-heading">{selected.name}</h4>
                   <p className="mt-0.5 text-[10px] text-muted">
                   {[selected.postalCode, selected.city, selected.country].filter(Boolean).join(' · ')}
@@ -771,13 +771,13 @@ export default function LocalSeoMapWidget({
                     href={selectedProfileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 text-[10px] font-medium text-[#4285F4] hover:underline"
+                    className="shrink-0 text-[10px] font-medium text-accent hover:underline"
                   >
                     {selectedOpeningLabel || 'Profil öffnen'}
                   </a>
                 ) : (
                   <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] text-muted">
-                    <span className="h-2 w-2 rounded-full bg-[#34A853]" />Aktiv
+                    <span className="h-2 w-2 rounded-full bg-success-bar" />Aktiv
                   </span>
                 )}
               </div>

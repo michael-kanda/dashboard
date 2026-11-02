@@ -138,9 +138,9 @@ export default function AiTrafficAnomalyBanner({
         const isSpike = a.type === 'spike';
         const Icon = isSpike ? Rocket : AlertTriangle;
         const colorClasses = isSpike
-          ? 'bg-green-50 dark:bg-green-900/15 border-green-200 dark:border-green-800/50 text-green-800 dark:text-green-300'
-          : 'bg-amber-50 dark:bg-amber-900/15 border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-300';
-        const iconColor = isSpike ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400';
+          ? 'bg-success-bg border-border text-success'
+          : 'bg-warning-bg border-border text-warning';
+        const iconColor = isSpike ? 'text-success' : 'text-warning';
         const label = getLabel(a.source);
         const changeStr = a.change >= 999 ? 'neu' : `${a.change >= 0 ? '+' : ''}${a.change.toFixed(0)}%`;
         const headline = isSpike

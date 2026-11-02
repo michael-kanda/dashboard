@@ -194,8 +194,8 @@ export default function AiTrafficCard({
       {/* Fehler-Zustand */}
       {error ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center my-4">
-          <AlertTriangle className="text-red-500 w-8 h-8 mb-3" />
-          <p className="text-sm text-red-700 dark:text-red-400 font-semibold">Fehler bei GA4-Daten</p>
+          <AlertTriangle className="text-danger w-8 h-8 mb-3" />
+          <p className="text-sm text-danger font-semibold">Fehler bei GA4-Daten</p>
           <p className="text-xs text-muted mt-1" title={error}>
             Die KI-Traffic-Daten konnten nicht geladen werden.
           </p>
@@ -228,7 +228,7 @@ export default function AiTrafficCard({
               {/* Top KI-Quellen */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="widget-eyebrow text-muted tracking-wide">
+                  <p className="widget-eyebrow text-muted">
                     Top KI-Quellen
                   </p>
                   {selectedModel && (
@@ -327,8 +327,8 @@ export default function AiTrafficCard({
                                   <span className="text-faint mx-1">·</span>
                                   <span className={cn(
                                     'font-medium',
-                                    convRate >= 3 ? 'text-green-600 dark:text-green-400' :
-                                    convRate >= 1 ? 'text-amber-600 dark:text-amber-400' :
+                                    convRate >= 3 ? 'text-success' :
+                                    convRate >= 1 ? 'text-warning' :
                                     'text-muted'
                                   )}>
                                     {convRate.toFixed(1)}%
@@ -357,7 +357,7 @@ export default function AiTrafficCard({
 
             {/* ── Spalte 2: Sitzungs-Trend nach KI-Modell + Action-Buttons ── */}
             <div className="min-w-0 flex flex-col">
-              <p className="widget-eyebrow text-muted tracking-wide mb-3">
+              <p className="widget-eyebrow text-muted mb-3">
                 Sitzungs-Trend nach KI-Modell
               </p>
 

@@ -122,9 +122,9 @@ export default async function EditUserPage({ params }: PageProps) {
 
   if (!id || typeof id !== 'string' || id.length !== 36) {
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <div className="p-8 text-center bg-white rounded-lg shadow-md max-w-2xl mx-auto mt-10">
-                <h2 className="text-xl font-bold text-red-600 mb-4">❌ Ungültige ID</h2>
+        <div className="min-h-screen bg-surface-secondary p-8">
+            <div className="p-8 text-center bg-surface rounded-lg max-w-2xl mx-auto mt-10">
+                <h2 className="text-xl font-bold text-danger mb-4">❌ Ungültige ID</h2>
                 <p>Die angegebene Benutzer-ID ist ungültig.</p>
             </div>
         </div>
@@ -146,11 +146,11 @@ export default async function EditUserPage({ params }: PageProps) {
 
   if (!user || loadError) {
      return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <div className="p-8 bg-white rounded-lg shadow-md max-w-2xl mx-auto mt-10">
-                <h2 className="text-xl font-bold text-red-600 mb-4">Benutzer nicht gefunden</h2>
+        <div className="min-h-screen bg-surface-secondary p-8">
+            <div className="p-8 bg-surface rounded-lg max-w-2xl mx-auto mt-10">
+                <h2 className="text-xl font-bold text-danger mb-4">Benutzer nicht gefunden</h2>
                 <p>Der Benutzer mit der ID {id} konnte nicht geladen werden.</p>
-                {loadError && <p className="text-sm text-gray-500 mt-2">{loadError}</p>}
+                {loadError && <p className="text-sm text-muted mt-2">{loadError}</p>}
             </div>
         </div>
     );
@@ -163,22 +163,22 @@ export default async function EditUserPage({ params }: PageProps) {
   const userBeingEditedIsAdmin = user.role === 'ADMIN';
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-surface-secondary p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         
         {/* Benutzerdetails bearbeiten */}
-        <div className="bg-white p-8 rounded-lg shadow-md">
+        <div className="bg-surface p-8 rounded-lg">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">
-              Benutzer <span className="text-indigo-600">{user.email}</span> bearbeiten
+              Benutzer <span className="text-accent">{user.email}</span> bearbeiten
             </h2>
              <div className="flex gap-2 items-center">
               {user.mandant_id && (
-                <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs font-medium">
+                <span className="bg-accent-tint text-accent px-3 py-1 rounded-full text-xs font-medium">
                   {user.mandant_id}
                 </span>
               )}
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+              <span className="bg-accent-tint text-accent px-3 py-1 rounded-full text-sm font-medium">
                 {user.role}
               </span>
             </div>

@@ -92,7 +92,7 @@ export default function TableauKpiCard({
 
       {error ? (
         <div className="flex flex-1 flex-col justify-center py-4">
-          <div className="mb-1 flex items-center gap-2 text-red-600">
+          <div className="mb-1 flex items-center gap-2 text-danger">
             <ExclamationTriangleFill size={15} />
             <span className="text-sm font-semibold">Daten nicht verfügbar</span>
           </div>
@@ -105,7 +105,7 @@ export default function TableauKpiCard({
               {formatValue(value)}
             </strong>
             {change !== undefined ? (
-              <span className={`widget-control font-semibold tabular-nums ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`widget-control font-semibold tabular-nums ${isPositive ? 'text-success' : 'text-danger'}`}>
                 {isPositive ? '+' : ''}{formattedChange} %
               </span>
             ) : null}
