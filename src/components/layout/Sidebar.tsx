@@ -17,6 +17,7 @@ import {
 import { roleLabel } from '@/lib/ui-labels';
 import { Avatar } from '@/components/ui/AvatarStack';
 import FontSizeControl from '@/components/FontSizeControl';
+import ProjectActions from '@/components/layout/ProjectActions';
 
 // ═══════════════════════════════════════════════════════
 // KONFIGURATION
@@ -76,6 +77,9 @@ export default function Sidebar() {
   const isDashboardPage = pathname.startsWith('/projekt/') || 
     (pathname.startsWith('/dashboard/') && pathname !== '/dashboard/freigabe') ||
     (session?.user?.role === 'BENUTZER' && pathname === '/');
+
+  // Geöffnetes Projekt für Drucken und Teilen (Kunden landen ebenfalls auf /projekt/[id]).
+  const openProjectId = pathname.match(/^\/(?:projekt|dashboard)\/([0-9a-f-]{36})(?:\/|$)/i)?.[1] ?? null;
 
   // Scroll-Spy: Beobachte welche Sektion gerade sichtbar ist & prüfe auf Existenz
   useEffect(() => {
@@ -329,6 +333,12 @@ export default function Sidebar() {
         )}
       </nav>
 
+      {openProjectId && status === 'authenticated' && (
+        <div className={`flex-shrink-0 border-t border-border py-1.5 px-2`}>
+          <ProjectActions projectId={openProjectId} collapsed={isCollapsed} />
+        </div>
+      )}
+
       {!isCollapsed && (
         <div className="flex-shrink-0 border-t border-border px-3 py-1.5">
           <FontSizeControl />
@@ -423,7 +433,13 @@ export default function Sidebar() {
             </>
           )}
 
-          <div className="mt-3 border-t border-border pt-1.5">
+          {openProjectId && (
+            <div className="mt-3 border-t border-border pt-1.5">
+              <ProjectActions projectId={openProjectId} />
+            </div>
+          )}
+
+          <div className={`${openProjectId ? 'mt-1.5' : 'mt-3'} border-t border-border pt-1.5`}>
             <FontSizeControl />
           </div>
 

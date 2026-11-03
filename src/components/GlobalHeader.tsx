@@ -1,11 +1,8 @@
 // src/components/GlobalHeader.tsx
 'use client';
 
-import React, { useState } from 'react';
-import { Printer, Share } from 'react-bootstrap-icons';
+import React from 'react';
 import { StatusPill } from '@/components/ui/Status';
-import { Button } from '@/components/ui/Button';
-import ShareLinkDialog from '@/components/ShareLinkDialog';
 import { Avatar } from '@/components/ui/AvatarStack';
 import DateRangeSelector, { type DateRangeOption } from '@/components/DateRangeSelector';
 
@@ -31,7 +28,6 @@ export default function GlobalHeader({
 
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
   const isGuest = userRole === 'GAST';
-  const [isShareOpen, setIsShareOpen] = useState(false);
   const hour = new Date().getHours();
   const greeting =
     hour >= 5 && hour < 11 ? 'Guten Morgen' :
@@ -63,24 +59,9 @@ export default function GlobalHeader({
 
         <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:items-end">
           <span className="text-[13px] text-muted">Google Updates: 24 h · Semrush Updates: 14 Tage</span>
-          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-            <Button variant="secondary" onClick={() => window.print()}>
-              <Printer size={14} aria-hidden="true" />
-              Drucken
-            </Button>
-            {!isGuest && projectId && (
-              <Button variant="secondary" onClick={() => setIsShareOpen(true)}>
-                <Share size={14} aria-hidden="true" />
-                Teilen
-              </Button>
-            )}
-            <DateRangeSelector value={dateRange} onChange={onDateRangeChange} className="w-full sm:w-auto" />
-          </div>
+          <DateRangeSelector value={dateRange} onChange={onDateRangeChange} className="w-full sm:w-auto" />
         </div>
       </div>
-      {projectId && !isGuest && (
-        <ShareLinkDialog projectId={projectId} open={isShareOpen} onClose={() => setIsShareOpen(false)} />
-      )}
     </header>
   );
 }

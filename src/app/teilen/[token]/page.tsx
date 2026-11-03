@@ -6,6 +6,7 @@ import type { DateRangeOption } from '@/types/date-range';
 import { loadProjectPageData } from '@/lib/project-page-data';
 import { resolveShareLink } from '@/lib/share-links';
 import { GUEST_ROLE } from '@/lib/share-link-token';
+import GuestPrintButton from './GuestPrintButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,6 +75,7 @@ export default async function SharedProjectPage({
       <div className="flex items-center justify-center gap-2 border-b border-border bg-accent-tint px-4 py-2 text-[14px] text-heading print:hidden" role="status">
         <Eye size={15} aria-hidden="true" className="text-accent" />
         <span>Gastansicht, nur lesen. Gültig bis {expiresLabel} Uhr.</span>
+        <GuestPrintButton />
       </div>
       <ProjectDashboardClient
         data={dashboardData ?? {}}
