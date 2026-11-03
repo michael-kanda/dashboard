@@ -13,7 +13,7 @@ export function DataList({
   className?: string;
 }) {
   return (
-    <div className={`overflow-x-auto rounded-container border border-border bg-surface ${className}`}>
+    <div className={`overflow-x-auto rounded-container border border-card-border bg-surface shadow-container ${className}`}>
       <table className="w-full border-collapse text-left" style={{ minWidth }} aria-label={label}>
         {children}
       </table>
@@ -101,7 +101,7 @@ export function EmptyRow({ colSpan, children = 'Keine Einträge gefunden' }: { c
 // Ruhiger Ladeplatzhalter in Listenform.
 export function ListSkeleton({ rows = 4, label = 'Wird geladen …' }: { rows?: number; label?: string }) {
   return (
-    <div className="rounded-container border border-border bg-surface" role="status" aria-live="polite">
+    <div className="rounded-container border border-card-border bg-surface shadow-container" role="status" aria-live="polite">
       <span className="sr-only">{label}</span>
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="flex items-center gap-3 border-b border-border-subtle px-[18px] py-3 last:border-b-0">

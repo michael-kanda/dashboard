@@ -84,7 +84,7 @@ export function StackedStatusBar({
 
 export function MetricTile({ label, value, hint }: { label: ReactNode; value: ReactNode; hint?: ReactNode }) {
   return (
-    <div className="rounded-container border border-border bg-surface px-[18px] py-4">
+    <div className="rounded-container border border-card-border bg-surface shadow-container px-[18px] py-4">
       <div className="text-[13px] text-muted">{label}</div>
       <div className="mt-1 text-[29px] font-semibold leading-tight text-heading tabular-nums">{value}</div>
       {hint && <div className="mt-1 text-[13px] text-muted">{hint}</div>}

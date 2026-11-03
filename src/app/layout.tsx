@@ -6,6 +6,8 @@ import { Providers } from "./providers";
 import MainLayout from '@/components/MainLayout';
 import { Toaster } from 'sonner';
 import * as Sentry from '@sentry/nextjs';
+import { themeToCss } from '@/lib/theme';
+import { getCachedTheme } from '@/lib/theme-store';
 import "bootstrap-icons/font/bootstrap-icons.css";
 
 // Auf dem Mac greift SF Pro aus dem Systemstapel, sonst Inter.
@@ -44,15 +46,19 @@ const themeInitScript = `
   })();
 `;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Vom Superadmin gewählte Farben, Rahmen und Schatten; leer, solange nichts geändert wurde.
+  const themeCss = themeToCss(await getCachedTheme());
+
   return (
     <html lang="de" className={inter.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        {themeCss && <style id="app-theme" dangerouslySetInnerHTML={{ __html: themeCss }} />}
       </head>
       <body className="bg-page">
         <Providers>

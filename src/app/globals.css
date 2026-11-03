@@ -89,6 +89,8 @@
   --radius-pill: var(--dp-radius-pill);
 
   --shadow-card: var(--dp-shadow-card);
+  --shadow-container: var(--dp-card-shadow);
+  --color-card-border: var(--dp-card-border);
   --shadow-segment: var(--dp-shadow-segment);
   --shadow-dialog: var(--dp-shadow-dialog);
 }
@@ -162,22 +164,22 @@
 
   .card-glass {
     background: var(--dp-bg-primary);
-    border: 1px solid var(--dp-border-default);
+    border: 1px solid var(--dp-card-border);
     border-radius: var(--dp-radius-container);
     color: var(--dp-text-body);
   }
 
   .dashboard-widget-surface {
     background: var(--dp-bg-primary);
-    border: 1px solid var(--dp-border-default) !important;
+    border: 1px solid var(--dp-card-border) !important;
     border-radius: var(--dp-radius-container);
-    box-shadow: none;
+    box-shadow: var(--dp-card-shadow);
     color: var(--dp-text-body);
   }
 
   .dark .dashboard-widget-surface {
     background: var(--dp-bg-primary);
-    box-shadow: none;
+    box-shadow: var(--dp-card-shadow);
   }
 
   /* ── Dashboard typography ──────────────────────────────── */
@@ -663,7 +665,7 @@
   .widget-card {
     background-color: var(--dp-bg-primary);
     border-radius: var(--dp-radius-lg);
-    box-shadow: var(--dp-shadow-card);
+    box-shadow: var(--dp-shadow-card), var(--dp-card-shadow);
     color: var(--dp-text-body);
   }
 
@@ -784,7 +786,16 @@
 
 /* Ensure card-glass edge always uses the token */
 .card-glass {
-  box-shadow: var(--dp-shadow-card) !important;
+  box-shadow: var(--dp-card-shadow) !important;
+}
+
+/* Ältere Karten aus Utility-Klassen folgen denselben Rahmen- und Schatten-Einstellungen. */
+.bg-surface.border.rounded-lg,
+.bg-surface.border.rounded-xl,
+.bg-surface.border.rounded-2xl,
+.bg-surface.border.rounded-container {
+  border-color: var(--dp-card-border);
+  box-shadow: var(--dp-card-shadow);
 }
 
 /* Gray body backgrounds that leaked through from old hardcoded classes */

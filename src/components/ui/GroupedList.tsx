@@ -18,7 +18,7 @@ export function GroupedSection({
   return (
     <section className={className}>
       {title && <SectionTitle title={title} help={help} actions={actions} />}
-      <div className="overflow-hidden rounded-container border border-border bg-surface">{children}</div>
+      <div className="overflow-hidden rounded-container border border-card-border bg-surface shadow-container">{children}</div>
     </section>
   );
 }

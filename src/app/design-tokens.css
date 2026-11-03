@@ -137,8 +137,12 @@
   --dp-surface-card-border:  var(--dp-border-default);
   --dp-surface-overlay:      rgba(0, 0, 0, 0.30);
 
+  /* --- Widgets und Listen: Rahmen und Schatten, im Admin unter „Design“ einstellbar --- */
+  --dp-card-border:    var(--dp-border-default);
+  --dp-card-shadow:    0 0 #0000;   /* „kein Schatten“, bleibt in Schattenlisten gültig */
+
   /* --- Schatten: keine, nur Linie; Segment und Dialog eigens --- */
-  --dp-shadow-card:    0 0 0 1px var(--dp-border-default);
+  --dp-shadow-card:    0 0 0 1px var(--dp-card-border);
   --dp-shadow-sidebar: none;
   --dp-shadow-segment: 0 1px 3px rgba(0, 0, 0, 0.12);
   --dp-shadow-dialog:  0 20px 60px rgba(0, 0, 0, 0.18);

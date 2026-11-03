@@ -9,7 +9,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { useState, useEffect, useCallback } from 'react';
 import { 
   List, X, Briefcase, CalendarCheck, ShieldLock, Speedometer2, 
-  BoxArrowRight, BoxArrowInRight, HddNetwork, Magic,
+  BoxArrowRight, BoxArrowInRight, HddNetwork, Magic, Palette,
   LayoutSidebarInset, SunFill, MoonStarsFill,
   ChevronDown, ChevronUp,
   BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search, Google, GeoAlt
@@ -196,6 +196,7 @@ export default function Sidebar() {
   const adminNavItems: NavItem[] = [
     { href: '/admin', label: 'Admin-Bereich', icon: <ShieldLock size={16} />, visible: isAdmin },
     { href: '/admin/system', label: 'System', icon: <HddNetwork size={16} />, visible: isSuperAdmin },
+    { href: '/admin/design', label: 'Design', icon: <Palette size={16} />, visible: isSuperAdmin },
   ];
 
   const isActive = (href: string): boolean => {
