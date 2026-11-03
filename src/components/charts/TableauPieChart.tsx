@@ -8,7 +8,6 @@ import {
   Pie,
   Cell,
   Tooltip,
-  Legend,
   PieLabelRenderProps,
 } from 'recharts';
 import { ChartEntry } from '@/lib/dashboard-shared';
@@ -17,18 +16,20 @@ import { ExclamationTriangleFill, GraphUp, CheckCircleFill } from 'react-bootstr
 import NoDataState from '@/components/NoDataState';
 import { formatReportingPeriod, type ReportingPeriod } from '@/lib/reporting-period';
 
-// Farben definieren
+// Sieben verschiedene Farben, damit keine zwei Segmente gleich aussehen.
 const KPI_COLORS = [
-  'var(--dp-chart-1)', // Blue
-  'var(--dp-chart-5)', // Purple
-  'var(--dp-chart-2)', // Emerald
-  'var(--dp-chart-3)', // Amber
-  'var(--dp-chart-5)', // Pink
-  'var(--dp-chart-1)', // Indigo
+  'var(--dp-chart-1)', // Blau
+  'var(--dp-chart-5)', // Lila
+  'var(--dp-chart-2)', // Grün
+  'var(--dp-chart-3)', // Orange
   'var(--dp-chart-6)', // Cyan
+  'var(--dp-chart-4)', // Rot
+  'var(--dp-dot-off)', // Grau
 ];
 
-const LIGHT_COLORS = ['var(--dp-chart-3)', 'var(--dp-chart-6)', 'var(--dp-chart-2)', '#fcd34d'];
+const LIGHT_COLORS = ['var(--dp-chart-3)', 'var(--dp-chart-6)', 'var(--dp-chart-2)', 'var(--dp-dot-off)'];
+
+const percentFormat = new Intl.NumberFormat('de-AT', { maximumFractionDigits: 0 });
 
 interface TableauPieChartProps {
   data?: ChartEntry[];
@@ -251,7 +252,7 @@ export default function TableauPieChart({
   }
 
   return (
-    <div className={cn('dashboard-widget-surface rounded-lg p-6 flex flex-col h-[350px] transition-shadow', className)}>
+    <div className={cn('dashboard-widget-surface rounded-lg p-6 flex flex-col min-h-[350px] transition-shadow', className)}>
       <div className="mb-1 flex-shrink-0">
         <h3 className="widget-title text-heading">{title}</h3>
         <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
@@ -281,7 +282,7 @@ export default function TableauPieChart({
           </>
         )}
       </div>
-      <div className="flex-grow min-h-0 relative">
+      <div className="relative h-[220px] flex-shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -307,15 +308,21 @@ export default function TableauPieChart({
             </Pie>
             {/* ✅ FIX: totalValue an Tooltip übergeben */}
             <Tooltip content={<CustomTooltip totalValue={totalValue} />} />
-            <Legend 
-              verticalAlign="bottom" 
-              height={36} 
-              iconType="circle"
-              formatter={(value) => <span className="text-xs text-secondary font-medium ml-1">{value}</span>}
-            />
           </PieChart>
         </ResponsiveContainer>
       </div>
+      {/* Eigene Legende statt der Recharts-Legende: bricht um und lässt das Widget mitwachsen. */}
+      <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5" aria-label={`Legende ${title}`}>
+        {chartData.map((entry) => (
+          <li key={entry.name} className="inline-flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-secondary">
+            <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: entry.fill }} aria-hidden="true" />
+            <span className="break-words">{entry.name}</span>
+            {totalValue > 0 && (
+              <span className="tabular-nums text-muted">{percentFormat.format((entry.value / totalValue) * 100)} %</span>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import {
 } from 'react-bootstrap-icons';
 import { roleLabel } from '@/lib/ui-labels';
 import { Avatar } from '@/components/ui/AvatarStack';
+import FontSizeControl from '@/components/FontSizeControl';
 
 // ═══════════════════════════════════════════════════════
 // KONFIGURATION
@@ -328,6 +329,12 @@ export default function Sidebar() {
         )}
       </nav>
 
+      {!isCollapsed && (
+        <div className="flex-shrink-0 border-t border-border px-3 py-1.5">
+          <FontSizeControl />
+        </div>
+      )}
+
       <div className={`flex flex-shrink-0 items-center gap-2.5 border-t border-border px-3 py-3 ${isCollapsed ? 'flex-col' : ''}`}>
         {status === 'authenticated' && session?.user ? (
           <>
@@ -416,7 +423,11 @@ export default function Sidebar() {
             </>
           )}
 
-          <div className="mt-3 flex items-center gap-2.5 border-t border-border pt-3">
+          <div className="mt-3 border-t border-border pt-1.5">
+            <FontSizeControl />
+          </div>
+
+          <div className="mt-1.5 flex items-center gap-2.5 border-t border-border pt-3">
             <Avatar email={session?.user?.email || userLabel} size={30} />
             <div className="min-w-0 flex-1">
               <div className="truncate text-[14px] font-semibold text-heading">{userLabel}</div>

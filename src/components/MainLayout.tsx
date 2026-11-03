@@ -10,14 +10,15 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
 
   const noLayoutPaths = ['/login', '/preview'];
-  const showLayout = !noLayoutPaths.includes(pathname);
+  // Gastlinks (/teilen/…) zeigen nur das Dashboard, ohne Navigation.
+  const showLayout = !noLayoutPaths.includes(pathname) && !pathname.startsWith('/teilen/');
 
   // ─── Kein Layout (z.B. Login-Seite) ───
   if (!showLayout) {
     return (
       <ThemeProvider>
         <div className="flex flex-col min-h-screen bg-page">
-          <main className="flex-grow">{children}</main>
+          <main className="app-content flex-grow">{children}</main>
         </div>
       </ThemeProvider>
     );
@@ -29,7 +30,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     <ThemeProvider>
       <div className="flex min-h-screen flex-col bg-page md:flex-row">
         <Sidebar />
-        <div className="flex flex-col flex-1 min-w-0">
+        <div className="app-content flex flex-col flex-1 min-w-0">
           <main className="flex-grow">{children}</main>
           <Footer />
         </div>

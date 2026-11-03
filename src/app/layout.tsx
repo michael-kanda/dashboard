@@ -42,6 +42,10 @@ const themeInitScript = `
       } else {
         document.documentElement.classList.remove('dark');
       }
+      var scale = Number(localStorage.getItem('datapeak-font-scale'));
+      if ([0.9, 1.1, 1.2, 1.35].indexOf(scale) !== -1) {
+        document.documentElement.style.setProperty('--dp-content-zoom', String(scale));
+      }
     } catch(e) {}
   })();
 `;

@@ -14,6 +14,8 @@ interface DashboardRenderPolicyInput {
   semrushTrackingId02?: string | null;
 }
 
+const GUEST_HIDDEN_WIDGETS = new Set<DashboardWidgetKey>(['aiAnalysis', 'dataMaxChat']);
+
 export function buildDashboardRenderPolicy({
   userRole,
   visibility,
@@ -25,7 +27,10 @@ export function buildDashboardRenderPolicy({
   semrushTrackingId02,
 }: DashboardRenderPolicyInput) {
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
-  const canShow = (key: DashboardWidgetKey) => isAdmin || visibility[key];
+  // Gäste (Gastlink) haben keine Sitzung; Widgets, die erst beim Klicken Daten holen, entfallen.
+  const isGuest = userRole === 'GAST';
+  const canShow = (key: DashboardWidgetKey) =>
+    isGuest && GUEST_HIDDEN_WIDGETS.has(key) ? false : isAdmin || visibility[key];
   const semrushPrimary = Boolean(semrushTrackingId) && canShow('semrushPrimary');
   const semrushSecondary = Boolean(semrushTrackingId02) && canShow('semrushSecondary');
   const trafficBreakdowns = {

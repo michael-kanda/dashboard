@@ -45,3 +45,19 @@ test('Dashboard admins override visibility but not missing source data', () => {
   assert.equal(policy.render.promptTracking, true);
   assert.equal(policy.render.semrushSecondary, true);
 });
+
+test('Guests from a share link never get on-demand AI widgets', () => {
+  const policy = buildDashboardRenderPolicy({
+    userRole: 'GAST',
+    visibility: visibility(true),
+    hasGoogleAds: true,
+    hasLocalSeo: true,
+    hasIndexingStatus: true,
+    hasPromptTracking: true,
+  });
+
+  assert.equal(policy.isAdmin, false);
+  assert.equal(policy.canShow('aiAnalysis'), false);
+  assert.equal(policy.canShow('dataMaxChat'), false);
+  assert.equal(policy.canShow('kpis'), true);
+});

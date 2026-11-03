@@ -104,6 +104,11 @@
     transition: background-color 160ms ease-out, color 160ms ease-out;
   }
 
+  /* Persönliche Schriftgröße (Sidebar → Schriftgröße), Sidebar selbst bleibt unverändert. */
+  .app-content {
+    zoom: var(--dp-content-zoom, 1);
+  }
+
   body {
     background-color: var(--dp-page);
     color: var(--dp-text-body);
@@ -135,6 +140,18 @@
     background-color: var(--dp-input-bg);
     border-color: var(--dp-input-border);
     color: var(--dp-input-text);
+  }
+
+  /* Browser-Autofill (Safari/Chrome) färbt Felder sonst gelb, im Dunkelmodus mit unlesbarer Schrift. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:autofill {
+    -webkit-text-fill-color: var(--dp-input-text);
+    caret-color: var(--dp-input-text);
+    -webkit-box-shadow: 0 0 0 1000px var(--dp-bg-primary) inset;
+    box-shadow: 0 0 0 1000px var(--dp-bg-primary) inset;
+    transition: background-color 600000s 0s;
   }
 
   *:focus-visible {
@@ -255,8 +272,8 @@
     --kpi-grid-section: var(--dp-bg-secondary);
     --kpi-grid-line: var(--dp-border-default);
     background: var(--kpi-grid-panel) !important;
-    border: 1px solid var(--kpi-grid-line) !important;
-    box-shadow: none;
+    border: 1px solid var(--dp-card-border) !important;
+    box-shadow: var(--dp-card-shadow);
     overflow: hidden;
   }
 
@@ -301,7 +318,7 @@
     --kpi-grid-panel: var(--dp-bg-primary);
     --kpi-grid-section: var(--dp-bg-secondary);
     --kpi-grid-line: var(--dp-border-default);
-    box-shadow: none;
+    box-shadow: var(--dp-card-shadow);
   }
 
   .dashboard-widget-surface.indexing-coverage-rail {
@@ -310,8 +327,8 @@
     --indexing-muted: var(--dp-bg-tertiary);
     --indexing-line: var(--dp-border-default);
     background: var(--indexing-panel) !important;
-    border: 1px solid var(--indexing-line) !important;
-    box-shadow: none;
+    border: 1px solid var(--dp-card-border) !important;
+    box-shadow: var(--dp-card-shadow);
   }
 
   .indexing-coverage-rail__layout {
@@ -369,7 +386,7 @@
     --indexing-section: var(--dp-bg-secondary);
     --indexing-muted: var(--dp-bg-tertiary);
     --indexing-line: var(--dp-border-default);
-    box-shadow: none;
+    box-shadow: var(--dp-card-shadow);
   }
 
   @media (max-width: 1023px) {
@@ -403,8 +420,8 @@
     --local-map-muted: var(--dp-bg-tertiary);
     --local-map-line: var(--dp-border-default);
     background: var(--local-map-panel) !important;
-    border: 1px solid var(--local-map-line) !important;
-    box-shadow: none;
+    border: 1px solid var(--dp-card-border) !important;
+    box-shadow: var(--dp-card-shadow);
   }
 
   .local-signal-map__layout {
@@ -495,7 +512,7 @@
     --local-map-section: var(--dp-bg-secondary);
     --local-map-muted: var(--dp-bg-tertiary);
     --local-map-line: var(--dp-border-default);
-    box-shadow: none;
+    box-shadow: var(--dp-card-shadow);
   }
 
   @media (max-width: 1023px) {
@@ -535,9 +552,9 @@
 
   .admin-clean .admin-panel {
     background: var(--dp-bg-primary);
-    border: 1px solid var(--dp-border-default) !important;
+    border: 1px solid var(--dp-card-border) !important;
     border-radius: var(--dp-radius-container);
-    box-shadow: none;
+    box-shadow: var(--dp-card-shadow);
   }
 
   .admin-clean input:not([type="checkbox"]):not([type="radio"]),
@@ -955,6 +972,14 @@
   [role="tooltip"], .print-hidden { display: none !important; }
 
   main { width: 100% !important; padding: 0 !important; margin: 0 !important; display: block !important; }
+
+  .app-content { zoom: 1 !important; }
+
+  .dashboard-widget-surface {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+  }
 
   .card-glass, .glass-panel {
     background-color: white !important;

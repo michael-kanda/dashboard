@@ -70,6 +70,18 @@ export default function ThemeProvider({ children, defaultTheme = 'light' }: Them
     }
   }, [theme, mounted, applyTheme]);
 
+  // ── Drucken immer im hellen Modus, danach zurück ──
+  useEffect(() => {
+    const onBeforePrint = () => document.documentElement.classList.remove('dark');
+    const onAfterPrint = () => applyTheme(theme);
+    window.addEventListener('beforeprint', onBeforePrint);
+    window.addEventListener('afterprint', onAfterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', onBeforePrint);
+      window.removeEventListener('afterprint', onAfterPrint);
+    };
+  }, [theme, applyTheme]);
+
   const toggleTheme = () => {
     setThemeState(prev => prev === 'light' ? 'dark' : 'light');
   };
