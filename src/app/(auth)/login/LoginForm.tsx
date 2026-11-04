@@ -1,7 +1,6 @@
 // src/app/(auth)/login/LoginForm.tsx
 'use client';
 
-import Image from 'next/image';
 import { getSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -142,16 +141,12 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
             </form>
           </>
         ) : (
-          <div className="flex min-h-[360px] flex-col items-center justify-center text-center" role="status">
-            <div className="relative mb-8 h-[120px] w-[180px]">
-              <Image src="/data-max.webp" alt="DataMax" fill className="object-contain" priority />
-            </div>
-            <h1 className="flex items-center justify-center gap-2 text-[23px] font-bold tracking-[-0.02em] text-heading">
-              <Spinner size={18} />
-              Login erfolgreich{successAnsprache ? ` ${successAnsprache}` : ''}
+          <div className="flex min-h-[360px] flex-col items-center justify-center text-center" role="status" aria-live="polite">
+            <Spinner size={28} />
+            <h1 className="mt-5 text-[23px] font-bold tracking-[-0.02em] text-heading">
+              Login erfolgreich{successAnsprache ? `, ${successAnsprache}` : ''}
             </h1>
-            <p className="mt-2 text-[15px] font-semibold text-accent">Dateninitialisierung läuft …</p>
-            <p className="mt-1 text-[14px] text-muted">Sie werden gleich weitergeleitet.</p>
+            <p className="mt-1 text-[14px] text-muted">Daten werden initialisiert, Sie werden gleich weitergeleitet.</p>
           </div>
         )}
       </div>
