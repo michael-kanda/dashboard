@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateObject } from 'ai';
 import { z } from 'zod';
-import { google, AI_CONFIG } from '@/lib/ai-config';
+import { google, getAiModels } from '@/lib/ai-config';
 import { auth } from '@/lib/auth';
 
 export const runtime = 'nodejs';
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = await generateObject({
-      model: google(AI_CONFIG.fallbackModel),
+      model: google((await getAiModels()).fallback),
       schema: ResearchResponseSchema,
       system: SYSTEM_PROMPT,
       prompt,

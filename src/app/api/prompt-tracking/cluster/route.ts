@@ -9,7 +9,7 @@ import { generateObject } from 'ai';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
 import crypto from 'crypto';
-import { AI_CONFIG, google } from '@/lib/ai-config';
+import { getAiModels, google } from '@/lib/ai-config';
 
 import {
   PromptClusterRequestSchema,
@@ -20,7 +20,6 @@ import {
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-const MODEL_ID = AI_CONFIG.primaryModel;
 // Neue (nicht gecachte) Gemini-Analysen pro Nutzer und Tag; Superadmins sind ausgenommen.
 const MAX_CLUSTER_RUNS_PER_DAY = 20;
 
@@ -156,8 +155,9 @@ export async function POST(req: NextRequest) {
 
   // ── 6. LLM-Aufruf ───────────────────────────────────────────────
   try {
+    const modelId = (await getAiModels()).primary;
     const result = await generateObject({
-      model: google(MODEL_ID),
+      model: google(modelId),
       schema: PromptClusterResultSchema,
       system: SYSTEM_PROMPT,
       prompt: userPrompt,
@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
       clusters: validatedClusters,
       insights: result.object.insights,
       meta: {
-        model: MODEL_ID,
+        model: modelId,
         queriesAnalyzed: queries.length,
         generatedAt: new Date().toISOString(),
         elapsedMs: Date.now() - startedAt,

@@ -1,22 +1,19 @@
 // src/lib/ai-config.ts
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
+import { DEFAULT_AI_MODELS } from './ai-model-schema';
+import { getAiModels } from './ai-model-store';
+
+export { getAiModels };
 
 // ============================================================================
 // ZENTRALE AI-KONFIGURATION
 // ============================================================================
 
+// Standardmodelle; die aktiven Modelle wählt der Superadmin unter System (getAiModels).
 export const AI_CONFIG = {
-  // Modell-Kette: Beste zuerst, dann Fallbacks
-  models: [
-    'gemini-3.5-flash-lite',  // Primary
-    'gemini-3.1-flash-lite',  // Fallback
-  ] as const,
-  
-  // Shortcuts für direkten Zugriff (Rückwärtskompatibilität)
-  primaryModel: 'gemini-3.5-flash-lite' as const,
-  fallbackModel: 'gemini-3.1-flash-lite' as const,
-  lastResortModel: 'gemini-3.1-flash-lite' as const,
+  primaryModel: DEFAULT_AI_MODELS.primary,
+  fallbackModel: DEFAULT_AI_MODELS.fallback,
   
   // Temperature-Presets
   settings: {
@@ -103,7 +100,8 @@ export async function streamTextSafe(
   params: Omit<Parameters<typeof streamText>[0], 'model'>
 ): Promise<EnhancedStreamResult> {
   
-  const models = AI_CONFIG.models;
+  const { primary, fallback } = await getAiModels();
+  const models = primary === fallback ? [primary] : [primary, fallback];
   const statusMap: Record<number, ModelStatus> = {
     0: 'primary',
     1: 'fallback', 

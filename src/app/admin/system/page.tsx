@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { ArrowRepeat, PersonCircle } from 'react-bootstrap-icons';
 import { toast } from 'sonner';
 import LoginLogbook from '@/app/admin/LoginLogbook';
+import AiModelSettings from './AiModelSettings';
 import { roleLabel } from '@/lib/ui-labels';
 import { PageContainer, PageHeader } from '@/components/ui/Page';
 import { GroupedSection, GroupedRow } from '@/components/ui/GroupedList';
@@ -80,12 +81,13 @@ export default function SystemHealthPage() {
   const [togglingDataMaxId, setTogglingDataMaxId] = useState<string | null>(null);
 
   // --- FETCHERS ---
-  const fetchStatus = async () => {
-    setIsLoading(true);
+  // quiet: ohne Ladeansicht nachladen, z. B. nach dem Speichern des KI-Modells.
+  const fetchStatus = async (quiet = false) => {
+    if (!quiet) setIsLoading(true);
     try {
       const res = await fetch('/api/admin/system-status');
       if (res.ok) setStatus(await res.json());
-    } catch (e) { console.error(e); } finally { setIsLoading(false); }
+    } catch (e) { console.error(e); } finally { if (!quiet) setIsLoading(false); }
   };
 
   const fetchMaintenanceStatus = useCallback(async () => {
@@ -366,6 +368,12 @@ export default function SystemHealthPage() {
               );
             })}
           </GroupedSection>
+
+          <AiModelSettings
+            primary={status.aiModel?.primaryModel || status.aiModel?.activeModel || ''}
+            fallback={status.aiModel?.fallbackModel || ''}
+            onSaved={() => fetchStatus(true)}
+          />
 
           <GroupedSection title="Dashboard-Daten" help={cacheNotice ? <span role="status">{cacheNotice}</span> : 'Gespeicherte Abrufe aus Google und Semrush.'}>
             <GroupedRow label="Gespeicherte Einträge" description="Bis zur neuen Abfrage bleiben die bisherigen Daten sichtbar.">

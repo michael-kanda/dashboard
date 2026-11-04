@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
-import { AI_CONFIG } from '@/lib/ai-config';
+import { getAiModels } from '@/lib/ai-config';
 
 // Google AI Konfiguration
 const google = createGoogleGenerativeAI({
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     console.log('[AI Generate Questions] Starte Generierung für:', { domain, keywords: keywordList });
 
     const result = await streamText({
-      model: google(AI_CONFIG.primaryModel),
+      model: google((await getAiModels()).primary),
       system: "Du bist ein erfahrener SEO-Redakteur. Deine Aufgabe ist es, basierend auf Keywords relevante 'W-Fragen' (Wer, Wie, Was, Wo, Warum) zu generieren, die Nutzer suchen könnten. Formatiere die Antwort als saubere Liste.",
       prompt: `Analysiere die Domain "${domain}" und die folgenden Keywords: ${keywordList}.\n\nGeneriere eine Liste von 10-15 relevanten W-Fragen, die potentielle Besucher dieser Domain in Bezug auf die Keywords haben könnten.`,
       temperature: 0.7,

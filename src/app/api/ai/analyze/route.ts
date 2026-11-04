@@ -8,7 +8,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import crypto from 'node:crypto';
 import type { User } from '@/lib/schemas'; 
-import { AI_CONFIG } from '@/lib/ai-config';
+import { getAiModels } from '@/lib/ai-config';
 import { getProjectIndexingStatus } from '@/lib/indexing-status';
 
 const google = createGoogleGenerativeAI({
@@ -610,7 +610,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = streamText({
-      model: google(AI_CONFIG.primaryModel),
+      model: google((await getAiModels()).primary),
       system: systemPrompt,
       prompt: `Analysiere diese Daten für den Zeitraum ${dateRange}:\n${summaryData}`,
       temperature: 0.4, 

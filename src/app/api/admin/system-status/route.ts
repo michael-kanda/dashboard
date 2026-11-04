@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
 import { generateText } from 'ai';
-import { AI_CONFIG, google } from '@/lib/ai-config';
+import { getAiModels, google } from '@/lib/ai-config';
 import { getSearchConsoleData, getAnalyticsData } from '@/lib/google-api';
 import { getBingData } from '@/lib/bing-api';
 export const dynamic = 'force-dynamic';
@@ -15,6 +15,7 @@ export async function GET() {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
+    const aiModels = await getAiModels();
     const status = {
       database: { status: 'pending', message: '', latency: 0 },
       google: { status: 'pending', message: '' },
@@ -22,8 +23,9 @@ export async function GET() {
       aiModel: {
         status: 'pending',
         message: '',
-        activeModel: AI_CONFIG.primaryModel as string,
-        fallbackModel: AI_CONFIG.fallbackModel as string,
+        activeModel: aiModels.primary as string,
+        fallbackModel: aiModels.fallback as string,
+        primaryModel: aiModels.primary,
         latency: 0,
       },
       bingApi: { status: 'pending', message: '' },
@@ -78,7 +80,7 @@ export async function GET() {
         throw new Error('Env Variable GEMINI_API_KEY oder GOOGLE_GENERATIVE_AI_API_KEY fehlt.');
       }
 
-      const modelsToCheck = [AI_CONFIG.primaryModel, AI_CONFIG.fallbackModel];
+      const modelsToCheck = [aiModels.primary, aiModels.fallback];
       let lastError = '';
 
       for (const modelName of modelsToCheck) {
@@ -92,10 +94,10 @@ export async function GET() {
 
           status.aiModel.activeModel = modelName;
           status.aiModel.latency = Math.round(performance.now() - startAi);
-          status.aiModel.status = modelName === AI_CONFIG.primaryModel ? 'ok' : 'warning';
-          status.aiModel.message = modelName === AI_CONFIG.primaryModel
+          status.aiModel.status = modelName === aiModels.primary ? 'ok' : 'warning';
+          status.aiModel.message = modelName === aiModels.primary
             ? `Aktiv: ${modelName}. Live-Test fehlerfrei.`
-            : `Fallback aktiv: ${modelName}. Primary ${AI_CONFIG.primaryModel} fehlerhaft: ${lastError}`;
+            : `Fallback aktiv: ${modelName}. Hauptmodell ${aiModels.primary} fehlerhaft: ${lastError}`;
           break;
         } catch (modelError: any) {
           lastError = modelError?.message || String(modelError);
