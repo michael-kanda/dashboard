@@ -12,6 +12,7 @@ import {
   ExclamationTriangle,
   ArrowRepeat
 } from 'react-bootstrap-icons';
+import { Spinner } from '@/components/ui/Spinner';
 
 type Props = { userId: string };
 
@@ -192,7 +193,7 @@ export default function LandingpageManager({ userId }: Props) {
           >
             {isUploading ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <Spinner size={16} className="" />
                 <span>Verarbeite...</span>
               </>
             ) : (

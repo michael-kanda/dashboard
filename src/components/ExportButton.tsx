@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { AnalysisReport } from '@/components/pdf/AnalysisReport';
 import { FileEarmarkPdf } from 'react-bootstrap-icons';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface ExportButtonProps {
   chartRef?: React.RefObject<HTMLDivElement>;
@@ -74,7 +75,7 @@ export default function ExportButton({
     >
       {isGenerating ? (
         <>
-          <div className="animate-spin h-3 w-3 border-2 border-accent border-t-transparent rounded-full"></div>
+          <Spinner size={13} />
           <span>Erstelle PDF...</span>
         </>
       ) : (

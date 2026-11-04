@@ -82,6 +82,19 @@ const SHADOWS: Record<ThemeMode, Record<Exclude<ShadowLevel, 'none'>, string>> =
   },
 };
 
+export const FONT_WEIGHT_KEYS = ['normal', 'medium', 'semibold', 'bold'] as const;
+export type FontWeightKey = (typeof FONT_WEIGHT_KEYS)[number];
+
+// Standard je Stufe; Fließtext ist hell 450, dunkel 400 (design-tokens.css).
+export const FONT_WEIGHT_FIELDS: { key: FontWeightKey; label: string; description: string; defaultLabel: string; options: number[] }[] = [
+  { key: 'normal', label: 'Fließtext', description: 'Normaler Text in Widgets und Listen', defaultLabel: 'Standard (hell 450, dunkel 400)', options: [300, 400, 450, 500, 600] },
+  { key: 'medium', label: 'Mittel', description: 'Navigation, Beschriftungen, Werte', defaultLabel: 'Standard (500)', options: [400, 500, 600] },
+  { key: 'semibold', label: 'Halbfett', description: 'Überschriften, Buttons, Tabellenköpfe', defaultLabel: 'Standard (600)', options: [500, 600, 700, 800] },
+  { key: 'bold', label: 'Fett', description: 'Seitentitel und große Kennzahlen', defaultLabel: 'Standard (700)', options: [600, 700, 800, 900] },
+];
+
+const ALLOWED_WEIGHTS = [300, 400, 450, 500, 600, 700, 800, 900] as const;
+
 export const DEFAULT_RADIUS = 14;
 export const MAX_RADIUS = 24;
 
@@ -89,6 +102,7 @@ export const HEX_COLOR = /^#[0-9A-F]{6}$/;
 
 const hexColor = z.string().regex(HEX_COLOR, 'Farbe als #RRGGBB angeben');
 const modeColors = z.partialRecord(z.enum(THEME_COLOR_KEYS), hexColor);
+const fontWeight = z.number().int().refine((value) => (ALLOWED_WEIGHTS as readonly number[]).includes(value));
 
 // Nur diese Werte kommen ins CSS; alles andere wird abgelehnt.
 export const themeSchema = z.object({
@@ -97,6 +111,7 @@ export const themeSchema = z.object({
   border: z.boolean().default(true),
   shadow: z.enum(SHADOW_LEVELS).default('none'),
   radius: z.number().int().min(0).max(MAX_RADIUS).default(DEFAULT_RADIUS),
+  weights: z.partialRecord(z.enum(FONT_WEIGHT_KEYS), fontWeight).default({}),
 });
 
 export type ThemeSettings = z.infer<typeof themeSchema>;
@@ -206,8 +221,16 @@ export function themeToCss(input: ThemeSettings): string {
   const light = modeDeclarations(theme, 'light');
   const dark = modeDeclarations(theme, 'dark');
 
+  // Radius und Schriftstärken gelten in beiden Modi; html:root schlägt auch .dark.
+  const global: string[] = [];
+  if (theme.radius !== DEFAULT_RADIUS) global.push(`--dp-radius-container:${theme.radius}px`);
+  for (const key of FONT_WEIGHT_KEYS) {
+    const weight = theme.weights[key];
+    if (weight !== undefined) global.push(`--dp-weight-${key}:${weight}`);
+  }
+
   const blocks: string[] = [];
-  if (theme.radius !== DEFAULT_RADIUS) blocks.push(`html:root{--dp-radius-container:${theme.radius}px}`);
+  if (global.length) blocks.push(`html:root{${global.join(';')}}`);
   if (light.length) blocks.push(`html:root:not(.dark){${light.join(';')}}`);
   if (dark.length) blocks.push(`html.dark{${dark.join(';')}}`);
   return blocks.join('\n');

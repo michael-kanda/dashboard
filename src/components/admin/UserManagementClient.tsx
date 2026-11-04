@@ -4,7 +4,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, FormEvent, type ReactNode } from 'react';
 import type { User } from '@/lib/schemas';
-import { ArrowRepeat, PersonCircle, PersonPlus } from 'react-bootstrap-icons';
+import { PersonCircle, PersonPlus } from 'react-bootstrap-icons';
 import { toast } from 'sonner';
 import LogoManager from '@/app/admin/LogoManager';
 import LoginLogbook from '@/app/admin/LoginLogbook';
@@ -19,6 +19,7 @@ import { AvatarStack } from '@/components/ui/AvatarStack';
 import { Toggle } from '@/components/ui/Toggle';
 import { Dialog } from '@/components/ui/Dialog';
 import { inputClasses } from '@/components/ui/Field';
+import { Spinner } from '@/components/ui/Spinner';
 
 // Formularzeile einer Grouped List: Label links, Feld rechts.
 function FormRow({ id, label, children }: { id: string; label: ReactNode; children: ReactNode }) {
@@ -235,7 +236,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
           <>
             <Button variant="secondary" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>Abbrechen</Button>
             <Button type="submit" form="create-user-form" disabled={isSubmitting}>
-              {isSubmitting && <ArrowRepeat className="animate-spin" size={14} aria-hidden="true" />}
+              {isSubmitting && <Spinner size={14} className="" />}
               {isSubmitting ? 'Speichere …' : (selectedRole === 'BENUTZER' ? 'Kunden erstellen' : 'Admin erstellen')}
             </Button>
           </>

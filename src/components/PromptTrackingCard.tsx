@@ -3,7 +3,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Sparkles, Download, Search, ExternalLink, WandSparkles, Loader2, X,
+  Sparkles, Download, Search, ExternalLink, WandSparkles, X,
   ChevronDown, ChevronUp, Lightbulb, AlertCircle, Info, TrendingUp,
   TrendingDown, Minus, FileText, MapPin, MessageCircleQuestionMark,
   Copy, ClipboardCheck,
@@ -24,6 +24,7 @@ import {
   INTENT_LABELS,
 } from '@/lib/prompt-cluster-schema';
 import GoogleCleanUnderline from '@/components/ui/GoogleCleanUnderline';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface PromptTrackingCardProps {
   data?: PromptTrackingResult;
@@ -205,7 +206,7 @@ export default function PromptTrackingCard({
             className="widget-control flex items-center gap-2 px-3 py-1.5 rounded-md border border-border text-body bg-surface hover:bg-surface-tertiary disabled:opacity-50 disabled:cursor-not-allowed transition print:hidden"
             title={!canCluster ? `Mindestens ${MIN_QUERIES_FOR_AI} Queries nötig` : `${queriesForAi.length} Queries analysieren`}
           >
-            {isClustering ? <><Loader2 className="w-4 h-4 animate-spin" />Analysiere...</> : <><WandSparkles className="w-4 h-4" />Mit AI clustern</>}
+            {isClustering ? <><Spinner size={16} className="" />Analysiere...</> : <><WandSparkles className="w-4 h-4" />Mit AI clustern</>}
           </button>
           <button
             onClick={handleExport}
@@ -569,7 +570,7 @@ function PromptResearchTool({
             disabled={isGeneratingResearch}
             className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border bg-surface text-body hover:bg-surface-tertiary disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            {isGeneratingResearch ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <WandSparkles className="w-3.5 h-3.5" />}
+            {isGeneratingResearch ? <Spinner size={14} className="" /> : <WandSparkles className="w-3.5 h-3.5" />}
             Mit DataMax generieren
           </button>
           <button

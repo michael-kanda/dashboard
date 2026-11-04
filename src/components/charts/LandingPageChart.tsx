@@ -15,6 +15,7 @@ import {
   Download
 } from 'react-bootstrap-icons';
 import { formatReportingPeriod, type ReportingPeriod } from '@/lib/reporting-period';
+import { PageSpinner } from '@/components/ui/Spinner';
 
 // Typ für die Query-Daten pro Landingpage
 export interface LandingPageQueries {
@@ -514,10 +515,7 @@ export default function LandingPageChart({
 
               {/* Loading State */}
               {isLoadingFollowUp && (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <div className="w-8 h-8 border-3 border-accent border-t-transparent rounded-full animate-spin mb-4"></div>
-                  <span className="text-muted font-medium">Analysiere Nutzerverhalten...</span>
-                </div>
+                <PageSpinner label="Nutzerverhalten wird analysiert" className="py-12" />
               )}
 
               {/* Error State */}

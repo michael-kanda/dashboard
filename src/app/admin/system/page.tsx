@@ -1,16 +1,19 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, type ReactNode } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { ArrowRepeat, PersonCircle } from 'react-bootstrap-icons';
+import { toast } from 'sonner';
 import LoginLogbook from '@/app/admin/LoginLogbook';
 import { roleLabel } from '@/lib/ui-labels';
-import { PageContainer, PageHeader, SectionTitle } from '@/components/ui/Page';
+import { PageContainer, PageHeader } from '@/components/ui/Page';
 import { GroupedSection, GroupedRow } from '@/components/ui/GroupedList';
-import { DataList, DataListHead, EmptyRow, ListSkeleton, PrimaryCell, Td, Th, Tr } from '@/components/ui/DataList';
+import { DataList, DataListHead, EmptyRow, PrimaryCell, Td, Th, Tr } from '@/components/ui/DataList';
 import { SearchField } from '@/components/ui/SearchField';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Button } from '@/components/ui/Button';
-import { StatusDot, StatusPill } from '@/components/ui/Status';
+import { MetricTile, StatusDot, StatusPill } from '@/components/ui/Status';
 import { Toggle } from '@/components/ui/Toggle';
+import { PageSpinner, Spinner } from '@/components/ui/Spinner';
 
 const SERVICE_STATUS: Record<string, { tone: 'success' | 'warning' | 'danger' | 'off'; label: string }> = {
   ok: { tone: 'success', label: 'Verbunden' },
@@ -23,46 +26,20 @@ function serviceStatus(value?: string) {
   return SERVICE_STATUS[value || 'pending'] ?? SERVICE_STATUS.error;
 }
 
-// Abschnitt mit Nutzerliste und Schalter je Nutzer (Wartung, KI-Tool, DataMax).
-function PermissionSection({
-  title,
-  statusLine,
-  actions,
-  search,
-  onSearch,
-  searchLabel,
-  isLoading,
-  children,
-  footer,
-}: {
-  title: string;
-  statusLine: string;
-  actions: ReactNode;
-  search: string;
-  onSearch: (value: string) => void;
-  searchLabel: string;
-  isLoading: boolean;
-  children: ReactNode;
-  footer?: ReactNode;
-}) {
-  return (
-    <section className="min-w-0">
-      <SectionTitle title={title} help={statusLine} actions={actions} />
-      <div className="mb-2.5">
-        <SearchField label={searchLabel} placeholder="E-Mail oder Domain" value={search} onChange={onSearch} />
-      </div>
-      <DataList label={title} minWidth={480} className="max-h-72 overflow-y-auto">
-        <DataListHead>
-          <Th>Nutzer</Th>
-          <Th>Rolle</Th>
-          <Th className="text-right">Zugang</Th>
-        </DataListHead>
-        <tbody aria-busy={isLoading}>{children}</tbody>
-      </DataList>
-      {footer && <p className="mt-1.5 text-[13px] text-muted">{footer}</p>}
-    </section>
-  );
-}
+type SystemTab = 'uebersicht' | 'zugriffe' | 'anmeldungen';
+
+const TABS: { value: SystemTab; label: string }[] = [
+  { value: 'uebersicht', label: 'Übersicht' },
+  { value: 'zugriffe', label: 'Zugriffe' },
+  { value: 'anmeldungen', label: 'Anmeldungen' },
+];
+
+type AccessFilter = 'alle' | 'eingeschraenkt';
+
+const ACCESS_FILTERS: { value: AccessFilter; label: string }[] = [
+  { value: 'alle', label: 'Alle' },
+  { value: 'eingeschraenkt', label: 'Eingeschränkt' },
+];
 
 // Typen erweitert
 type UserStatus = {
@@ -80,27 +57,27 @@ export default function SystemHealthPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSchedulingRefresh, setIsSchedulingRefresh] = useState(false);
   const [cacheNotice, setCacheNotice] = useState<string | null>(null);
+  const [tab, setTab] = useState<SystemTab>('uebersicht');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [accessFilter, setAccessFilter] = useState<AccessFilter>('alle');
   
   // --- WARTUNGSMODUS STATE ---
   const [maintenanceUsers, setMaintenanceUsers] = useState<UserStatus[]>([]);
   const [maintenanceCount, setMaintenanceCount] = useState(0);
   const [isLoadingMaintenance, setIsLoadingMaintenance] = useState(false);
   const [togglingMaintId, setTogglingMaintId] = useState<string | null>(null);
-  const [maintSearchTerm, setMaintSearchTerm] = useState('');
 
   // --- KI-TOOL STATE ---
   const [kiToolUsers, setKiToolUsers] = useState<UserStatus[]>([]);
   const [kiToolDisabledCount, setKiToolDisabledCount] = useState(0);
   const [isLoadingKiTool, setIsLoadingKiTool] = useState(false);
   const [togglingKiId, setTogglingKiId] = useState<string | null>(null);
-  const [kiToolSearchTerm, setKiToolSearchTerm] = useState('');
 
   // --- DATAMAX CHAT STATE (NEU) ---
   const [dataMaxUsers, setDataMaxUsers] = useState<UserStatus[]>([]);
   const [dataMaxDisabledCount, setDataMaxDisabledCount] = useState(0);
   const [isLoadingDataMax, setIsLoadingDataMax] = useState(false);
   const [togglingDataMaxId, setTogglingDataMaxId] = useState<string | null>(null);
-  const [dataMaxSearchTerm, setDataMaxSearchTerm] = useState('');
 
   // --- FETCHERS ---
   const fetchStatus = async () => {
@@ -162,13 +139,13 @@ export default function SystemHealthPage() {
         body: JSON.stringify({ userId, isActive: shouldActivate })
       });
       if (res.ok) await fetchMaintenanceStatus();
-      else alert((await res.json()).message || 'Fehler');
-    } catch (e) { alert('Verbindungsfehler'); } finally { setTogglingMaintId(null); }
+      else toast.error((await res.json()).message || 'Fehler');
+    } catch { toast.error('Verbindungsfehler'); } finally { setTogglingMaintId(null); }
   };
 
   const toggleKiTool = async (userId: string, currentEnabled: boolean) => {
     const user = kiToolUsers.find(u => u.id === userId);
-    if (user?.role === 'SUPERADMIN') return alert('Superadmins können nicht gesperrt werden.');
+    if (user?.role === 'SUPERADMIN') return toast('Superadmins können nicht gesperrt werden.');
     const newState = currentEnabled === false ? true : false; 
     setTogglingKiId(userId);
     try {
@@ -178,14 +155,14 @@ export default function SystemHealthPage() {
         body: JSON.stringify({ userId, isEnabled: newState })
       });
       if (res.ok) await fetchKiToolStatus();
-      else alert((await res.json()).message || 'Fehler');
-    } catch (e) { alert('Verbindungsfehler'); } finally { setTogglingKiId(null); }
+      else toast.error((await res.json()).message || 'Fehler');
+    } catch { toast.error('Verbindungsfehler'); } finally { setTogglingKiId(null); }
   };
 
   // NEU: DataMax Toggle
   const toggleDataMax = async (userId: string, currentEnabled?: boolean) => {
     const user = dataMaxUsers.find(u => u.id === userId);
-    if (user?.role === 'SUPERADMIN') return alert('Superadmins können nicht gesperrt werden.');
+    if (user?.role === 'SUPERADMIN') return toast('Superadmins können nicht gesperrt werden.');
     // Default ist true (wenn undefined). Also togglen wir basierend darauf.
     const isCurrentlyEnabled = currentEnabled !== false;
     const newState = !isCurrentlyEnabled;
@@ -198,14 +175,14 @@ export default function SystemHealthPage() {
         body: JSON.stringify({ userId, isEnabled: newState })
       });
       if (res.ok) await fetchDataMaxStatus();
-      else alert((await res.json()).message || 'Fehler');
-    } catch (e) { alert('Verbindungsfehler'); } finally { setTogglingDataMaxId(null); }
+      else toast.error((await res.json()).message || 'Fehler');
+    } catch { toast.error('Verbindungsfehler'); } finally { setTogglingDataMaxId(null); }
   };
 
   // NEU: Alle KI-Tool sperren (außer SUPERADMIN)
   const bulkDisableKiTool = async () => {
     const nonSuperadmins = kiToolUsers.filter(u => u.role !== 'SUPERADMIN' && u.ki_tool_enabled !== false);
-    if (nonSuperadmins.length === 0) return alert('Keine User zum Sperren vorhanden.');
+    if (nonSuperadmins.length === 0) return toast('Keine User zum Sperren vorhanden.');
     if (!confirm(`KI-Tool für ${nonSuperadmins.length} User deaktivieren? (Superadmins ausgenommen)`)) return;
     // Optimistisches Update
     setKiToolUsers(prev => prev.map(u => u.role === 'SUPERADMIN' ? u : { ...u, ki_tool_enabled: false }));
@@ -217,13 +194,13 @@ export default function SystemHealthPage() {
       });
       if (!res.ok) throw new Error('Fehler');
       await fetchKiToolStatus();
-    } catch (e) { alert('Fehler beim Sperren'); await fetchKiToolStatus(); }
+    } catch { toast.error('Fehler beim Sperren'); await fetchKiToolStatus(); }
   };
 
   // NEU: Alle KI-Tool freigeben
   const bulkEnableKiTool = async () => {
     const disabled = kiToolUsers.filter(u => u.ki_tool_enabled === false);
-    if (disabled.length === 0) return alert('Alle User haben bereits Zugriff.');
+    if (disabled.length === 0) return toast('Alle User haben bereits Zugriff.');
     if (!confirm(`KI-Tool für ${disabled.length} User wieder aktivieren?`)) return;
     setKiToolUsers(prev => prev.map(u => ({ ...u, ki_tool_enabled: true })));
     setKiToolDisabledCount(0);
@@ -234,13 +211,13 @@ export default function SystemHealthPage() {
       });
       if (!res.ok) throw new Error('Fehler');
       await fetchKiToolStatus();
-    } catch (e) { alert('Fehler beim Freigeben'); await fetchKiToolStatus(); }
+    } catch { toast.error('Fehler beim Freigeben'); await fetchKiToolStatus(); }
   };
 
   // NEU: Alle DataMax sperren (außer SUPERADMIN)
   const bulkDisableDataMax = async () => {
     const nonSuperadmins = dataMaxUsers.filter(u => u.role !== 'SUPERADMIN' && u.data_max_enabled !== false);
-    if (nonSuperadmins.length === 0) return alert('Keine User zum Sperren vorhanden.');
+    if (nonSuperadmins.length === 0) return toast('Keine User zum Sperren vorhanden.');
     if (!confirm(`DataMax Chat für ${nonSuperadmins.length} User deaktivieren? (Superadmins ausgenommen)`)) return;
     setDataMaxUsers(prev => prev.map(u => u.role === 'SUPERADMIN' ? u : { ...u, data_max_enabled: false }));
     setDataMaxDisabledCount(dataMaxUsers.filter(u => u.role !== 'SUPERADMIN').length);
@@ -251,13 +228,13 @@ export default function SystemHealthPage() {
       });
       if (!res.ok) throw new Error('Fehler');
       await fetchDataMaxStatus();
-    } catch (e) { alert('Fehler beim Sperren'); await fetchDataMaxStatus(); }
+    } catch { toast.error('Fehler beim Sperren'); await fetchDataMaxStatus(); }
   };
 
   // NEU: Alle DataMax freigeben
   const bulkEnableDataMax = async () => {
     const disabled = dataMaxUsers.filter(u => u.data_max_enabled === false);
-    if (disabled.length === 0) return alert('Alle User haben bereits Zugriff.');
+    if (disabled.length === 0) return toast('Alle User haben bereits Zugriff.');
     if (!confirm(`DataMax Chat für ${disabled.length} User wieder aktivieren?`)) return;
     setDataMaxUsers(prev => prev.map(u => ({ ...u, data_max_enabled: true })));
     setDataMaxDisabledCount(0);
@@ -268,7 +245,7 @@ export default function SystemHealthPage() {
       });
       if (!res.ok) throw new Error('Fehler');
       await fetchDataMaxStatus();
-    } catch (e) { alert('Fehler beim Freigeben'); await fetchDataMaxStatus(); }
+    } catch { toast.error('Fehler beim Freigeben'); await fetchDataMaxStatus(); }
   };
 
   const handleScheduleRefresh = async () => {
@@ -285,63 +262,55 @@ export default function SystemHealthPage() {
     } finally { setIsSchedulingRefresh(false); }
   };
 
-  // --- FILTERS ---
-  const filteredKiUsers = kiToolUsers.filter(u => 
-    u.email.toLowerCase().includes(kiToolSearchTerm.toLowerCase()) || 
-    (u.domain && u.domain.toLowerCase().includes(kiToolSearchTerm.toLowerCase()))
-  );
+  // --- ZUGRIFFE: eine Liste aus den drei Quellen ---
+  const accessUsers = useMemo(() => {
+    const byId = new Map<string, UserStatus>();
+    for (const list of [maintenanceUsers, kiToolUsers, dataMaxUsers]) {
+      for (const user of list) byId.set(user.id, { ...byId.get(user.id), ...user });
+    }
+    for (const user of kiToolUsers) {
+      const merged = byId.get(user.id);
+      if (merged) merged.ki_tool_enabled = user.ki_tool_enabled;
+    }
+    for (const user of dataMaxUsers) {
+      const merged = byId.get(user.id);
+      if (merged) merged.data_max_enabled = user.data_max_enabled;
+    }
+    for (const user of maintenanceUsers) {
+      const merged = byId.get(user.id);
+      if (merged) merged.maintenance_mode = user.maintenance_mode;
+    }
+    return Array.from(byId.values()).sort((a, b) => a.email.localeCompare(b.email));
+  }, [maintenanceUsers, kiToolUsers, dataMaxUsers]);
 
-  const filteredMaintUsers = maintenanceUsers.filter(u => 
-    u.email.toLowerCase().includes(maintSearchTerm.toLowerCase()) || 
-    (u.domain && u.domain.toLowerCase().includes(maintSearchTerm.toLowerCase()))
-  );
+  const isRestricted = (user: UserStatus) =>
+    Boolean(user.maintenance_mode) || user.ki_tool_enabled === false || user.data_max_enabled === false;
 
-  const filteredDataMaxUsers = dataMaxUsers.filter(u => 
-    u.email.toLowerCase().includes(dataMaxSearchTerm.toLowerCase()) || 
-    (u.domain && u.domain.toLowerCase().includes(dataMaxSearchTerm.toLowerCase()))
-  );
+  const filteredUsers = accessUsers.filter((user) => {
+    const term = searchTerm.toLowerCase();
+    const matches = user.email.toLowerCase().includes(term) || (user.domain && user.domain.toLowerCase().includes(term));
+    return matches && (accessFilter === 'alle' || isRestricted(user));
+  });
 
-  const userCell = (user: UserStatus) => (
-    <PrimaryCell icon={<PersonCircle size={16} />} title={user.email} subtitle={user.domain || undefined} />
-  );
-
-  const refreshButton = (onClick: () => void, loading: boolean) => (
-    <Button variant="plain" size="sm" onClick={onClick} disabled={loading}>
-      <ArrowRepeat className={loading ? 'animate-spin' : ''} size={14} aria-hidden="true" />
-      Aktualisieren
-    </Button>
-  );
-
-  const bulkActions = (onDisable: () => void, onEnable: () => void, loading: boolean, onRefresh: () => void) => (
-    <>
-      <span className="text-[13px] text-muted">Superadmins ausgenommen</span>
-      <Button variant="destructive" size="sm" onClick={onDisable} disabled={loading}>Alle sperren</Button>
-      <Button variant="plain" size="sm" onClick={onEnable} disabled={loading}>Alle freigeben</Button>
-      {refreshButton(onRefresh, loading)}
-    </>
-  );
-
-  const header = (
-    <PageHeader title="System" subtitle="Dienste, Zugriffe und Systemfunktionen überwachen">
-      {status?.aiModel && (
-        <StatusPill>KI: {status.aiModel.activeModel || serviceStatus(status.aiModel.status).label}</StatusPill>
-      )}
-      {maintenanceCount > 0 && <StatusPill tone="danger">{maintenanceCount} gesperrt</StatusPill>}
-    </PageHeader>
-  );
+  const isLoadingAccess = isLoadingMaintenance || isLoadingKiTool || isLoadingDataMax;
+  const refreshAccess = () => {
+    fetchMaintenanceStatus();
+    fetchKiToolStatus();
+    fetchDataMaxStatus();
+  };
 
   if (isLoading) {
     return (
       <PageContainer>
-        {header}
-        <ListSkeleton rows={5} label="System-Status wird geladen …" />
+        <PageHeader title="System" subtitle="Dienste, Zugriffe und Anmeldungen" />
+        <PageSpinner label="System-Status wird geladen" />
       </PageContainer>
     );
   }
   if (!status) {
     return (
       <PageContainer>
-        {header}
+        <PageHeader title="System" subtitle="Dienste, Zugriffe und Anmeldungen" />
         <p className="text-[14px] text-danger" role="alert">Fehler beim Laden.</p>
       </PageContainer>
     );
@@ -362,13 +331,27 @@ export default function SystemHealthPage() {
     { label: 'Semrush API', data: status.semrush },
     { label: 'GSC API', data: status.gscApi },
   ];
+  const servicesWithIssues = services.filter(({ data }) => data?.status === 'error' || data?.status === 'warning').length;
 
   return (
     <PageContainer>
-      {header}
+      <PageHeader title="System" subtitle="Dienste, Zugriffe und Anmeldungen">
+        <SegmentedControl label="Bereich" options={TABS} value={tab} onChange={setTab} />
+      </PageHeader>
 
-      <div className="grid grid-cols-1 gap-[22px] xl:grid-cols-3">
-        <div className="flex min-w-0 flex-col gap-[22px] xl:col-span-2">
+      {tab === 'uebersicht' && (
+        <div className="space-y-[22px]">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <MetricTile
+              label="Dienste"
+              value={servicesWithIssues === 0 ? 'OK' : servicesWithIssues}
+              hint={servicesWithIssues === 0 ? 'Alle verbunden' : 'mit Warnung oder Fehler'}
+            />
+            <MetricTile label="Gesperrt" value={maintenanceCount} hint="Wartungsmodus" />
+            <MetricTile label="Ohne KI-Tool" value={kiToolDisabledCount} hint="Benutzer" />
+            <MetricTile label="Ohne DataMax" value={dataMaxDisabledCount} hint="Benutzer" />
+          </div>
+
           <GroupedSection title="Dienste">
             {services.map(({ label, data, detail }) => {
               const state = serviceStatus(data?.status);
@@ -384,105 +367,89 @@ export default function SystemHealthPage() {
             })}
           </GroupedSection>
 
-          <PermissionSection
-            title="Wartungsmodus & Zugangssperre"
-            statusLine={maintenanceCount > 0 ? `${maintenanceCount} Benutzer gesperrt.` : 'Alle Benutzer haben freien Zugang.'}
-            actions={refreshButton(fetchMaintenanceStatus, isLoadingMaintenance)}
-            search={maintSearchTerm}
-            onSearch={setMaintSearchTerm}
-            searchLabel="Benutzer für Wartung durchsuchen"
-            isLoading={isLoadingMaintenance}
-          >
-            {filteredMaintUsers.length === 0 && <EmptyRow colSpan={3}>Keine Benutzer gefunden</EmptyRow>}
-            {filteredMaintUsers.map((user) => (
-              <Tr key={user.id}>
-                <Td>{userCell(user)}</Td>
-                <Td>
-                  <span className="flex flex-wrap items-center gap-1.5">
-                    <StatusPill>{roleLabel(user.role)}</StatusPill>
-                    {user.maintenance_mode && <StatusPill tone="danger">Gesperrt</StatusPill>}
-                  </span>
-                </Td>
-                <Td className="text-right">
-                  <Toggle
-                    checked={!user.maintenance_mode}
-                    onChange={() => toggleMaintenance(user.id, user.maintenance_mode)}
-                    label={`Zugang für ${user.email}`}
-                    disabled={togglingMaintId === user.id}
-                  />
-                </Td>
-              </Tr>
-            ))}
-          </PermissionSection>
-
-          <PermissionSection
-            title="KI-Tool Berechtigung"
-            statusLine={kiToolDisabledCount > 0 ? `${kiToolDisabledCount} User ohne KI-Tool.` : 'Alle User haben KI-Tool Zugriff.'}
-            actions={bulkActions(bulkDisableKiTool, bulkEnableKiTool, isLoadingKiTool, fetchKiToolStatus)}
-            search={kiToolSearchTerm}
-            onSearch={setKiToolSearchTerm}
-            searchLabel="Benutzer für KI-Tool durchsuchen"
-            isLoading={isLoadingKiTool}
-          >
-            {filteredKiUsers.length === 0 && <EmptyRow colSpan={3}>Keine Benutzer gefunden</EmptyRow>}
-            {filteredKiUsers.map((user) => (
-              <Tr key={user.id}>
-                <Td>{userCell(user)}</Td>
-                <Td><StatusPill>{roleLabel(user.role)}</StatusPill></Td>
-                <Td className="text-right">
-                  <Toggle
-                    checked={user.role === 'SUPERADMIN' || user.ki_tool_enabled !== false}
-                    onChange={() => toggleKiTool(user.id, user.ki_tool_enabled !== false)}
-                    label={user.role === 'SUPERADMIN' ? `KI-Tool für ${user.email} (geschützt)` : `KI-Tool für ${user.email}`}
-                    disabled={togglingKiId === user.id || user.role === 'SUPERADMIN'}
-                  />
-                </Td>
-              </Tr>
-            ))}
-          </PermissionSection>
-
-          <PermissionSection
-            title="DataMax Chat Berechtigung"
-            statusLine={dataMaxDisabledCount > 0 ? `${dataMaxDisabledCount} User ohne Chat Zugriff.` : 'Alle User dürfen DataMax nutzen.'}
-            actions={bulkActions(bulkDisableDataMax, bulkEnableDataMax, isLoadingDataMax, fetchDataMaxStatus)}
-            search={dataMaxSearchTerm}
-            onSearch={setDataMaxSearchTerm}
-            searchLabel="Benutzer für DataMax durchsuchen"
-            isLoading={isLoadingDataMax}
-            footer="Standardmäßig haben alle User Zugriff."
-          >
-            {filteredDataMaxUsers.length === 0 && <EmptyRow colSpan={3}>Keine Benutzer gefunden</EmptyRow>}
-            {filteredDataMaxUsers.map((user) => (
-              <Tr key={user.id}>
-                <Td>{userCell(user)}</Td>
-                <Td><StatusPill>{roleLabel(user.role)}</StatusPill></Td>
-                <Td className="text-right">
-                  <Toggle
-                    checked={user.role === 'SUPERADMIN' || user.data_max_enabled !== false}
-                    onChange={() => toggleDataMax(user.id, user.data_max_enabled)}
-                    label={user.role === 'SUPERADMIN' ? `DataMax für ${user.email} (geschützt)` : `DataMax für ${user.email}`}
-                    disabled={togglingDataMaxId === user.id || user.role === 'SUPERADMIN'}
-                  />
-                </Td>
-              </Tr>
-            ))}
-          </PermissionSection>
-
-          <GroupedSection title="Cache Management" help={cacheNotice ? <span role="status">{cacheNotice}</span> : undefined}>
-            <GroupedRow label="Einträge">
-              <span className="font-semibold text-heading tabular-nums">{status.cache.count}</span>
+          <GroupedSection title="Dashboard-Daten" help={cacheNotice ? <span role="status">{cacheNotice}</span> : 'Gespeicherte Abrufe aus Google und Semrush.'}>
+            <GroupedRow label="Gespeicherte Einträge" description="Bis zur neuen Abfrage bleiben die bisherigen Daten sichtbar.">
+              <span className="font-semibold tabular-nums text-heading">{status.cache.count}</span>
               <Button variant="plain" size="sm" onClick={handleScheduleRefresh} disabled={isSchedulingRefresh}>
-                <ArrowRepeat className={isSchedulingRefresh ? 'animate-spin' : undefined} size={14} aria-hidden="true" />
+                {isSchedulingRefresh ? <Spinner size={14} className="" /> : <ArrowRepeat size={14} aria-hidden="true" />}
                 Aktualisierung vormerken
               </Button>
             </GroupedRow>
           </GroupedSection>
         </div>
+      )}
 
-        <div className="min-w-0 xl:col-span-1">
-          <LoginLogbook />
+      {tab === 'zugriffe' && (
+        <div className="space-y-[22px]">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <SegmentedControl label="Benutzer filtern" options={ACCESS_FILTERS} value={accessFilter} onChange={setAccessFilter} />
+            <SearchField label="Benutzer durchsuchen" placeholder="E-Mail oder Domain" value={searchTerm} onChange={setSearchTerm} />
+            <Button variant="plain" size="sm" onClick={refreshAccess} disabled={isLoadingAccess} className="ml-auto">
+              {isLoadingAccess ? <Spinner size={14} className="" /> : <ArrowRepeat size={14} aria-hidden="true" />}
+              Aktualisieren
+            </Button>
+          </div>
+
+          <DataList label="Zugriffe" minWidth={720}>
+            <DataListHead>
+              <Th>Benutzer</Th>
+              <Th>Rolle</Th>
+              <Th className="text-center">Zugang</Th>
+              <Th className="text-center">KI-Tool</Th>
+              <Th className="text-center">DataMax</Th>
+            </DataListHead>
+            <tbody aria-busy={isLoadingAccess}>
+              {filteredUsers.length === 0 && <EmptyRow colSpan={5}>Keine Benutzer gefunden</EmptyRow>}
+              {filteredUsers.map((user) => {
+                const isSuperadmin = user.role === 'SUPERADMIN';
+                return (
+                  <Tr key={user.id}>
+                    <Td><PrimaryCell icon={<PersonCircle size={16} />} title={user.email} subtitle={user.domain || undefined} /></Td>
+                    <Td><StatusPill>{roleLabel(user.role)}</StatusPill></Td>
+                    <Td className="text-center">
+                      <Toggle
+                        checked={!user.maintenance_mode}
+                        onChange={() => toggleMaintenance(user.id, Boolean(user.maintenance_mode))}
+                        label={`Zugang für ${user.email}`}
+                        disabled={togglingMaintId === user.id}
+                      />
+                    </Td>
+                    <Td className="text-center">
+                      <Toggle
+                        checked={isSuperadmin || user.ki_tool_enabled !== false}
+                        onChange={() => toggleKiTool(user.id, user.ki_tool_enabled !== false)}
+                        label={isSuperadmin ? `KI-Tool für ${user.email} (geschützt)` : `KI-Tool für ${user.email}`}
+                        disabled={togglingKiId === user.id || isSuperadmin}
+                      />
+                    </Td>
+                    <Td className="text-center">
+                      <Toggle
+                        checked={isSuperadmin || user.data_max_enabled !== false}
+                        onChange={() => toggleDataMax(user.id, user.data_max_enabled)}
+                        label={isSuperadmin ? `DataMax für ${user.email} (geschützt)` : `DataMax für ${user.email}`}
+                        disabled={togglingDataMaxId === user.id || isSuperadmin}
+                      />
+                    </Td>
+                  </Tr>
+                );
+              })}
+            </tbody>
+          </DataList>
+
+          <GroupedSection title="Für alle Benutzer" help="Superadmins sind ausgenommen.">
+            <GroupedRow label="KI-Tool" description={kiToolDisabledCount > 0 ? `${kiToolDisabledCount} ohne Zugriff` : 'Alle haben Zugriff'}>
+              <Button variant="plain" size="sm" onClick={bulkEnableKiTool} disabled={isLoadingKiTool}>Alle freigeben</Button>
+              <Button variant="destructive" size="sm" onClick={bulkDisableKiTool} disabled={isLoadingKiTool}>Alle sperren</Button>
+            </GroupedRow>
+            <GroupedRow label="DataMax Chat" description={dataMaxDisabledCount > 0 ? `${dataMaxDisabledCount} ohne Zugriff` : 'Alle haben Zugriff'}>
+              <Button variant="plain" size="sm" onClick={bulkEnableDataMax} disabled={isLoadingDataMax}>Alle freigeben</Button>
+              <Button variant="destructive" size="sm" onClick={bulkDisableDataMax} disabled={isLoadingDataMax}>Alle sperren</Button>
+            </GroupedRow>
+          </GroupedSection>
         </div>
-      </div>
+      )}
+
+      {tab === 'anmeldungen' && <LoginLogbook />}
     </PageContainer>
   );
 }

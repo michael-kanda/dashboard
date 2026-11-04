@@ -24,6 +24,9 @@
   --font-sans: var(--dp-font-sans);
   --font-mono: var(--dp-font-mono);
   --font-weight-normal: var(--dp-weight-normal);
+  --font-weight-medium: var(--dp-weight-medium);
+  --font-weight-semibold: var(--dp-weight-semibold);
+  --font-weight-bold: var(--dp-weight-bold);
 
   /* Alle Tailwind-Schriftstufen 1 px größer als der Standard */
   --text-xs: 13px;
@@ -132,6 +135,22 @@
       transition-duration: 0.01ms !important;
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
+    }
+  }
+
+  /* Ladeindikator (components/ui/Spinner.tsx); bei reduzierter Bewegung langsam statt gar nicht. */
+  .dp-spinner {
+    animation: dp-spin 0.75s linear infinite;
+  }
+
+  @keyframes dp-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dp-spinner {
+      animation-duration: 1.8s !important;
+      animation-iteration-count: infinite !important;
     }
   }
 

@@ -15,7 +15,6 @@ import {
   CheckCircleFill, // ✅ Wichtig
   InfoCircle,
   ExclamationTriangleFill,
-  ArrowRepeat,
   InfoCircleFill,
   ListTask,
   Filter,
@@ -25,6 +24,7 @@ import {
   ClockHistory,
   ChatSquareText
 } from 'react-bootstrap-icons';
+import { Spinner, PageSpinner } from '@/components/ui/Spinner';
 
 // Typdefinition
 type Landingpage = {
@@ -236,7 +236,7 @@ export default function FreigabePage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <DateRangeSelector value={dateRange} onChange={setDateRange} className="w-full sm:w-auto" />
             <button onClick={handleGscRefresh} disabled={isRefreshing || isLoading} className="px-4 py-2 font-medium rounded-md text-white bg-accent-solid hover:opacity-90 disabled:bg-gray-400 disabled:cursor-wait flex items-center justify-center gap-2 w-full sm:w-auto">
-              {isRefreshing ? <ArrowRepeat className="animate-spin" size={18} /> : <Search size={16} />}
+              {isRefreshing ? <Spinner size={18} className="" /> : <Search size={16} />}
               <span>{isRefreshing ? 'Wird abgeglichen...' : 'GSC-Daten abgleichen'}</span>
             </button>
           </div>
@@ -254,7 +254,7 @@ export default function FreigabePage() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-12"><ArrowRepeat className="animate-spin inline-block text-accent mr-2" size={24}/><p className="text-muted inline-block">Lade Landingpages...</p></div>
+          <PageSpinner label="Landingpages werden geladen" className="py-12" />
         ) : filteredPages.length === 0 ? (
           <div className="bg-surface p-12 rounded-lg text-center">
              <p className="text-muted">{landingpages.length === 0 ? 'Sie haben noch keine Landingpages.' : `Keine Landingpages mit Status "${filterStatus}" gefunden.`}</p>

@@ -22,6 +22,7 @@ import type {
   ProjectIndexingStatus,
 } from '@/lib/indexing-status';
 import { readIndexingStatusResponse } from '@/lib/indexing-response';
+import { Spinner } from '@/components/ui/Spinner';
 
 const NOTICE_CLASS = 'mt-4 rounded-md border border-border bg-warning-bg px-3 py-2 text-xs text-warning';
 
@@ -438,7 +439,7 @@ export default function IndexingStatusWidget({
                     disabled={showSyncProgress}
                     className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-xs font-semibold text-body transition-colors hover:bg-surface-secondary disabled:cursor-wait disabled:opacity-60"
                   >
-                    <RefreshCw size={15} className={showSyncProgress ? 'animate-spin' : ''} />
+                    {showSyncProgress ? <Spinner size={15} /> : <RefreshCw size={15} />}
                     {syncButtonLabel}
                   </button>
                 )}

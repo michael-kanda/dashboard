@@ -3,10 +3,11 @@
 
 import { useState, FormEvent } from 'react';
 import useSWR, { mutate } from 'swr';
-import { ArrowRepeat, Trash } from 'react-bootstrap-icons';
+import { Trash } from 'react-bootstrap-icons';
 import { GroupedSection } from '@/components/ui/GroupedList';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Field, inputClasses } from '@/components/ui/Field';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface MandantLogo {
   mandant_id: string;
@@ -108,7 +109,7 @@ export default function LogoManager() {
           </Field>
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <ArrowRepeat className="animate-spin" size={14} aria-hidden="true" />}
+              {isSubmitting && <Spinner size={14} className="" />}
               {isSubmitting ? 'Wird gespeichert …' : 'Logo speichern'}
             </Button>
             {message.text && (

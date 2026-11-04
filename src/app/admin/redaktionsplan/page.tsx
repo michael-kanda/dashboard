@@ -16,7 +16,8 @@ import { StatusPill, type StatusTone } from '@/components/ui/Status';
 import { inputClasses, textareaClasses } from '@/components/ui/Field';
 
 // Icons
-import { ArrowRepeat, ArrowUp, ArrowDown, CheckCircleFill, Search, Trash } from 'react-bootstrap-icons';
+import { ArrowUp, ArrowDown, CheckCircleFill, Search, Trash } from 'react-bootstrap-icons';
+import { Spinner } from '@/components/ui/Spinner';
 
 // Typdefinition
 type Landingpage = {
@@ -282,7 +283,7 @@ const handleGscRefresh = async () => {
           <GroupedRow label="GSC-Daten abgleichen" description="Klicks, Impressionen und Position für den gewählten Zeitraum">
             <DateRangeSelector value={dateRange} onChange={setDateRange} className="w-full sm:w-auto" />
             <Button variant="plain" size="sm" onClick={handleGscRefresh} disabled={isRefreshing || isLoading}>
-              {isRefreshing ? <ArrowRepeat className="animate-spin" size={14} aria-hidden="true" /> : <Search size={14} aria-hidden="true" />}
+              {isRefreshing ? <Spinner size={14} className="" /> : <Search size={14} aria-hidden="true" />}
               {isRefreshing ? 'Wird abgeglichen …' : 'Abgleichen'}
             </Button>
           </GroupedRow>

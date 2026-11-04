@@ -11,9 +11,11 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Toggle } from '@/components/ui/Toggle';
 import { StatusDot } from '@/components/ui/Status';
+import { inputClasses } from '@/components/ui/Field';
 import {
   DEFAULT_RADIUS,
   DEFAULT_THEME,
+  FONT_WEIGHT_FIELDS,
   MAX_RADIUS,
   SHADOW_OPTIONS,
   THEME_COLOR_FIELDS,
@@ -21,6 +23,7 @@ import {
   findContrastIssues,
   normalizeHex,
   themeToCss,
+  type FontWeightKey,
   type ThemeColorKey,
   type ThemeMode,
   type ThemeSettings,
@@ -141,6 +144,15 @@ export default function DesignSettingsClient({ initialTheme }: { initialTheme: T
     });
   };
 
+  const setWeight = (key: FontWeightKey, value: string) => {
+    setTheme((prev) => {
+      const weights = { ...prev.weights };
+      if (value === '') delete weights[key];
+      else weights[key] = Number(value);
+      return { ...prev, weights };
+    });
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -240,6 +252,27 @@ export default function DesignSettingsClient({ initialTheme }: { initialTheme: T
               />
               <span className="w-12 text-right tabular-nums text-heading">{theme.radius} px</span>
             </GroupedRow>
+          </GroupedSection>
+
+          <GroupedSection title="Schriftstärke" help="Gilt in beiden Modi. 400 ist normal, 700 ist fett.">
+            {FONT_WEIGHT_FIELDS.map(({ key, label, description, defaultLabel, options }) => (
+              <GroupedRow key={key} label={label} description={description} htmlFor={`weight-${key}`}>
+                <span className="w-10 text-right text-[17px] text-heading" style={{ fontWeight: theme.weights[key] ?? `var(--dp-weight-${key})` }} aria-hidden="true">
+                  Aa
+                </span>
+                <select
+                  id={`weight-${key}`}
+                  value={theme.weights[key] ?? ''}
+                  onChange={(e) => setWeight(key, e.target.value)}
+                  className={`${inputClasses} w-auto min-w-[200px]`}
+                >
+                  <option value="">{defaultLabel}</option>
+                  {options.map((weight) => (
+                    <option key={weight} value={weight}>{weight}</option>
+                  ))}
+                </select>
+              </GroupedRow>
+            ))}
           </GroupedSection>
 
           <div>

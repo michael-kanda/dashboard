@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { User } from '@/types';
-import { Pencil, ArrowRepeat, CheckCircle } from 'react-bootstrap-icons';
+import { Pencil, CheckCircle } from 'react-bootstrap-icons';
+import { Spinner } from '@/components/ui/Spinner';
 
 // Projekt-Interface
 interface Project {
@@ -139,7 +140,7 @@ export default function ProjectAssignmentManager({
           className="w-full px-4 py-2 font-normal text-white bg-accent-solid border-[3px] border-accent rounded-[3px] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
-            <ArrowRepeat className="animate-spin" size={18} />
+            <Spinner size={18} className="" />
           ) : (
             <CheckCircle size={18} />
           )}

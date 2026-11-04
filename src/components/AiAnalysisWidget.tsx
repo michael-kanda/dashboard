@@ -3,10 +3,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Lightbulb, ArrowRepeat, ExclamationTriangle, InfoCircle, GraphUpArrow } from 'react-bootstrap-icons';
+import { Lightbulb, ExclamationTriangle, InfoCircle, GraphUpArrow } from 'react-bootstrap-icons';
 import { getRangeLabel, DateRangeOption } from '@/components/DateRangeSelector';
 import ExportButton from '@/components/ExportButton';
 import { sanitizeAiHtml } from '@/lib/sanitize-ai-html';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface Props {
   projectId: string;
@@ -206,7 +207,7 @@ export default function AiAnalysisWidget({
       <div className="dashboard-widget-surface rounded-2xl flex flex-col h-full">
         <div className="p-5 border-b border-border-subtle rounded-t-2xl flex justify-between items-center">
           <h3 className="widget-section-title text-heading flex items-center gap-2">
-            {isLoading ? <ArrowRepeat className="animate-spin text-accent" /> : <InfoCircle className="text-accent" />}
+            {isLoading ? <Spinner size={16} /> : <InfoCircle className="text-accent" />}
             Status ({rangeLabel})
           </h3>
         </div>

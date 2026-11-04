@@ -56,3 +56,11 @@ test('flags unreadable color pairs', () => {
   const issues = findContrastIssues(themeSchema.parse({ light: { text: '#CCCCCC' } }));
   assert.ok(issues.some((issue) => issue.mode === 'light' && issue.label.startsWith('Fließtext')));
 });
+
+test('font weights apply to both modes and only allowed values pass', () => {
+  const css = themeToCss(themeSchema.parse({ weights: { normal: 500, semibold: 700 } }));
+  assert.match(css, /html:root\{[^}]*--dp-weight-normal:500;--dp-weight-semibold:700\}/);
+  assert.equal(themeSchema.safeParse({ weights: { normal: 451 } }).success, false);
+  assert.equal(themeSchema.safeParse({ weights: { normal: '500;color:red' } }).success, false);
+  assert.equal(themeSchema.safeParse({ weights: { huge: 500 } }).success, false);
+});

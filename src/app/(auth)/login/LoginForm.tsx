@@ -6,6 +6,8 @@ import { getSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Eye, EyeSlash, Lock } from 'react-bootstrap-icons';
+import ThemeModeSwitch from '@/components/ThemeModeSwitch';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface LoginFormProps {
   callbackUrl?: string;
@@ -67,7 +69,10 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
     'h-11 min-w-0 flex-1 bg-transparent text-[15px] text-heading placeholder:text-muted focus:outline-none disabled:opacity-60';
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-page px-4 py-10">
+    <div className="relative flex min-h-screen w-full items-center justify-center bg-page px-4 py-16">
+      <div className="absolute right-4 top-4">
+        <ThemeModeSwitch />
+      </div>
       <div className="w-full max-w-[360px]">
         {!isSuccess ? (
           <>
@@ -127,7 +132,7 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
                 className="flex h-9 w-full items-center justify-center gap-2 rounded-control bg-accent-solid px-4 text-[14px] font-semibold text-white transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-60"
                 disabled={isLoading || isSuccess}
               >
-                {isLoading && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" aria-hidden="true" />}
+                {isLoading && <Spinner size={14} className="" />}
                 {isLoading ? 'Prüfe Daten …' : 'Anmelden'}
               </button>
               <p className="flex items-center justify-center gap-1.5 text-[13px] text-muted">
@@ -142,7 +147,7 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
               <Image src="/data-max.webp" alt="DataMax" fill className="object-contain" priority />
             </div>
             <h1 className="flex items-center justify-center gap-2 text-[23px] font-bold tracking-[-0.02em] text-heading">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent-tint border-t-accent" aria-hidden="true" />
+              <Spinner size={18} />
               Login erfolgreich{successAnsprache ? ` ${successAnsprache}` : ''}
             </h1>
             <p className="mt-2 text-[15px] font-semibold text-accent">Dateninitialisierung läuft …</p>

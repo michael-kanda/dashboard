@@ -161,16 +161,6 @@ export default function ProjectDashboard({
       {dataMaxEnabled && model.canShow('dataMaxChat') && (
         <DataMaxChat projectId={projectId} dateRange={dateRange} ansprache={userAnsprache} />
       )}
-
-      <style jsx global>{`
-        @keyframes indeterminate-bar {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(300%); }
-        }
-        .animate-indeterminate-bar {
-          animation: indeterminate-bar 1.5s infinite linear;
-        }
-      `}</style>
     </div>
   );
 }

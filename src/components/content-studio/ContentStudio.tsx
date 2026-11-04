@@ -8,7 +8,6 @@ import {
   Database,
   FileText,
   History,
-  Loader2,
   RefreshCw,
   Sparkles,
 } from 'lucide-react';
@@ -23,6 +22,7 @@ import type {
   ContentType,
   InternalLinkCandidate,
 } from '@/lib/content-studio/types';
+import { Spinner } from '@/components/ui/Spinner';
 
 type Project = {
   id: string;
@@ -421,7 +421,7 @@ export default function ContentStudio() {
 
               <div className="mt-6 flex justify-end">
                 <button type="button" onClick={loadContext} disabled={loadingContext} className="inline-flex items-center gap-2 rounded bg-accent-solid px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-solid disabled:opacity-50">
-                  {loadingContext ? <Loader2 size={16} className="animate-spin" /> : <Database size={16} />} Datenbriefing erstellen
+                  {loadingContext ? <Spinner size={16} className="" /> : <Database size={16} />} Datenbriefing erstellen
                 </button>
               </div>
             </section>
@@ -447,7 +447,7 @@ export default function ContentStudio() {
             <ContentContextPanel context={context} selectedLinks={selectedLinks} onSelectedLinksChange={setSelectedLinks} />
             <div className="mt-5 flex justify-between">
               <button type="button" onClick={() => setStep('setup')} className="inline-flex items-center gap-2 rounded border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-heading"><ArrowLeft size={16} /> Setup</button>
-              <button type="button" onClick={generateOutline} disabled={generatingOutline} className="inline-flex items-center gap-2 rounded bg-accent-solid px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-solid disabled:opacity-50">{generatingOutline ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} Gliederung erstellen</button>
+              <button type="button" onClick={generateOutline} disabled={generatingOutline} className="inline-flex items-center gap-2 rounded bg-accent-solid px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-solid disabled:opacity-50">{generatingOutline ? <Spinner size={16} className="" /> : <Sparkles size={16} />} Gliederung erstellen</button>
             </div>
           </>
         )}
@@ -457,7 +457,7 @@ export default function ContentStudio() {
             <ContentOutlineEditor outline={outline} onChange={setOutline} />
             <div className="mt-5 flex justify-between">
               <button type="button" onClick={() => setStep('data')} className="inline-flex items-center gap-2 rounded border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-heading"><ArrowLeft size={16} /> Daten</button>
-              <button type="button" onClick={generateDraft} disabled={generatingDraft} className="inline-flex items-center gap-2 rounded bg-accent-solid px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-solid disabled:opacity-50">{generatingDraft ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />} Entwurf erstellen</button>
+              <button type="button" onClick={generateDraft} disabled={generatingDraft} className="inline-flex items-center gap-2 rounded bg-accent-solid px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-solid disabled:opacity-50">{generatingDraft ? <Spinner size={16} className="" /> : <ArrowRight size={16} />} Entwurf erstellen</button>
             </div>
           </>
         )}
