@@ -976,6 +976,15 @@
 @media print {
   @page { size: A4 portrait; margin: 8mm 8mm 10mm 8mm; }
 
+  /* Druckbericht (/projekt/[id]/bericht): eigene Größen, globale Druckregeln gelten hier nicht. */
+  .print-report { font-size: 12px !important; }
+  .print-report h1.report-title { font-size: 22px !important; color: #1d1d1f !important; }
+  .print-report h2 { font-size: 13px !important; margin-bottom: 8px !important; color: #1d1d1f !important; }
+  .print-report h3 { font-size: 12px !important; color: #1d1d1f !important; }
+  .print-report .report-section { break-inside: avoid; }
+  .print-report table { break-inside: auto; }
+  .print-report tr { break-inside: avoid; }
+
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
   body {

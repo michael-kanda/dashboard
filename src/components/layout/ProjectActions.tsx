@@ -5,6 +5,13 @@ import { Printer, Share } from 'react-bootstrap-icons';
 import ShareLinkDialog from '@/components/ShareLinkDialog';
 
 // Drucken und Gastlink für das geöffnete Projekt, zurückhaltend in der Sidebar.
+// Drucken öffnet den eigenen Druckbericht mit dem aktuell gewählten Zeitraum.
+function openReport(projectId: string) {
+  const range = new URLSearchParams(window.location.search).get('range');
+  const params = new URLSearchParams({ print: '1', ...(range ? { range } : {}) });
+  window.open(`/projekt/${projectId}/bericht?${params.toString()}`, '_blank', 'noopener');
+}
+
 export default function ProjectActions({ projectId, collapsed = false }: { projectId: string; collapsed?: boolean }) {
   const [isShareOpen, setIsShareOpen] = useState(false);
 
@@ -14,7 +21,7 @@ export default function ProjectActions({ projectId, collapsed = false }: { proje
   return (
     <>
       <div className={`flex ${collapsed ? 'flex-col items-center' : 'items-center'} gap-0.5`}>
-        <button type="button" onClick={() => window.print()} className={item} aria-label={collapsed ? 'Drucken' : undefined} title="Projektseite drucken">
+        <button type="button" onClick={() => openReport(projectId)} className={item} aria-label={collapsed ? 'Drucken' : undefined} title="Projektseite drucken">
           <Printer size={14} aria-hidden="true" />
           {!collapsed && 'Drucken'}
         </button>

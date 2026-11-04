@@ -10,8 +10,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
 
   const noLayoutPaths = ['/login', '/preview'];
-  // Gastlinks (/teilen/…) zeigen nur das Dashboard, ohne Navigation.
-  const showLayout = !noLayoutPaths.includes(pathname) && !pathname.startsWith('/teilen/');
+  // Gastlinks (/teilen/…) und Druckberichte (…/bericht) zeigen nur ihren Inhalt, ohne Navigation.
+  const showLayout = !noLayoutPaths.includes(pathname) && !pathname.startsWith('/teilen/') && !pathname.endsWith('/bericht');
 
   // ─── Kein Layout (z.B. Login-Seite) ───
   if (!showLayout) {
