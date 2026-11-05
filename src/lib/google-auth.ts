@@ -62,3 +62,12 @@ export function tryCreateGoogleAuth(scopes: readonly string[]): JWT | null {
     return null;
   }
 }
+
+// E-Mail des Dienstkontos, das in GSC und GA4 freigegeben sein muss (für Hinweise in der Oberfläche).
+export function getServiceAccountEmail(): string | null {
+  try {
+    return readServiceAccountCredentials().clientEmail;
+  } catch {
+    return null;
+  }
+}

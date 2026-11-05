@@ -20,6 +20,8 @@ import {
 } from 'react-bootstrap-icons';
 import { Spinner } from '@/components/ui/Spinner';
 import { GA4_PROPERTY_ID_HINT, parseGa4PropertyId } from '@/lib/ga4-property-id';
+import { normalizeGscSiteUrl } from '@/lib/gsc-site-url';
+import GoogleConnectionCheck from '@/components/admin/GoogleConnectionCheck';
 import { getPasswordError, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 
 interface EditUserFormProps {
@@ -998,7 +1000,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
                     className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
                     disabled={isSubmitting}
                   />
-                  {formData.gscSiteUrl && !isSubmitting && (
+                  {formData.gscSiteUrl && !isSubmitting && normalizeGscSiteUrl(formData.gscSiteUrl).ok && (
                     <CheckCircle 
                       className="absolute top-1/2 right-3 -translate-y-1/2 text-success" 
                       size={16}
@@ -1058,6 +1060,10 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
                     ? <p className="mt-1 text-xs text-muted">{GA4_PROPERTY_ID_HINT}</p>
                     : <p className="mt-1 text-xs text-danger" role="alert">{check.message}</p>;
                 })()}
+              </div>
+
+              <div className="mt-4">
+                <GoogleConnectionCheck gscSiteUrl={formData.gscSiteUrl} ga4PropertyId={formData.ga4PropertyId} />
               </div>
             </fieldset>
 

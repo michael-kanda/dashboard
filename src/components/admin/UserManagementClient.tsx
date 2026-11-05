@@ -20,6 +20,7 @@ import { Toggle } from '@/components/ui/Toggle';
 import { Dialog } from '@/components/ui/Dialog';
 import { inputClasses } from '@/components/ui/Field';
 import { Spinner } from '@/components/ui/Spinner';
+import GoogleConnectionCheck from '@/components/admin/GoogleConnectionCheck';
 
 // Formularzeile einer Grouped List: Label links, Feld rechts.
 function FormRow({ id, label, children }: { id: string; label: ReactNode; children: ReactNode }) {
@@ -43,6 +44,9 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
   const router = useRouter();
   
   const [users, setUsers] = useState<User[]>(initialUsers);
+  // Für den Live-Check der Datenquellen beim Anlegen
+  const [newGscSiteUrl, setNewGscSiteUrl] = useState('');
+  const [newGa4PropertyId, setNewGa4PropertyId] = useState('');
   const [selectedRole, setSelectedRole] = useState<'BENUTZER' | 'ADMIN'>('BENUTZER');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTimelineActive, setIsTimelineActive] = useState(false);
@@ -106,6 +110,8 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
       toast.success(`Benutzer "${result.email}" erstellt!`);
 
       (e.target as HTMLFormElement).reset();
+      setNewGscSiteUrl('');
+      setNewGa4PropertyId('');
       setIsTimelineActive(false);
       setSelectedRole('BENUTZER');
       setIsCreateOpen(false);
@@ -313,11 +319,16 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
                   <input id="new-favicon" name="favicon_url" type="text" placeholder="https://example.com/icon.png" className={inputClasses} disabled={isSubmitting} />
                 </FormRow>
                 <FormRow id="new-gsc" label="GSC Site URL">
-                  <input id="new-gsc" name="gsc_site_url" type="text" placeholder="sc-domain:example.com" className={inputClasses} disabled={isSubmitting} />
+                  <input id="new-gsc" name="gsc_site_url" type="text" placeholder="sc-domain:example.com" value={newGscSiteUrl} onChange={(e) => setNewGscSiteUrl(e.target.value)} className={inputClasses} disabled={isSubmitting} />
                 </FormRow>
-                <FormRow id="new-ga4" label="GA4 ID">
-                  <input id="new-ga4" name="ga4_property_id" type="text" placeholder="12345678" className={inputClasses} disabled={isSubmitting} />
+                <FormRow id="new-ga4" label="GA4 Property-ID">
+                  <input id="new-ga4" name="ga4_property_id" type="text" placeholder="412345678" value={newGa4PropertyId} onChange={(e) => setNewGa4PropertyId(e.target.value)} className={inputClasses} disabled={isSubmitting} />
                 </FormRow>
+                {(newGscSiteUrl.trim() || newGa4PropertyId.trim()) && (
+                  <div className="px-[18px] py-2.5">
+                    <GoogleConnectionCheck gscSiteUrl={newGscSiteUrl} ga4PropertyId={newGa4PropertyId} />
+                  </div>
+                )}
                 <FormRow id="new-semrush" label="Semrush Project ID">
                   <input id="new-semrush" name="semrush_project_id" type="text" placeholder="123456" className={inputClasses} disabled={isSubmitting} />
                 </FormRow>
