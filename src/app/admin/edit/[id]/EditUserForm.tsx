@@ -20,6 +20,7 @@ import {
 } from 'react-bootstrap-icons';
 import { Spinner } from '@/components/ui/Spinner';
 import { GA4_PROPERTY_ID_HINT, parseGa4PropertyId } from '@/lib/ga4-property-id';
+import { getPasswordError, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 
 interface EditUserFormProps {
   user: User;
@@ -147,6 +148,8 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
   });
 
   const [password, setPassword] = useState('');
+  // Feld erst auf Klick zeigen: sonst trägt der Browser das gespeicherte Login-Passwort ein.
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [projectLocations, setProjectLocations] = useState<ProjectLocation[]>([]);
   const [widgetVisibility, setWidgetVisibility] = useState<DashboardWidgetVisibility>(
     normalizeDashboardWidgetVisibility(user.dashboard_widget_visibility, {
@@ -195,6 +198,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
       }));
       setProjectLocations(normalizeLocations(user.project_locations));
       setPassword('');
+      setIsChangingPassword(false);
       setMessage('');
       setSuccessMessage('');
     }
@@ -239,6 +243,11 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const passwordError = isChangingPassword && password.length > 0 ? getPasswordError(password) : null;
+    if (passwordError) {
+      setMessage(`❌ Fehler: ${passwordError}`);
+      return;
+    }
     setMessage('💾 Speichere Änderungen...');
     setSuccessMessage('');
     setIsSubmitting(true);
@@ -290,7 +299,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         delete payload.permissions;
       }
       
-      if (password && password.trim().length > 0) {
+      if (isChangingPassword && password.trim().length > 0) {
         payload.password = password;
       }
 
@@ -342,6 +351,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         promptTracking: updatedUser.settings_show_prompt_tracking,
       }));
       setPassword('');
+      setIsChangingPassword(false);
       setMessage('');
       setSuccessMessage('✅ Benutzer erfolgreich aktualisiert!');
       if (onUserUpdated) onUserUpdated();
@@ -403,17 +413,38 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
 
         {/* --- Passwort --- */}
         <div>
-          <label className="block text-sm font-medium text-body">
-            Passwort (Optional - leer lassen um nicht zu ändern)
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Nur ausfüllen wenn Passwort geändert werden soll"
-            className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
-            disabled={isSubmitting}
-          />
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="new-user-password" className="block text-sm font-medium text-body">Passwort</label>
+            <button
+              type="button"
+              onClick={() => { setIsChangingPassword(!isChangingPassword); setPassword(''); }}
+              className="text-sm font-medium text-accent hover:underline disabled:opacity-50"
+              disabled={isSubmitting}
+            >
+              {isChangingPassword ? 'Abbrechen' : 'Passwort ändern'}
+            </button>
+          </div>
+          {isChangingPassword ? (
+            <>
+              <input
+                id="new-user-password"
+                name="new-password"
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={`Neues Passwort, mindestens ${MIN_PASSWORD_LENGTH} Zeichen`}
+                className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+                disabled={isSubmitting}
+                autoFocus
+              />
+              <p className={`mt-1 text-xs ${password.length > 0 && password.length < MIN_PASSWORD_LENGTH ? 'text-danger' : 'text-muted'}`}>
+                {password.length}/{MIN_PASSWORD_LENGTH} Zeichen. Leer lassen, um das Passwort nicht zu ändern.
+              </p>
+            </>
+          ) : (
+            <p className="mt-1 text-xs text-muted">Das bestehende Passwort bleibt unverändert.</p>
+          )}
         </div>
 
         {/* --- Mandant-ID --- */}

@@ -261,7 +261,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
               <input id="new-email" name="email" type="email" required placeholder="kunde@firma.at" className={inputClasses} disabled={isSubmitting} />
             </FormRow>
             <FormRow id="new-password" label="Initial-Passwort">
-              <input id="new-password" name="password" type="text" required placeholder="Sicheres Passwort" className={inputClasses} disabled={isSubmitting} />
+              <input id="new-password" name="password" type="text" autoComplete="new-password" required minLength={10} placeholder="Mindestens 10 Zeichen" className={inputClasses} disabled={isSubmitting} />
             </FormRow>
             <FormRow id="new-mandant" label="Mandant-ID (Label)">
               <input
