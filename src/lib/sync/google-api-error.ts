@@ -93,6 +93,10 @@ export function classifyGoogleApiError(error: unknown): ClassifiedGoogleApiError
     || haystack.includes('unauthorized')
     || haystack.includes('not found')
     || haystack.includes('invalid argument')
+    || haystack.includes('invalid_argument')
+    // Falsch eingetragene GA4-ID (z. B. Mess-ID G-…): bleibt falsch, bis sie korrigiert wird.
+    || haystack.includes('invalid property id')
+    || haystack.includes('ungültige ga4 property-id')
   ) {
     return { ...base, kind: 'permanent', retryable: false, blocksSnapshotWrite: false };
   }

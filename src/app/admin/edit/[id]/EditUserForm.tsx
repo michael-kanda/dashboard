@@ -19,6 +19,7 @@ import {
   ExclamationTriangle  // NEU für Warnung
 } from 'react-bootstrap-icons';
 import { Spinner } from '@/components/ui/Spinner';
+import { GA4_PROPERTY_ID_HINT, parseGa4PropertyId } from '@/lib/ga4-property-id';
 
 interface EditUserFormProps {
   user: User;
@@ -1013,13 +1014,19 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
                     className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
                     disabled={isSubmitting}
                   />
-                  {formData.ga4PropertyId && !isSubmitting && (
+                  {formData.ga4PropertyId && !isSubmitting && parseGa4PropertyId(formData.ga4PropertyId).ok && (
                     <CheckCircle 
                       className="absolute top-1/2 right-3 -translate-y-1/2 text-success" 
                       size={16}
                     />
                   )}
                 </div>
+                {(() => {
+                  const check = parseGa4PropertyId(formData.ga4PropertyId);
+                  return check.ok
+                    ? <p className="mt-1 text-xs text-muted">{GA4_PROPERTY_ID_HINT}</p>
+                    : <p className="mt-1 text-xs text-danger" role="alert">{check.message}</p>;
+                })()}
               </div>
             </fieldset>
 

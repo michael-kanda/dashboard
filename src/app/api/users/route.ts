@@ -3,6 +3,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
 import { getPasswordError } from '@/lib/password-policy';
+import { parseGa4PropertyId } from '@/lib/ga4-property-id';
 import { User } from '@/types';
 import { auth } from '@/lib/auth';
 import { normalizeDashboardWidgetVisibility } from '@/lib/dashboard-widget-visibility';
@@ -245,6 +246,10 @@ export async function POST(req: NextRequest) {
     if (!email || !password || !role) {
       return NextResponse.json({ message: 'E-Mail, Passwort und Rolle sind erforderlich' }, { status: 400 });
     }
+    const ga4Property = parseGa4PropertyId(ga4_property_id);
+    if (!ga4Property.ok) {
+      return NextResponse.json({ message: ga4Property.message }, { status: 400 });
+    }
     const passwordError = getPasswordError(password);
     if (passwordError) {
       return NextResponse.json({ message: passwordError }, { status: 400 });
@@ -312,7 +317,7 @@ export async function POST(req: NextRequest) {
         ${effective_mandant_id || null}, 
         ${permissionsPgString},
         ${typeof ansprache === 'string' && ansprache.trim() ? ansprache.trim() : null},
-        ${domain || null}, ${gsc_site_url || null}, ${ga4_property_id || null},
+        ${domain || null}, ${gsc_site_url || null}, ${ga4Property.value},
         ${semrush_project_id || null}, ${semrush_tracking_id || null}, ${semrush_tracking_id_02 || null},
         ${favicon_url || null},
         ${startDate}, ${duration}, ${timelineActive},

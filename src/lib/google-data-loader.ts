@@ -57,6 +57,7 @@ import { classifyGoogleApiError } from '@/lib/sync/google-api-error';
 import { isDemoProject } from '@/lib/demo-project';
 import { GOOGLE_ADS_SHEET_DATA_VERSION } from '@/lib/google-ads-sheet';
 import { requestBudgetOptions, withRequestBudget } from './sync/request-budget';
+import { parseGa4PropertyId } from '@/lib/ga4-property-id';
 
 function getShortErrorMessage(error: unknown): string {
   const err = error as any;
@@ -566,9 +567,14 @@ async function loadGoogleData(
     }
   }
 
-  if (user.ga4_property_id) {
+  const ga4Property = parseGa4PropertyId(user.ga4_property_id);
+  if (!ga4Property.ok) {
+    // Ohne gültige ID nicht bei Google anfragen; GSC-Daten werden trotzdem gespeichert.
+    console.warn(`[GA4] ${ga4Property.message}`);
+    apiErrors.ga4 = ga4Property.message;
+  } else if (ga4Property.value) {
     try {
-      const propertyId = user.ga4_property_id.trim();
+      const propertyId = ga4Property.value;
 
       // GA4 drosselt parallele Reports pro Property hart und große Date-Trends
       // laufen leicht in Timeouts. Deshalb sequenziell laden: aktuelle Periode

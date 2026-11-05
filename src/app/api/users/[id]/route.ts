@@ -1,5 +1,6 @@
 // src/app/api/users/[id]/route.ts
 import { NextResponse, NextRequest } from 'next/server';
+import { parseGa4PropertyId } from '@/lib/ga4-property-id';
 import { enqueueProjectSyncJob } from '@/lib/sync/job-queue';
 import { markDashboardSnapshotsStale } from '@/lib/sync/dashboard-snapshot';
 import { sql } from '@vercel/postgres';
@@ -234,6 +235,10 @@ export async function PUT(
     if (!email) {
       return NextResponse.json({ message: 'E-Mail ist erforderlich' }, { status: 400 });
     }
+    const ga4Property = parseGa4PropertyId(ga4_property_id);
+    if (!ga4Property.ok) {
+      return NextResponse.json({ message: ga4Property.message }, { status: 400 });
+    }
 
     const { rows: existingUsers } = await sql`
       SELECT
@@ -347,7 +352,7 @@ export async function PUT(
             domain = ${domain || null},
             gsc_site_url = ${gsc_site_url || null},
             sitemap_url = ${sitemap_url || null},
-            ga4_property_id = ${ga4_property_id || null},
+            ga4_property_id = ${ga4Property.value},
             semrush_project_id = ${semrush_project_id || null},
             semrush_tracking_id = ${semrush_tracking_id || null},
             semrush_tracking_id_02 = ${semrush_tracking_id_02 || null},
@@ -387,7 +392,7 @@ export async function PUT(
             domain = ${domain || null},
             gsc_site_url = ${gsc_site_url || null},
             sitemap_url = ${sitemap_url || null},
-            ga4_property_id = ${ga4_property_id || null},
+            ga4_property_id = ${ga4Property.value},
             semrush_project_id = ${semrush_project_id || null},
             semrush_tracking_id = ${semrush_tracking_id || null},
             semrush_tracking_id_02 = ${semrush_tracking_id_02 || null},
