@@ -3,6 +3,7 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { isNonBrowserRuntimeEvent } from "@/lib/sentry-filter";
 
 Sentry.init({
   dsn: "https://47443b3ff6edf164f0a58f55f12bd41e@o4510442605051905.ingest.de.sentry.io/4510442606755920",
@@ -28,6 +29,12 @@ Sentry.init({
   // Enable sending user PII (Personally Identifiable Information)
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
+
+  // Bots, die die Seite in Deno o. Ä. ausführen, erzeugen Fehler ohne echte Nutzer (z. B. fehlender
+  // Response-Stream beim Prefetch). Diese Meldungen nicht an Sentry senden.
+  beforeSend(event) {
+    return isNonBrowserRuntimeEvent(event) ? null : event;
+  },
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
