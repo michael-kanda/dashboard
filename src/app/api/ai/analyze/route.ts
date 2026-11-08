@@ -1,5 +1,6 @@
 // src/app/api/ai/analyze/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { buildGa4GoogleAdsLevelRows } from '@/lib/google-ads-table';
 import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
@@ -228,6 +229,14 @@ export async function POST(req: NextRequest) {
         for (const [name, v] of campMap) {
           const campCpc = v.clicks > 0 ? v.cost / v.clicks : 0;
           googleAdsSection += `\n      - ${name}: ${fmtCur(v.cost)} | ${v.clicks} Klicks | CPC ${fmtCur(campCpc)} | ${v.conversions} Conv.`;
+        }
+      } else if (effectiveGoogleAdsData.source !== 'sheet') {
+        const ga4Campaigns = buildGa4GoogleAdsLevelRows(effectiveGoogleAdsData, 'campaign');
+        if (ga4Campaigns.length > 0) {
+          googleAdsSection += `\n\n      KAMPAGNEN:`;
+          for (const c of ga4Campaigns.sort((a, b) => b.cost - a.cost)) {
+            googleAdsSection += `\n      - ${c.label}: ${fmtCur(c.cost)} | ${c.clicks} Klicks | CPC ${fmtCur(c.cpc)} | ${c.conversions} Conv.`;
+          }
         }
       }
     }

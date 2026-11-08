@@ -17,7 +17,9 @@ export interface GoogleAdsDashboardData {
 export function hasGoogleAdsRows(data?: GoogleAdsData | null) {
   if (!data) return false;
   return data.rows.length > 0
-    || (data.campaignRows?.length ?? 0) > 0;
+    || (data.campaignRows?.length ?? 0) > 0
+    || Object.keys(data.metricsByCampaign ?? {}).length > 0
+    || (data.totals?.cost ?? 0) > 0;
 }
 
 export function createGoogleAdsDataModule(

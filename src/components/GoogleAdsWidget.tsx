@@ -13,6 +13,11 @@ import {
 import type { GoogleAdsData, GoogleAdsRow } from '@/lib/dashboard-shared';
 import type { DateRangeOption } from '@/components/DateRangeSelector';
 import GoogleCleanUnderline from '@/components/ui/GoogleCleanUnderline';
+import {
+  aggregateGoogleAdsRows,
+  buildGa4GoogleAdsLevelRows,
+  type GoogleAdsTableRow,
+} from '@/lib/google-ads-table';
 
 interface GoogleAdsWidgetProps {
   error?: string;
@@ -52,70 +57,8 @@ function formatStoredDateRange(startDate?: string, endDate?: string): string {
 
 // ── Aggregations-Logik ──
 
-interface AggregatedRow {
-  label: string;
-  cost: number;
-  clicks: number;
-  cpc: number;
-  interactionRate: number;
-  conversions: number;
-  sessions: number;
-  subRows?: GoogleAdsRow[];
-}
-
-function aggregateBy(rows: GoogleAdsRow[], field: keyof GoogleAdsRow): AggregatedRow[] {
-  const map = new Map<
-    string,
-    {
-      cost: number;
-      clicks: number;
-      impressions: number;
-      conversions: number;
-      sessions: number;
-      engagedSessions: number;
-      subRows: GoogleAdsRow[];
-    }
-  >();
-
-  for (const row of rows) {
-    const key = String(row[field]) || '(not set)';
-    if (key === '–' || key === 'undefined' || key === '') continue; // Platzhalter/fehlende Felder überspringen
-    const existing = map.get(key) || {
-      cost: 0,
-      clicks: 0,
-      impressions: 0,
-      conversions: 0,
-      sessions: 0,
-      engagedSessions: 0,
-      subRows: [],
-    };
-    existing.cost += row.cost;
-    existing.clicks += row.clicks;
-    existing.impressions += row.impressions ?? 0;
-    existing.conversions += row.conversions;
-    existing.sessions += row.sessions;
-    existing.engagedSessions += row.engagedSessions ?? 0;
-    existing.subRows.push(row);
-    map.set(key, existing);
-  }
-
-  return Array.from(map.entries()).map(([label, agg]) => ({
-    label,
-    cost: agg.cost,
-    clicks: agg.clicks,
-    cpc: agg.clicks > 0 ? agg.cost / agg.clicks : 0,
-    // Sheet-Daten: impressions-basiert (Klicks/Impressionen)
-    // GA4-Daten: session-basiert (Engaged/Sessions)
-    interactionRate: agg.impressions > 0
-      ? (agg.clicks / agg.impressions) * 100
-      : agg.sessions > 0
-      ? (agg.engagedSessions / agg.sessions) * 100
-      : 0,
-    conversions: agg.conversions,
-    sessions: agg.sessions,
-    subRows: agg.subRows,
-  }));
-}
+type AggregatedRow = GoogleAdsTableRow;
+const aggregateBy = aggregateGoogleAdsRows;
 
 /**
  * Bestimmt die nächste Drill-Down-Dimension und das zugehörige Label.
@@ -178,52 +121,11 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
     const config = viewConfig[viewMode];
     const sourceRows = getSourceRows(viewMode);
 
-    let aggregated = aggregateBy(sourceRows, config.field);
-
-    // GA4-Modus: Lookup-Overrides für Conversions und Metriken
-    if (!isSheet) {
-      if (viewMode === 'campaign' && data.conversionsByCampaign) {
-        for (const row of aggregated) {
-          if (data.conversionsByCampaign[row.label] !== undefined) {
-            row.conversions = data.conversionsByCampaign[row.label];
-          }
-        }
-      } else if (viewMode === 'adgroup' && data.conversionsByAdGroup) {
-        for (const row of aggregated) {
-          if (data.conversionsByAdGroup[row.label] !== undefined) {
-            row.conversions = data.conversionsByAdGroup[row.label];
-          }
-        }
-      }
-
-      if (viewMode === 'campaign' && data.metricsByCampaign) {
-        for (const row of aggregated) {
-          const lookup = data.metricsByCampaign[row.label];
-          if (lookup) {
-            row.cost = lookup.cost;
-            row.clicks = lookup.clicks;
-            row.cpc = lookup.clicks > 0 ? lookup.cost / lookup.clicks : 0;
-            row.sessions = lookup.sessions;
-            row.interactionRate = lookup.sessions > 0
-              ? (lookup.engagedSessions / lookup.sessions) * 100
-              : 0;
-          }
-        }
-      } else if (viewMode === 'adgroup' && data.metricsByAdGroup) {
-        for (const row of aggregated) {
-          const lookup = data.metricsByAdGroup[row.label];
-          if (lookup) {
-            row.cost = lookup.cost;
-            row.clicks = lookup.clicks;
-            row.cpc = lookup.clicks > 0 ? lookup.cost / lookup.clicks : 0;
-            row.sessions = lookup.sessions;
-            row.interactionRate = lookup.sessions > 0
-              ? (lookup.engagedSessions / lookup.sessions) * 100
-              : 0;
-          }
-        }
-      }
-    }
+    // GA4-Modus: Kampagnen und Anzeigengruppen aus den vollständigen
+    // 1-Dimension-Abfragen, damit z. B. Performance Max nicht fehlt.
+    let aggregated = !isSheet && (viewMode === 'campaign' || viewMode === 'adgroup')
+      ? buildGa4GoogleAdsLevelRows(data, viewMode === 'campaign' ? 'campaign' : 'adGroup')
+      : aggregateBy(sourceRows, config.field);
 
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
@@ -233,13 +135,15 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
     }
 
     aggregated.sort((a, b) => {
+      // Restzeile immer ans Ende
+      if (a.isRemainder !== b.isRemainder) return a.isRemainder ? 1 : -1;
       const valA = a[sortField] as number;
       const valB = b[sortField] as number;
       return sortAsc ? valA - valB : valB - valA;
     });
 
     return aggregated;
-  }, [data.rows, data.landingPageRows, data.conversionsByCampaign, data.conversionsByAdGroup, data.metricsByCampaign, data.metricsByAdGroup, data.campaignRows, data.adGroupRows, data.adRows, data.searchQueryRows, data.source, viewMode, sortField, sortAsc, searchTerm]);
+  }, [data.rows, data.totals, data.landingPageRows, data.conversionsByCampaign, data.conversionsByAdGroup, data.metricsByCampaign, data.metricsByAdGroup, data.campaignRows, data.adGroupRows, data.adRows, data.searchQueryRows, data.source, viewMode, sortField, sortAsc, searchTerm]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -271,7 +175,8 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
   const hideConv = !isSheet && viewMode === 'searchquery';
 
   const hasAnyData = data.rows.length > 0 || (data.landingPageRows || []).length > 0
-    || (data.campaignRows || []).length > 0 || (data.adRows || []).length > 0;
+    || (data.campaignRows || []).length > 0 || (data.adRows || []).length > 0
+    || Object.keys(data.metricsByCampaign || {}).length > 0 || totals.cost > 0;
 
   // ── Skeleton ──
   if (isLoading) {
@@ -567,7 +472,12 @@ function TableRow({
                 isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />
               ) : null}
             </span>
-            <span className="truncate" title={row.label}>
+            <span
+              className={`truncate ${row.isRemainder ? 'font-normal text-muted' : ''}`}
+              title={row.isRemainder
+                ? 'Kosten, Klicks und Sitzungen, die GA4 keiner einzelnen Kampagne bzw. Anzeigengruppe zuordnet. So passt die Tabelle zu den Summen oben.'
+                : row.label}
+            >
               {row.label}
             </span>
           </div>
