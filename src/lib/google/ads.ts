@@ -543,7 +543,9 @@ async function readSheetTab(
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: `${tabName}!A1:Z50000`,
+      // Ganze Spalten lesen: Bei Tagesdaten über 24 Monate haben Anzeigen und
+      // Suchanfragen leicht mehr als 50.000 Zeilen.
+      range: `'${tabName}'!A:Z`,
     });
 
     const rows = response.data.values;
