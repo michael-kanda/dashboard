@@ -16,6 +16,7 @@ import {
   getQueriesByLandingPageObject,
   getGoogleAdsReport,
   getGoogleAdsFromSheet,
+  getGoogleAdsGa4Supplement,
   getPromptLikeQueries,
   DEFAULT_PROMPT_TRACKING_MIN_WORDS,
   type GoogleAdsData,
@@ -454,6 +455,7 @@ async function loadGoogleData(
   let apiErrors: ApiErrorStatus = {};
   let landingPageQueries: LandingPageQueries = {};
   let googleAdsData: GoogleAdsData | undefined;
+  let googleAdsGa4Supplement: GoogleAdsData['ga4Supplement'];
   let googleGenAi: GoogleGenAiPerformanceData | undefined;
   let promptTracking: PromptTrackingResult | undefined;
   let currentPaidSearchLoaded = false;
@@ -673,6 +675,10 @@ async function loadGoogleData(
       if (!user.google_ads_sheet_id) {
         try { googleAdsData = await getGoogleAdsReport(propertyId, startDateStr, endDateStr); }
         catch (e) { apiErrors.googleAds = getShortErrorMessage(e); }
+      } else {
+        // Sheet bleibt Hauptquelle; GA4 liefert Sitzungen und den Admin-Abgleich.
+        try { googleAdsGa4Supplement = await getGoogleAdsGa4Supplement(propertyId, startDateStr, endDateStr); }
+        catch (e) { console.warn('[Google Ads GA4-Ergänzung] Fehler (ignoriert):', getShortErrorMessage(e)); }
       }
     } catch (e: any) {
       const message = getShortErrorMessage(e);
@@ -706,9 +712,13 @@ async function loadGoogleData(
     if (previous && sameSource) {
       googleAdsData = { ...previous, fetchedAt: previous.fetchedAt ?? new Date(rows[0].last_fetched).toISOString() };
     }
+    if (googleAdsData?.source === 'sheet' && googleAdsGa4Supplement) {
+      googleAdsData = { ...googleAdsData, ga4Supplement: googleAdsGa4Supplement };
+    }
   } else if (googleAdsData) {
     googleAdsData = { ...googleAdsData, reportStartDate: startDateStr, reportEndDate: endDateStr,
-      fetchedAt: googleAdsData.fetchedAt ?? new Date().toISOString() };
+      fetchedAt: googleAdsData.fetchedAt ?? new Date().toISOString(),
+      ...(googleAdsData.source === 'sheet' && googleAdsGa4Supplement ? { ga4Supplement: googleAdsGa4Supplement } : {}) };
   }
 
   if (user.gsc_site_url) {

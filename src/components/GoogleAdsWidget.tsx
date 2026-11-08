@@ -15,7 +15,12 @@ import type { DateRangeOption } from '@/components/DateRangeSelector';
 import GoogleCleanUnderline from '@/components/ui/GoogleCleanUnderline';
 import {
   aggregateGoogleAdsRows,
+  applyGa4SessionsToSheetRows,
   buildGa4GoogleAdsLevelRows,
+  compareGoogleAdsSources,
+  GOOGLE_ADS_COMPARISON_TOLERANCE_PERCENT,
+  type GoogleAdsSourceComparison,
+  type GoogleAdsSourceComparisonValue,
   type GoogleAdsTableRow,
 } from '@/lib/google-ads-table';
 
@@ -24,6 +29,8 @@ interface GoogleAdsWidgetProps {
   data: GoogleAdsData;
   isLoading?: boolean;
   dateRange?: DateRangeOption;
+  /** Admin-Abgleich Sheet vs. GA4 anzeigen (nur Admins). */
+  showSourceComparison?: boolean;
 }
 
 type SortField = 'cost' | 'clicks' | 'cpc' | 'interactionRate' | 'conversions' | 'sessions';
@@ -78,7 +85,7 @@ function getNextDimension(viewMode: ViewMode): { field: keyof GoogleAdsRow; labe
 
 // ── Hauptkomponente ──
 
-export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: GoogleAdsWidgetProps) {
+export default function GoogleAdsWidget({ data, isLoading, dateRange, error, showSourceComparison = false }: GoogleAdsWidgetProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('campaign');
   const [sortField, setSortField] = useState<SortField>('cost');
   const [sortAsc, setSortAsc] = useState(false);
@@ -92,6 +99,8 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
 
   const { totals } = data;
   const isSheet = data.source === 'sheet';
+  const ga4Supplement = isSheet ? data.ga4Supplement : undefined;
+  const sourceComparison = showSourceComparison ? compareGoogleAdsSources(data) : null;
 
   const dateRangeStr = formatStoredDateRange(data.reportStartDate, data.reportEndDate);
   const latestDataDate = data.latestDataDate
@@ -127,6 +136,11 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
       ? buildGa4GoogleAdsLevelRows(data, viewMode === 'campaign' ? 'campaign' : 'adGroup')
       : aggregateBy(sourceRows, config.field);
 
+    // Sheet-Modus: Sitzungen aus GA4 ergänzen (Kosten/Klicks bleiben aus Google Ads)
+    if (isSheet && (viewMode === 'campaign' || viewMode === 'adgroup')) {
+      aggregated = applyGa4SessionsToSheetRows(aggregated, data, viewMode === 'campaign' ? 'campaign' : 'adGroup');
+    }
+
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       aggregated = aggregated.filter((row) =>
@@ -143,7 +157,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
     });
 
     return aggregated;
-  }, [data.rows, data.totals, data.landingPageRows, data.conversionsByCampaign, data.conversionsByAdGroup, data.metricsByCampaign, data.metricsByAdGroup, data.campaignRows, data.adGroupRows, data.adRows, data.searchQueryRows, data.source, viewMode, sortField, sortAsc, searchTerm]);
+  }, [data.rows, data.totals, data.landingPageRows, data.conversionsByCampaign, data.conversionsByAdGroup, data.metricsByCampaign, data.metricsByAdGroup, data.campaignRows, data.adGroupRows, data.adRows, data.searchQueryRows, data.source, data.ga4Supplement, viewMode, sortField, sortAsc, searchTerm]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -173,6 +187,8 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
 
   // Conversions ausblenden: in der Suchanfragen-Ansicht (nur bei GA4)
   const hideConv = !isSheet && viewMode === 'searchquery';
+  // Sitzungen: GA4 immer; Sheet nur mit GA4-Ergänzung und nur dort, wo GA4 die Ebene kennt
+  const showSessions = !isSheet || (Boolean(ga4Supplement) && (viewMode === 'campaign' || viewMode === 'adgroup'));
 
   const hasAnyData = data.rows.length > 0 || (data.landingPageRows || []).length > 0
     || (data.campaignRows || []).length > 0 || (data.adRows || []).length > 0
@@ -230,11 +246,13 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
           {dateRangeStr && ` · ${dateRangeStr}`}
           {isSheet && latestDataDate && ` · Sheet-Daten bis ${latestDataDate}`}
           {error && ' · Aktualisierung fehlgeschlagen; letzter verfügbarer Stand'}
+          {ga4Supplement && ' · Sitzungen aus GA4'}
         </p>
+        {sourceComparison && <SourceComparisonNote comparison={sourceComparison} />}
       </div>
 
       {/* ── KPI-Strip ───────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-5">
+      <div className={`grid grid-cols-2 sm:grid-cols-3 gap-2 mb-5 ${ga4Supplement ? 'lg:grid-cols-6' : 'lg:grid-cols-5'}`}>
         <KpiMini label="Ad Spend"    value={formatCurrency(totals.cost)} />
         <KpiMini label="Klicks"      value={formatNumber(totals.clicks)} />
         <KpiMini label="Ø CPC"       value={formatCurrency(totals.avgCpc)} />
@@ -243,6 +261,13 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
           ? <KpiMini label="Impressionen" value={formatNumber((totals as any).impressions ?? 0)} />
           : <KpiMini label="Sitzungen"    value={formatNumber(totals.sessions)} />
         }
+        {ga4Supplement && (
+          <KpiMini
+            label="Sitzungen"
+            value={formatNumber(ga4Supplement.totals.sessions)}
+            tooltip="Sitzungen aus GA4, die Google Ads zugeordnet sind"
+          />
+        )}
       </div>
 
       {/* ── Tabs + Search ───────────────────────────────────── */}
@@ -329,7 +354,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
                   Conv.<SortIcon field="conversions" />
                 </th>
               )}
-              {!isSheet && (
+              {showSessions && (
                 <th
                   onClick={() => handleSort('sessions')}
                   className={`widget-table-head text-right px-2 py-2.5 cursor-pointer hover:text-body transition-colors whitespace-nowrap ${
@@ -353,6 +378,8 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
                 viewMode={viewMode}
                 hideConv={hideConv}
                 isSheet={isSheet}
+                showSessions={showSessions}
+                ga4AdGroupLookup={ga4Supplement?.byAdGroup}
                 conversionsByAdGroup={data.conversionsByAdGroup}
                 metricsByAdGroup={data.metricsByAdGroup}
               />
@@ -361,7 +388,7 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
             {tableData.length === 0 && (
               <tr>
                 <td
-                  colSpan={4 + (hideConv ? 0 : 1) + (isSheet ? 0 : 1)}
+                  colSpan={4 + (hideConv ? 0 : 1) + (showSessions ? 1 : 0)}
                   className="px-4 py-10 text-center text-sm text-muted"
                 >
                   Keine Ergebnisse für &quot;{searchTerm}&quot;
@@ -376,6 +403,27 @@ export default function GoogleAdsWidget({ data, isLoading, dateRange, error }: G
 }
 
 // ── Sub-Komponenten ──
+
+function formatDiff(value: GoogleAdsSourceComparisonValue): string {
+  if (value.diffPercent === null) return '';
+  const rounded = Math.round(value.diffPercent * 10) / 10;
+  const sign = rounded > 0 ? '+' : rounded < 0 ? '−' : '±';
+  return ` (${sign}${new Intl.NumberFormat('de-DE').format(Math.abs(rounded))} %)`;
+}
+
+function SourceComparisonNote({ comparison }: { comparison: GoogleAdsSourceComparison }) {
+  const { cost, clicks, hasWarning } = comparison;
+  return (
+    <p
+      className={`widget-meta mt-1.5 ${hasWarning ? 'text-warning' : 'text-faint'}`}
+      title={`Nur für Admins sichtbar. Abweichungen bis ${GOOGLE_ADS_COMPARISON_TOLERANCE_PERCENT} % sind normal (Zeitzone, Datenverzögerung). Größere Abweichungen deuten auf ein veraltetes Sheet oder eine fehlende Google-Ads-Verknüpfung in GA4 hin.`}
+    >
+      {hasWarning ? 'Abweichung prüfen · ' : 'Abgleich · '}
+      GA4: {formatCurrency(cost.ga4)}{formatDiff(cost)} · {formatNumber(clicks.ga4)} Klicks{formatDiff(clicks)}
+      <span className="ml-1 opacity-70">(nur Admin)</span>
+    </p>
+  );
+}
 
 function KpiMini({
   label,
@@ -405,6 +453,8 @@ function TableRow({
   viewMode,
   hideConv,
   isSheet,
+  showSessions,
+  ga4AdGroupLookup,
   conversionsByAdGroup,
   metricsByAdGroup,
 }: {
@@ -414,6 +464,8 @@ function TableRow({
   viewMode: ViewMode;
   hideConv: boolean;
   isSheet: boolean;
+  showSessions: boolean;
+  ga4AdGroupLookup?: Record<string, { sessions: number }>;
   conversionsByAdGroup?: Record<string, number>;
   metricsByAdGroup?: Record<string, { cost: number; clicks: number; sessions: number; engagedSessions: number }>;
 }) {
@@ -452,8 +504,15 @@ function TableRow({
       }
     }
 
+    // Sheet + GA4: Sitzungen der Anzeigengruppen in der Kampagnen-Ansicht
+    if (isSheet && viewMode === 'campaign' && ga4AdGroupLookup) {
+      for (const sub of subAgg) {
+        sub.sessions = ga4AdGroupLookup[sub.label]?.sessions ?? 0;
+      }
+    }
+
     return subAgg;
-  }, [row.subRows, nextDim, viewMode, isSheet, conversionsByAdGroup, metricsByAdGroup]);
+  }, [row.subRows, nextDim, viewMode, isSheet, conversionsByAdGroup, metricsByAdGroup, ga4AdGroupLookup]);
 
   const hasSubRows = aggregatedSubRows.length > 1;
 
@@ -496,7 +555,7 @@ function TableRow({
             {formatNumber(row.conversions)}
           </td>
         )}
-        {!isSheet && (
+        {showSessions && (
           <td className="widget-table-cell text-right px-2 py-3 text-body whitespace-nowrap">
             {formatNumber(row.sessions)}
           </td>
@@ -531,9 +590,9 @@ function TableRow({
                 {hideSubConv ? '–' : formatNumber(sub.conversions)}
               </td>
             )}
-            {!isSheet && (
+            {showSessions && (
               <td className="text-right px-2 py-2 text-xs text-faint whitespace-nowrap">
-                {formatNumber(sub.sessions)}
+                {isSheet && viewMode !== 'campaign' ? '–' : formatNumber(sub.sessions)}
               </td>
             )}
           </tr>

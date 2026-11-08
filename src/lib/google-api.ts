@@ -25,6 +25,7 @@ export type { GoogleAdsRow } from './google/ads';
 export type { GoogleAdsData } from './google/ads';
 export { getGoogleAdsReport } from './google/ads';
 export { getGoogleAdsFromSheet } from './google/ads';
+export { getGoogleAdsGa4Supplement } from './google/ads';
 export type { PromptTrackingResult, PromptQueryData } from './google/gsc';
 export { DEFAULT_PROMPT_TRACKING_MIN_WORDS } from './google/gsc';
 export { getPromptLikeQueries } from './google/gsc';

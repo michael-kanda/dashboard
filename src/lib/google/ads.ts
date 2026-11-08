@@ -3,6 +3,7 @@ import { createAuth } from './client';
 import { google } from 'googleapis';
 import { requestBudgetOptions } from '../sync/request-budget';
 import { GA4_KEY_EVENTS_METRIC } from '@/lib/ga4-metrics';
+import type { GoogleAdsGa4Supplement, GoogleAdsMetricLookup } from '@/lib/dashboard-shared';
 import { GOOGLE_ADS_SHEET_DATA_VERSION, parseGoogleAdsSheetNumber, readGoogleAdsConversions, reconcileGoogleAdsCampaignConversions, type GoogleAdsSheetRawRow } from '@/lib/google-ads-sheet';
 
 export interface GoogleAdsRow {
@@ -62,6 +63,8 @@ export interface GoogleAdsData {
   latestDataDate?: string;
   fetchedAt?: string;
   conversionFallbackUsed?: boolean;
+  /** GA4-Ergänzung bei Sheet-Quelle: Sitzungen pro Kampagne/Anzeigengruppe und Abgleich. */
+  ga4Supplement?: GoogleAdsGa4Supplement;
 }
 
 export async function getGoogleAdsReport(
@@ -436,6 +439,82 @@ async function getGoogleAdsReportUncached(
   };
 
   return { rows, landingPageRows, totals, conversionsByCampaign, conversionsByAdGroup, conversionsByQuery, metricsByCampaign, metricsByAdGroup };
+}
+
+/**
+ * Schlanke GA4-Abfrage für Projekte mit Sheet-Quelle: Kosten und Klicks dienen
+ * nur dem Admin-Abgleich, Sitzungen ergänzen die Sheet-Tabelle.
+ */
+export async function getGoogleAdsGa4Supplement(
+  propertyId: string,
+  startDate: string,
+  endDate: string,
+): Promise<GoogleAdsGa4Supplement> {
+  return withGa4ResultCache(
+    `adsga4sup:${propertyId}:${startDate}:${endDate}`,
+    () => getGoogleAdsGa4SupplementUncached(propertyId, startDate, endDate),
+  );
+}
+
+async function getGoogleAdsGa4SupplementUncached(
+  propertyId: string,
+  startDate: string,
+  endDate: string,
+): Promise<GoogleAdsGa4Supplement> {
+  const property = propertyId.startsWith('properties/') ? propertyId : `properties/${propertyId}`;
+  const analytics = google.analyticsdata({ version: 'v1beta', auth: createAuth(), ...requestBudgetOptions() });
+  const dimensionFilter = {
+    notExpression: {
+      filter: {
+        fieldName: 'sessionGoogleAdsCampaignName',
+        stringFilter: { matchType: 'EXACT' as const, value: '(not set)' },
+      },
+    },
+  };
+  const metrics = [
+    { name: 'advertiserAdCost' },
+    { name: 'advertiserAdClicks' },
+    { name: 'sessions' },
+    { name: 'engagedSessions' },
+  ];
+  const report = (dimension?: string) => ga4RunReport(analytics, {
+    property,
+    requestBody: {
+      dateRanges: [{ startDate, endDate }],
+      dimensions: dimension ? [{ name: dimension }] : [],
+      metrics: dimension ? metrics : [...metrics, { name: GA4_KEY_EVENTS_METRIC }],
+      dimensionFilter,
+      ...(dimension ? { limit: '1000' } : {}),
+    },
+  });
+  const toLookup = (values: Array<{ value?: string | null }> = []): GoogleAdsMetricLookup => ({
+    cost: parseFloat(values[0]?.value || '0'),
+    clicks: parseInt(values[1]?.value || '0', 10),
+    sessions: parseInt(values[2]?.value || '0', 10),
+    engagedSessions: parseInt(values[3]?.value || '0', 10),
+  });
+
+  const [totalsResponse, campaignResponse, adGroupResponse] = await Promise.all([
+    report(),
+    report('sessionGoogleAdsCampaignName'),
+    report('sessionGoogleAdsAdGroupName'),
+  ]);
+
+  const totalsValues = totalsResponse.data.rows?.[0]?.metricValues || [];
+  const byName = (rows: typeof campaignResponse.data.rows) => {
+    const result: Record<string, GoogleAdsMetricLookup> = {};
+    for (const row of rows || []) {
+      const name = row.dimensionValues?.[0]?.value || '(not set)';
+      result[name] = toLookup(row.metricValues || []);
+    }
+    return result;
+  };
+
+  return {
+    totals: { ...toLookup(totalsValues), conversions: parseFloat(totalsValues[4]?.value || '0') },
+    byCampaign: byName(campaignResponse.data.rows),
+    byAdGroup: byName(adGroupResponse.data.rows),
+  };
 }
 
 type SheetRowRaw = GoogleAdsSheetRawRow;

@@ -171,3 +171,54 @@ export function buildGa4GoogleAdsLevelRows(
 
   return appendRemainder(rows, data.totals);
 }
+
+/**
+ * Sheet-Quelle: Sitzungen aus GA4 pro Kampagne bzw. Anzeigengruppe ergänzen.
+ * Kosten, Klicks und Conversions bleiben aus Google Ads.
+ */
+export function applyGa4SessionsToSheetRows(
+  rows: GoogleAdsTableRow[],
+  data: GoogleAdsData,
+  level: 'campaign' | 'adGroup',
+): GoogleAdsTableRow[] {
+  const lookup = level === 'campaign' ? data.ga4Supplement?.byCampaign : data.ga4Supplement?.byAdGroup;
+  if (!lookup) return rows;
+  for (const row of rows) {
+    row.sessions = lookup[row.label]?.sessions ?? 0;
+  }
+  return rows;
+}
+
+export interface GoogleAdsSourceComparisonValue {
+  sheet: number;
+  ga4: number;
+  /** Abweichung GA4 gegenüber Sheet in Prozent; null, wenn das Sheet 0 hat. */
+  diffPercent: number | null;
+}
+
+export interface GoogleAdsSourceComparison {
+  cost: GoogleAdsSourceComparisonValue;
+  clicks: GoogleAdsSourceComparisonValue;
+  /** true, wenn Kosten oder Klicks mehr als die Toleranz abweichen. */
+  hasWarning: boolean;
+}
+
+export const GOOGLE_ADS_COMPARISON_TOLERANCE_PERCENT = 10;
+
+function compareValue(sheet: number, ga4: number): GoogleAdsSourceComparisonValue {
+  return { sheet, ga4, diffPercent: sheet > 0 ? ((ga4 - sheet) / sheet) * 100 : null };
+}
+
+function exceedsTolerance(value: GoogleAdsSourceComparisonValue): boolean {
+  if (value.diffPercent === null) return value.ga4 > 0;
+  return Math.abs(value.diffPercent) > GOOGLE_ADS_COMPARISON_TOLERANCE_PERCENT;
+}
+
+/** Abgleich Sheet gegen GA4 für Admins. Nur bei Sheet-Quelle mit GA4-Ergänzung. */
+export function compareGoogleAdsSources(data: GoogleAdsData): GoogleAdsSourceComparison | null {
+  if (data.source !== 'sheet' || !data.ga4Supplement) return null;
+  const cost = compareValue(data.totals.cost, data.ga4Supplement.totals.cost);
+  const clicks = compareValue(data.totals.clicks, data.ga4Supplement.totals.clicks);
+  if (cost.sheet === 0 && cost.ga4 === 0 && clicks.sheet === 0 && clicks.ga4 === 0) return null;
+  return { cost, clicks, hasWarning: exceedsTolerance(cost) || exceedsTolerance(clicks) };
+}

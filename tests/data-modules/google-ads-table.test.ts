@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  aggregateGoogleAdsRows,
+  applyGa4SessionsToSheetRows,
   buildGa4GoogleAdsLevelRows,
+  compareGoogleAdsSources,
   GOOGLE_ADS_NO_AD_GROUP_LABEL,
   GOOGLE_ADS_UNASSIGNED_LABEL,
 } from '../../src/lib/google-ads-table.ts';
@@ -75,4 +78,47 @@ test('Ohne Abweichung gibt es keine Restzeile', () => {
 
 test('Widget gilt als befüllt, wenn nur Lookups vorhanden sind (reine PMax-Konten)', () => {
   assert.equal(hasGoogleAdsRows({ ...data, rows: [] }), true);
+});
+
+const supplement = {
+  totals: { cost: 236, clicks: 700, sessions: 330, engagedSessions: 170, conversions: 3 },
+  byCampaign: { Stempel: { cost: 29, clicks: 62, sessions: 26, engagedSessions: 13 } },
+  byAdGroup: { 'Stempel 01': { cost: 20, clicks: 53, sessions: 22, engagedSessions: 11 } },
+};
+
+const sheetData = {
+  rows: [],
+  landingPageRows: [],
+  source: 'sheet' as const,
+  totals: { cost: 240.3, clicks: 715, avgCpc: 0.34, roas: 0, conversions: 4, sessions: 0, engagedSessions: 0, impressions: 9000 },
+  campaignRows: [row('Stempel', '–', 29.73, 63, 0), row('PMax Stempel', '–', 210.57, 652, 0)],
+  ga4Supplement: supplement,
+};
+
+test('Sheet-Zeilen bekommen Sitzungen aus GA4, Kosten bleiben aus dem Sheet', () => {
+  const rows = applyGa4SessionsToSheetRows(aggregateGoogleAdsRows(sheetData.campaignRows, 'campaign'), sheetData, 'campaign');
+  const stempel = rows.find((r) => r.label === 'Stempel');
+  assert.equal(stempel?.sessions, 26);
+  assert.equal(stempel?.cost, 29.73);
+  assert.equal(rows.find((r) => r.label === 'PMax Stempel')?.sessions, 0);
+});
+
+test('Abgleich Sheet gegen GA4 innerhalb der Toleranz ohne Warnung', () => {
+  const comparison = compareGoogleAdsSources(sheetData);
+  assert.ok(comparison);
+  assert.equal(comparison.hasWarning, false);
+  assert.ok(Math.abs((comparison.cost.diffPercent ?? 0) - ((236 - 240.3) / 240.3) * 100) < 1e-9);
+});
+
+test('Abgleich warnt bei mehr als 10 % Abweichung', () => {
+  const comparison = compareGoogleAdsSources({
+    ...sheetData,
+    ga4Supplement: { ...supplement, totals: { ...supplement.totals, cost: 120, clicks: 300 } },
+  });
+  assert.equal(comparison?.hasWarning, true);
+});
+
+test('Kein Abgleich ohne GA4-Ergänzung oder bei GA4-Quelle', () => {
+  assert.equal(compareGoogleAdsSources({ ...sheetData, ga4Supplement: undefined }), null);
+  assert.equal(compareGoogleAdsSources({ ...data, ga4Supplement: supplement }), null);
 });

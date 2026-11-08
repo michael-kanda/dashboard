@@ -73,6 +73,17 @@ export interface GoogleAdsRow {
   sessions: number; engagedSessions: number;
 }
 
+export interface GoogleAdsMetricLookup {
+  cost: number; clicks: number; sessions: number; engagedSessions: number;
+}
+
+/** GA4-Werte zu Google Ads, ergänzend zur Sheet-Quelle (Sitzungen + Abgleich). */
+export interface GoogleAdsGa4Supplement {
+  totals: GoogleAdsMetricLookup & { conversions: number };
+  byCampaign: Record<string, GoogleAdsMetricLookup>;
+  byAdGroup: Record<string, GoogleAdsMetricLookup>;
+}
+
 export interface GoogleAdsData {
   rows: GoogleAdsRow[];
   landingPageRows: GoogleAdsRow[];
@@ -98,6 +109,7 @@ export interface GoogleAdsData {
   latestDataDate?: string;
   fetchedAt?: string;
   conversionFallbackUsed?: boolean;
+  ga4Supplement?: GoogleAdsGa4Supplement;
 }
 
 export interface GoogleGenAiTrendPoint {

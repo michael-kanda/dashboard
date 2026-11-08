@@ -73,6 +73,7 @@ export default function DashboardAcquisitionWidgets({
             error={model.modules.googleAds.meta.issues[0]?.message}
             isLoading={isLoading}
             dateRange={dateRange}
+            showSourceComparison={model.isAdmin}
           />
         </div>
       )}
