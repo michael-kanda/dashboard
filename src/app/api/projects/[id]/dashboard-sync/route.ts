@@ -3,7 +3,7 @@ import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { classifyDashboardJobFailure, trySyncDashboardProjectSnapshot } from '@/lib/sync/dashboard';
-import { isDashboardSnapshotStale } from '@/lib/sync/cache-policy';
+import { isDashboardSnapshotBehind, isDashboardSnapshotStale } from '@/lib/sync/cache-policy';
 import { isDashboardSnapshotCompatible } from '@/lib/sync/dashboard-snapshot-contract';
 import {
   claimProjectSyncJob,
@@ -94,7 +94,8 @@ export async function POST(
     : null;
   const cacheIsFresh = Boolean(cachedData)
     && isDashboardSnapshotCompatible(cachedData, configuredSheetId)
-    && !isDashboardSnapshotStale(dateRange, lastFetchedAt);
+    && !isDashboardSnapshotStale(dateRange, lastFetchedAt)
+    && !isDashboardSnapshotBehind(dateRange, cachedData?.reportingPeriod?.to);
 
   if (cacheIsFresh) {
     return NextResponse.json({

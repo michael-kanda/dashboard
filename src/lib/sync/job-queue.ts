@@ -1,5 +1,5 @@
 import { sql } from '@vercel/postgres';
-import { getDashboardCacheDurationHours } from './cache-policy';
+import { getDashboardCacheDurationHours, getReportingWindow } from './cache-policy';
 
 export type ProjectSyncJobType = 'dashboard' | 'gsc-history' | 'indexing';
 export type ProjectSyncJobStatus = 'pending' | 'running' | 'completed' | 'failed';
@@ -135,6 +135,8 @@ export async function enqueueProjectSyncJob({
 
 export async function seedDueProjectSyncJobs() {
   const dashboardRefreshHours = getDashboardCacheDurationHours('30d');
+  // Snapshots, die nicht bis zum Vortag reichen, ebenfalls neu laden.
+  const expectedEndDate = getReportingWindow('30d').endDate;
   await sql`
     UPDATE project_sync_jobs
     SET
@@ -167,6 +169,7 @@ export async function seedDueProjectSyncJobs() {
       AND (
         cache.last_fetched IS NULL
         OR cache.last_fetched < NOW() - (${dashboardRefreshHours} * INTERVAL '1 hour')
+        OR COALESCE(cache.data->'reportingPeriod'->>'to', '') < ${expectedEndDate}
       )
     ON CONFLICT (user_id, job_type, date_range)
     DO UPDATE SET

@@ -1,6 +1,7 @@
 // src/app/api/landingpages/refresh-gsc/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
+import { REPORTING_LAG_DAYS } from '@/lib/sync/cache-policy';
 import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { sql, type QueryResult } from '@vercel/postgres';
@@ -31,7 +32,7 @@ function calculateDateRanges(dateRange: string): {
 } {
   const today = new Date();
   const endDateCurrent = new Date(today);
-  endDateCurrent.setDate(endDateCurrent.getDate() - 2); 
+  endDateCurrent.setDate(endDateCurrent.getDate() - REPORTING_LAG_DAYS); // bis Vortag
   
   const startDateCurrent = new Date(endDateCurrent);
   let daysBack: number;

@@ -5,7 +5,7 @@ import { getDemoAnalyticsData } from '../demo-data';
 import { attachDashboardMetricMetadata } from '../metric-metadata';
 import { isDemoProject } from '../demo-project';
 import { enqueueProjectSyncJob } from './job-queue';
-import { INVALIDATED_CACHE_TIMESTAMP, isDashboardSnapshotStale } from './cache-policy';
+import { INVALIDATED_CACHE_TIMESTAMP, isDashboardSnapshotBehind, isDashboardSnapshotStale } from './cache-policy';
 import { isDashboardSnapshotCompatible } from './dashboard-snapshot-contract';
 
 export interface DashboardSnapshotResult {
@@ -53,7 +53,9 @@ export async function readDashboardSnapshot(
   const configuredSheetId = user.google_ads_sheet_id?.trim() || null;
   const versionMismatch = Boolean(cachedData)
     && !isDashboardSnapshotCompatible(cachedData, configuredSheetId);
-  const stale = versionMismatch || isDashboardSnapshotStale(dateRange, lastFetchedAt);
+  const stale = versionMismatch
+    || isDashboardSnapshotStale(dateRange, lastFetchedAt)
+    || (Boolean(cachedData) && isDashboardSnapshotBehind(dateRange, cachedData?.reportingPeriod?.to));
   let queued = false;
 
   const shouldEnqueue = stale

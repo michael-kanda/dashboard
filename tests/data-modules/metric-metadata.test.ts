@@ -11,7 +11,7 @@ import {
 
 test('Metric periods are deterministic for a dashboard range', () => {
   const period = resolveMetricPeriod('30d', new Date('2026-08-05T12:00:00.000Z'));
-  assert.deepEqual(period, { from: '2026-07-05', to: '2026-08-03' });
+  assert.deepEqual(period, { from: '2026-07-06', to: '2026-08-04' });
 });
 
 test('Indexing metrics use a point-in-time period', () => {

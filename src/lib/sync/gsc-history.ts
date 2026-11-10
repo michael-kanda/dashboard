@@ -1,7 +1,7 @@
 import { sql, type VercelPoolClient } from '@vercel/postgres';
 import { getGscDataForPagesWithComparison, getSearchConsoleData } from '../google-api';
 import { markDataSyncFinished, markDataSyncStarted } from '../data-sync-state';
-import { GSC_DATA_LAG_DAYS } from './cache-policy';
+import { REPORTING_LAG_DAYS as GSC_DATA_LAG_DAYS } from './cache-policy';
 
 type GscProject = {
   id: string;

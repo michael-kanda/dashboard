@@ -20,6 +20,7 @@ export async function getSearchConsoleData(
     const res = await searchconsole.searchanalytics.query({
       siteUrl,
       requestBody: {
+        dataState: 'all', // frische Daten bis gestern, nicht nur finale
         startDate,
         endDate,
         dimensions: ['date'],
@@ -114,6 +115,7 @@ async function queryGenAiDimension(
     const res = await searchconsole.searchanalytics.query({
       siteUrl,
       requestBody: {
+        dataState: 'all', // frische Daten bis gestern, nicht nur finale
         startDate,
         endDate,
         dimensions: [dimension],
@@ -153,6 +155,7 @@ export async function getGoogleGenAiPerformanceData(
     const appearanceRes = await searchconsole.searchanalytics.query({
       siteUrl,
       requestBody: {
+        dataState: 'all', // frische Daten bis gestern, nicht nur finale
         startDate,
         endDate,
         dimensions: ['searchAppearance'],
@@ -229,6 +232,7 @@ export async function getTopQueries(
     const res = await searchconsole.searchanalytics.query({
       siteUrl,
       requestBody: {
+        dataState: 'all', // frische Daten bis gestern, nicht nur finale
         startDate,
         endDate,
         dimensions: ['query', 'page'],
@@ -327,6 +331,7 @@ async function fetchGscBatch(
     const response = await searchconsole.searchanalytics.query({
       siteUrl,
       requestBody: {
+        dataState: 'all', // frische Daten bis gestern, nicht nur finale
         startDate,
         endDate,
         dimensions: ['page'],
@@ -477,6 +482,7 @@ export async function getGscPageCtr(
     const response = await searchconsole.searchanalytics.query({
       siteUrl,
       requestBody: {
+        dataState: 'all', // frische Daten bis gestern, nicht nur finale
         startDate,
         endDate,
         dimensions: ['page'],
@@ -520,6 +526,7 @@ async function getQueriesByLandingPage(
     const res = await searchconsole.searchanalytics.query({
       siteUrl,
       requestBody: {
+        dataState: 'all', // frische Daten bis gestern, nicht nur finale
         startDate,
         endDate,
         dimensions: ['page', 'query'],
@@ -660,6 +667,7 @@ export async function getPromptLikeQueries(
     const res = await searchconsole.searchanalytics.query({
       siteUrl,
       requestBody: {
+        dataState: 'all', // frische Daten bis gestern, nicht nur finale
         startDate,
         endDate,
         dimensions: ['query', 'page'],
@@ -770,6 +778,7 @@ export async function getPromptLikeQueries(
       const trendRes = await searchconsole.searchanalytics.query({
         siteUrl,
         requestBody: {
+          dataState: 'all', // frische Daten bis gestern, nicht nur finale
           startDate, endDate,
           dimensions: ['date'],
           rowLimit: 25000,
