@@ -1,8 +1,8 @@
-import { sql } from '@vercel/postgres';
+import { sql, type QueryResultRow } from '@vercel/postgres';
 import { ProjectStatsSchema, type ProjectStats } from '@/lib/schemas'; // ✅ Import
 
 export async function getProjectsForDashboard(user: { id: string; role: string; mandant_id?: string | null }): Promise<ProjectStats[]> {
-  let rows: any[] = [];
+  let rows: QueryResultRow[] = [];
 
   if (user.role === 'SUPERADMIN') {
     const res = await sql`

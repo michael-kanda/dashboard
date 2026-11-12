@@ -60,15 +60,9 @@ import { GOOGLE_ADS_SHEET_DATA_VERSION } from '@/lib/google-ads-sheet';
 import { requestBudgetOptions, withRequestBudget } from './sync/request-budget';
 import { parseGa4PropertyId } from '@/lib/ga4-property-id';
 import { logger } from '@/lib/logger';
-
-function getShortErrorMessage(error: unknown): string {
-  const err = error as any;
-  return (
-    err?.cause?.message ||
-    err?.response?.data?.error?.message ||
-    (error instanceof Error ? error.message : String(error))
-  );
-}
+import { errorFields } from '@/lib/errors';
+// Gleiche Kurzmeldung wie in den GA4-Libs (cause -> Google-API-Body -> message).
+import { getShortGoogleError as getShortErrorMessage } from '@/lib/google/ga4-runtime';
 
 interface RawApiData {
   clicks: { total: number; daily: ChartPoint[] };
@@ -319,10 +313,10 @@ function buildShareTrend(
   }
 
   for (const point of allDaily) {
-    const ts = typeof point.date === 'number' ? point.date : new Date(point.date as any).getTime();
+    const ts = typeof point.date === 'number' ? point.date : new Date(point.date).getTime();
     if (!ts) continue;
     const { key } = bucketKey(ts);
-    const value = (point as any).value ?? 0;
+    const value = point.value ?? 0;
     allByBucket.set(key, (allByBucket.get(key) || 0) + value);
   }
 
@@ -362,7 +356,7 @@ async function getBrandKeywordsForUser(
   _startDate: string,
   _endDate: string
 ): Promise<{ keywords: string[] | null; autoDetected: boolean }> {
-  const existing = (user as any).brand_keywords as string[] | null | undefined;
+  const existing = user.brand_keywords;
   if (existing && Array.isArray(existing) && existing.length > 0) {
     return { keywords: existing, autoDetected: false };
   }
@@ -494,12 +488,12 @@ async function loadGoogleData(
             genAiPrevious.totalImpressions
           ),
         };
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.warn('[Google GenAI] Fehler (ignoriert):', e);
-        apiErrors.genAi = e?.message || 'Google GenAI Report nicht verfügbar';
+        apiErrors.genAi = errorFields(e).message || 'Google GenAI Report nicht verfügbar';
       }
 
-      const manualGenAi = normalizeManualGoogleGenAiData((user as any).google_genai_manual_data);
+      const manualGenAi = normalizeManualGoogleGenAiData(user.google_genai_manual_data);
       if (manualGenAi && (!googleGenAi || googleGenAi.status !== 'available' || googleGenAi.totalImpressions <= 0)) {
         googleGenAi = manualGenAi;
         logger.info('[Google GenAI] Nutze manuellen GSC-Export-Fallback.');
@@ -564,9 +558,9 @@ async function loadGoogleData(
       } catch (e) {
         console.warn('[Prompt Tracking] Fehler (ignoriert):', e);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('[GSC Error]', e);
-      apiErrors.gsc = e.message || 'GSC Fehler';
+      apiErrors.gsc = errorFields(e).message || 'GSC Fehler';
     }
   }
 
@@ -624,9 +618,9 @@ async function loadGoogleData(
 
       try {
         const rawPages = await getTopConvertingPages(propertyId, startDateStr, endDateStr);
-        const configuredLocationPaths = Array.isArray((user as any).project_locations)
-          ? (user as any).project_locations
-              .flatMap((location: any) => Array.isArray(location?.landingPages) ? location.landingPages : [])
+        const configuredLocationPaths = Array.isArray(user.project_locations)
+          ? user.project_locations
+              .flatMap((location) => Array.isArray(location?.landingPages) ? location.landingPages : [])
               .map((path: unknown) => normalizePath(String(path || '')))
               .filter(Boolean)
           : [];
@@ -638,7 +632,7 @@ async function loadGoogleData(
           gscCtrData = await getGscPageCtr(user.gsc_site_url, startDateStr, endDateStr);
         }
         const pageMap = new Map<string, ConvertingPageData>();
-        [...rawPages, ...localSeoPages].forEach((p: any) => {
+        [...rawPages, ...localSeoPages].forEach((p) => {
           const normalizedPath = normalizePath(p.path || '');
           if (!normalizedPath || pageMap.has(normalizedPath)) return;
           pageMap.set(normalizedPath, {
@@ -681,7 +675,7 @@ async function loadGoogleData(
         try { googleAdsGa4Supplement = await getGoogleAdsGa4Supplement(propertyId, startDateStr, endDateStr); }
         catch (e) { console.warn('[Google Ads GA4-Ergänzung] Fehler (ignoriert):', getShortErrorMessage(e)); }
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       const message = getShortErrorMessage(e);
       console.warn('[GA4] Basisdaten nicht verfügbar:', message);
       apiErrors.ga4 = message || 'GA4 Fehler';
@@ -692,7 +686,7 @@ async function loadGoogleData(
     const sheetId = user.google_ads_sheet_id.trim();
     googleAdsData = createEmptyGoogleAdsSheetData(sheetId, startDateStr, endDateStr);
     try { googleAdsData = await getGoogleAdsFromSheet(sheetId, startDateStr, endDateStr); }
-    catch (e: any) {
+    catch (e: unknown) {
       const message = getShortErrorMessage(e);
       console.warn('[Google Ads Sheet] Fehler:', message);
       apiErrors.googleAds = message || 'Google Ads Sheet nicht verfügbar';
@@ -724,7 +718,7 @@ async function loadGoogleData(
 
   if (user.gsc_site_url) {
     try { bingData = await getBingData(user.gsc_site_url); }
-    catch (e: any) { console.warn('[Bing] Fetch fehlgeschlagen:', e); apiErrors.bing = e.message || 'Bing Fehler'; }
+    catch (e: unknown) { console.warn('[Bing] Fetch fehlgeschlagen:', e); apiErrors.bing = errorFields(e).message || 'Bing Fehler'; }
   }
 
   let weatherData: Record<string, import('@/lib/weather').DailyWeather> = {};
@@ -772,7 +766,7 @@ async function loadGoogleData(
     topQueriesDataVersion: TOP_QUERIES_DATA_VERSION,
     landingPageQueries,
     topConvertingPages,
-    localSeo: buildLocalSeoData((user as any).project_locations, topQueries, topConvertingPages, cityData),
+    localSeo: buildLocalSeoData(user.project_locations, topQueries, topConvertingPages, cityData),
     aiTraffic, countryData, channelData, deviceData,
     bingData, weatherData, googleAdsData, googleGenAi, promptTracking,
     apiErrors: Object.keys(apiErrors).length > 0 ? apiErrors : undefined,

@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import type { GoogleGenAiPerformanceData } from '@/lib/dashboard-shared';
 import { cn } from '@/lib/utils';
+import { errorFields } from '@/lib/errors';
 import GoogleCleanUnderline from '@/components/ui/GoogleCleanUnderline';
 
 interface GoogleGenAiVisibilityCardProps {
@@ -91,7 +92,7 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
     setIsImporting(true);
     setImportStatus(null);
     try {
-      let payload: any = { csv: importText };
+      let payload: unknown = { csv: importText };
       const trimmed = importText.trim();
       if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
         payload = JSON.parse(trimmed);
@@ -106,8 +107,8 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
       if (!response.ok) throw new Error(result?.message || 'Import fehlgeschlagen');
       setImportStatus('GSC-Export gespeichert. Dashboard wird neu geladen...');
       window.location.reload();
-    } catch (error: any) {
-      setImportStatus(error?.message || 'Import fehlgeschlagen');
+    } catch (error: unknown) {
+      setImportStatus(errorFields(error).message || 'Import fehlgeschlagen');
     } finally {
       setIsImporting(false);
     }
@@ -125,8 +126,8 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
       if (!response.ok) throw new Error(result?.message || 'Löschen fehlgeschlagen');
       setImportStatus('Manueller Export gelöscht. Dashboard wird neu geladen...');
       window.location.reload();
-    } catch (error: any) {
-      setImportStatus(error?.message || 'Löschen fehlgeschlagen');
+    } catch (error: unknown) {
+      setImportStatus(errorFields(error).message || 'Löschen fehlgeschlagen');
     } finally {
       setIsImporting(false);
     }
@@ -305,7 +306,7 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
                       color: 'var(--dp-text)',
                     }}
                     labelFormatter={(value) => format(new Date(value), 'dd. MMMM yyyy', { locale: de })}
-                    formatter={(value: any) => [new Intl.NumberFormat('de-DE').format(Number(value)), 'GenAI-Impressions']}
+                    formatter={(value) => [new Intl.NumberFormat('de-DE').format(Number(value)), 'GenAI-Impressions']}
                   />
                   <Area
                     type="monotone"

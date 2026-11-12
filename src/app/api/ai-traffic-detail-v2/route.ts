@@ -34,13 +34,16 @@ import {
   tryAcquireGa4RequestLock,
 } from '@/lib/ga4-request-lock';
 import { logger } from '@/lib/logger';
+import { errorFields } from '@/lib/errors';
+
+type VercelRequestContext = { get?: () => { waitUntil?: unknown } | undefined };
 
 // Hintergrund-Tasks nach der Response am Leben halten (SWR-Refresh), OHNE
 // Paket-Abhängigkeit: derselbe Mechanismus, den @vercel/functions intern
 // nutzt. Fehlt der Context (lokal/Tests), läuft der Task fire-and-forget.
 function vercelWaitUntil(task: Promise<unknown>): void {
   try {
-    const ctx = (globalThis as any)[Symbol.for('@vercel/request-context')]?.get?.();
+    const ctx = (globalThis as { [key: symbol]: VercelRequestContext | undefined })[Symbol.for('@vercel/request-context')]?.get?.();
     if (ctx && typeof ctx.waitUntil === 'function') {
       ctx.waitUntil(task);
     }
@@ -63,16 +66,17 @@ const CACHE_TTL_MS = 30 * 60 * 1000;
 // In-Memory-Dedup nur als Best-Effort-Optimierung INNERHALB einer warmen
 // Instanz. Der eigentliche instanzübergreifende Schutz läuft über DB-Cooldown
 // und DB-Cache.
-const inFlightRequests = new Map<string, Promise<any>>();
+const inFlightRequests = new Map<string, Promise<unknown>>();
 
 function getQuotaMessage(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
-  const cause = (error as any)?.cause?.message;
+  const cause = errorFields(error).cause?.message;
   return cause || message;
 }
 
 function isGa4QuotaError(error: unknown) {
-  const status = (error as any)?.status || (error as any)?.code || (error as any)?.response?.status;
+  const err = errorFields(error);
+  const status = err.status || err.code || err.response?.status;
   const message = getQuotaMessage(error).toLowerCase();
   return status === 429 || message.includes('quota') || message.includes('resource_exhausted');
 }
@@ -90,13 +94,14 @@ function isGa4QuotaError(error: unknown) {
  */
 function isTransientGa4Error(error: unknown) {
   const message = getQuotaMessage(error).toLowerCase();
+  const err = errorFields(error);
   const type =
-    (error as any)?.type ||
-    (error as any)?.error?.type ||
-    (error as any)?.cause?.type;
+    err.type ||
+    err.error?.type ||
+    err.cause?.type;
   return (
     type === 'aborted' ||
-    (error as any)?.name === 'AbortError' ||
+    err.name === 'AbortError' ||
     message.includes('aborted') ||
     message.includes('timeout') ||
     message.includes('etimedout') ||
@@ -145,7 +150,7 @@ async function setCooldown(propertyId: string): Promise<number> {
 // ---------------------------------------------------------------------------
 
 interface CacheHit {
-  payload: any;
+  payload: unknown;
   ageMs: number;
 }
 
@@ -165,7 +170,7 @@ async function readCache(cacheKey: string): Promise<CacheHit | null> {
   }
 }
 
-async function writeCache(cacheKey: string, payload: any): Promise<void> {
+async function writeCache(cacheKey: string, payload: unknown): Promise<void> {
   try {
     await sql`
       INSERT INTO ga4_ai_traffic_cache (cache_key, payload, created_at)

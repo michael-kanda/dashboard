@@ -2,8 +2,17 @@
 import axios from 'axios';
 import { requestBudgetOptions } from './sync/request-budget';
 import { logger } from '@/lib/logger';
+import { errorFields, getErrorMessage } from '@/lib/errors';
 
 const BING_API_BASE = 'https://ssl.bing.com/webmaster/api.svc/json';
+
+// Rohzeile aus GetQueryStats; die API liefert je nach Version Pascal- oder camelCase.
+type BingQueryStatEntry = {
+  Query?: string; query?: string;
+  Impressions?: number; impressions?: number;
+  Clicks?: number; clicks?: number;
+  AvgImpressionPosition?: number; Position?: number; position?: number;
+};
 
 export interface BingKeywordData {
   query: string;
@@ -44,14 +53,14 @@ export async function getBingData(
     let keywords: BingKeywordData[] = [];
 
     if (response.data && response.data.d) {
-      keywords = response.data.d.map((entry: any) => ({
+      keywords = response.data.d.map((entry: BingQueryStatEntry) => ({
         query: entry.Query || entry.query || '',
         impressions: entry.Impressions || entry.impressions || 0,
         clicks: entry.Clicks || entry.clicks || 0,
         position: entry.AvgImpressionPosition || entry.Position || entry.position || 0,
       }));
     } else if (Array.isArray(response.data)) {
-      keywords = response.data.map((entry: any) => ({
+      keywords = response.data.map((entry: BingQueryStatEntry) => ({
         query: entry.Query || entry.query || '',
         impressions: entry.Impressions || entry.impressions || 0,
         clicks: entry.Clicks || entry.clicks || 0,
@@ -62,11 +71,12 @@ export async function getBingData(
     logger.debug(`[BING] ${keywords.length} Keywords geladen`);
     return keywords;
 
-  } catch (error: any) {
-    if (error.response) {
-      console.error('[BING] API Error:', error.response.status, error.response.data);
+  } catch (error: unknown) {
+    const { response } = errorFields(error);
+    if (response) {
+      console.error('[BING] API Error:', response.status, response.data);
     } else {
-      console.error('[BING] Request Error:', error.message);
+      console.error('[BING] Request Error:', getErrorMessage(error));
     }
     return [];
   }

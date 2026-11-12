@@ -2,7 +2,7 @@ import { createAuth } from './client';
 import { google } from 'googleapis';
 import { requestBudgetOptions } from '../sync/request-budget';
 
-export async function getGoogleSheetData(sheetId: string): Promise<any[]> {
+export async function getGoogleSheetData(sheetId: string): Promise<Record<string, string>[]> {
   const auth = createAuth();
   const sheets = google.sheets({ version: 'v4', auth, ...requestBudgetOptions() });
 

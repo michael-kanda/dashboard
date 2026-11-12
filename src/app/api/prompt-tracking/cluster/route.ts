@@ -62,11 +62,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!session?.user || !(session.user as any).id) {
+  if (!session?.user || !session.user.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const userId = (session.user as any).id as string;
+  const userId = session.user.id;
   logger.debug(`[Prompt Cluster] Auth OK für ${session.user.email}`);
 
   // ── 2. ENV-Check ────────────────────────────────────────────────
@@ -216,7 +216,7 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json(response);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Prompt Cluster] LLM-Fehler:', error);
 
     return NextResponse.json(

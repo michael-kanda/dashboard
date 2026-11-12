@@ -9,6 +9,8 @@ import ExportButton from '@/components/ExportButton';
 import { sanitizeAiHtml } from '@/lib/sanitize-ai-html';
 import { Spinner } from '@/components/ui/Spinner';
 import { logger } from '@/lib/logger';
+import type { GoogleAdsData } from '@/lib/dashboard-shared';
+import { errorFields } from '@/lib/errors';
 
 interface Props {
   projectId: string;
@@ -21,7 +23,7 @@ interface Props {
     change?: number;
     unit?: string;
   }>;
-  googleAdsData?: any; // ✅ Google Ads Daten (aus Sheet)
+  googleAdsData?: GoogleAdsData; // ✅ Google Ads Daten (aus Sheet)
 }
 
 export default function AiAnalysisWidget({ 
@@ -144,10 +146,10 @@ export default function AiAnalysisWidget({
       parseAndSetContent(fullText);
       setIsStreamComplete(true);
 
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
+    } catch (err: unknown) {
+      if (errorFields(err).name !== 'AbortError') {
         console.error(err);
-        setError(err);
+        setError(err instanceof Error ? err : new Error(String(err)));
       }
     } finally {
       setIsLoading(false);

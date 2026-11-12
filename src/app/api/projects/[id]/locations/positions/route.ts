@@ -57,7 +57,7 @@ export async function PATCH(
   }
 
   const currentLocations = Array.isArray(rows[0].project_locations) ? rows[0].project_locations : [];
-  const updatedLocations = currentLocations.map((location: any, index: number) => {
+  const updatedLocations = currentLocations.map((location: { id?: unknown } | null, index: number) => {
     const id = typeof location?.id === 'string' && location.id.trim()
       ? location.id.trim()
       : `location-${index + 1}`;

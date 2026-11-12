@@ -21,8 +21,9 @@ function extractSheetId(url: string): string | null {
 
 // Robuste Hilfsfunktion zum Finden von Werten in CSV/Excel Zeilen
 // Ignoriert Groß-/Kleinschreibung und verschiedene Schreibweisen
-function getRowValue(row: any, possibleKeys: string[]): string | null {
-  if (!row || typeof row !== 'object') return null;
+function getRowValue(value: unknown, possibleKeys: string[]): string | null {
+  if (!value || typeof value !== 'object') return null;
+  const row = value as Record<string, unknown>;
   
   const rowKeys = Object.keys(row);
   
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ message: 'Zugriff auf dieses Projekt verweigert.' }, { status: 403 });
     }
 
-    let rawData: any[] = [];
+    let rawData: unknown[] = [];
     const contentType = request.headers.get('content-type') || '';
 
     // --- GOOGLE SHEET ---

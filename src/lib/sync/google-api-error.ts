@@ -1,3 +1,5 @@
+import { errorFields } from '../errors.ts';
+
 export type GoogleApiErrorKind = 'transient' | 'quota' | 'permanent' | 'unknown';
 
 export interface ClassifiedGoogleApiError {
@@ -23,12 +25,8 @@ const PERMANENT_REASONS = new Set([
   'badRequest', 'invalid', 'accessNotConfigured',
 ]);
 
-function asRecord(value: unknown): Record<string, any> | null {
-  return value && typeof value === 'object' ? value as Record<string, any> : null;
-}
-
 function readStatus(error: unknown): number | null {
-  const candidate = asRecord(error);
+  const candidate = errorFields(error);
   const raw = candidate?.status
     ?? candidate?.code
     ?? candidate?.response?.status
@@ -38,7 +36,7 @@ function readStatus(error: unknown): number | null {
 }
 
 function readReason(error: unknown): string | null {
-  const candidate = asRecord(error);
+  const candidate = errorFields(error);
   const reason = candidate?.errors?.[0]?.reason
     ?? candidate?.response?.data?.error?.errors?.[0]?.reason
     ?? candidate?.response?.data?.error?.status
@@ -48,7 +46,7 @@ function readReason(error: unknown): string | null {
 
 export function readErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
-  const nested = asRecord(error)?.response?.data?.error?.message;
+  const nested = errorFields(error)?.response?.data?.error?.message;
   if (typeof nested === 'string' && nested) return nested;
   const text = String(error ?? '');
   return text && text !== '[object Object]' ? text : 'Unbekannter Google-API-Fehler';

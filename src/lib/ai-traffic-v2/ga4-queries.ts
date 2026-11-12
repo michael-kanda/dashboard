@@ -2,11 +2,12 @@
 // GA4-Repository: Auth, Request-Optionen, Fehlerstrategie und die rohen
 // runReport-Abfragen der KI-Traffic-Analyse (V2)
 
-import { google } from 'googleapis';
+import { google, type analyticsdata_v1beta } from 'googleapis';
 import { createGoogleAuth, GOOGLE_SCOPES } from '../google-auth';
 import { buildAiTrafficDimensionFilter } from '../ai-sources';
 import { GA4_KEY_EVENTS_METRIC } from '../ga4-metrics';
 import { logger } from '@/lib/logger';
+import { errorFields } from '@/lib/errors';
 
 // ============================================================================
 // HELPER FUNKTIONEN
@@ -88,7 +89,7 @@ const GA4_REQUEST_OPTIONS = {
 
 /** Erkennt GA4-Quota-/Server-Error-Fehler (429 / RESOURCE_EXHAUSTED). */
 export function isGa4QuotaError(error: unknown): boolean {
-  const e = error as any;
+  const e = errorFields(error);
   const status = e?.status || e?.code || e?.response?.status;
   const message = (e?.cause?.message || e?.message || String(error)).toLowerCase();
   return status === 429 || message.includes('quota') || message.includes('resource_exhausted');
@@ -109,11 +110,11 @@ export function isGa4QuotaError(error: unknown): boolean {
  *   nicht in die maxDuration der Route.
  */
 async function safeRunReport(
-  analytics: any,
+  analytics: analyticsdata_v1beta.Analyticsdata,
   property: string,
-  requestBody: any,
+  requestBody: analyticsdata_v1beta.Schema$RunReportRequest,
   { optional = false, deadline, label = 'ga4-report' }: { optional?: boolean; deadline?: number; label?: string } = {}
-): Promise<{ data: { rows?: any[] } }> {
+): Promise<{ data: { rows?: analyticsdata_v1beta.Schema$Row[] | null } }> {
   const startedAt = Date.now();
   const remainingMs = deadline ? deadline - Date.now() : GA4_TIMEOUT_MS;
 
@@ -130,15 +131,15 @@ async function safeRunReport(
   try {
     const response = await analytics.properties.runReport(
       { property, requestBody },
-      { ...GA4_REQUEST_OPTIONS, timeout } as any
+      { ...GA4_REQUEST_OPTIONS, timeout }
     );
     logger.debug(
       `[AI Traffic V2] Report OK ${label}: ${Date.now() - startedAt}ms, rows=${response.data.rows?.length || 0}`
     );
     return response;
   } catch (error) {
-    const dimensions = (requestBody.dimensions || []).map((item: any) => item.name).join(',') || '-';
-    const metrics = (requestBody.metrics || []).map((item: any) => item.name).join(',') || '-';
+    const dimensions = (requestBody.dimensions || []).map((item) => item.name).join(',') || '-';
+    const metrics = (requestBody.metrics || []).map((item) => item.name).join(',') || '-';
     if (isGa4QuotaError(error)) throw error;
     console.warn(
       `[AI Traffic V2] Report Fehler ${label}: ${Date.now() - startedAt}ms, ` +

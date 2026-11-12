@@ -5,8 +5,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
-import { google } from 'googleapis';
+import { google, type searchconsole_v1 } from 'googleapis';
 import { GOOGLE_SCOPES, tryCreateGoogleAuth } from '@/lib/google-auth';
+import { errorFields, getErrorMessage } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,7 @@ interface DiagnoseResult {
   step: string;
   status: 'ok' | 'error' | 'warning';
   message: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 interface GscDiagnosticRow {
@@ -61,7 +62,7 @@ function getDateParam(searchParams: URLSearchParams, key: string): string | null
 }
 
 async function queryGscDimensionWithAppearanceFilter(
-  searchconsole: any,
+  searchconsole: searchconsole_v1.Searchconsole,
   siteUrl: string,
   startDate: string,
   endDate: string,
@@ -199,14 +200,14 @@ export async function GET(request: NextRequest) {
             : null
         }
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       results.push({
         step: '3. GSC Sites Liste',
         status: 'error',
         message: '❌ Fehler beim Abrufen der Sites',
         details: {
-          error: e.message,
-          code: e.code,
+          error: getErrorMessage(e),
+          code: errorFields(e).code,
           hint: 'Prüfe ob die Search Console API aktiviert ist!'
         }
       });
@@ -362,15 +363,15 @@ export async function GET(request: NextRequest) {
                 }
               });
 
-            } catch (e: any) {
+            } catch (e: unknown) {
               results.push({
                 step: '7. Datenabfrage Test',
                 status: 'error',
                 message: '❌ Fehler bei der Datenabfrage',
                 details: {
-                  error: e.message,
-                  code: e.response?.status,
-                  reason: e.response?.data?.error?.message,
+                  error: getErrorMessage(e),
+                  code: errorFields(e).response?.status,
+                  reason: errorFields(e).response?.data?.error?.message,
                   possibleCauses: [
                     'Service Account hat keinen Zugriff',
                     'URL-Format stimmt nicht',
@@ -488,16 +489,16 @@ export async function GET(request: NextRequest) {
                       : 'Wahrscheinlich stellt Google den neuen GenAI-Report für diese Property aktuell nur in der Search-Console-Oberfläche beziehungsweise im Export bereit, nicht in der Search Analytics API.',
                   }
                 });
-              } catch (e: any) {
+              } catch (e: unknown) {
                 results.push({
                   step: '8. GenAI Performance Report / Search-Appearance',
                   status: 'error',
                   message: '❌ GenAI-Diagnoseabfrage fehlgeschlagen',
                   details: {
                     dateRange: `${genAiStartStr} bis ${genAiEndStr}`,
-                    error: e.message,
-                    code: e.response?.status,
-                    reason: e.response?.data?.error?.message,
+                    error: getErrorMessage(e),
+                    code: errorFields(e).response?.status,
+                    reason: errorFields(e).response?.data?.error?.message,
                   }
                 });
               }
@@ -551,13 +552,13 @@ export async function GET(request: NextRequest) {
       ` : null
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       summary: { status: 'KRITISCHER FEHLER' },
       results,
       error: {
-        message: error.message,
-        stack: error.stack
+        message: getErrorMessage(error),
+        stack: errorFields(error).stack
       }
     }, { status: 500 });
   }

@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
           years.add(d.getFullYear());
         }
         return Array.from(years).some(year => 
-          hd.getHolidays(year).some((h: any) => {
+          hd.getHolidays(year).some((h) => {
             const hDate = new Date(h.date);
             return hDate >= start && hDate <= end && h.type === 'public';
           })
@@ -219,7 +219,7 @@ export async function GET(req: NextRequest) {
           years.add(d.getFullYear());
         }
         return Array.from(years).some(year =>
-          hd.getHolidays(year).some((h: any) => {
+          hd.getHolidays(year).some((h) => {
             const hDate = new Date(h.date);
             return hDate >= start && hDate <= end && h.type === 'public';
           })

@@ -1,7 +1,7 @@
 // src/lib/ai-traffic-extended.ts
 // Erweiterte KI-Traffic Analyse mit Landingpage-Zuordnung
 
-import { google } from 'googleapis';
+import { google, type analyticsdata_v1beta } from 'googleapis';
 import type { AiTrafficDetailData, AiLandingPageData, AiSourceData } from '@/types/ai-traffic-detail';
 import { normalizeSource, buildAiTrafficDimensionFilter } from './ai-sources';
 import { createGoogleAuth, GOOGLE_SCOPES } from './google-auth';
@@ -135,7 +135,7 @@ export async function getAiTrafficWithLandingPages(
         ],
         limit: '1000'
       },
-    }).catch(() => ({ data: { rows: [] as any[] } }));
+    }).catch(() => ({ data: { rows: [] as analyticsdata_v1beta.Schema$Row[] } }));
 
     // =========================================================================
     // DATEN VERARBEITEN

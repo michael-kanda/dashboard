@@ -26,9 +26,11 @@ function normalizeBrandKeywords(input: unknown): string[] | null {
   return keywords.length > 0 ? keywords : null;
 }
 
+type BrandKeywordsBody = { targetUserId?: string; brand_keywords?: unknown };
+
 async function resolveTargetUserId(
   req: NextRequest,
-  body?: any
+  body?: BrandKeywordsBody
 ): Promise<{ ok: false; res: NextResponse } | { ok: true; userId: string }> {
   let session;
   try {
@@ -55,7 +57,7 @@ async function resolveTargetUserId(
 }
 
 export async function POST(req: NextRequest) {
-  let body: any = {};
+  let body: BrandKeywordsBody = {};
   try {
     body = await req.json();
   } catch {
@@ -85,7 +87,7 @@ export async function POST(req: NextRequest) {
       success: true,
       keywords: rows[0].brand_keywords || null,
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('[Brand Keywords] Speichern fehlgeschlagen:', e);
     return NextResponse.json(
       { error: 'DB-Save fehlgeschlagen' },

@@ -11,8 +11,6 @@ export interface ExtendedUser extends User {
   data_max_enabled?: boolean; 
   settings_show_prompt_tracking: boolean | null;
   dashboard_info_text?: string | null;
-  google_genai_manual_data?: any | null;
-  project_locations?: any[] | null;
   sitemap_url?: string | null;
   google_ads_sheet_id?: string;  // ← NEU
 }

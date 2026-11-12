@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
 import { logger } from '@/lib/logger';
+import { getErrorMessage } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -117,9 +118,9 @@ export async function POST(req: Request) {
       isEnabled: isEnabled === true 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('KI-Tool Settings POST error:', error);
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    return NextResponse.json({ message: getErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -167,8 +168,8 @@ export async function PUT(req: Request) {
       isEnabled: isEnabled === true 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('KI-Tool Settings PUT error:', error);
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    return NextResponse.json({ message: getErrorMessage(error) }, { status: 500 });
   }
 }

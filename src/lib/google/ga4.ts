@@ -472,7 +472,7 @@ async function getLandingPageMetricsForPathsUncached(
         orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
         limit: '100',
       },
-    } as any);
+    });
 
     return (response.data.rows || []).map((row) => {
       const conversions = parseGa4Metric(row.metricValues?.[0]?.value);

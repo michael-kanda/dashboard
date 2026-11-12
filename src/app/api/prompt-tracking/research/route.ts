@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const role = (session.user as any).role;
+  const role = session.user.role;
   if (role !== 'ADMIN' && role !== 'SUPERADMIN') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(result.object);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Prompt Research] DataMax Fehler:', error);
     return NextResponse.json(
       { error: 'Prompt Research fehlgeschlagen' },

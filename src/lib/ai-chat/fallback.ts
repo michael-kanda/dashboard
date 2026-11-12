@@ -2,12 +2,13 @@
 // Vorgeschlagene Fragen des DataMax-Chats inkl. Fallback-Fragen
 
 import type { ProjectDashboardData } from '@/lib/dashboard-shared';
+import type { AiTrafficDetailData } from '@/types/ai-traffic-detail';
 
 // ============================================================================
 // SUGGESTED QUESTIONS GENERATOR (Erweitert)
 // ============================================================================
 
-export function generateSuggestedQuestions(data: ProjectDashboardData, aiTrafficDetail?: any, hasHolidays?: boolean): string[] {
+export function generateSuggestedQuestions(data: ProjectDashboardData, aiTrafficDetail?: AiTrafficDetailData | null, hasHolidays?: boolean): string[] {
   const questions: string[] = [];
   const kpis = data.kpis;
 

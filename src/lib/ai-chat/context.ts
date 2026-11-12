@@ -6,6 +6,7 @@ import Holidays from 'date-holidays';
 import type { User } from '@/lib/schemas';
 import type { ProjectDashboardData } from '@/lib/dashboard-shared';
 import type { DailyWeather } from '@/lib/weather';
+import type { AiTrafficDetailData } from '@/types/ai-traffic-detail';
 import { getDateRangeLabel } from './date-range';
 
 // ============================================================================
@@ -100,7 +101,7 @@ function buildHolidayContext(dateRange: string, country: string = 'AT'): string 
 
     years.forEach(year => {
       const yearHolidays = hd.getHolidays(year);
-      yearHolidays.forEach((h: any) => {
+      yearHolidays.forEach((h) => {
         const hDate = new Date(h.date);
         if (hDate >= start && hDate <= end) {
           holidays.push({
@@ -150,7 +151,7 @@ export function buildChatContext(
   data: ProjectDashboardData, 
   user: User, 
   dateRange: string,
-  aiTrafficDetail?: any, // Extended AI Traffic Data
+  aiTrafficDetail?: AiTrafficDetailData | null, // Extended AI Traffic Data
   country?: string // Land für Feiertage
 ): string {
   const kpis = data.kpis;
@@ -238,12 +239,12 @@ DATENLOGIK:
   if (aiTrafficDetail && aiTrafficDetail.totalSessions > 0) {
     // KI-Quellen mit Details
     const aiSources = aiTrafficDetail.sources?.slice(0, 5)
-      .map((s: any) => `- ${s.source}: ${s.sessions} Sessions (${s.percentage.toFixed(1)}%), Top-Seite: ${s.topPages?.[0]?.path || 'k.A.'}`)
+      .map((s) => `- ${s.source}: ${s.sessions} Sessions (${s.percentage.toFixed(1)}%), Top-Seite: ${s.topPages?.[0]?.path || 'k.A.'}`)
       .join('\n') || 'Keine KI-Quellen';
 
     // Landingpages die von KI-Traffic profitieren
     const aiLandingPages = aiTrafficDetail.landingPages?.slice(0, 5)
-      .map((p: any) => {
+      .map((p) => {
         const topSource = p.sources?.[0]?.source || 'unbekannt';
         return `- ${p.path}: ${p.sessions} Sessions (via ${topSource}), ${p.conversions} Conv., Bounce: ${p.bounceRate.toFixed(1)}%`;
       })
@@ -252,8 +253,8 @@ DATENLOGIK:
     // Trend-Analyse
     let trendInfo = '';
     if (aiTrafficDetail.trend && aiTrafficDetail.trend.length >= 7) {
-      const recentWeek = aiTrafficDetail.trend.slice(-7).reduce((sum: number, t: any) => sum + t.sessions, 0);
-      const previousWeek = aiTrafficDetail.trend.slice(-14, -7).reduce((sum: number, t: any) => sum + t.sessions, 0);
+      const recentWeek = aiTrafficDetail.trend.slice(-7).reduce((sum, t) => sum + t.sessions, 0);
+      const previousWeek = aiTrafficDetail.trend.slice(-14, -7).reduce((sum, t) => sum + t.sessions, 0);
       if (previousWeek > 0) {
         const change = ((recentWeek - previousWeek) / previousWeek * 100).toFixed(1);
         trendInfo = `Trend letzte 7 Tage: ${recentWeek} Sessions (${Number(change) >= 0 ? '+' : ''}${change}% vs Vorwoche)`;

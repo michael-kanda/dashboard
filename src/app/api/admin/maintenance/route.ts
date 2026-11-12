@@ -106,7 +106,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, userId, isActive: isActive === true });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Maintenance POST error:', error);
     return NextResponse.json({ message: 'Interner Fehler' }, { status: 500 });
   }
