@@ -39,7 +39,7 @@ const MAX_LINES = 600;
 const lineBaseline = new Map([
   ['src/components/PromptTrackingCard.tsx', 1550],
   ['src/app/admin/edit/[id]/EditUserForm.tsx', 1210],
-  ['src/lib/ai-traffic-extended-v2.ts', 1162],
+  ['src/lib/ai-traffic-extended-v2.ts', 1160],
   ['src/components/LocalSeoMapWidget.tsx', 852],
   ['src/app/api/ai/chat/route.ts', 840],
   ['src/lib/google/gsc.ts', 831],
