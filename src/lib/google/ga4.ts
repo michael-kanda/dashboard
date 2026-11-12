@@ -7,6 +7,7 @@ import { requestBudgetOptions } from '../sync/request-budget';
 import { buildAiTrafficDimensionFilter, normalizeSource } from '../ai-sources';
 import { ChartEntry } from '@/lib/dashboard-shared';
 import type { AiTrafficData } from '@/types/ai-traffic';
+import type { FollowUpPath, LandingPageFollowUpData } from '@/types/landing-page';
 import { GA4_KEY_EVENTS_METRIC, parseGa4Metric } from '@/lib/ga4-metrics';
 
 export async function getAnalyticsData(
@@ -552,18 +553,7 @@ async function getTopConvertingPagesUncached(
   }
 }
 
-export interface FollowUpPath {
-  path: string;
-  sessions: number;
-  percentage: number;
-}
-
-export interface LandingPageFollowUpData {
-  landingPage: string;
-  totalSessions: number;
-  landingPageSessions: number;
-  followUpPaths: FollowUpPath[];
-}
+export type { FollowUpPath, LandingPageFollowUpData };
 
 export async function getLandingPageFollowUpPaths(
   propertyId: string,
