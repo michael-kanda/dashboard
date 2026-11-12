@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AiTrafficDetailCardV2 from '@/components/AiTrafficDetailCardV2';
 import type { AiTrafficExtendedData } from '@/lib/ai-traffic-extended-v2';
 import type { ReportingPeriod } from '@/lib/reporting-period';
+import { logger } from '@/lib/logger';
 
 export interface AiTrafficDetailWidgetV2Props {
   projectId?: string;
@@ -34,7 +35,7 @@ export default function AiTrafficDetailWidgetV2({
       }
 
       const url = `/api/ai-traffic-detail-v2?${params.toString()}`;
-      console.log('[AiTrafficDetailWidgetV2] Fetching:', url);
+      logger.debug('[AiTrafficDetailWidgetV2] Fetching:', url);
       
       const response = await fetch(url);
       
@@ -56,7 +57,7 @@ export default function AiTrafficDetailWidgetV2({
         throw new Error(result.error || 'KI-Traffic-Daten werden gerade aktualisiert.');
       }
 
-      console.log('[AiTrafficDetailWidgetV2] Data received:', result.data ? 'OK' : 'null');
+      logger.debug('[AiTrafficDetailWidgetV2] Data received:', result.data ? 'OK' : 'null');
       setData(result.data || undefined);
       const period = result.meta?.currentPeriod;
       setReportingPeriod(period?.start && period?.end

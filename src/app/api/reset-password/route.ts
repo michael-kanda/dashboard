@@ -4,7 +4,8 @@ import { NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
 import { getPasswordError } from '@/lib/password-policy';
-import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
+import { auth } from '@/lib/auth';
+import { logger } from '@/lib/logger'; // KORRIGIERT: Import von auth
 
 export async function POST(request: Request) {
   try {
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
 
     const normalizedEmail = email.toLowerCase().trim();
     
-    console.log('[RESET-PASSWORD] Passwort-Reset für:', normalizedEmail);
+    logger.debug('[RESET-PASSWORD] Passwort-Reset für:', normalizedEmail);
 
     // Prüfe, ob Benutzer existiert
     const { rows: existingUsers } = await sql`
@@ -38,18 +39,18 @@ export async function POST(request: Request) {
     `;
 
     if (existingUsers.length === 0) {
-      console.log('[RESET-PASSWORD] ❌ Benutzer nicht gefunden');
+      logger.debug('[RESET-PASSWORD] ❌ Benutzer nicht gefunden');
       return NextResponse.json({ 
         message: 'Benutzer nicht gefunden' 
       }, { status: 404 });
     }
 
     const user = existingUsers[0];
-    console.log('[RESET-PASSWORD] Benutzer gefunden:', user.email, 'Rolle:', user.role);
+    logger.debug('[RESET-PASSWORD] Benutzer gefunden:', user.email, 'Rolle:', user.role);
 
     // Neues Passwort hashen
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    console.log('[RESET-PASSWORD] Neues Hash erstellt, Länge:', hashedPassword.length);
+    logger.debug('[RESET-PASSWORD] Neues Hash erstellt, Länge:', hashedPassword.length);
 
     // Passwort in DB aktualisieren
     const { rows: updatedUsers } = await sql`
@@ -60,13 +61,13 @@ export async function POST(request: Request) {
     `;
 
     if (updatedUsers.length === 0) {
-      console.log('[RESET-PASSWORD] ❌ Update fehlgeschlagen');
+      logger.debug('[RESET-PASSWORD] ❌ Update fehlgeschlagen');
       return NextResponse.json({ 
         message: 'Passwort-Update fehlgeschlagen' 
       }, { status: 500 });
     }
 
-    console.log('[RESET-PASSWORD] ✅ Passwort erfolgreich zurückgesetzt');
+    logger.info('[RESET-PASSWORD] ✅ Passwort erfolgreich zurückgesetzt');
 
     return NextResponse.json({ 
       message: `✅ Passwort für ${user.email} erfolgreich zurückgesetzt`,

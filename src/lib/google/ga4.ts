@@ -9,6 +9,7 @@ import { ChartEntry } from '@/lib/dashboard-shared';
 import type { AiTrafficData } from '@/types/ai-traffic';
 import type { FollowUpPath, LandingPageFollowUpData } from '@/types/landing-page';
 import { GA4_KEY_EVENTS_METRIC, parseGa4Metric } from '@/lib/ga4-metrics';
+import { logger } from '@/lib/logger';
 
 export async function getAnalyticsData(
   propertyId: string,
@@ -585,9 +586,9 @@ export async function getLandingPageFollowUpPaths(
     ? landingPageBase
     : `/${landingPageBase}`;
 
-  console.log(`[GA4 Followup] Property: ${formattedPropertyId}`);
-  console.log(`[GA4 Followup] Landing Page: "${cleanLandingPage}"`);
-  console.log(`[GA4 Followup] Date Range: ${startDate} - ${endDate}`);
+  logger.debug(`[GA4 Followup] Property: ${formattedPropertyId}`);
+  logger.debug(`[GA4 Followup] Landing Page: "${cleanLandingPage}"`);
+  logger.debug(`[GA4 Followup] Date Range: ${startDate} - ${endDate}`);
 
   try {
     const response = await ga4RunReport(analytics, {
@@ -612,10 +613,10 @@ export async function getLandingPageFollowUpPaths(
     });
 
     const rows = response.data.rows || [];
-    console.log(`[GA4 Followup] Rows returned: ${rows.length}`);
+    logger.debug(`[GA4 Followup] Rows returned: ${rows.length}`);
 
     if (rows.length > 0) {
-      console.log(
+      logger.debug(
         `[GA4 Followup] Sample results:`,
         rows.slice(0, 3).map((r) => ({
           path: r.dimensionValues?.[0]?.value,
@@ -651,9 +652,9 @@ export async function getLandingPageFollowUpPaths(
       followUpPaths.push({ path: pagePath, sessions: pageViews, percentage: 0 });
     }
 
-    console.log(`[GA4 Followup] Landing page views: ${landingPageViews}`);
-    console.log(`[GA4 Followup] Follow-up page views: ${totalPageViews}`);
-    console.log(`[GA4 Followup] Unique follow-up paths: ${followUpPaths.length}`);
+    logger.debug(`[GA4 Followup] Landing page views: ${landingPageViews}`);
+    logger.debug(`[GA4 Followup] Follow-up page views: ${totalPageViews}`);
+    logger.debug(`[GA4 Followup] Unique follow-up paths: ${followUpPaths.length}`);
 
     for (const fp of followUpPaths) {
       fp.percentage =

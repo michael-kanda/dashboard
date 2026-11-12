@@ -6,6 +6,7 @@ import { google } from 'googleapis';
 import { createGoogleAuth, GOOGLE_SCOPES } from '../google-auth';
 import { buildAiTrafficDimensionFilter } from '../ai-sources';
 import { GA4_KEY_EVENTS_METRIC } from '../ga4-metrics';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // HELPER FUNKTIONEN
@@ -131,7 +132,7 @@ async function safeRunReport(
       { property, requestBody },
       { ...GA4_REQUEST_OPTIONS, timeout } as any
     );
-    console.log(
+    logger.debug(
       `[AI Traffic V2] Report OK ${label}: ${Date.now() - startedAt}ms, rows=${response.data.rows?.length || 0}`
     );
     return response;

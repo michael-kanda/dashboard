@@ -3,7 +3,8 @@ import { NextResponse, NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
 import { canAccessLandingpage } from '@/lib/project-access';
-import * as Brevo from '@getbrevo/brevo'; // ✅ Brevo direkt importiert
+import * as Brevo from '@getbrevo/brevo';
+import { logger } from '@/lib/logger'; // ✅ Brevo direkt importiert
 
 // --- Brevo Konfiguration (Wie in deiner Status-Route) ---
 const apiInstance = new Brevo.TransactionalEmailsApi();
@@ -126,7 +127,7 @@ export async function PUT(
 
           try {
             await apiInstance.sendTransacEmail(sendSmtpEmail);
-            console.log(`✅ Brevo-Mail gesendet an Kunde: ${customerEmail}`);
+            logger.info(`✅ Brevo-Mail gesendet an Kunde: ${customerEmail}`);
           } catch (err) {
             console.error('❌ Fehler beim Brevo-Versand an Kunde:', err);
           }
@@ -164,7 +165,7 @@ export async function PUT(
 
           try {
             await apiInstance.sendTransacEmail(sendSmtpEmail);
-            console.log(`✅ Brevo-Mail gesendet an Admin: ${adminEmail}`);
+            logger.info(`✅ Brevo-Mail gesendet an Admin: ${adminEmail}`);
           } catch (err) {
             console.error(`❌ Fehler beim Brevo-Versand an Admin (${adminEmail}):`, err);
           }

@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { getAiModels } from '@/lib/ai-config';
+import { logger } from '@/lib/logger';
 
 // Google AI Konfiguration
 const google = createGoogleGenerativeAI({
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
     // 4. KI-Generierung mit Streaming
     const keywordList = keywords.join(', ');
     
-    console.log('[AI Generate Questions] Starte Generierung für:', { domain, keywords: keywordList });
+    logger.debug('[AI Generate Questions] Starte Generierung für:', { domain, keywords: keywordList });
 
     const result = await streamText({
       model: google((await getAiModels()).primary),

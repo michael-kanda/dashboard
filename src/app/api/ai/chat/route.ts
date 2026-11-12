@@ -12,6 +12,7 @@ import { detectRequestedDateRange, getDateRanges, normalizeDateRange } from '@/l
 import { buildChatContext } from '@/lib/ai-chat/context';
 import { generateSuggestedQuestions } from '@/lib/ai-chat/fallback';
 import { buildSystemPrompt } from '@/lib/ai-chat/prompt';
+import { logger } from '@/lib/logger';
 export const maxDuration = 60;
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,7 @@ export const dynamic = 'force-dynamic';
 // ============================================================================
 
 export async function POST(req: NextRequest) {
-  console.log('[DataMax Chat] POST Request erhalten');
+  logger.debug('[DataMax Chat] POST Request erhalten');
   
   try {
     // 1. Auth
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
           dateRanges.previous.start,
           dateRanges.previous.end
         );
-        console.log('[DataMax Chat] Extended AI Traffic geladen:', aiTrafficDetail?.totalSessions, 'Sessions');
+        logger.debug('[DataMax Chat] Extended AI Traffic geladen:', aiTrafficDetail?.totalSessions, 'Sessions');
       } catch (e) {
         console.warn('[DataMax Chat] Extended AI Traffic nicht verfügbar:', e);
         // Kein Fehler werfen - wir nutzen dann die Basis-Daten

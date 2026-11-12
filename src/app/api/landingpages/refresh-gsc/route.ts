@@ -7,6 +7,7 @@ import { canAccessProject } from '@/lib/project-access';
 import { sql, type QueryResult } from '@vercel/postgres';
 import { getGscDataForPagesWithComparison } from '@/lib/google-api';
 import type { User } from '@/types';
+import { logger } from '@/lib/logger';
 
 // === Hilfsfunktionen ===
 
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'projectId und dateRange sind erforderlich' }, { status: 400 });
     }
 
-    console.log(`[GSC Refresh] Starte Abgleich für Projekt ${projectId} über Zeitraum: ${dateRange}`);
+    logger.debug(`[GSC Refresh] Starte Abgleich für Projekt ${projectId} über Zeitraum: ${dateRange}`);
 
     // 3. Berechtigungsprüfung
     if (!(await canAccessProject(user, projectId))) {
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
 
     // 6. Zeiträume berechnen
     const { currentRange, previousRange } = calculateDateRanges(dateRange);
-    console.log(`[GSC Refresh] Zeiträume: Aktuell(${currentRange.startDate} bis ${currentRange.endDate})`);
+    logger.debug(`[GSC Refresh] Zeiträume: Aktuell(${currentRange.startDate} bis ${currentRange.endDate})`);
 
     // 7. GSC-Daten abrufen
     const gscDataMap = await getGscDataForPagesWithComparison(
@@ -170,7 +171,7 @@ export async function POST(request: NextRequest) {
     await Promise.all(updatePromises);
     await client.query('COMMIT');
 
-    console.log(`[GSC Refresh] ✅ ${updatedCount} Seiten aktualisiert.`);
+    logger.debug(`[GSC Refresh] ✅ ${updatedCount} Seiten aktualisiert.`);
 
     return NextResponse.json({
       message: `✅ ${updatedCount} Landingpages erfolgreich aktualisiert (${dateRange}).`,

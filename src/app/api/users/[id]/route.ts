@@ -10,6 +10,7 @@ import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { User } from '@/types';
 import { normalizeDashboardWidgetVisibility } from '@/lib/dashboard-widget-visibility';
+import { logger } from '@/lib/logger';
 export const revalidate = 0;
 
 type ProjectLocationPayload = {
@@ -312,7 +313,7 @@ export async function PUT(
       }, { status: 409 });
     }
     
-    console.log(`[PUT /api/users/${targetUserId}] Update-Anfrage...`);
+    logger.debug(`[PUT /api/users/${targetUserId}] Update-Anfrage...`);
     
     const permissionsArray = Array.isArray(permissions) ? permissions : [];
     const permissionsPgString = `{${permissionsArray.join(',')}}`;
@@ -450,7 +451,7 @@ export async function PUT(
       console.warn(`[PUT /api/users/${targetUserId}] Cache/Sync-Auftrag konnte nicht aktualisiert werden:`, cacheError);
     }
 
-    console.log(`✅ [PUT /api/users/${targetUserId}] Benutzer erfolgreich aktualisiert:`, rows[0].email);
+    logger.info(`✅ [PUT /api/users/${targetUserId}] Benutzer erfolgreich aktualisiert:`, rows[0].email);
     
     return NextResponse.json({
       ...rows[0],
@@ -493,7 +494,7 @@ export async function DELETE(
       return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });
     }
 
-    console.log(`[DELETE /api/users/${targetUserId}] Lösche Benutzer...`);
+    logger.debug(`[DELETE /api/users/${targetUserId}] Lösche Benutzer...`);
 
     const { rows: existingUsers } = await sql`
       SELECT role, mandant_id FROM users WHERE id = ${targetUserId}::uuid
@@ -538,7 +539,7 @@ export async function DELETE(
       return NextResponse.json({ message: "Benutzer nicht gefunden" }, { status: 404 });
     }
 
-    console.log(`✅ [DELETE /api/users/${targetUserId}] Benutzer erfolgreich gelöscht`);
+    logger.info(`✅ [DELETE /api/users/${targetUserId}] Benutzer erfolgreich gelöscht`);
     return NextResponse.json({ message: 'Benutzer erfolgreich gelöscht' });
   } catch (error) {
     console.error(`[DELETE /api/users/${targetUserId}] Fehler:`, error);

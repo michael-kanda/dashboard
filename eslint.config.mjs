@@ -31,6 +31,15 @@ const eslintConfig = [
     },
   },
   {
+    // Anwendungscode: Ablauf- und Info-Ausgaben laufen ueber src/lib/logger.ts
+    // (mit Log-Level). console.warn/console.error bleiben erlaubt. CLI-Skripte
+    // unter scripts/ schreiben weiter direkt auf die Konsole.
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-console": ["error", { allow: ["warn", "error"] }],
+    },
+  },
+  {
     ignores: [
       "node_modules/**",
       ".next/**",

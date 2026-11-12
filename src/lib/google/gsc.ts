@@ -7,6 +7,7 @@ import { type GoogleGenAiPerformanceData, type GoogleGenAiBreakdownItem } from '
 import type { TopQueryData } from '@/types/dashboard';
 import type { PromptTrackingResult, PromptQueryData, PromptWordCountBucket, QuestionTypeDistribution } from '@/lib/dashboard-shared';
 import { isBrandedQuery, hasGeoReference, detectQuestionType, type QuestionType } from '@/lib/prompt-tracking/query-classifier';
+import { logger } from '@/lib/logger';
 
 export async function getSearchConsoleData(
   siteUrl: string,
@@ -171,13 +172,13 @@ export async function getGoogleGenAiPerformanceData(
     const genAiAppearances = Array.from(new Set(allAppearances.filter(isGenAiSearchAppearance)));
 
     if (genAiAppearances.length === 0) {
-      console.info('[Google GenAI] Keine GenAI-Search-Appearance erkannt. GSC lieferte:', allAppearances);
+      logger.info('[Google GenAI] Keine GenAI-Search-Appearance erkannt. GSC lieferte:', allAppearances);
       return emptyGoogleGenAiPerformance(
         'Der Google-GenAI-Report ist fuer diese Property noch nicht per API/Search-Appearance sichtbar oder es gibt zu wenige Impressionen.'
       );
     }
 
-    console.info('[Google GenAI] Erkannte Search-Appearances:', genAiAppearances);
+    logger.info('[Google GenAI] Erkannte Search-Appearances:', genAiAppearances);
 
     const [dates, pages, countries, devices] = await Promise.all([
       queryGenAiDimension(searchconsole, siteUrl, startDate, endDate, genAiAppearances, 'date'),
@@ -384,7 +385,7 @@ export async function getGscDataForPagesWithComparison(
     batches.push(pageUrls.slice(i, i + GSC_BATCH_SIZE));
   }
 
-  console.log(`[GSC] Verarbeite ${pageUrls.length} URLs in ${batches.length} Batches...`);
+  logger.debug(`[GSC] Verarbeite ${pageUrls.length} URLs in ${batches.length} Batches...`);
 
   try {
     const currentDataMaps = await Promise.all(
@@ -460,7 +461,7 @@ export async function getGscDataForPagesWithComparison(
       }
     }
 
-    console.log(`[GSC] ✅ ${resultMap.size} von ${pageUrls.length} URLs erfolgreich abgerufen.`);
+    logger.debug(`[GSC] ✅ ${resultMap.size} von ${pageUrls.length} URLs erfolgreich abgerufen.`);
     return resultMap;
   } catch (error) {
     console.error('Error in getGscDataForPagesWithComparison:', error);
@@ -505,7 +506,7 @@ export async function getGscPageCtr(
       }
     });
 
-    console.log(`[GSC] ${result.size} Seiten mit CTR-Daten geladen`);
+    logger.debug(`[GSC] ${result.size} Seiten mit CTR-Daten geladen`);
   } catch (err) {
     console.warn('[GSC] CTR-Daten konnten nicht geladen werden:', err);
   }

@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { getLandingPageFollowUpPaths } from '@/lib/google-api';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest) {
     const startDateStr = start.toISOString().split('T')[0];
     const endDateStr = end.toISOString().split('T')[0];
 
-    console.log(`[Landing Page Followup] Loading data for ${ga4PropertyId}, page: ${landingPage}`);
+    logger.debug(`[Landing Page Followup] Loading data for ${ga4PropertyId}, page: ${landingPage}`);
 
     // Folgepfade von GA4 abrufen
     const followUpData = await getLandingPageFollowUpPaths(

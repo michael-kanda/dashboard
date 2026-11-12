@@ -1,6 +1,7 @@
 // src/lib/bing-api.ts
 import axios from 'axios';
 import { requestBudgetOptions } from './sync/request-budget';
+import { logger } from '@/lib/logger';
 
 const BING_API_BASE = 'https://ssl.bing.com/webmaster/api.svc/json';
 
@@ -27,7 +28,7 @@ export async function getBingData(
   try {
     const cleanUrl = siteUrl.replace(/\/$/, "");
     
-    console.log('[BING] Fetching data for:', cleanUrl);
+    logger.debug('[BING] Fetching data for:', cleanUrl);
 
     const response = await axios.get(`${BING_API_BASE}/GetQueryStats`, {
       ...requestBudgetOptions(),
@@ -38,7 +39,7 @@ export async function getBingData(
       timeout: 10000
     });
     
-    console.log('[BING] Response status:', response.status);
+    logger.debug('[BING] Response status:', response.status);
 
     let keywords: BingKeywordData[] = [];
 
@@ -58,7 +59,7 @@ export async function getBingData(
       }));
     }
 
-    console.log(`[BING] ${keywords.length} Keywords geladen`);
+    logger.debug(`[BING] ${keywords.length} Keywords geladen`);
     return keywords;
 
   } catch (error: any) {

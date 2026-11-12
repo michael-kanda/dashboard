@@ -3,15 +3,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
-import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
+import { auth } from '@/lib/auth';
+import { logger } from '@/lib/logger'; // KORRIGIERT: Import von auth
 
 export async function GET(_request: NextRequest) {
   try {
     const session = await auth(); // KORRIGIERT: auth() aufgerufen
     const user = session?.user;
 
-    console.log('[/api/projects] GET Request');
-    console.log('[/api/projects] User:', user?.email, 'Role:', user?.role);
+    logger.debug('[/api/projects] GET Request');
+    logger.debug('[/api/projects] User:', user?.email, 'Role:', user?.role);
 
     if (!user) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 });
@@ -26,7 +27,7 @@ export async function GET(_request: NextRequest) {
 
     if (user.role === 'SUPERADMIN') {
       // Superadmins sehen alle Projekte (= alle Benutzer mit Rolle BENUTZER)
-      console.log('[/api/projects] SUPERADMIN - Lade alle Projekte (Kunden)');
+      logger.debug('[/api/projects] SUPERADMIN - Lade alle Projekte (Kunden)');
       
       result = await sql`
         SELECT 
@@ -42,11 +43,11 @@ export async function GET(_request: NextRequest) {
         ORDER BY mandant_id ASC NULLS LAST, domain ASC NULLS LAST, email ASC
       `;
 
-      console.log('[/api/projects] Gefunden:', result.rows.length, 'Projekte');
+      logger.debug('[/api/projects] Gefunden:', result.rows.length, 'Projekte');
 
     } else if (user.role === 'ADMIN') {
       // KORREKTUR: Admins sehen nur ihre zugewiesenen Projekte
-      console.log('[/api/projects] ADMIN - Lade zugewiesene Projekte aus project_assignments');
+      logger.debug('[/api/projects] ADMIN - Lade zugewiesene Projekte aus project_assignments');
       
       result = await sql`
         SELECT 
@@ -64,7 +65,7 @@ export async function GET(_request: NextRequest) {
         ORDER BY u.mandant_id ASC, u.domain ASC NULLS LAST, u.email ASC
       `;
 
-      console.log('[/api/projects] Gefunden:', result.rows.length, 'zugewiesene Projekte');
+      logger.debug('[/api/projects] Gefunden:', result.rows.length, 'zugewiesene Projekte');
     } else {
       // Andere Rollen haben keinen Zugriff
       return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 });

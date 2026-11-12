@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { type Session } from 'next-auth'; 
 import { auth } from '@/lib/auth'; // KORRIGIERT
 import { sql } from '@vercel/postgres';
+import { logger } from '@/lib/logger';
 
 // Berechtigungsprüfung: Darf der eingeloggte Admin Zuweisungen ändern?
 // KORREKTUR: 'any' ersetzt durch 'Session | null'
@@ -26,7 +27,7 @@ export async function POST(
     const { id: projectId } = await params;
     const session = await auth(); // KORRIGIERT: auth() aufgerufen
     
-    console.log('[POST /api/projects/[id]/assign] Start');
+    logger.debug('[POST /api/projects/[id]/assign] Start');
     
     // KORREKTUR: Prüft auf 'kann_admins_verwalten' oder SUPERADMIN
     if (!(await hasAssignmentPermission(session))) {
@@ -37,8 +38,8 @@ export async function POST(
     const body = await request.json();
     const { userId } = body; // Der Admin, der zugewiesen wird
     
-    console.log('[POST] User ID (Admin):', userId);
-    console.log('[POST] Project ID (Kunde):', projectId);
+    logger.debug('[POST] User ID (Admin):', userId);
+    logger.debug('[POST] Project ID (Kunde):', projectId);
 
 
     if (!userId || !projectId) {
@@ -73,9 +74,9 @@ export async function POST(
       }
     }
 
-    console.log('[POST] ✅ Validierung erfolgreich');
-    console.log('[POST] Admin:', adminCheck[0].email);
-    console.log('[POST] Projekt:', projectCheck[0].email);
+    logger.debug('[POST] ✅ Validierung erfolgreich');
+    logger.debug('[POST] Admin:', adminCheck[0].email);
+    logger.debug('[POST] Projekt:', projectCheck[0].email);
 
     // Führe die Zuweisung durch
     await sql`
@@ -84,7 +85,7 @@ export async function POST(
       ON CONFLICT (user_id, project_id) DO NOTHING;
     `;
 
-    console.log('[POST] ✅ Zuweisung erfolgreich erstellt');
+    logger.info('[POST] ✅ Zuweisung erfolgreich erstellt');
 
     return NextResponse.json({ 
       message: 'Admin erfolgreich zugewiesen.',
@@ -110,7 +111,7 @@ export async function DELETE(
     const { id: projectId } = await params;
     const session = await auth(); // KORRIGIERT: auth() aufgerufen
     
-    console.log('[DELETE /api/projects/[id]/assign] Start');
+    logger.debug('[DELETE /api/projects/[id]/assign] Start');
 
     // KORREKTUR: Prüft auf 'kann_admins_verwalten' oder SUPERADMIN
     if (!(await hasAssignmentPermission(session))) {
@@ -121,7 +122,7 @@ export async function DELETE(
     const body = await request.json();
     const { userId } = body; // Der Admin, dessen Zuweisung entfernt wird
     
-    console.log('[DELETE] User ID (Admin):', userId);
+    logger.debug('[DELETE] User ID (Admin):', userId);
     
     if (!userId) {
       return NextResponse.json({ message: 'Benutzer-ID fehlt' }, { status: 400 });
@@ -137,7 +138,7 @@ export async function DELETE(
       return NextResponse.json({ message: 'Keine Zuweisung gefunden' }, { status: 404 });
     }
 
-    console.log('[DELETE] ✅ Zuweisung erfolgreich entfernt');
+    logger.info('[DELETE] ✅ Zuweisung erfolgreich entfernt');
 
     return NextResponse.json({ message: 'Zuweisung erfolgreich entfernt.' }, { status: 200 });
 

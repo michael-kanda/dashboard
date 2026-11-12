@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
 import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { getSemrushKeywordsWithFallback } from '@/lib/semrush-api-handler';
+import { logger } from '@/lib/logger';
 
 interface UserRow {
   id: string;
@@ -20,7 +21,7 @@ interface CacheRow {
 
 export async function GET(request: NextRequest) {
   const debugLog = (msg: string, data?: unknown) => {
-    console.log(`[API Keywords Debug] ${msg}`, data ? JSON.stringify(data, null, 2) : '');
+    logger.debug(`[API Keywords Debug] ${msg}`, data ? JSON.stringify(data, null, 2) : '');
   };
 
   try {

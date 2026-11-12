@@ -2,6 +2,7 @@ import { GA4_MAX_CONCURRENT, GA4_TIMEOUT_MS, GA4_CALL_BUDGET_MS } from './ga4-ru
 import { google } from 'googleapis';
 import { requestBudgetOptions } from '../sync/request-budget';
 import { createGoogleAuth, GOOGLE_SCOPES } from '@/lib/google-auth';
+import { logger } from '@/lib/logger';
 
 google.options({
   retry: true,
@@ -28,7 +29,7 @@ google.options({
   timeout: 30_000,
 });
 
-console.log(
+logger.debug(
   `[google-api] GA4-Layer v4 aktiv (Timeout ${GA4_TIMEOUT_MS / 1000}s, ` +
   `Call-Budget ${GA4_CALL_BUDGET_MS / 1000}s, ${GA4_MAX_CONCURRENT} Slots, ` +
   `Cache+SWR+Selbstheilung inkl. Dimension-Reports)`

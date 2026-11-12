@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
+import { logger } from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
   try {
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
     const isDemo = session.user.is_demo === true;
     
     if (isDemo) {
-      console.log('[Project Timeline] Demo-User erkannt. Sende Demo-Daten...');
+      logger.debug('[Project Timeline] Demo-User erkannt. Sende Demo-Daten...');
       
       // Demo: Projektstart vor 60 Tagen, 6 Monate Laufzeit
       const demoStartDate = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);

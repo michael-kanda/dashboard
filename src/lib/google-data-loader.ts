@@ -59,6 +59,7 @@ import { isDemoProject } from '@/lib/demo-project';
 import { GOOGLE_ADS_SHEET_DATA_VERSION } from '@/lib/google-ads-sheet';
 import { requestBudgetOptions, withRequestBudget } from './sync/request-budget';
 import { parseGa4PropertyId } from '@/lib/ga4-property-id';
+import { logger } from '@/lib/logger';
 
 function getShortErrorMessage(error: unknown): string {
   const err = error as any;
@@ -366,11 +367,11 @@ async function getBrandKeywordsForUser(
     return { keywords: existing, autoDetected: false };
   }
 
-  console.log(`[Brand Auto-Detect] Starte für ${user.email}...`);
+  logger.debug(`[Brand Auto-Detect] Starte für ${user.email}...`);
   try {
     const result = await detectBrandKeywords({ domain: user.domain });
 
-    console.log(
+    logger.debug(
       `[Brand Auto-Detect] ✅ ${result.keywords.length} Keywords erkannt für ${user.email}: ` +
       `[${result.keywords.slice(0, 5).join(', ')}${result.keywords.length > 5 ? ', ...' : ''}]`
     );
@@ -414,12 +415,12 @@ async function loadGoogleData(
   if (!user.id) return null;
   const userId = user.id;
 
-  console.log(
+  logger.debug(
     `[Google Data Loader] User: ${user.email} | google_ads_sheet_id: ${user.google_ads_sheet_id || '(nicht gesetzt)'}`
   );
 
   if (isDemoProject(user)) {
-    console.log('[Google Data Loader] Demo-User erkannt. Lade Demo-Daten...');
+    logger.debug('[Google Data Loader] Demo-User erkannt. Lade Demo-Daten...');
     return attachDashboardMetricMetadata(getDemoAnalyticsData(dateRange), dateRange);
   }
 
@@ -429,11 +430,11 @@ async function loadGoogleData(
       enqueueIfMissing: options.enqueueIfMissing,
       priority: 50,
     });
-    console.log(`[Google Cache] ${snapshot.data ? '✅ SNAPSHOT' : '⏳ AUSSTEHEND'} für ${user.email}`);
+    logger.debug(`[Google Cache] ${snapshot.data ? '✅ SNAPSHOT' : '⏳ AUSSTEHEND'} für ${user.email}`);
     return snapshot.data;
   }
 
-  console.log(`[Google Cache] 🔄 Lade frische Daten für ${user.email}...`);
+  logger.debug(`[Google Cache] 🔄 Lade frische Daten für ${user.email}...`);
 
   const reportingWindow = getReportingWindow(dateRange);
   const startDateStr = reportingWindow.startDate;
@@ -501,7 +502,7 @@ async function loadGoogleData(
       const manualGenAi = normalizeManualGoogleGenAiData((user as any).google_genai_manual_data);
       if (manualGenAi && (!googleGenAi || googleGenAi.status !== 'available' || googleGenAi.totalImpressions <= 0)) {
         googleGenAi = manualGenAi;
-        console.info('[Google GenAI] Nutze manuellen GSC-Export-Fallback.');
+        logger.info('[Google GenAI] Nutze manuellen GSC-Export-Fallback.');
       }
 
       try {
@@ -552,7 +553,7 @@ async function loadGoogleData(
           brandKeywordsSource: finalBrandSource,
         };
 
-        console.log(
+        logger.debug(
           `[Prompt Tracking] ✅ ${promptTracking.totals.totalQueries} Queries ` +
           `(${promptTracking.totals.sharePercent.toFixed(1)} % Anteil, ` +
           `${promptTracking.totals.brandedImpressionShare.toFixed(1)} % Brand-Impressions` +

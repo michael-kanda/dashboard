@@ -7,6 +7,7 @@ import { unstable_noStore as noStore } from 'next/cache';
 import { baseAuthConfig } from '@/lib/auth-config';
 import { clearLoginFailures, isLoginLocked, readClientIp, recordLoginFailure } from '@/lib/login-throttle';
 import { fingerprintPasswordHash } from '@/lib/session-state';
+import { logger } from '@/lib/logger';
 
 // Code erscheint im Login-Formular als Hinweis auf die vorübergehende Sperre.
 class LoginLockedError extends CredentialsSignin {
@@ -38,7 +39,7 @@ export const authConfig = {
           console.warn('[Authorize] Login wegen wiederholter Fehlversuche gesperrt:', normalizedEmail);
           throw new LoginLockedError();
         }
-        console.log('[Authorize] Suche Benutzer:', normalizedEmail);
+        logger.debug('[Authorize] Suche Benutzer:', normalizedEmail);
 
         let user;
         try {
@@ -82,11 +83,11 @@ export const authConfig = {
           if (!user) {
             await bcrypt.compare(credentials.password as string, DUMMY_PASSWORD_HASH);
             await recordLoginFailure(normalizedEmail, clientIp);
-            console.log('[Authorize] Benutzer nicht gefunden:', normalizedEmail);
+            logger.info('[Authorize] Benutzer nicht gefunden:', normalizedEmail);
             throw new Error('Diese E-Mail-Adresse ist nicht registriert');
           }
 
-          console.log('[Authorize] Benutzer gefunden:', user.email);
+          logger.debug('[Authorize] Benutzer gefunden:', user.email);
 
           if (!user.password) {
             console.error('[Authorize] KRITISCHER FEHLER: Benutzer hat kein Passwort-Hash in der DB!');
@@ -98,11 +99,11 @@ export const authConfig = {
 
           if (!passwordsMatch) {
             await recordLoginFailure(normalizedEmail, clientIp);
-            console.log('[Authorize] Passwort-Vergleich fehlgeschlagen für:', normalizedEmail);
+            logger.debug('[Authorize] Passwort-Vergleich fehlgeschlagen für:', normalizedEmail);
             throw new Error('Das Passwort ist nicht korrekt');
           }
 
-          console.log('[Authorize] Login erfolgreich für:', user.email);
+          logger.info('[Authorize] Login erfolgreich für:', user.email);
           await clearLoginFailures(normalizedEmail);
 
         } catch (authError) {

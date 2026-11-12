@@ -1,5 +1,6 @@
 // src/lib/semrush-api-v2-fallback.ts - ALTERNATIVE MIT V2 API
 import axios from 'axios';
+import { logger } from '@/lib/logger';
 
 const apiKey = process.env.SEMRUSH_API_KEY;
 
@@ -40,7 +41,7 @@ export async function getSemrushKeywordsV2Fallback(
     normalizedDomain = normalizedDomain.substring(7);
   }
 
-  console.log('[Semrush-v2] Using fallback v2 API for domain:', normalizedDomain);
+  logger.debug('[Semrush-v2] Using fallback v2 API for domain:', normalizedDomain);
 
   const rankParams: Record<string, string> = {
     key: apiKey,
@@ -51,7 +52,7 @@ export async function getSemrushKeywordsV2Fallback(
   };
 
   try {
-    console.log('[Semrush-v2] Fetching rank data from v2 API');
+    logger.debug('[Semrush-v2] Fetching rank data from v2 API');
     
     const queryString = new URLSearchParams(rankParams).toString();
     
@@ -72,7 +73,7 @@ export async function getSemrushKeywordsV2Fallback(
       return { keywords: [], error: 'No keywords found' };
     }
 
-    console.log('[Semrush-v2] ✅ Got', lines.length, 'rank results');
+    logger.debug('[Semrush-v2] ✅ Got', lines.length, 'rank results');
 
     const keywords: ProcessedKeyword[] = [];
     
@@ -105,7 +106,7 @@ export async function getSemrushKeywordsV2Fallback(
     keywords.sort((a, b) => a.position - b.position);
     const top20 = keywords.slice(0, 20);
 
-    console.log('[Semrush-v2] ✅ Processed', top20.length, 'keywords');
+    logger.debug('[Semrush-v2] ✅ Processed', top20.length, 'keywords');
     return { keywords: top20, error: null };
 
   } catch (error: unknown) {
@@ -137,7 +138,7 @@ export async function getSemrushKeywordsV2Extended(
     normalizedDomain = normalizedDomain.substring(4);
   }
 
-  console.log('[Semrush-v2-ext] Extended v2 API query for:', normalizedDomain);
+  logger.debug('[Semrush-v2-ext] Extended v2 API query for:', normalizedDomain);
 
   try {
     const rankParams: Record<string, string> = {

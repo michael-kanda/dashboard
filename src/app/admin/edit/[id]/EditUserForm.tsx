@@ -29,6 +29,7 @@ import LocalSeoSection from './sections/LocalSeoSection';
 import ConfigurationSection from './sections/ConfigurationSection';
 import GoogleAdsSection from './sections/GoogleAdsSection';
 import SemrushSection from './sections/SemrushSection';
+import { logger } from '@/lib/logger';
 
 interface EditUserFormProps {
   user: User;
@@ -77,8 +78,8 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
 
   useEffect(() => {
     if (user) {
-      console.log('[EditUserForm] useEffect - user.project_timeline_active:', user.project_timeline_active);
-      console.log('[EditUserForm] useEffect - user.maintenance_mode:', user.maintenance_mode);
+      logger.debug('[EditUserForm] useEffect - user.project_timeline_active:', user.project_timeline_active);
+      logger.debug('[EditUserForm] useEffect - user.maintenance_mode:', user.maintenance_mode);
       
       const newFormData = {
         email: user.email || '',

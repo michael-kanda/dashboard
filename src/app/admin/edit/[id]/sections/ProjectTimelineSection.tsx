@@ -9,6 +9,7 @@ import {
   ToggleOff,
 } from 'react-bootstrap-icons';
 import type { EditUserFormData, InputChangeHandler } from './edit-user-form-helpers';
+import { logger } from '@/lib/logger';
 
 interface ProjectTimelineSectionProps {
   formData: Pick<EditUserFormData, 'project_timeline_active' | 'project_start_date' | 'project_duration_months'>;
@@ -36,7 +37,7 @@ export default function ProjectTimelineSection({
             name="project_timeline_active"
             checked={formData.project_timeline_active}
             onChange={(e) => {
-              console.log('[EditUserForm] Checkbox onChange - checked:', e.target.checked);
+              logger.debug('[EditUserForm] Checkbox onChange - checked:', e.target.checked);
               handleInputChange(e);
             }}
             disabled={isSubmitting}

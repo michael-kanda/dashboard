@@ -1,5 +1,6 @@
 // src/lib/weather.ts
 import { requestBudgetOptions } from './sync/request-budget';
+import { logger } from '@/lib/logger';
 
 // =============================================
 // TLD → Koordinaten Mapping (erweiterbar)
@@ -150,7 +151,7 @@ export async function fetchWeatherData(
       });
     }
 
-    console.log(`[Weather] ✅ ${map.size} Tage geladen (${coords.label})`);
+    logger.debug(`[Weather] ✅ ${map.size} Tage geladen (${coords.label})`);
   } catch (error) {
     console.warn('[Weather] Fetch fehlgeschlagen (ignoriert):', error);
   }

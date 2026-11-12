@@ -7,7 +7,8 @@ import type { User } from '@/types';
 import EditUserForm from './EditUserForm';
 import LandingpageManager from './LandingpageManager';
 import ProjectAssignmentManager from './ProjectAssignmentManager';
-import UserLogbook from '@/components/UserLogbook'; 
+import UserLogbook from '@/components/UserLogbook';
+import { logger } from '@/lib/logger'; 
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -28,7 +29,7 @@ interface UserWithAssignments extends Omit<User, 'assigned_projects'> {
 // Lädt den Benutzer UND seine Zuweisungen
 async function getUserData(id: string): Promise<UserWithAssignments | null> {
   try {
-    console.log('[getUserData] 🔍 Suche Benutzer mit ID:', id);
+    logger.debug('[getUserData] 🔍 Suche Benutzer mit ID:', id);
     // 1. Benutzerdaten laden
     const { rows: users } = await sql`
       SELECT

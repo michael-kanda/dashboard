@@ -5,6 +5,7 @@ import { requestBudgetOptions } from '../sync/request-budget';
 import { GA4_KEY_EVENTS_METRIC } from '@/lib/ga4-metrics';
 import type { GoogleAdsGa4Supplement, GoogleAdsMetricLookup } from '@/lib/dashboard-shared';
 import { GOOGLE_ADS_SHEET_DATA_VERSION, parseGoogleAdsSheetNumber, readGoogleAdsConversions, reconcileGoogleAdsCampaignConversions, type GoogleAdsSheetRawRow } from '@/lib/google-ads-sheet';
+import { logger } from '@/lib/logger';
 
 export interface GoogleAdsRow {
   campaign: string;
@@ -134,7 +135,7 @@ async function getGoogleAdsReportUncached(
   const totalSessions = parseInt(totalsRow[5]?.value || '0', 10);
   const totalEngagedSessions = parseInt(totalsRow[6]?.value || '0', 10);
 
-  console.log(
+  logger.debug(
     `[Google Ads] Call 0 Totals → Spend: €${totalCost.toFixed(2)} | Klicks: ${totalClicks} | Conv.: ${totalConversions} | Sessions: ${totalSessions} | Engaged: ${totalEngagedSessions}`
   );
 
@@ -302,8 +303,8 @@ async function getGoogleAdsReportUncached(
       };
     }
 
-    console.log(`[Google Ads] Conv-Lookups → Campaigns: ${Object.keys(conversionsByCampaign).length} | AdGroups: ${Object.keys(conversionsByAdGroup).length} | Queries: ${Object.keys(conversionsByQuery).length}`);
-    console.log(`[Google Ads] Metrics-Lookups → Campaigns: ${Object.keys(metricsByCampaign).length} | AdGroups: ${Object.keys(metricsByAdGroup).length}`);
+    logger.debug(`[Google Ads] Conv-Lookups → Campaigns: ${Object.keys(conversionsByCampaign).length} | AdGroups: ${Object.keys(conversionsByAdGroup).length} | Queries: ${Object.keys(conversionsByQuery).length}`);
+    logger.debug(`[Google Ads] Metrics-Lookups → Campaigns: ${Object.keys(metricsByCampaign).length} | AdGroups: ${Object.keys(metricsByAdGroup).length}`);
   } catch (e) {
     console.warn('[Google Ads] Conv/Metrics-Lookup fehlgeschlagen (ignoriert):', e);
   }
@@ -364,12 +365,12 @@ async function getGoogleAdsReportUncached(
           engagedSessions: parseInt(mets[5]?.value || '0', 10),
         };
       });
-      console.log(`[Google Ads] LP-Call A (mit Kosten): ${landingPageRows.length} Landingpages ✅`);
+      logger.debug(`[Google Ads] LP-Call A (mit Kosten): ${landingPageRows.length} Landingpages ✅`);
     } else {
-      console.log('[Google Ads] LP-Call A: 0 Rows (Thresholding) → Fallback B');
+      logger.debug('[Google Ads] LP-Call A: 0 Rows (Thresholding) → Fallback B');
     }
   } catch {
-    console.log('[Google Ads] LP-Call A fehlgeschlagen → Fallback B');
+    logger.debug('[Google Ads] LP-Call A fehlgeschlagen → Fallback B');
   }
 
   // Versuch B: Fallback ohne Ad-Metriken (falls A leer)
@@ -419,7 +420,7 @@ async function getGoogleAdsReportUncached(
         };
       });
 
-      console.log(`[Google Ads] LP-Call B (ohne Kosten): ${landingPageRows.length} Landingpages`);
+      logger.debug(`[Google Ads] LP-Call B (ohne Kosten): ${landingPageRows.length} Landingpages`);
     } catch (e) {
       console.warn('[Google Ads] LP-Call B fehlgeschlagen (ignoriert):', e);
     }
@@ -604,7 +605,7 @@ export async function getGoogleAdsFromSheet(
   const auth = createAuth();
   const sheets = google.sheets({ version: 'v4', auth, ...requestBudgetOptions() });
 
-  console.log(`[Google Ads Sheet] Lese Sheet ${sheetId} für ${startDate} – ${endDate}`);
+  logger.debug(`[Google Ads Sheet] Lese Sheet ${sheetId} für ${startDate} – ${endDate}`);
 
   // ── Alle Tabs parallel lesen ──
   const [rawCampaigns, rawAdGroups, rawAds, rawQueries] = await Promise.all([
@@ -620,7 +621,7 @@ export async function getGoogleAdsFromSheet(
   const filteredAds = rawAds.filter((r) => isInDateRange(r['Datum'], startDate, endDate));
   const filteredQueries = rawQueries.filter((r) => isInDateRange(r['Datum'], startDate, endDate));
 
-  console.log(`[Google Ads Sheet] Gefiltert → Kampagnen: ${filteredCampaigns.length} | AG: ${filteredAdGroups.length} | Anzeigen: ${filteredAds.length} | SQ: ${filteredQueries.length}`);
+  logger.debug(`[Google Ads Sheet] Gefiltert → Kampagnen: ${filteredCampaigns.length} | AG: ${filteredAdGroups.length} | Anzeigen: ${filteredAds.length} | SQ: ${filteredQueries.length}`);
 
   // ── In GoogleAdsRow[] konvertieren ──
   const parsedCampaignRows: GoogleAdsRow[] = filteredCampaigns.map((r) =>
@@ -673,7 +674,7 @@ export async function getGoogleAdsFromSheet(
     interactionRate: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0,
   };
 
-  console.log(
+  logger.debug(
     `[Google Ads Sheet] Totals → Spend: €${totalCost.toFixed(2)} | Klicks: ${totalClicks} | Conv.: ${totalConversions}` +
     `${conversionResult.fallbackUsed ? ' (aus Detailebene rekonstruiert)' : ''}`
   );

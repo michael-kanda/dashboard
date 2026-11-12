@@ -33,6 +33,7 @@ import {
   releaseGa4RequestLock,
   tryAcquireGa4RequestLock,
 } from '@/lib/ga4-request-lock';
+import { logger } from '@/lib/logger';
 
 // Hintergrund-Tasks nach der Response am Leben halten (SWR-Refresh), OHNE
 // Paket-Abhängigkeit: derselbe Mechanismus, den @vercel/functions intern
@@ -310,13 +311,13 @@ export async function GET(request: NextRequest) {
         const refreshTask = (async () => {
           const lock = await tryAcquireGa4RequestLock(lockKey);
           if (!lock) {
-            console.log(`[AI Traffic V2] Hintergrund-Refresh übersprungen, bereits aktiv: ${lockKey}`);
+            logger.debug(`[AI Traffic V2] Hintergrund-Refresh übersprungen, bereits aktiv: ${lockKey}`);
             inFlightRequests.delete(lockKey);
             return;
           }
 
           try {
-            console.log(`[AI Traffic V2] Hintergrund-Refresh startet für ${ga4PropertyId}`);
+            logger.debug(`[AI Traffic V2] Hintergrund-Refresh startet für ${ga4PropertyId}`);
             const fresh = await getAiTrafficExtendedWithComparison(
               ga4PropertyId,
               currentStartStr,
@@ -325,7 +326,7 @@ export async function GET(request: NextRequest) {
               prevEndStr
             );
             await writeCache(cacheKey, fresh);
-            console.log(`[AI Traffic V2] Hintergrund-Refresh OK für ${ga4PropertyId}`);
+            logger.debug(`[AI Traffic V2] Hintergrund-Refresh OK für ${ga4PropertyId}`);
           } catch (error) {
             if (isGa4QuotaError(error)) {
               await setCooldown(ga4PropertyId);
@@ -365,7 +366,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log(`[AI Traffic V2] Loading data for ${ga4PropertyId}`);
+    logger.debug(`[AI Traffic V2] Loading data for ${ga4PropertyId}`);
 
     // 3) ERSTAUFRUF ohne Cache: synchron laden (mit In-Flight-Dedup innerhalb
     //    der Instanz). Kann bei großen Properties lange dauern — passiert pro

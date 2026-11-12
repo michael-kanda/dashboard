@@ -16,6 +16,7 @@ import {
   PromptClusterResultSchema,
   type PromptClusterApiResponse,
 } from '@/lib/prompt-cluster-schema';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
   }
 
   const userId = (session.user as any).id as string;
-  console.log(`[Prompt Cluster] Auth OK für ${session.user.email}`);
+  logger.debug(`[Prompt Cluster] Auth OK für ${session.user.email}`);
 
   // ── 2. ENV-Check ────────────────────────────────────────────────
   if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
@@ -112,7 +113,7 @@ export async function POST(req: NextRequest) {
       LIMIT 1
     `;
     if (rows.length > 0) {
-      console.log(`[Prompt Cluster] ✅ Cache HIT (Hash ${queriesHash})`);
+      logger.debug(`[Prompt Cluster] ✅ Cache HIT (Hash ${queriesHash})`);
       return NextResponse.json(rows[0].result);
     }
   } catch (e) {
@@ -209,7 +210,7 @@ export async function POST(req: NextRequest) {
       console.warn('[Prompt Cluster] History-Save fehlgeschlagen (ignoriert):', e);
     }
 
-    console.log(
+    logger.debug(
       `[Prompt Cluster] ✅ ${validatedClusters.length} Cluster aus ${queries.length} Queries ` +
       `in ${response.meta.elapsedMs}ms`
     );
