@@ -18,11 +18,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!session?.user || !(session.user as any).id) {
+  if (!session?.user || !session.user.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const userId = (session.user as any).id as string;
+  const userId = session.user.id;
 
   // ── Optional: Date-Range-Filter ──────────────────────────────────
   const url = new URL(req.url);
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
         createdAt: r.created_at,
       })),
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('[Cluster History] Fehler:', e);
     return NextResponse.json(
       { error: 'Konnte Historie nicht laden' },

@@ -199,7 +199,7 @@ export default function FreigabePage() {
       default: return <InfoCircle className="inline-block" size={16} />;
     }
   };
-  const filterOptions = [
+  const filterOptions: { label: string; value: LandingpageStatus | 'alle'; icon: JSX.Element }[] = [
     { label: 'Alle', value: 'alle', icon: <ListTask className="inline-block mr-1" size={16}/> },
     { label: 'Offen', value: 'Offen', icon: <FileEarmarkText className="inline-block mr-1" size={16}/> },
     { label: 'In Prüfung', value: 'In Prüfung', icon: <Search className="inline-block mr-1" size={16}/> },
@@ -245,7 +245,7 @@ export default function FreigabePage() {
            <h3 className="text-sm font-semibold text-muted mb-3 flex items-center gap-1"><Filter size={16}/> Filtern nach Status</h3>
            <div className="flex gap-2 flex-wrap">
               {filterOptions.map(option => (
-                <button key={option.value} onClick={() => setFilterStatus(option.value as any)} className={`px-3 py-1.5 text-sm rounded-md font-medium border transition-colors flex items-center gap-1 ${filterStatus === option.value ? 'bg-accent-solid text-white border-accent' : 'bg-surface text-body border-border hover:bg-surface-secondary'}`}>
+                <button key={option.value} onClick={() => setFilterStatus(option.value)} className={`px-3 py-1.5 text-sm rounded-md font-medium border transition-colors flex items-center gap-1 ${filterStatus === option.value ? 'bg-accent-solid text-white border-accent' : 'bg-surface text-body border-border hover:bg-surface-secondary'}`}>
                     {option.icon} {option.label} ({option.value === 'alle' ? landingpages.length : landingpages.filter(lp => lp.status === option.value).length})
                 </button>
              ))}

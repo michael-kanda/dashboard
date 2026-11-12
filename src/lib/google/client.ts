@@ -3,6 +3,7 @@ import { google } from 'googleapis';
 import { requestBudgetOptions } from '../sync/request-budget';
 import { createGoogleAuth, GOOGLE_SCOPES } from '@/lib/google-auth';
 import { logger } from '@/lib/logger';
+import { errorFields } from '@/lib/errors';
 
 google.options({
   retry: true,
@@ -15,8 +16,8 @@ google.options({
     // schnell fehl und kosten kein Zeitbudget. Timeout-Aborts retried gaxios
     // ohnehin nicht (siehe oben).
     noResponseRetries: 1,
-    onRetryAttempt: (err: any) => {
-      const code = err?.response?.status ?? err?.code ?? err?.error?.type ?? 'no-response';
+    onRetryAttempt: (err) => {
+      const code = err?.response?.status ?? err?.code ?? errorFields(err).error?.type ?? 'no-response';
       const attempt = err?.config?.retryConfig?.currentRetryAttempt ?? '?';
       console.warn(`[Google API] Retry nach ${code} (Versuch ${attempt})`);
     },

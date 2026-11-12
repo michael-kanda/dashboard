@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { sql, type QueryResultRow } from '@vercel/postgres';
 import { UserSchema, type User } from '@/lib/schemas'; // ✅ Import aus Schema
 
 interface UserSession {
@@ -10,7 +10,7 @@ interface UserSession {
 
 export async function getUsersForManagement(user: UserSession): Promise<User[]> {
   try {
-    let rows: any[] = [];
+    let rows: QueryResultRow[] = [];
 
     // --- SUPERADMIN ---
     if (user.role === 'SUPERADMIN') {

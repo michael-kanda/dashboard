@@ -1,6 +1,7 @@
 // src/lib/semrush-api.ts
 import axios from 'axios';
 import { logger } from '@/lib/logger';
+import { errorFields } from '@/lib/errors';
 
 const apiKey = process.env.SEMRUSH_API_KEY;
 
@@ -136,7 +137,7 @@ export async function getSemrushKeywords(
       let landingUrl = '';
       if (kwData.Lu) {
         // Versuche erst exaktes Datum, sonst ersten verfügbaren Wert
-        const urls = kwData.Lu as Record<string, any>;
+        const urls = kwData.Lu;
         const urlVal = urls[dateKey] || Object.values(urls)[0];
         if (typeof urlVal === 'string') landingUrl = urlVal;
         else if (typeof urlVal === 'object') landingUrl = Object.values(urlVal)[0] as string;
@@ -145,7 +146,7 @@ export async function getSemrushKeywords(
       // Traffic %
       let trafficPercent = 0;
       if (kwData.Tr) {
-        const tr = kwData.Tr as Record<string, any>;
+        const tr = kwData.Tr;
         const trVal = tr[dateKey] || Object.values(tr)[0];
         const numVal = typeof trVal === 'object' ? Object.values(trVal)[0] : trVal;
         if (typeof numVal === 'number') trafficPercent = numVal * 100;
@@ -172,7 +173,7 @@ export async function getSemrushKeywords(
     
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
-      const apiMsg = (error.response?.data as any)?.message || JSON.stringify(error.response?.data);
+      const apiMsg = errorFields(error.response?.data).message || JSON.stringify(error.response?.data);
       
       if (status === 403) errorMessage = 'API Key ungültig oder abgelaufen.';
       else if (status === 404) errorMessage = 'Projekt-ID nicht gefunden (Überprüfe Konfiguration).';

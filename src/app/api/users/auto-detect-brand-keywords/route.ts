@@ -27,15 +27,15 @@ async function loadUser(targetUserId: string) {
 
 async function resolveTargetUserId(
   req: NextRequest,
-  fromBody?: any
+  fromBody?: { targetUserId?: string }
 ): Promise<{ ok: false; res: NextResponse } | { ok: true; userId: string }> {
   let session;
   try { session = await auth(); } catch { session = null; }
-  if (!session?.user || !(session.user as any).id) {
+  if (!session?.user || !session.user.id) {
     return { ok: false, res: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   }
-  const userId = (session.user as any).id as string;
-  const role = (session.user as any).role;
+  const userId = session.user.id;
+  const role = session.user.role;
   const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN';
 
   const url = new URL(req.url);
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  let body: any = {};
+  let body: { targetUserId?: string } = {};
   try { body = await req.json(); } catch {}
 
   const ctx = await resolveTargetUserId(req, body);
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
   let result;
   try {
     result = await detectBrandKeywords({ domain: user.domain });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('[Brand Detection] Fehler:', e);
     return NextResponse.json(
       { error: 'Detection fehlgeschlagen' },
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       WHERE id = ${ctx.userId}::uuid
     `;
     await markDashboardSnapshotsStale({ userId: ctx.userId });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('[Brand Detection] Speichern fehlgeschlagen:', e);
     return NextResponse.json(
       { error: 'DB-Save fehlgeschlagen' },

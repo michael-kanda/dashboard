@@ -45,7 +45,7 @@ export async function getProjectIndexingStatus(projectId: string): Promise<Proje
         ON CONFLICT (user_id) DO NOTHING
       `;
     }
-    const { rows } = await sql<any>`
+    const { rows } = await sql`
       SELECT
         url, status, coverage_state, robots_txt_state, indexing_state, page_fetch_state,
         last_crawl_time, google_canonical, user_canonical,

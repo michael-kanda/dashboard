@@ -88,7 +88,7 @@ export function ChatMessage({ message, fontSizeClass = 'text-sm' }: ChatMessageP
                     <ol className="list-none space-y-2 my-2 pl-0 counter-reset-item">{children}</ol>
                   ),
                   li: ({ children, ...props }) => {
-                    const isOrdered = (props as any).ordered;
+                    const isOrdered = 'ordered' in props && Boolean(props.ordered);
                     return (
                       <li className="flex gap-2 text-body">
                         <span className={`shrink-0 mt-0.5 ${isOrdered ? 'text-accent font-semibold' : 'text-accent'}`}>

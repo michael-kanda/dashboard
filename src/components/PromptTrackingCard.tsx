@@ -12,6 +12,7 @@ import { calculatePromptTrackingSignal } from '@/lib/dashboard-shared';
 import { QUESTION_TYPE_LABELS, type QuestionType } from '@/lib/prompt-tracking/query-classifier';
 import type { PromptClusterApiResponse } from '@/lib/prompt-cluster-schema';
 import { calcChange } from '@/lib/prompt-tracking/format';
+import { errorFields } from '@/lib/errors';
 import GoogleCleanUnderline from '@/components/ui/GoogleCleanUnderline';
 import { Spinner } from '@/components/ui/Spinner';
 import { PromptResearchTool } from '@/components/prompt-tracking/PromptResearchTool';
@@ -155,8 +156,8 @@ export default function PromptTrackingCard({
       }
       const result: PromptClusterApiResponse = await res.json();
       setClusterResult(result);
-    } catch (err: any) {
-      setClusterError(err?.message || 'Unbekannter Fehler');
+    } catch (err: unknown) {
+      setClusterError(errorFields(err).message || 'Unbekannter Fehler');
     } finally {
       setIsClustering(false);
     }

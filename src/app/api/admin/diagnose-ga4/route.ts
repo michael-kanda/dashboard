@@ -1,15 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
-import { google } from 'googleapis';
+import { google, type analyticsdata_v1beta } from 'googleapis';
 import { buildAiTrafficDimensionFilter } from '@/lib/ai-sources';
 import { createGoogleAuth, GOOGLE_SCOPES } from '@/lib/google-auth';
+import { errorFields } from '@/lib/errors';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 type DiagnoseSuite = 'core' | 'all';
 type DiagnoseMode = 'reports' | 'dashboard';
+
+type ReportDefinition = { id: string; purpose: string; body: analyticsdata_v1beta.Schema$RunReportRequest };
+
+interface ReportRunResult {
+  id: string;
+  purpose: string;
+  repeatIndex?: number;
+  sequenceIndex?: number;
+  queuedMs: number;
+  ok: boolean;
+  durationMs: number;
+  rowCount?: number;
+  errorType?: string;
+  status?: string | number | null;
+  message?: string;
+  summary: ReturnType<typeof summarizeBody>;
+}
 
 interface DiagnoseArgs {
   property: string;
@@ -47,17 +65,17 @@ function defaultDateRange() {
   };
 }
 
-function summarizeBody(body: any) {
+function summarizeBody(body: analyticsdata_v1beta.Schema$RunReportRequest) {
   return {
-    dimensions: (body.dimensions || []).map((dimension: any) => dimension.name),
-    metrics: (body.metrics || []).map((metric: any) => metric.name),
+    dimensions: (body.dimensions || []).map((dimension) => dimension.name),
+    metrics: (body.metrics || []).map((metric) => metric.name),
     hasFilter: Boolean(body.dimensionFilter),
     limit: body.limit,
   };
 }
 
 function classifyError(error: unknown) {
-  const err = error as any;
+  const err = errorFields(error);
   const message = (
     err?.cause?.message ||
     err?.response?.data?.error?.message ||
@@ -79,7 +97,7 @@ function classifyError(error: unknown) {
   if (status === 401 || status === 403 || lower.includes('permission')) {
     return { type: 'auth-permission', status, message };
   }
-  if (status >= 500 || lower.includes('internal')) return { type: 'ga4-server', status, message };
+  if (Number(status) >= 500 || lower.includes('internal')) return { type: 'ga4-server', status, message };
   return { type: 'other', status, message };
 }
 
@@ -319,7 +337,7 @@ function dashboardReportDefinitions(args: Pick<DiagnoseArgs, 'start' | 'end' | '
   ];
 }
 
-function buildDiagnosis(results: any[]) {
+function buildDiagnosis(results: ReportRunResult[]) {
   const byId = new Map(results.map((result) => [result.id, result]));
   const fail = (id: string) => byId.get(id)?.ok === false;
   const pass = (id: string) => byId.get(id)?.ok === true;
@@ -392,12 +410,12 @@ async function resolveArgs(request: NextRequest): Promise<DiagnoseArgs> {
 }
 
 async function runReport(
-  analytics: any,
+  analytics: analyticsdata_v1beta.Analyticsdata,
   property: string,
-  report: any,
+  report: ReportDefinition,
   timeout: number,
   meta: { repeatIndex?: number; sequenceIndex?: number; queuedAt?: number } = {}
-) {
+): Promise<ReportRunResult> {
   const startedAt = Date.now();
   const summary = summarizeBody(report.body);
 
@@ -412,7 +430,7 @@ async function runReport(
           statusCodesToRetry: [],
           noResponseRetries: 0,
         },
-      } as any
+      }
     );
     return {
       id: report.id,
@@ -461,7 +479,7 @@ async function runWithConcurrency<T, R>(
   return results;
 }
 
-function buildDashboardDiagnosis(results: any[], args: DiagnoseArgs) {
+function buildDashboardDiagnosis(results: ReportRunResult[], args: DiagnoseArgs) {
   const lines = buildDiagnosis(results);
   const failures = results.filter((result) => !result.ok);
   const quotaFailures = failures.filter((result) => result.errorType === 'quota');

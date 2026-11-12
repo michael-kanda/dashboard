@@ -152,20 +152,20 @@ export async function POST(req: NextRequest) {
       : '0';
 
     const topKeywords = data.topQueries?.slice(0, 5)
-      .map((q: any) => `- "${q.query}" (Pos: ${q.position.toFixed(1)}, Klicks: ${q.clicks})`)
+      .map((q) => `- "${q.query}" (Pos: ${q.position.toFixed(1)}, Klicks: ${q.clicks})`)
       .join('\n') || 'Keine Keywords';
 
     // ✅ SEO CHANCEN (Striking Distance Keywords - Position 4-20)
     const seoOpportunities = data.topQueries
-      ?.filter((q: any) => q.position >= 4 && q.position <= 20)
-      .sort((a: any, b: any) => b.impressions - a.impressions)
+      ?.filter((q) => q.position >= 4 && q.position <= 20)
+      .sort((a, b) => b.impressions - a.impressions)
       .slice(0, 5)
-      .map((q: any) => `- "${q.query}" (Pos: ${q.position.toFixed(1)}, Impr: ${q.impressions})`)
+      .map((q) => `- "${q.query}" (Pos: ${q.position.toFixed(1)}, Impr: ${q.impressions})`)
       .join('\n') || 'Keine SEO-Chancen identifiziert';
 
     // ✅ Erweiterter Filter für Data Max
     const topConverters = data.topConvertingPages
-      ?.filter((p: any) => {
+      ?.filter((p) => {
          const path = p.path.toLowerCase();
          const isStandardExcluded = 
             path.includes('danke') || 
@@ -183,7 +183,7 @@ export async function POST(req: NextRequest) {
             path.includes('undefined');
          return !isStandardExcluded && !isTechnical;
       })
-      .map((p: any) => {
+      .map((p) => {
          if (p.conversions > 0) {
            return `- "${p.path}": ${p.conversions} Conv. (Rate: ${p.conversionRate}%, Eng: ${p.engagementRate}%)`;
          } else {
@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
       .join('\n') || 'Keine relevanten Content-Daten verfügbar.';
       
     const topChannels = data.channelData?.slice(0, 3)
-      .map((c: any) => `${c.name} (${fmt(c.value)})`)
+      .map((c) => `${c.name} (${fmt(c.value)})`)
       .join(', ') || 'Keine Kanal-Daten';
 
     // ✅ NEU: Google Ads Daten (aus Frontend/Sheet)
@@ -245,15 +245,15 @@ export async function POST(req: NextRequest) {
     // ✅ NEU: KI-Traffic Analyse mit Quellen und Top-Seiten
     const aiTrafficSources = data.aiTraffic?.topAiSources
       ?.slice(0, 5)
-      .map((s: any) => `- ${s.source}: ${s.sessions} Sitzungen (${s.percentage.toFixed(1)}%)`)
+      .map((s) => `- ${s.source}: ${s.sessions} Sitzungen (${s.percentage.toFixed(1)}%)`)
       .join('\n') || 'Keine KI-Quellen erkannt';
 
     // KI-Traffic Trend-Analyse
     const aiTrend = data.aiTraffic?.trend;
     let aiTrendInfo = 'Keine Trenddaten';
     if (aiTrend && aiTrend.length >= 7) {
-      const recentWeek = aiTrend.slice(-7).reduce((sum: number, t: any) => sum + (t.sessions || t.value || 0), 0);
-      const previousWeek = aiTrend.slice(-14, -7).reduce((sum: number, t: any) => sum + (t.sessions || t.value || 0), 0);
+      const recentWeek = aiTrend.slice(-7).reduce((sum: number, t: { sessions?: number; value?: number }) => sum + (t.sessions || t.value || 0), 0);
+      const previousWeek = aiTrend.slice(-14, -7).reduce((sum: number, t: { sessions?: number; value?: number }) => sum + (t.sessions || t.value || 0), 0);
       if (previousWeek > 0) {
         const trendChange = ((recentWeek - previousWeek) / previousWeek * 100).toFixed(1);
         aiTrendInfo = `Letzte 7 Tage: ${recentWeek} Sitzungen (${Number(trendChange) >= 0 ? '+' : ''}${trendChange}% vs. Vorwoche)`;
@@ -266,8 +266,8 @@ export async function POST(req: NextRequest) {
     const genAiTrend = genAi?.trend || [];
     let genAiTrendInfo = genAi?.message || 'Keine Google-GenAI-Daten verfügbar';
     if (genAiTrend.length >= 7) {
-      const recentWeek = genAiTrend.slice(-7).reduce((sum: number, t: any) => sum + (t.impressions || t.value || 0), 0);
-      const previousWeek = genAiTrend.slice(-14, -7).reduce((sum: number, t: any) => sum + (t.impressions || t.value || 0), 0);
+      const recentWeek = genAiTrend.slice(-7).reduce((sum: number, t: { impressions?: number; value?: number }) => sum + (t.impressions || t.value || 0), 0);
+      const previousWeek = genAiTrend.slice(-14, -7).reduce((sum: number, t: { impressions?: number; value?: number }) => sum + (t.impressions || t.value || 0), 0);
       if (previousWeek > 0) {
         const trendChange = ((recentWeek - previousWeek) / previousWeek * 100).toFixed(1);
         genAiTrendInfo = `Letzte 7 Tage: ${recentWeek} GenAI-Impressions (${Number(trendChange) >= 0 ? '+' : ''}${trendChange}% vs. Vorwoche)`;
@@ -277,7 +277,7 @@ export async function POST(req: NextRequest) {
     }
 
     const genAiTopPages = genAi?.topPages?.length
-      ? genAi.topPages.slice(0, 5).map((page: any) => `- ${page.key}: ${fmt(page.impressions)} GenAI-Impressions`).join('\n')
+      ? genAi.topPages.slice(0, 5).map((page) => `- ${page.key}: ${fmt(page.impressions)} GenAI-Impressions`).join('\n')
       : 'Keine Top-Seiten verfügbar';
 
     const genAiStatusLabel = genAi?.status === 'available'
@@ -291,14 +291,14 @@ export async function POST(req: NextRequest) {
       const localTotals = data.localSeo.totals;
       const localLocations = data.localSeo.locations
         .slice()
-        .sort((a: any, b: any) => (b.conversions - a.conversions) || (b.sessions - a.sessions) || (b.impressions - a.impressions))
+        .sort((a, b) => (b.conversions - a.conversions) || (b.sessions - a.sessions) || (b.impressions - a.impressions))
         .slice(0, 8)
-        .map((location: any, index: number) => {
+        .map((location, index) => {
           const topQueries = location.topQueries?.slice(0, 3)
-            .map((q: any) => `"${q.query}" (${fmt(q.impressions)} Impr., ${fmt(q.clicks)} Klicks, Pos. ${q.position?.toFixed(1) ?? 'k.A.'})`)
+            .map((q) => `"${q.query}" (${fmt(q.impressions)} Impr., ${fmt(q.clicks)} Klicks, Pos. ${q.position?.toFixed(1) ?? 'k.A.'})`)
             .join('; ') || 'keine passenden lokalen GSC-Queries';
           const landingPages = location.topLandingPages?.slice(0, 3)
-            .map((p: any) => `${p.path} (${fmt(p.newUsers || 0)} neue Besucher, ${fmt(p.sessions || 0)} Sessions, ${fmt(p.conversions || 0)} Conv.)`)
+            .map((p) => `${p.path} (${fmt(p.newUsers || 0)} neue Besucher, ${fmt(p.sessions || 0)} Sessions, ${fmt(p.conversions || 0)} Conv.)`)
             .join('; ') || 'keine Standort-Landingpage-Daten';
 
           return `${index + 1}. ${location.name} (${[location.postalCode, location.city, location.country].filter(Boolean).join(', ') || 'ohne Standortangabe'})

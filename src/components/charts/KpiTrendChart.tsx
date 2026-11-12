@@ -441,7 +441,7 @@ export default function KpiTrendChart({
               height={36}
               content={({ payload }) => (
                 <div className="flex justify-center gap-6 mb-4">
-                  {payload?.map((entry: any, index) => {
+                  {payload?.map((entry, index) => {
                      const isPrimary = index === 0;
                      const conf = isPrimary ? activeConfig : compareConfig;
                      if (!conf) return null;

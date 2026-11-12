@@ -26,8 +26,8 @@ interface UserRow {
   semrush_tracking_id_02: string | null;
   google_ads_sheet_id: string | null;
   brand_keywords: string[] | null;
-  google_genai_manual_data: any | null;
-  project_locations: any[] | null;
+  google_genai_manual_data: unknown;
+  project_locations: User['project_locations'];
 }
 
 export async function GET(
@@ -84,7 +84,7 @@ export async function GET(
     try {
       // Wir bauen ein Objekt, das dem 'User'-Schema entspricht
       // Wichtig: null-Werte aus der DB zu undefined konvertieren, da Zod/TS das oft lieber mag
-      const projectData: Partial<User> & { project_locations?: any[]; brand_keywords?: string[] | null } = {
+      const projectData: Partial<User> = {
         id: project.id, // ID ist Pflicht und hier vorhanden
         email: project.email,
         role: project.role,
@@ -107,7 +107,7 @@ export async function GET(
       
       // TypeScript beschwert sich, weil getOrFetchGoogleData(Partial<User>) aufgerufen wird,
       // aber intern User.id braucht. Wir erzwingen den Cast, da wir wissen, dass ID da ist.
-      const dashboardData = await getOrFetchGoogleData(projectData as any, dateRange);
+      const dashboardData = await getOrFetchGoogleData(projectData as User, dateRange);
 
       if (!dashboardData) {
         return NextResponse.json({

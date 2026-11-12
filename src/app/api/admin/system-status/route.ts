@@ -5,6 +5,7 @@ import { generateText } from 'ai';
 import { getAiModels, google } from '@/lib/ai-config';
 import { getSearchConsoleData, getAnalyticsData } from '@/lib/google-api';
 import { getBingData } from '@/lib/bing-api';
+import { getErrorMessage } from '@/lib/errors';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
@@ -42,9 +43,9 @@ export async function GET() {
       status.database.status = 'ok';
       status.database.latency = Math.round(performance.now() - startDb);
       status.database.message = 'Verbindung stabil.';
-    } catch (e: any) {
+    } catch (e: unknown) {
       status.database.status = 'error';
-      status.database.message = e.message;
+      status.database.message = getErrorMessage(e);
     }
 
     // --- TEST 2: GOOGLE API AUTH CONFIG ---
@@ -54,9 +55,9 @@ export async function GET() {
       }
       status.google.status = 'ok';
       status.google.message = 'Credentials konfiguriert.';
-    } catch (e: any) {
+    } catch (e: unknown) {
       status.google.status = 'error';
-      status.google.message = e.message;
+      status.google.message = getErrorMessage(e);
     }
 
     // --- TEST 3: SEMRUSH CONFIG ---
@@ -68,9 +69,9 @@ export async function GET() {
         status.semrush.status = 'ok';
         status.semrush.message = 'API Key vorhanden.';
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       status.semrush.status = 'error';
-      status.semrush.message = e.message;
+      status.semrush.message = getErrorMessage(e);
     }
 
     // --- TEST 4: KI MODELL LIVE CHECK ---
@@ -99,8 +100,8 @@ export async function GET() {
             ? `Aktiv: ${modelName}. Live-Test fehlerfrei.`
             : `Fallback aktiv: ${modelName}. Hauptmodell ${aiModels.primary} fehlerhaft: ${lastError}`;
           break;
-        } catch (modelError: any) {
-          lastError = modelError?.message || String(modelError);
+        } catch (modelError: unknown) {
+          lastError = getErrorMessage(modelError) || String(modelError);
         }
       }
 
@@ -109,10 +110,10 @@ export async function GET() {
         status.aiModel.latency = Math.round(performance.now() - startAi);
         status.aiModel.message = `Alle KI-Modelle fehlgeschlagen. Letzter Fehler: ${lastError || 'Unbekannt'}`;
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       status.aiModel.status = 'error';
       status.aiModel.latency = Math.round(performance.now() - startAi);
-      status.aiModel.message = e.message;
+      status.aiModel.message = getErrorMessage(e);
     }
 
     // --- TEST 5: CACHE STATS ---
@@ -143,9 +144,9 @@ export async function GET() {
         status.cron.status = 'warning';
         status.cron.message = 'Noch keine GSC Daten vorhanden.';
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
        status.cron.status = 'error';
-       status.cron.message = 'Prüfung fehlgeschlagen: ' + e.message;
+       status.cron.message = 'Prüfung fehlgeschlagen: ' + getErrorMessage(e);
     }
 
     // --- TEST 7: LIVE DATEN-FLUSS (GSC, GA4 & BING) ---
@@ -185,8 +186,8 @@ export async function GET() {
             try {
                await getSearchConsoleData(testUser.gsc_site_url, gscDateStr, gscDateStr);
                status.gscApi = { status: 'ok', message: `OK (${userLabel})` };
-            } catch (e: any) {
-               let errorMsg = e.message;
+            } catch (e: unknown) {
+               let errorMsg = getErrorMessage(e);
                if(errorMsg.includes('User does not have sufficient permissions')) errorMsg = 'Zugriff verweigert (Permissions)';
                
                status.gscApi = { 
@@ -203,8 +204,8 @@ export async function GET() {
             try {
                await getAnalyticsData(testUser.ga4_property_id, gaDateStr, gaDateStr);
                status.ga4Api = { status: 'ok', message: `OK (${userLabel})` };
-            } catch (e: any) {
-               status.ga4Api = { status: 'warning', message: `Fehler bei ${userLabel}: ${e.message}` };
+            } catch (e: unknown) {
+               status.ga4Api = { status: 'warning', message: `Fehler bei ${userLabel}: ${getErrorMessage(e)}` };
             }
          } else {
             status.ga4Api = { status: 'pending', message: `${userLabel}: Kein GA4 konfiguriert.` };
@@ -220,8 +221,8 @@ export async function GET() {
                // getBingData fängt Fehler intern ab und gibt [] zurück.
                // Wir bewerten es als OK, wenn der Aufruf durchlief.
                status.bingApi = { status: 'ok', message: `OK (${userLabel})` };
-            } catch (e: any) {
-               status.bingApi = { status: 'warning', message: `Fehler bei ${userLabel}: ${e.message}` };
+            } catch (e: unknown) {
+               status.bingApi = { status: 'warning', message: `Fehler bei ${userLabel}: ${getErrorMessage(e)}` };
             }
          } else {
             status.bingApi = { status: 'pending', message: 'User hat keine URL für Bing Test.' };
@@ -235,7 +236,7 @@ export async function GET() {
 
     return NextResponse.json(status);
 
-  } catch (error: any) {
-    return NextResponse.json({ message: 'System Check Failed', error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ message: 'System Check Failed', error: getErrorMessage(error) }, { status: 500 });
   }
 }

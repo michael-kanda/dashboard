@@ -39,7 +39,7 @@ const MAX_LINES = 600;
 const lineBaseline = new Map([
   ['src/components/LocalSeoMapWidget.tsx', 852],
   ['src/lib/google/gsc.ts', 832],
-  ['src/lib/google-data-loader.ts', 829],
+  ['src/lib/google-data-loader.ts', 823],
   ['src/components/IndexingStatusWidget.tsx', 798],
   ['src/lib/google/ads.ts', 706],
   ['src/lib/google/ga4.ts', 683],

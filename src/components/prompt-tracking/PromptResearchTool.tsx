@@ -14,6 +14,7 @@ import {
 } from '@/lib/prompt-tracking/research';
 import GoogleCleanUnderline from '@/components/ui/GoogleCleanUnderline';
 import { Spinner } from '@/components/ui/Spinner';
+import { errorFields } from '@/lib/errors';
 
 // ════════════════════════════════════════════════════════════════════
 // Admin-only Prompt Research Tool
@@ -104,8 +105,8 @@ export function PromptResearchTool({
         rank: idx + 1,
       }));
       setDataMaxOpportunities(ranked);
-    } catch (error: any) {
-      setResearchError(error?.message || 'DataMax konnte keine Prompts generieren.');
+    } catch (error: unknown) {
+      setResearchError(errorFields(error).message || 'DataMax konnte keine Prompts generieren.');
     } finally {
       setIsGeneratingResearch(false);
     }

@@ -43,14 +43,16 @@ function parseDate(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+type ManualBreakdownItem = { key?: string; page?: string; url?: string; country?: string; device?: string; impressions?: number | string };
+
 function normalizeItems(
-  items: ManualGenAiInput['topPages'],
+  items: ManualBreakdownItem[] | undefined,
   fallbackKey: 'page' | 'country' | 'device' = 'page',
 ): GoogleGenAiBreakdownItem[] {
   if (!Array.isArray(items)) return [];
   return items
     .map((item) => {
-      const key = item.key || (item as any)[fallbackKey] || item.url || '';
+      const key = item.key || item[fallbackKey] || item.url || '';
       const impressions = parseNumber(item.impressions);
       return key && impressions > 0 ? { key, impressions } : null;
     })
@@ -94,8 +96,8 @@ export function normalizeManualGoogleGenAiData(raw: unknown): GoogleGenAiPerform
   const topPages = normalizeItems(input.topPages).length > 0
     ? normalizeItems(input.topPages)
     : csvParsed.topPages;
-  const countries = normalizeItems(input.countries as any, 'country');
-  const devices = normalizeItems(input.devices as any, 'device');
+  const countries = normalizeItems(input.countries, 'country');
+  const devices = normalizeItems(input.devices, 'device');
   const trend = Array.isArray(input.trend)
     ? input.trend
       .map((point) => {

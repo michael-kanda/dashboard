@@ -53,8 +53,19 @@ type UserStatus = {
   data_max_enabled?: boolean; // NEU: DataMax Status
 };
 
+// Ausschnitt der Antwort von /api/admin/system-status, den diese Seite liest.
+type ServiceCheck = { status?: string; message?: string };
+type SystemStatusResponse = {
+  database?: ServiceCheck;
+  google?: ServiceCheck;
+  semrush?: ServiceCheck;
+  gscApi?: ServiceCheck;
+  aiModel?: ServiceCheck & { activeModel?: string; fallbackModel?: string; primaryModel?: string; latency?: number };
+  cache: { count: number | string };
+};
+
 export default function SystemHealthPage() {
-  const [status, setStatus] = useState<any>(null);
+  const [status, setStatus] = useState<SystemStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSchedulingRefresh, setIsSchedulingRefresh] = useState(false);
   const [cacheNotice, setCacheNotice] = useState<string | null>(null);

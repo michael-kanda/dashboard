@@ -3,10 +3,13 @@ import { sql } from '@vercel/postgres';
 import { requestBudgetOptions } from '../sync/request-budget';
 import { getGa4PropertyLockKeyFromCacheKey, releaseGa4RequestLock, tryAcquireGa4RequestLock } from '@/lib/ga4-request-lock';
 import { logger } from '@/lib/logger';
+import { errorFields } from '@/lib/errors';
+
+type VercelRequestContext = { get?: () => { waitUntil?: unknown } | undefined };
 
 function vercelWaitUntil(task: Promise<unknown>): void {
   try {
-    const ctx = (globalThis as any)[Symbol.for('@vercel/request-context')]?.get?.();
+    const ctx = (globalThis as { [key: symbol]: VercelRequestContext | undefined })[Symbol.for('@vercel/request-context')]?.get?.();
     if (ctx && typeof ctx.waitUntil === 'function') {
       ctx.waitUntil(task);
     }
@@ -108,7 +111,7 @@ export async function withGa4ResultCache<T>(cacheKey: string, fetcher: () => Pro
     // weitere Tokens verbrennen.
     const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
     const isQuotaError = msg.includes('quota') || msg.includes('resource_exhausted');
-    const isAbortError = msg.includes('aborted') || (error as any)?.error?.type === 'aborted' || (error as any)?.cause?.type === 'aborted';
+    const isAbortError = msg.includes('aborted') || errorFields(error).error?.type === 'aborted' || errorFields(error).cause?.type === 'aborted';
     if (!isQuotaError && !isAbortError) {
       console.warn(`[GA4 Cache] Erstaufruf fehlgeschlagen — starte Selbstheilungs-Refresh für ${cacheKey}`);
       scheduleGa4BackgroundRefresh(cacheKey, fetcher);
@@ -119,7 +122,7 @@ export async function withGa4ResultCache<T>(cacheKey: string, fetcher: () => Pro
   }
 }
 
-async function readGa4ResultCache(cacheKey: string): Promise<{ payload: any; ageMs: number } | null> {
+async function readGa4ResultCache(cacheKey: string): Promise<{ payload: unknown; ageMs: number } | null> {
   try {
     const { rows } = await sql`
       SELECT payload, created_at FROM ga4_ai_traffic_cache WHERE cache_key = ${cacheKey}
@@ -135,7 +138,7 @@ async function readGa4ResultCache(cacheKey: string): Promise<{ payload: any; age
   }
 }
 
-async function writeGa4ResultCache(cacheKey: string, payload: any): Promise<void> {
+async function writeGa4ResultCache(cacheKey: string, payload: unknown): Promise<void> {
   try {
     await sql`
       INSERT INTO ga4_ai_traffic_cache (cache_key, payload, created_at)
@@ -179,7 +182,7 @@ function releaseGa4Slot(): void {
 }
 
 export function isGa4AbortError(error: unknown): boolean {
-  const err = error as any;
+  const err = errorFields(error);
   const message = error instanceof Error ? error.message : String(error);
   return (
     message.toLowerCase().includes('aborted') ||
@@ -190,7 +193,7 @@ export function isGa4AbortError(error: unknown): boolean {
 }
 
 export function getShortGoogleError(error: unknown): string {
-  const err = error as any;
+  const err = errorFields(error);
   return (
     err?.cause?.message ||
     err?.response?.data?.error?.message ||
@@ -228,7 +231,7 @@ export async function ga4RunReport(
     const timeout = Math.min(GA4_TIMEOUT_MS, remainingMs);
     return (await analytics.properties.runReport(
       request,
-      { ...GA4_REQUEST_OPTIONS, timeout, ...requestBudgetOptions() } as any
+      { ...GA4_REQUEST_OPTIONS, timeout, ...requestBudgetOptions() }
     )) as unknown as { data: analyticsdata_v1beta.Schema$RunReportResponse };
   } finally {
     releaseGa4Slot();

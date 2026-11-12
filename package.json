@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint src scripts --max-warnings 183",
+    "lint": "eslint src scripts --max-warnings 14",
     "typecheck": "tsc --noEmit",
     "test:data-modules": "node --no-warnings --experimental-strip-types --test --test-concurrency=1 tests/data-modules/*.test.ts",
     "audit:code": "node scripts/audit-code.mjs",

@@ -2,8 +2,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
-import { sql } from '@vercel/postgres';
+import { sql, type QueryResultRow } from '@vercel/postgres';
 import { logger } from '@/lib/logger';
+
+// Trendpunkt im gecachten Dashboard-JSON (google_data_cache.data).
+type CachedTrendPoint = { date: string | number; value?: number; sessions?: number; impressions?: number };
 
 export async function GET(req: NextRequest) {
   try {
@@ -179,8 +182,8 @@ export async function GET(req: NextRequest) {
           
           if (cacheRows.length > 0 && cacheRows[0].data?.charts?.impressions) {
             gscImpressionTrend = cacheRows[0].data.charts.impressions
-              .filter((point: any) => new Date(point.date) >= projectStartDate)
-              .map((point: any) => ({
+              .filter((point: CachedTrendPoint) => new Date(point.date) >= projectStartDate)
+              .map((point: CachedTrendPoint) => ({
                 date: new Date(point.date).toISOString().split('T')[0],
                 value: point.value || 0
               }));
@@ -205,8 +208,8 @@ export async function GET(req: NextRequest) {
       
       if (cacheRows.length > 0 && cacheRows[0].data?.aiTraffic?.trend) {
         aiTrafficTrend = cacheRows[0].data.aiTraffic.trend
-          .filter((point: any) => new Date(point.date) >= projectStartDate)
-          .map((point: any) => ({
+          .filter((point: CachedTrendPoint) => new Date(point.date) >= projectStartDate)
+          .map((point: CachedTrendPoint) => ({
             date: new Date(point.date).toISOString().split('T')[0],
             value: point.sessions || point.value || 0
           }));
@@ -214,8 +217,8 @@ export async function GET(req: NextRequest) {
 
       if (cacheRows.length > 0 && cacheRows[0].data?.googleGenAi?.trend) {
         genAiImpressionTrend = cacheRows[0].data.googleGenAi.trend
-          .filter((point: any) => new Date(point.date) >= projectStartDate)
-          .map((point: any) => ({
+          .filter((point: CachedTrendPoint) => new Date(point.date) >= projectStartDate)
+          .map((point: CachedTrendPoint) => ({
             date: new Date(point.date).toISOString().split('T')[0],
             value: point.impressions || point.value || 0
           }));
@@ -225,7 +228,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 5. Top Movers (Landingpages mit größtem Impressionen-Zuwachs)
-    let topMovers: any[] = [];
+    let topMovers: QueryResultRow[] = [];
     
     try {
       const { rows: moverRows } = await sql`

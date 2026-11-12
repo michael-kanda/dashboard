@@ -258,7 +258,7 @@ function GoogleAdsWidgetContent({ data, isLoading, error, showSourceComparison =
         <KpiMini label="Ø CPC"       value={formatCurrency(totals.avgCpc)} />
         <KpiMini label="Conversions" value={formatNumber(totals.conversions)} />
         {isSheet
-          ? <KpiMini label="Impressionen" value={formatNumber((totals as any).impressions ?? 0)} />
+          ? <KpiMini label="Impressionen" value={formatNumber(totals.impressions ?? 0)} />
           : <KpiMini label="Sitzungen"    value={formatNumber(totals.sessions)} />
         }
         {ga4Supplement && (

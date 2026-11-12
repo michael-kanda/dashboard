@@ -2,6 +2,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth';
+import type { Session } from 'next-auth';
 import { canAccessLandingpage } from '@/lib/project-access';
 import * as Brevo from '@getbrevo/brevo';
 import { logger } from '@/lib/logger'; // ✅ Brevo direkt importiert
@@ -15,7 +16,7 @@ apiInstance.setApiKey(
 const systemEmail = process.env.BREVO_SYSTEM_EMAIL || 'status@datapeak.at'; // Fallback wie in Status-Route
 
 // Superadmins, zugewiesene Admins und der Projektinhaber dürfen auf die Landingpage zugreifen.
-async function hasAccess(landingpageId: string, session: any) {
+async function hasAccess(landingpageId: string, session: Session | null) {
   return canAccessLandingpage(session?.user, landingpageId);
 }
 

@@ -1,13 +1,13 @@
 import type { DailyDataPoint, DateRangeData } from './types';
 import { createAuth } from './client';
 import { parseGscDate } from './dates';
-import { google } from 'googleapis';
+import { google, type searchconsole_v1 } from 'googleapis';
 import { requestBudgetOptions } from '../sync/request-budget';
-import { type GoogleGenAiPerformanceData, type GoogleGenAiBreakdownItem } from '@/lib/dashboard-shared';
+import type { GoogleGenAiPerformanceData, GoogleGenAiBreakdownItem, PromptTrackingResult, PromptQueryData, PromptWordCountBucket, QuestionTypeDistribution } from '@/lib/dashboard-shared';
 import type { TopQueryData } from '@/types/dashboard';
-import type { PromptTrackingResult, PromptQueryData, PromptWordCountBucket, QuestionTypeDistribution } from '@/lib/dashboard-shared';
 import { isBrandedQuery, hasGeoReference, detectQuestionType, type QuestionType } from '@/lib/prompt-tracking/query-classifier';
 import { logger } from '@/lib/logger';
+import { errorFields, getErrorMessage } from '@/lib/errors';
 
 export async function getSearchConsoleData(
   siteUrl: string,
@@ -102,7 +102,7 @@ function emptyGoogleGenAiPerformance(message: string): GoogleGenAiPerformanceDat
 }
 
 async function queryGenAiDimension(
-  searchconsole: any,
+  searchconsole: searchconsole_v1.Searchconsole,
   siteUrl: string,
   startDate: string,
   endDate: string,
@@ -210,8 +210,8 @@ export async function getGoogleGenAiPerformanceData(
       source: 'gsc-search-appearance',
       dataVersion: GOOGLE_GENAI_DATA_VERSION,
     };
-  } catch (error: any) {
-    console.warn('[Google GenAI] Report/API nicht verfuegbar:', error?.message || error);
+  } catch (error: unknown) {
+    console.warn('[Google GenAI] Report/API nicht verfuegbar:', errorFields(error).message || error);
     return {
       ...emptyGoogleGenAiPerformance(
         'Der neue Google-GenAI-Report ist offiziell angekuendigt, aber fuer diese Property/API-Abfrage noch nicht verfuegbar.'
@@ -318,7 +318,7 @@ export interface GscPageData {
 const GSC_BATCH_SIZE = 20;
 
 async function fetchGscBatch(
-  searchconsole: any,
+  searchconsole: searchconsole_v1.Searchconsole,
   siteUrl: string,
   pageUrls: string[],
   startDate: string,
@@ -363,8 +363,8 @@ async function fetchGscBatch(
         });
       }
     }
-  } catch (error: any) {
-    console.error(`[GSC Batch] Fehler für ${pageUrls.length} URLs:`, error.message);
+  } catch (error: unknown) {
+    console.error(`[GSC Batch] Fehler für ${pageUrls.length} URLs:`, getErrorMessage(error));
   }
 
   return dataMap;
