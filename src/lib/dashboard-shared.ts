@@ -56,10 +56,7 @@ export interface ApiErrorStatus {
 export interface LandingPageQueryData { query: string; clicks: number; impressions: number; }
 export interface LandingPageQueries { [path: string]: LandingPageQueryData[]; }
 
-export interface FollowUpPath { path: string; sessions: number; percentage: number; }
-export interface LandingPageFollowUpData {
-  landingPage: string; totalSessions: number; followUpPaths: FollowUpPath[];
-}
+export type { FollowUpPath, LandingPageFollowUpData } from '@/types/landing-page';
 
 export interface ConvertingPageData {
   path: string; conversions: number; conversionRate: number;

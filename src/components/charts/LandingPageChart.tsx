@@ -3,6 +3,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { ConvertingPageData } from '@/lib/dashboard-shared';
+import type { LandingPageFollowUpData } from '@/types/landing-page';
 import {
   Search,
   TagFill,
@@ -20,19 +21,6 @@ import { PageSpinner } from '@/components/ui/Spinner';
 // Typ für die Query-Daten pro Landingpage
 export interface LandingPageQueries {
   [path: string]: Array<{ query: string; clicks: number; impressions: number }>;
-}
-
-export interface FollowUpPath {
-  path: string;
-  sessions: number;
-  percentage: number;
-}
-
-export interface FollowUpData {
-  landingPage: string;
-  totalSessions: number;
-  landingPageSessions: number;
-  followUpPaths: FollowUpPath[];
 }
 
 interface Props {
@@ -63,7 +51,7 @@ export default function LandingPageChart({
   // State für Folgepfade-Detail-Ansicht (Lightbox)
   const [showFollowUpDetail, setShowFollowUpDetail] = useState(false);
   const [selectedLandingPage, setSelectedLandingPage] = useState<string | null>(null);
-  const [followUpData, setFollowUpData] = useState<FollowUpData | null>(null);
+  const [followUpData, setFollowUpData] = useState<LandingPageFollowUpData | null>(null);
   const [isLoadingFollowUp, setIsLoadingFollowUp] = useState(false);
   const [followUpError, setFollowUpError] = useState<string | null>(null);
 
