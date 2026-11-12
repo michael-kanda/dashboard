@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
+import { logger } from '@/lib/logger';
 
 export async function PATCH(
   req: NextRequest,
@@ -28,7 +29,7 @@ export async function PATCH(
     // 3. DEMO-SCHUTZ (NEU)
     // ==========================================
     if (session.user.is_demo) {
-      console.log('[Settings] Blockiere Schreibzugriff für Demo-User:', session.user.email);
+      logger.debug('[Settings] Blockiere Schreibzugriff für Demo-User:', session.user.email);
       return NextResponse.json(
         { message: 'Im Demo-Modus können Projekteinstellungen nicht geändert werden.' },
         { status: 403 }

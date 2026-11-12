@@ -11,6 +11,7 @@ import crypto from 'node:crypto';
 import type { User } from '@/lib/schemas'; 
 import { getAiModels } from '@/lib/ai-config';
 import { getProjectIndexingStatus } from '@/lib/indexing-status';
+import { logger } from '@/lib/logger';
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     const isDemo = session.user.is_demo === true;
     
     if (isDemo) {
-      console.log('[AI Analyze] Demo-User erkannt. Simuliere Antwort...');
+      logger.debug('[AI Analyze] Demo-User erkannt. Simuliere Antwort...');
       
       await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -441,7 +442,7 @@ export async function POST(req: NextRequest) {
     `;
 
     if (cacheRows.length > 0) {
-      console.log('[AI Cache] ✅ HIT! Liefere gespeicherte Antwort.');
+      logger.debug('[AI Cache] ✅ HIT! Liefere gespeicherte Antwort.');
       const stream = new ReadableStream({
         start(controller) {
           controller.enqueue(new TextEncoder().encode(cacheRows[0].response));

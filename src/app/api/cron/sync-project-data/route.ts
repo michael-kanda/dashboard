@@ -16,6 +16,7 @@ import {
   withInfrastructureRetry,
 } from '@/lib/sync/retry';
 import { pickNextProjectSyncJobType } from '@/lib/sync/dispatcher-policy';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -213,7 +214,7 @@ export async function GET(request: NextRequest) {
     }
 
     const queueAfter = await retryDatabaseOperation('Queue-Rueckstau lesen', getQueueSourceStates);
-    console.info('[Sync Dispatcher] Kapazitaet', JSON.stringify({ sourceStates, queueAfter, jobTimings }));
+    logger.info('[Sync Dispatcher] Kapazitaet', JSON.stringify({ sourceStates, queueAfter, jobTimings }));
     const failures = results.filter((result) => !result.success);
     const transientFailures = failures.filter((result) => result.failureKind !== 'permanent');
     const permanentFailures = failures.length - transientFailures.length;

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,7 +74,7 @@ export async function POST(req: Request) {
         SET data_max_enabled = ${newState}
         WHERE role != 'SUPERADMIN'
       `;
-      console.log(`[DataMax] Bulk ${newState ? 'aktiviert' : 'deaktiviert'} für alle Non-Superadmins`);
+      logger.debug(`[DataMax] Bulk ${newState ? 'aktiviert' : 'deaktiviert'} für alle Non-Superadmins`);
       return NextResponse.json({ success: true, bulk: true, isEnabled: newState });
     }
 

@@ -6,6 +6,7 @@ import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
 import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { getGscDataForPagesWithComparison } from '@/lib/google-api';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 403 });
     }
 
-    console.log('[Debug GSC Landingpages] User ID:', userId);
+    logger.debug('[Debug GSC Landingpages] User ID:', userId);
 
     // User-Daten laden
     const { rows: userRows } = await sql`
@@ -47,8 +48,8 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('[Debug GSC Landingpages] User:', user.email);
-    console.log('[Debug GSC Landingpages] GSC URL:', user.gsc_site_url);
+    logger.debug('[Debug GSC Landingpages] User:', user.email);
+    logger.debug('[Debug GSC Landingpages] GSC URL:', user.gsc_site_url);
 
     // Landingpages laden
     const { rows: landingpages } = await sql`
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log('[Debug GSC Landingpages] Gefunden:', landingpages.length, 'Landingpages');
+    logger.debug('[Debug GSC Landingpages] Gefunden:', landingpages.length, 'Landingpages');
 
     // Zeiträume berechnen (30 Tage)
     const today = new Date();
@@ -93,12 +94,12 @@ export async function GET(request: NextRequest) {
       endDate: formatDate(endDatePrevious)
     };
 
-    console.log('[Debug GSC Landingpages] Zeitraum:', currentRange);
+    logger.debug('[Debug GSC Landingpages] Zeitraum:', currentRange);
 
     // GSC-Daten abrufen
     const pageUrls = landingpages.map(lp => lp.url);
     
-    console.log('[Debug GSC Landingpages] Rufe GSC-Daten ab für URLs:', pageUrls);
+    logger.debug('[Debug GSC Landingpages] Rufe GSC-Daten ab für URLs:', pageUrls);
 
     let gscDataMap;
     let error = null;
@@ -111,7 +112,7 @@ export async function GET(request: NextRequest) {
         previousRange
       );
       
-      console.log('[Debug GSC Landingpages] ✅ GSC-Daten erfolgreich abgerufen');
+      logger.debug('[Debug GSC Landingpages] ✅ GSC-Daten erfolgreich abgerufen');
     } catch (gscError) {
       error = gscError instanceof Error ? gscError.message : String(gscError);
       console.error('[Debug GSC Landingpages] ❌ GSC-Fehler:', error);
@@ -168,7 +169,7 @@ export async function GET(request: NextRequest) {
       totalImpressions: results.reduce((sum, r) => sum + (r.gsc.impressions || 0), 0)
     };
 
-    console.log('[Debug GSC Landingpages] Summary:', summary);
+    logger.debug('[Debug GSC Landingpages] Summary:', summary);
 
     return NextResponse.json({
       success: true,

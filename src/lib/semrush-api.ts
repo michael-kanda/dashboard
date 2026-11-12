@@ -1,5 +1,6 @@
 // src/lib/semrush-api.ts
 import axios from 'axios';
+import { logger } from '@/lib/logger';
 
 const apiKey = process.env.SEMRUSH_API_KEY;
 
@@ -63,7 +64,7 @@ export async function getSemrushKeywords(
     .replace(/^(?:https?:\/\/)?(?:www\.)?/i, '')
     .split('/')[0];
 
-  console.log(`[Semrush] 🚀 Starte Abfrage für Projekt: ${campaignId} (Domain: ${cleanDomain})`);
+  logger.debug(`[Semrush] 🚀 Starte Abfrage für Projekt: ${campaignId} (Domain: ${cleanDomain})`);
 
   // 2. Request Konfiguration (Single Source of Truth)
   // Wir nutzen die Wildcard-Strategie (*.domain/*), da diese Rankings für
@@ -163,7 +164,7 @@ export async function getSemrushKeywords(
     // Sortierung sicherstellen (falls API Sortierung nicht griff)
     keywords.sort((a, b) => a.position - b.position);
 
-    console.log(`[Semrush] ✅ Erfolg! ${keywords.length} Keywords geladen.`);
+    logger.debug(`[Semrush] ✅ Erfolg! ${keywords.length} Keywords geladen.`);
     return { keywords: keywords.slice(0, 50), error: null }; // Limit sicherstellen
 
   } catch (error: unknown) {

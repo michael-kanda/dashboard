@@ -3,6 +3,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
 import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/semrush/config
@@ -112,8 +113,8 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { semrushProjectId, semrushTrackingId, semrushTrackingId02 } = body;
 
-    console.log('[/api/semrush/config] Updating config for user:', targetUserId);
-    console.log('[/api/semrush/config] New values:', { 
+    logger.debug('[/api/semrush/config] Updating config for user:', targetUserId);
+    logger.debug('[/api/semrush/config] New values:', { 
       semrushProjectId, 
       semrushTrackingId, 
       semrushTrackingId02 
@@ -165,7 +166,7 @@ export async function PUT(request: NextRequest) {
 
         if (kampagne1Changed) {
           campaignsToInvalidate.push('kampagne_1');
-          console.log('[/api/semrush/config] Kampagne 1 wurde geändert - Cache wird invalidiert');
+          logger.debug('[/api/semrush/config] Kampagne 1 wurde geändert - Cache wird invalidiert');
         }
 
         // Prüfe ob Kampagne 2 sich geändert hat
@@ -174,12 +175,12 @@ export async function PUT(request: NextRequest) {
 
         if (kampagne2Changed) {
           campaignsToInvalidate.push('kampagne_2');
-          console.log('[/api/semrush/config] Kampagne 2 wurde geändert - Cache wird invalidiert');
+          logger.debug('[/api/semrush/config] Kampagne 2 wurde geändert - Cache wird invalidiert');
         }
       } else {
         // Keine alten Daten vorhanden - invalidiere sicherheitshalber beide
         campaignsToInvalidate.push('kampagne_1', 'kampagne_2');
-        console.log('[/api/semrush/config] Keine alten Daten - beide Caches werden invalidiert');
+        logger.debug('[/api/semrush/config] Keine alten Daten - beide Caches werden invalidiert');
       }
 
       // Invalidiere nur die betroffenen Kampagnen
@@ -189,11 +190,11 @@ export async function PUT(request: NextRequest) {
           WHERE user_id::text = ${targetUserId} AND campaign = ${campaign}
         `;
         
-        console.log(`[/api/semrush/config] ✅ Cache für ${campaign} invalidiert`);
+        logger.debug(`[/api/semrush/config] ✅ Cache für ${campaign} invalidiert`);
       }
 
       if (campaignsToInvalidate.length === 0) {
-        console.log('[/api/semrush/config] ℹ️ Keine Änderungen - Cache bleibt erhalten');
+        logger.debug('[/api/semrush/config] ℹ️ Keine Änderungen - Cache bleibt erhalten');
       }
 
       // Invalidiere auch den allgemeinen Semrush-Daten-Cache
@@ -201,14 +202,14 @@ export async function PUT(request: NextRequest) {
         DELETE FROM semrush_data_cache 
         WHERE user_id::text = ${targetUserId}
       `;
-      console.log('[/api/semrush/config] ✅ Allgemeiner Semrush-Cache invalidiert');
+      logger.debug('[/api/semrush/config] ✅ Allgemeiner Semrush-Cache invalidiert');
       
     } catch (cacheError) {
       console.error('[/api/semrush/config] Fehler beim Invalidieren des Cache:', cacheError);
       // Nicht kritisch, weiter machen
     }
 
-    console.log('[/api/semrush/config] ✅ Config gespeichert');
+    logger.debug('[/api/semrush/config] ✅ Config gespeichert');
 
     return NextResponse.json({
       semrushProjectId: updatedUser.semrushProjectId,

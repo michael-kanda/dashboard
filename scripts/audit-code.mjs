@@ -37,18 +37,14 @@ const toPosix = (file) => relative(workspace, file).split(sep).join('/');
 // nicht weiter wachsen. Wer eine davon verkleinert, senkt hier den Wert mit.
 const MAX_LINES = 600;
 const lineBaseline = new Map([
-  ['src/components/PromptTrackingCard.tsx', 1550],
-  ['src/app/admin/edit/[id]/EditUserForm.tsx', 1210],
-  ['src/lib/ai-traffic-extended-v2.ts', 1160],
   ['src/components/LocalSeoMapWidget.tsx', 852],
-  ['src/app/api/ai/chat/route.ts', 840],
-  ['src/lib/google/gsc.ts', 831],
-  ['src/lib/google-data-loader.ts', 828],
+  ['src/lib/google/gsc.ts', 832],
+  ['src/lib/google-data-loader.ts', 829],
   ['src/components/IndexingStatusWidget.tsx', 798],
-  ['src/lib/google/ads.ts', 705],
-  ['src/lib/google/ga4.ts', 682],
+  ['src/lib/google/ads.ts', 706],
+  ['src/lib/google/ga4.ts', 683],
   ['src/components/AiTrafficDetailCardV2.tsx', 674],
-  ['src/app/api/ai/analyze/route.ts', 644],
+  ['src/app/api/ai/analyze/route.ts', 645],
   ['src/components/charts/LandingPageChart.tsx', 611],
   ['src/components/GoogleAdsWidget.tsx', 602],
 ]);

@@ -8,6 +8,7 @@ import { getRangeLabel, DateRangeOption } from '@/components/DateRangeSelector';
 import ExportButton from '@/components/ExportButton';
 import { sanitizeAiHtml } from '@/lib/sanitize-ai-html';
 import { Spinner } from '@/components/ui/Spinner';
+import { logger } from '@/lib/logger';
 
 interface Props {
   projectId: string;
@@ -73,14 +74,14 @@ export default function AiAnalysisWidget({
       
       setTeaserText(generateTeaser(getRangeLabel(dateRange)));
 
-      console.log(`[AI Widget] 🚀 Starte Pre-Fetching für Zeitraum: ${dateRange}`);
+      logger.debug(`[AI Widget] 🚀 Starte Pre-Fetching für Zeitraum: ${dateRange}`);
       try {
         await fetch(`/api/projects/${projectId}?dateRange=${dateRange}`, {
           priority: 'low'
         });
         
         setIsPrefetched(true);
-        console.log('[AI Widget] ✅ Pre-Fetching abgeschlossen.');
+        logger.debug('[AI Widget] ✅ Pre-Fetching abgeschlossen.');
       } catch (e) {
         console.warn('[AI Widget] Pre-Fetching fehlgeschlagen (nicht kritisch):', e);
       }

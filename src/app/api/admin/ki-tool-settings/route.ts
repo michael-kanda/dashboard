@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +78,7 @@ export async function POST(req: Request) {
         SET ki_tool_enabled = ${newState}
         WHERE role != 'SUPERADMIN'
       `;
-      console.log(`[KI-Tool] Bulk ${newState ? 'aktiviert' : 'deaktiviert'} für alle Non-Superadmins`);
+      logger.debug(`[KI-Tool] Bulk ${newState ? 'aktiviert' : 'deaktiviert'} für alle Non-Superadmins`);
       return NextResponse.json({ success: true, bulk: true, isEnabled: newState });
     }
 
@@ -108,7 +109,7 @@ export async function POST(req: Request) {
       WHERE id = ${userId}::uuid
     `;
 
-    console.log(`[KI-Tool] ${isEnabled ? 'Aktiviert' : 'Deaktiviert'} für User: ${targetUser[0].email}`);
+    logger.debug(`[KI-Tool] ${isEnabled ? 'Aktiviert' : 'Deaktiviert'} für User: ${targetUser[0].email}`);
 
     return NextResponse.json({ 
       success: true, 

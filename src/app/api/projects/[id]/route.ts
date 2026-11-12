@@ -7,6 +7,7 @@ import { sql } from '@vercel/postgres';
 // Wir brauchen den User Typ für TypeScript Casts
 import { User } from '@/lib/schemas'; 
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
+import { logger } from '@/lib/logger';
 
 // Gleiche Begründung wie auf der Projekt-Seite: Diese Route führt denselben
 // Daten-Loader aus; beim Cold-Load darf ein einzelner GA4-Report bis zu 55 s
@@ -46,7 +47,7 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const dateRange = searchParams.get('dateRange') || '30d';
 
-    console.log('[/api/projects/[id]] GET Request');
+    logger.debug('[/api/projects/[id]] GET Request');
     
     // ========== BERECHTIGUNGSPRÜFUNG ==========
     if (!(await canAccessProject(session.user, projectId))) {

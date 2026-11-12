@@ -2,6 +2,7 @@ import type { analyticsdata_v1beta } from 'googleapis';
 import { sql } from '@vercel/postgres';
 import { requestBudgetOptions } from '../sync/request-budget';
 import { getGa4PropertyLockKeyFromCacheKey, releaseGa4RequestLock, tryAcquireGa4RequestLock } from '@/lib/ga4-request-lock';
+import { logger } from '@/lib/logger';
 
 function vercelWaitUntil(task: Promise<unknown>): void {
   try {
@@ -27,7 +28,7 @@ function scheduleGa4BackgroundRefresh<T>(cacheKey: string, fetcher: () => Promis
   const task = (async () => {
     const lock = await tryAcquireGa4RequestLock(lockKey);
     if (!lock) {
-      console.log(`[GA4 Lock] Hintergrund-Refresh übersprungen, bereits aktiv: ${lockKey}`);
+      logger.debug(`[GA4 Lock] Hintergrund-Refresh übersprungen, bereits aktiv: ${lockKey}`);
       ga4RefreshesInFlight.delete(lockKey);
       return;
     }
@@ -35,7 +36,7 @@ function scheduleGa4BackgroundRefresh<T>(cacheKey: string, fetcher: () => Promis
     try {
       const fresh = await fetcher();
       await writeGa4ResultCache(cacheKey, fresh);
-      console.log(`[GA4 Cache] Hintergrund-Refresh OK: ${cacheKey}`);
+      logger.debug(`[GA4 Cache] Hintergrund-Refresh OK: ${cacheKey}`);
     } catch (err) {
       console.warn(
         `[GA4 Cache] Hintergrund-Refresh fehlgeschlagen (${cacheKey}):`,

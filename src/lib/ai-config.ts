@@ -3,6 +3,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { DEFAULT_AI_MODELS } from './ai-model-schema';
 import { getAiModels } from './ai-model-store';
+import { logger } from '@/lib/logger';
 
 export { getAiModels };
 
@@ -117,9 +118,9 @@ export async function streamTextSafe(
     try {
       // Logging nur bei Fallback
       if (i === 0) {
-        console.log(`🤖 AI-Manager: Starte mit ${modelName}`);
+        logger.debug(`🤖 AI-Manager: Starte mit ${modelName}`);
       } else {
-        console.log(`🔄 AI-Manager: Fallback auf ${modelName}...`);
+        logger.info(`🔄 AI-Manager: Fallback auf ${modelName}...`);
       }
       
       const result = await streamText({
@@ -129,7 +130,7 @@ export async function streamTextSafe(
 
       // Erfolg!
       if (i > 0) {
-        console.log(`✅ AI-Manager: ${modelName} erfolgreich (nach ${i} Fallback${i > 1 ? 's' : ''})`);
+        logger.debug(`✅ AI-Manager: ${modelName} erfolgreich (nach ${i} Fallback${i > 1 ? 's' : ''})`);
       }
       
       // Füge Metadata zum Result hinzu (für optionales Tracking)

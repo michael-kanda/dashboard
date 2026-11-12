@@ -5,6 +5,7 @@ import { sql } from '@vercel/postgres';
 // ✅ WICHTIG: UserSchema für Validierung, User Typ ist hier nicht zwingend nötig
 import { UserSchema } from '@/lib/schemas'; 
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: Request) {
   try {
@@ -19,15 +20,15 @@ export async function GET(request: Request) {
     const dateRange = searchParams.get('dateRange') || '30d';
     const projectId = searchParams.get('projectId'); 
 
-    console.log('[/api/data] GET Request');
-    console.log('[/api/data] User:', session.user.email, 'Role:', role, 'ID:', id);
-    console.log('[/api/data] DateRange:', dateRange, 'ProjectId:', projectId || 'none');
+    logger.debug('[/api/data] GET Request');
+    logger.debug('[/api/data] User:', session.user.email, 'Role:', role, 'ID:', id);
+    logger.debug('[/api/data] DateRange:', dateRange, 'ProjectId:', projectId || 'none');
 
     // ========================================
     // 1. ADMIN/SUPERADMIN mit projectId (Einzelnes Dashboard ansehen)
     // ========================================
     if ((role === 'ADMIN' || role === 'SUPERADMIN') && projectId) {
-      console.log('[/api/data] Admin/Superadmin lädt Dashboard für Projekt:', projectId);
+      logger.debug('[/api/data] Admin/Superadmin lädt Dashboard für Projekt:', projectId);
 
       const { rows } = await sql`
         SELECT *
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
     // 2. SUPERADMIN ohne projectId (Liste aller Projekte)
     // ========================================
     if (role === 'SUPERADMIN' && !projectId) {
-      console.log('[/api/data] Lade Projektliste für SUPERADMIN');
+      logger.debug('[/api/data] Lade Projektliste für SUPERADMIN');
       // ❌ Hier stand vorher sql<User>. Wir entfernen <User>, da wir nur eine Teilliste laden.
       const { rows: projects } = await sql`
         SELECT id::text AS id, email, domain
@@ -82,7 +83,7 @@ export async function GET(request: Request) {
     // 3. ADMIN ohne projectId (Liste zugewiesener Projekte)
     // ========================================
     if (role === 'ADMIN' && !projectId) {
-      console.log('[/api/data] Lade zugewiesene Projekte für ADMIN:', id);
+      logger.debug('[/api/data] Lade zugewiesene Projekte für ADMIN:', id);
       // ❌ Auch hier entfernen wir <User>
       const { rows: projects } = await sql`
         SELECT u.id::text AS id, u.email, u.domain
@@ -98,7 +99,7 @@ export async function GET(request: Request) {
     // 4. BENUTZER (Eigenes Dashboard)
     // ========================================
     if (role === 'BENUTZER') {
-      console.log('[/api/data] Lade Dashboard für BENUTZER');
+      logger.debug('[/api/data] Lade Dashboard für BENUTZER');
       
       const { rows } = await sql`
         SELECT *

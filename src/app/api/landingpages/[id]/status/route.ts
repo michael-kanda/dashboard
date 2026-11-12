@@ -4,7 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
-import * as Brevo from '@getbrevo/brevo'; 
+import * as Brevo from '@getbrevo/brevo';
+import { logger } from '@/lib/logger'; 
 
 const apiInstance = new Brevo.TransactionalEmailsApi();
 
@@ -32,7 +33,7 @@ async function createNotification(
       INSERT INTO notifications (user_id, message, type, related_landingpage_id)
       VALUES (${userId}, ${message}, ${type}, ${landingpageId});
     `;
-    console.log('✅ Benachrichtigung erstellt für User:', userId);
+    logger.debug('✅ Benachrichtigung erstellt für User:', userId);
   } catch (error) {
     console.error('❌ Fehler beim Erstellen der Benachrichtigung:', error);
   }
@@ -54,9 +55,9 @@ export async function PUT(
     const body = await request.json();
     const { status: newStatus } = body as { status: StatusType };
 
-    console.log('[Status Update] User:', session.user.email, 'Role:', session.user.role);
-    console.log('[Status Update] Landingpage ID:', landingpageId);
-    console.log('[Status Update] Neuer Status:', newStatus);
+    logger.debug('[Status Update] User:', session.user.email, 'Role:', session.user.role);
+    logger.debug('[Status Update] Landingpage ID:', landingpageId);
+    logger.debug('[Status Update] Neuer Status:', newStatus);
 
     const validStatuses: StatusType[] = ['Offen', 'In Prüfung', 'Gesperrt', 'Freigegeben'];
     if (!validStatuses.includes(newStatus)) {
@@ -84,8 +85,8 @@ export async function PUT(
     const oldStatus = landingpage.status;
     const customerUserId = landingpage.user_id; // ID des Kunden, dem die LP gehört
 
-    console.log('[Status Update] Alter Status:', oldStatus);
-    console.log('[Status Update] Landingpage gehört zu:', landingpage.user_email);
+    logger.debug('[Status Update] Alter Status:', oldStatus);
+    logger.debug('[Status Update] Landingpage gehört zu:', landingpage.user_email);
 
     // Berechtigungsprüfung (bleibt gleich)
     const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SUPERADMIN';
@@ -123,7 +124,7 @@ export async function PUT(
         updated_at = NOW() -- ✅ NEU
       WHERE id = ${landingpageId};
     `;
-    console.log('✅ Status erfolgreich aktualisiert');
+    logger.info('✅ Status erfolgreich aktualisiert');
 
     // === Log-Eintrag erstellen (bleibt gleich) ===
     try {
@@ -140,7 +141,7 @@ export async function PUT(
         INSERT INTO landingpage_logs (landingpage_id, user_id, user_email, action)
         VALUES (${landingpageId}, ${currentUser.id}::uuid, ${currentUser.email}, ${actionDescription});
       `;
-      console.log('✅ Log-Eintrag erstellt für Landingpage:', landingpageId);
+      logger.debug('✅ Log-Eintrag erstellt für Landingpage:', landingpageId);
     } catch (logError) {
       console.error('❌ Fehler beim Erstellen des Log-Eintrags:', logError);
     }
@@ -177,9 +178,9 @@ export async function PUT(
       let shouldSendEmail = true;
       if (timeSinceLastEmail < NOTIFICATION_COOLDOWN_MINUTES) {
         shouldSendEmail = false;
-        console.log(`[Debounce] E-Mail für Kunde ${customerUserId} zurückgehalten. Letzter Versand vor ${timeSinceLastEmail.toFixed(1)} Min.`);
+        logger.info(`[Debounce] E-Mail für Kunde ${customerUserId} zurückgehalten. Letzter Versand vor ${timeSinceLastEmail.toFixed(1)} Min.`);
       } else {
-        console.log(`[Debounce] E-Mail für Kunde ${customerUserId} wird gesendet. (Letzter Versand: ${lastSentTime === 0 ? 'Nie' : timeSinceLastEmail.toFixed(1) + ' Min. her'})`);
+        logger.info(`[Debounce] E-Mail für Kunde ${customerUserId} wird gesendet. (Letzter Versand: ${lastSentTime === 0 ? 'Nie' : timeSinceLastEmail.toFixed(1) + ' Min. her'})`);
       }
       // +++ ENDE: Debounce-Prüfung +++
 
@@ -222,7 +223,7 @@ export async function PUT(
 
           try {
             await apiInstance.sendTransacEmail(sendSmtpEmail);
-            console.log(`✅ E-Mail gesendet an Admin: ${admin.email} (für Kunde ${customerUserId})`);
+            logger.info(`✅ E-Mail gesendet an Admin: ${admin.email} (für Kunde ${customerUserId})`);
           } catch (emailError) {
             console.error(`❌ Fehler beim Senden der E-Mail an ${admin.email}:`, emailError);
           }
@@ -236,7 +237,7 @@ export async function PUT(
           SET last_admin_notification_sent = NOW()
           WHERE id::text = ${customerUserId};
         `;
-        console.log(`[Debounce] Zeitstempel für Kunde ${customerUserId} aktualisiert.`);
+        logger.debug(`[Debounce] Zeitstempel für Kunde ${customerUserId} aktualisiert.`);
       }
     }
 

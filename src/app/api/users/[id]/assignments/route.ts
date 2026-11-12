@@ -4,7 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { type Session } from 'next-auth'; // KORRIGIERT: Session-Typ behalten
 import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
-import { sql } from '@vercel/postgres'; // Nur den Haupt-SQL-Import verwenden
+import { sql } from '@vercel/postgres';
+import { logger } from '@/lib/logger'; // Nur den Haupt-SQL-Import verwenden
 
 /**
  * Berechtigungsprüfung: Darf der eingeloggte Admin Zuweisungen ändern?
@@ -36,7 +37,7 @@ export async function PUT(
     const { id: targetUserId } = await params;
     const session = await auth(); // KORRIGIERT: auth() aufgerufen
 
-    console.log(
+    logger.debug(
       `[PUT /api/users/${targetUserId}/assignments] Start Zuweisungs-Update...`
     );
 
@@ -66,7 +67,7 @@ export async function PUT(
       );
     }
 
-    console.log(
+    logger.debug(
       `[PUT assignments] Aktualisiere ${project_ids.length} Zuweisungen für Admin ${targetUserId}`
     );
 
@@ -124,7 +125,7 @@ export async function PUT(
       [targetUserId]
     );
 
-    console.log(
+    logger.debug(
       `[PUT assignments] (TX) Alte Zuweisungen für ${targetUserId} gelöscht.`
     );
 
@@ -150,7 +151,7 @@ export async function PUT(
       // Führe alle Inserts parallel innerhalb der Transaktion aus
       await Promise.all(insertPromises);
 
-      console.log(
+      logger.debug(
         `[PUT assignments] (TX) ${project_ids.length} neue Zuweisungen verarbeitet.`
       );
     }
@@ -158,7 +159,7 @@ export async function PUT(
     // Schließe Transaktion erfolgreich ab
     await client.query('COMMIT');
 
-    console.log(`[PUT assignments] ✅ Transaktion erfolgreich abgeschlossen.`);
+    logger.debug(`[PUT assignments] ✅ Transaktion erfolgreich abgeschlossen.`);
 
     // 4. Erfolg zurückmelden
     return NextResponse.json(
@@ -176,7 +177,7 @@ export async function PUT(
     // KORREKTUR: Bei Fehler, Rollback durchführen
     console.error('❌ Fehler bei Zuweisungs-Update:', error);
     await client.query('ROLLBACK');
-    console.log('[PUT assignments] 롤백 (Rollback) durchgeführt.');
+    logger.debug('[PUT assignments] 롤백 (Rollback) durchgeführt.');
     
     return NextResponse.json(
       {
@@ -189,6 +190,6 @@ export async function PUT(
   } finally {
     // KORREKTUR: Client IMMER freigeben
     client.release();
-    console.log('[PUT assignments] Client-Verbindung freigegeben.');
+    logger.debug('[PUT assignments] Client-Verbindung freigegeben.');
   }
 }

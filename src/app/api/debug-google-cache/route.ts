@@ -4,6 +4,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
 import { sql } from '@vercel/postgres';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: Request) {
   try {
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
 
     // ========== ACTION: LIST ==========
     if (!action || action === 'list') {
-      console.log('[Debug Cache] Lade alle Cache-Einträge...');
+      logger.debug('[Debug Cache] Lade alle Cache-Einträge...');
       
       const { rows: cacheEntries } = await sql`
         SELECT 
@@ -58,7 +59,7 @@ export async function GET(request: Request) {
 
     // ========== ACTION: DETAILS ==========
     if (action === 'details' && userId && dateRange) {
-      console.log(`[Debug Cache] Lade Cache-Details für User ${userId}, DateRange ${dateRange}...`);
+      logger.debug(`[Debug Cache] Lade Cache-Details für User ${userId}, DateRange ${dateRange}...`);
       
       const { rows } = await sql`
         SELECT 
@@ -100,7 +101,7 @@ export async function GET(request: Request) {
 
     // ========== ACTION: CLEAR ==========
     if (action === 'clear') {
-      console.log('[Debug Cache] Lösche Cache...');
+      logger.debug('[Debug Cache] Lösche Cache...');
       
       let result;
       
@@ -151,7 +152,7 @@ export async function GET(request: Request) {
 
     // ========== ACTION: STATS ==========
     if (action === 'stats') {
-      console.log('[Debug Cache] Lade Cache-Statistiken...');
+      logger.debug('[Debug Cache] Lade Cache-Statistiken...');
       
       const { rows: stats } = await sql`
         SELECT 
