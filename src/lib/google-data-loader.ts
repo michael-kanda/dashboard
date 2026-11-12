@@ -358,8 +358,8 @@ function buildShareTrend(
 // ════════════════════════════════════════════════════════════════════
 async function getBrandKeywordsForUser(
   user: User,
-  startDate: string,
-  endDate: string
+  _startDate: string,
+  _endDate: string
 ): Promise<{ keywords: string[] | null; autoDetected: boolean }> {
   const existing = (user as any).brand_keywords as string[] | null | undefined;
   if (existing && Array.isArray(existing) && existing.length > 0) {
@@ -452,7 +452,7 @@ async function loadGoogleData(
   let channelData: ChartEntry[] = [];
   let deviceData: ChartEntry[] = [];
   let bingData: any[] = [];
-  let apiErrors: ApiErrorStatus = {};
+  const apiErrors: ApiErrorStatus = {};
   let landingPageQueries: LandingPageQueries = {};
   let googleAdsData: GoogleAdsData | undefined;
   let googleAdsGa4Supplement: GoogleAdsData['ga4Supplement'];

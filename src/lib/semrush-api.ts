@@ -1,5 +1,5 @@
 // src/lib/semrush-api.ts
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
 const apiKey = process.env.SEMRUSH_API_KEY;
 

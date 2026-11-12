@@ -216,7 +216,7 @@ export async function GET() {
          } else if (testUser.gsc_site_url) {
             try {
                // Wir versuchen einen echten Fetch
-               const bingRes = await getBingData(testUser.gsc_site_url);
+               await getBingData(testUser.gsc_site_url);
                // getBingData fängt Fehler intern ab und gibt [] zurück.
                // Wir bewerten es als OK, wenn der Aufruf durchlief.
                status.bingApi = { status: 'ok', message: `OK (${userLabel})` };
@@ -227,7 +227,7 @@ export async function GET() {
             status.bingApi = { status: 'pending', message: 'User hat keine URL für Bing Test.' };
          }
       }
-    } catch (e: any) {
+    } catch {
        status.gscApi = { status: 'error', message: 'DB Suche fehlgeschlagen.' };
        status.ga4Api = { status: 'error', message: 'DB Suche fehlgeschlagen.' };
        status.bingApi = { status: 'error', message: 'DB Suche fehlgeschlagen.' };

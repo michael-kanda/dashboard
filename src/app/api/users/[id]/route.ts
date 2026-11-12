@@ -173,7 +173,7 @@ export async function GET(
     }
     
     return NextResponse.json(userToGet);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ message: 'Interner Serverfehler' }, { status: 500 });
   }
 }

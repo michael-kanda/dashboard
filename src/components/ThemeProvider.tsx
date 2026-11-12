@@ -51,7 +51,7 @@ export default function ThemeProvider({ children, defaultTheme = 'light' }: Them
         // Kein gespeichertes Theme → Light Mode, dark class ENTFERNEN
         applyTheme('light');
       }
-    } catch (e) {
+    } catch {
       // localStorage nicht verfügbar → sicherstellen dass dark class weg ist
       applyTheme('light');
     }

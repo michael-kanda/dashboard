@@ -1,6 +1,5 @@
 // src/lib/dashboard-shared.ts
 
-import type { DateRangeOption } from '@/types/date-range';
 import type {
   KpiDatum,
   ChartPoint,

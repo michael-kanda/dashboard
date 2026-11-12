@@ -701,7 +701,6 @@ export async function getAiTrafficExtended(
     }>();
 
     let totalSessions = 0;
-    let totalUsers = 0;
     let totalEngagementTimeWeighted = 0;
     let totalBounceRateWeighted = 0;
     let totalEngagementRateWeighted = 0;
@@ -726,7 +725,6 @@ export async function getAiTrafficExtended(
 
       // Totals
       totalSessions += sessions;
-      totalUsers += users;
       totalEngagementTimeWeighted += avgEngTime * sessions;
       totalBounceRateWeighted += bounceRate * sessions;
       totalEngagementRateWeighted += engagementRate * sessions;

@@ -90,6 +90,7 @@ export default function PromptTrackingCard({
 
     return list;
   }, [data, filterMode, sortMode, questionTypeFilter, search]);
+  const queriesForAi = useMemo(() => filtered.slice(0, MAX_QUERIES_FOR_AI), [filtered]); // vor dem fruehen return
 
   if (!data || data.totals.totalQueries === 0) {
     return (
@@ -131,7 +132,6 @@ export default function PromptTrackingCard({
     URL.revokeObjectURL(link.href);
   };
 
-  const queriesForAi = useMemo(() => filtered.slice(0, MAX_QUERIES_FOR_AI), [filtered]);
   const canCluster = queriesForAi.length >= MIN_QUERIES_FOR_AI;
 
   const handleCluster = async () => {

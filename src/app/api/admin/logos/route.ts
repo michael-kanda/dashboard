@@ -7,7 +7,7 @@ import { sql } from '@vercel/postgres';
 /**
  * GET: Lädt alle aktuellen Mandanten-Logos (Nur für Superadmin)
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const session = await auth(); // KORRIGIERT: auth() aufgerufen
   if (session?.user?.role !== 'SUPERADMIN') {
     return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 403 });

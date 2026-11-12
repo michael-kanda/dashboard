@@ -37,7 +37,7 @@ export default function AiAnalysisWidget({
   
   // UI States
   const [isLoading, setIsLoading] = useState(false);
-  const [isStreamComplete, setIsStreamComplete] = useState(false);
+  const [, setIsStreamComplete] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [isPrefetched, setIsPrefetched] = useState(false);
   

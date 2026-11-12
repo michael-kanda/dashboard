@@ -14,8 +14,8 @@ export interface BingKeywordData {
 
 export async function getBingData(
   siteUrl: string,
-  startDate?: string,
-  endDate?: string
+  _startDate?: string,
+  _endDate?: string
 ): Promise<BingKeywordData[]> {
   const apiKey = process.env.BING_API_KEY;
 

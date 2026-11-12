@@ -114,7 +114,7 @@ export default function Sidebar() {
           const el = document.getElementById(id);
           if (el && observer) observer.observe(el);
         });
-      } catch (e) {
+      } catch {
         // Silent fail – Sektionen noch nicht im DOM
       }
     }, 1000);
@@ -152,7 +152,7 @@ export default function Sidebar() {
         const res = await fetch('/api/admin/maintenance?checkSelf=true');
         const data = await res.json();
         setIsInMaintenance(data.isInMaintenance === true);
-      } catch (e) { setIsInMaintenance(false); } finally { setIsCheckingMaintenance(false); }
+      } catch { setIsInMaintenance(false); } finally { setIsCheckingMaintenance(false); }
     };
     if (status !== 'loading') checkMaintenanceStatus();
   }, [session, status]);
@@ -165,7 +165,7 @@ export default function Sidebar() {
         const res = await fetch('/api/admin/ki-tool-settings?checkSelf=true');
         const data = await res.json();
         setKiToolEnabled(data.kiToolEnabled !== false);
-      } catch (e) { setKiToolEnabled(true); }
+      } catch { setKiToolEnabled(true); }
     };
     if (status !== 'loading') checkKiToolStatus();
   }, [session, status]);
@@ -178,7 +178,7 @@ export default function Sidebar() {
         const res = await fetch('/api/user/has-landingpages');
         const data = await res.json();
         setHasLandingpages(data.hasLandingpages === true);
-      } catch (e) { setHasLandingpages(false); } finally { setIsCheckingLandingpages(false); }
+      } catch { setHasLandingpages(false); } finally { setIsCheckingLandingpages(false); }
     };
     if (status !== 'loading') checkLandingpages();
   }, [session, status]);

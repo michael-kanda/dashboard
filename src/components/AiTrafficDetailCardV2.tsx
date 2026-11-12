@@ -3,10 +3,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { 
-  Bot, Filter, ArrowDown, ArrowUp, FileText, Search, XCircle, RefreshCcw,
+  Bot, ArrowDown, ArrowUp, FileText, Search, XCircle, RefreshCcw,
   TrendingUp, Users, Clock, ChevronDown, ChevronUp, AlertTriangle, Info,
   ArrowRight, Target, BarChart3, Waypoints, MousePointerClick, CheckCircle2,
-  Sparkles, LayoutGrid,
+  Sparkles,
   // Intent Icons
   BookOpen, ShoppingCart, Phone, Compass, Building2, Scale, Home, Activity
 } from 'lucide-react';
@@ -129,7 +129,7 @@ const IntentCard: React.FC<{
   intent: IntentCategory; sessions: number; conversions: number;
   conversionRate: number; avgEngagementTime: number; engagementRate: number;
   percentage: number; topPages: Array<{ path: string; sessions: number }>;
-}> = ({ intent, sessions, conversions, conversionRate, avgEngagementTime, engagementRate, percentage, topPages }) => (
+}> = ({ intent, sessions, conversions, conversionRate, engagementRate, percentage, topPages }) => (
   <div className="p-4 rounded-xl border border-border-subtle hover:border-border transition-all bg-surface"
     style={{ borderLeftColor: intent.color, borderLeftWidth: '4px' }}>
     <div className="flex items-center justify-between mb-3">

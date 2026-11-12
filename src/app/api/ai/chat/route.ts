@@ -604,7 +604,7 @@ export async function POST(req: NextRequest) {
     // 2. Ziel-User bestimmen
     const userId = session.user.id;
     const userRole = session.user.role;
-    let targetUserId = projectId || userId;
+    const targetUserId = projectId || userId;
 
     // Fremde Projekte nur mit Berechtigung (Kunden ausschließlich das eigene)
     if (targetUserId !== userId && !(await canAccessProject(session.user, targetUserId))) {

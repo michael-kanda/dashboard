@@ -1,7 +1,7 @@
 // src/app/admin/redaktionsplan/page.tsx
 'use client';
 
-import { useState, useEffect, ReactNode, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { User } from '@/types';
@@ -48,9 +48,9 @@ const GscChangeIndicator = ({ change, isPosition = false }: { change: number | s
   const numChange = (change === null || change === undefined || change === '') ? 0 : parseFloat(String(change));
   if (numChange === 0) return null;
   
-  let isPositive = isPosition ? numChange < 0 : numChange > 0;
+  const isPositive = isPosition ? numChange < 0 : numChange > 0;
   
-  let text = isPosition 
+  const text = isPosition 
     ? (numChange > 0 ? `+${numChange.toFixed(2)}` : numChange.toFixed(2)) 
     : (numChange > 0 ? `+${numChange.toLocaleString('de-DE')}` : numChange.toLocaleString('de-DE'));
   
@@ -130,7 +130,7 @@ function RedaktionsplanContent() {
       if (!response.ok) throw new Error('Fehler');
       const data: User[] = await response.json();
       setProjects(data);
-    } catch (error) { setMessage('Fehler beim Laden der Projekte'); } finally { setIsLoadingProjects(false); }
+    } catch { setMessage('Fehler beim Laden der Projekte'); } finally { setIsLoadingProjects(false); }
   };
 
   const updateStatus = async (landingpageId: number, newStatus: LandingpageStatus) => {
@@ -147,7 +147,7 @@ function RedaktionsplanContent() {
       if (!response.ok) throw new Error('Update fehlgeschlagen');
       setMessage(`Status geändert`);
       setTimeout(() => setMessage(''), 3000);
-    } catch (error) {
+    } catch {
       setLandingpages(originalLandingpages);
       setMessage('Fehler beim Ändern des Status');
     }
@@ -182,7 +182,7 @@ function RedaktionsplanContent() {
       setLandingpages(prev => prev.filter(lp => lp.id !== landingpageId));
       setMessage('✅ Gelöscht');
       setTimeout(() => setMessage(''), 3000);
-    } catch (error) { setMessage('Fehler beim Löschen'); }
+    } catch { setMessage('Fehler beim Löschen'); }
   };
 
 const handleGscRefresh = async () => {

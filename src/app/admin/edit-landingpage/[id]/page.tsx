@@ -43,7 +43,7 @@ export default function EditLandingpagePage() {
           setTitle(data.title);
           setUrl(data.url);
           setStatus(data.status);
-        } catch (error) {
+        } catch {
           setMessage('Server-Verbindungsfehler.');
         } finally {
           setIsLoading(false);

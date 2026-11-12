@@ -85,17 +85,17 @@ function getNextDimension(viewMode: ViewMode): { field: keyof GoogleAdsRow; labe
 
 // ── Hauptkomponente ──
 
-export default function GoogleAdsWidget({ data, isLoading, dateRange, error, showSourceComparison = false }: GoogleAdsWidgetProps) {
+export default function GoogleAdsWidget(props: GoogleAdsWidgetProps) {
+  // Datenpruefung vor allen Hooks: GoogleAdsWidgetContent ruft so immer dieselben Hooks auf.
+  return props.data?.totals ? <GoogleAdsWidgetContent {...props} /> : null;
+}
+
+function GoogleAdsWidgetContent({ data, isLoading, error, showSourceComparison = false }: GoogleAdsWidgetProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('campaign');
   const [sortField, setSortField] = useState<SortField>('cost');
   const [sortAsc, setSortAsc] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Safety: falls data undefined/null → Skeleton zeigen
-  if (!data || !data.totals) {
-    return null;
-  }
 
   const { totals } = data;
   const isSheet = data.source === 'sheet';
