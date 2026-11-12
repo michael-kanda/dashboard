@@ -191,7 +191,6 @@ export async function getAiTrafficWithLandingPages(
     let totalAvgEngagementTime = 0;
     let totalBounceRate = 0;
     let totalConversions = 0;
-    let rowCount = 0;
 
     // Hauptdaten aggregieren
     for (const row of mainRows) {
@@ -211,7 +210,6 @@ export async function getAiTrafficWithLandingPages(
       totalAvgEngagementTime += avgEngTime * sessions; // Gewichteter Durchschnitt
       totalBounceRate += bounceRate * sessions;
       totalConversions += conversions;
-      rowCount++;
 
       // Source aggregieren
       if (!sourceMap.has(source)) {

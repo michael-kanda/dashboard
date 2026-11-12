@@ -7,7 +7,7 @@ import { sql } from '@vercel/postgres';
 export const dynamic = 'force-dynamic';
 
 // GET: Alle User und deren DataMax-Status abrufen
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     const session = await auth();
     // Nur Admins/Superadmins dürfen das sehen

@@ -12,7 +12,7 @@ type LoginLogEntry = {
   timestamp: string;
 };
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   // Verhindert Caching, damit die Logs immer aktuell sind
   noStore();
   

@@ -21,7 +21,6 @@ import {
   ArrowUp,
   ArrowDown,
   CalendarEvent, 
-  ClockHistory,
   ChatSquareText
 } from 'react-bootstrap-icons';
 import { Spinner, PageSpinner } from '@/components/ui/Spinner';
@@ -55,8 +54,8 @@ const GscChangeIndicator = ({ change, isPosition = false }: { change: number | s
   const numChange = (change === null || change === undefined || change === '') ? 0 : parseFloat(String(change));
   if (numChange === 0) return null;
   
-  let isPositive = isPosition ? numChange < 0 : numChange > 0;
-  let text = isPosition 
+  const isPositive = isPosition ? numChange < 0 : numChange > 0;
+  const text = isPosition 
     ? (numChange > 0 ? `+${numChange.toFixed(2)}` : numChange.toFixed(2)) 
     : (numChange > 0 ? `+${numChange.toLocaleString('de-DE')}` : numChange.toLocaleString('de-DE'));
   
@@ -134,7 +133,7 @@ export default function FreigabePage() {
       if (!response.ok) throw new Error('Status-Update fehlgeschlagen');
       setMessage(`Status auf "${newStatus}" geändert`);
       setTimeout(() => setMessage(''), 3000);
-    } catch (error) {
+    } catch {
       setLandingpages(originalLandingpages);
       setMessage('Fehler beim Ändern des Status');
     }
@@ -175,7 +174,7 @@ export default function FreigabePage() {
       if (!response.ok) throw new Error('Fehler');
       setMessage('Daten erfolgreich abgeglichen!');
       await loadLandingpages(); 
-    } catch (error) {
+    } catch {
       setMessage('Fehler beim Abgleich');
     } finally {
       setIsRefreshing(false);

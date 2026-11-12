@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
       } else {
         serviceEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
       }
-    } catch (e) {}
+    } catch {}
 
     results.push({
       step: '2. Auth Client',

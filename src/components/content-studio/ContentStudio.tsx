@@ -144,7 +144,7 @@ export default function ContentStudio() {
 
   const selectProject = (projectId: string) => {
     const project = projects.find((item) => item.id === projectId);
-    setBrief((current) => ({
+    setBrief(() => ({
       ...DEFAULT_BRIEF,
       projectId,
       targetUrl: getProjectUrl(project?.domain || null),

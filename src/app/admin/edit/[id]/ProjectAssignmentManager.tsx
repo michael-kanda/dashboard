@@ -27,7 +27,6 @@ export interface ProjectAssignmentManagerProps {
 
 export default function ProjectAssignmentManager({ 
   user, 
-  allProjects, 
   availableProjects 
 }: ProjectAssignmentManagerProps) {
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);

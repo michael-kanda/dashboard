@@ -15,7 +15,7 @@ import {
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ChartPoint, ActiveKpi } from '@/lib/dashboard-shared'; 
-import { ArrowLeftRight, CalendarEvent, Filter } from 'react-bootstrap-icons';
+import { ArrowLeftRight, Filter } from 'react-bootstrap-icons';
 import { cn } from '@/lib/utils';
 import { buildHolidayMap, type HolidayInfo } from '@/lib/holidays';
 import type { DailyWeather, WeatherIcon } from '@/lib/weather';

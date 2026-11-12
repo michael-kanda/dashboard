@@ -570,7 +570,7 @@ export async function getLandingPageFollowUpPaths(
   landingPage: string,
   startDate: string,
   endDate: string,
-  siteUrl?: string
+  _siteUrl?: string
 ): Promise<LandingPageFollowUpData> {
   const formattedPropertyId = propertyId.startsWith('properties/')
     ? propertyId

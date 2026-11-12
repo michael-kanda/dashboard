@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, BarChart3, Check, Database, Link2, Search } from 'lucide-react';
+import { AlertTriangle, Check, Database, Link2, Search } from 'lucide-react';
 import type { ContentContext, InternalLinkCandidate } from '@/lib/content-studio/types';
 
 type Props = {

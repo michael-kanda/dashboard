@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { auth } from '@/lib/auth'; // KORRIGIERT: Import von auth
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await auth(); // KORRIGIERT: auth() aufgerufen
     const user = session?.user;

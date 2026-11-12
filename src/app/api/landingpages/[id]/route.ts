@@ -111,7 +111,6 @@ export async function PUT(
     if (comment !== undefined && newComment !== oldComment && newComment.trim() !== '') {
       
       const actorRole = session?.user?.role;
-      const actorEmail = session?.user?.email;
 
       // Fall A: Admin schreibt -> Kunde bekommt Info
       if (actorRole === 'ADMIN' || actorRole === 'SUPERADMIN') {
@@ -143,7 +142,7 @@ export async function PUT(
           WHERE pa.project_id = ${lpOwnerId}
         `;
         
-        let recipients = adminRows.map(r => r.email);
+        const recipients = adminRows.map(r => r.email);
         
         // Fallback: Wenn kein Admin zugewiesen, an Ersteller senden
         if (recipients.length === 0) {

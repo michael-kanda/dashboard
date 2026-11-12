@@ -12,6 +12,25 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
+    rules: {
+      // Bewusst ungenutzte Parameter und Variablen mit _ kennzeichnen, z. B. das
+      // request-Argument eines Route-Handlers, das in Next 14 die statische
+      // Optimierung verhindert und deshalb stehen bleiben soll.
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+      // Altbestand: ca. 180 Vorkommen. Als Warnung gefuehrt, damit `npm run lint`
+      // gruen ist; --max-warnings in package.json verhindert neue Vorkommen.
+      "@typescript-eslint/no-explicit-any": "warn",
+    },
+  },
+  {
     ignores: [
       "node_modules/**",
       ".next/**",

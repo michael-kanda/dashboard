@@ -45,7 +45,7 @@ export default function UserLogbook({ userId }: UserLogbookProps) {
       try {
         const url = new URL(urlStr);
         return url.pathname;
-      } catch (e) {
+      } catch {
         return urlStr; // Fallback, falls die URL ungültig ist
       }
     }

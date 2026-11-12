@@ -368,7 +368,7 @@ async function getGoogleAdsReportUncached(
     } else {
       console.log('[Google Ads] LP-Call A: 0 Rows (Thresholding) → Fallback B');
     }
-  } catch (e) {
+  } catch {
     console.log('[Google Ads] LP-Call A fehlgeschlagen → Fallback B');
   }
 
