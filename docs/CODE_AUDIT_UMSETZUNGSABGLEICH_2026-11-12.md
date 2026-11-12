@@ -157,11 +157,23 @@ Auf Commit `2be441b3`, nach `npm ci`:
 ## 8. Offene Punkte nach Priorität
 
 1. **`PromptTrackingCard.tsx` aufteilen** (1.550 Zeilen). Im Audit-Plan Phase 3, Punkt 5, ausdrücklich genannt und nicht umgesetzt.
-2. **`FollowUpPath` auf eine Definition reduzieren**, z. B. in `src/types/` oder `lib/dashboard-shared.ts`, und an den beiden anderen Stellen importieren.
+2. ~~**`FollowUpPath` auf eine Definition reduzieren**~~. Umgesetzt in #4, siehe Kapitel 9.
 3. **`EditUserForm.tsx` aufteilen**. Sie ist seit dem Audit von 1.166 auf 1.210 Zeilen gewachsen statt zu schrumpfen.
-4. **`/api/landingpages` löschen**. Platzhalter ohne Aufrufer.
-5. **Audit-Skript erweitern**, damit die Rückschritte, die dieser Abgleich findet, automatisch auffallen:
-   - Warnung für Dateien über 600 Zeilen
-   - Fehler für Routen unter `src/app/api` ohne erkannte Rollen- oder Sessionprüfung (mit Ausnahmeliste, z. B. für `auth/[...nextauth]`)
+4. ~~**`/api/landingpages` löschen**~~. Umgesetzt in #4, siehe Kapitel 9.
+5. ~~**Audit-Skript erweitern**~~ (Dateigröße, Auth je Route). Umgesetzt in #4, siehe Kapitel 9.
 6. **Strukturiertes Logging** statt 180 `console.log`-Aufrufen (Audit-Empfehlung aus Kapitel 11).
 7. **`ai-traffic-extended-v2.ts` (1.162 Zeilen) und `api/ai/chat/route.ts` (840 Zeilen)** wie im Audit vorgeschlagen aufteilen.
+8. **`axios` als direkte Abhängigkeit eintragen oder ersetzen.** `src/lib/semrush-api.ts` importiert `axios`, das seit der Bereinigung nicht mehr in `package.json` steht. Es wird nur indirekt über `@getbrevo/brevo` installiert.
+
+## 9. Nachtrag: Folge-PRs
+
+Kapitel 1 bis 8 beschreiben den Stand `2be441b3`. Danach entstanden zwei PRs, die Punkte aus Kapitel 8 umsetzen. Beim Schreiben dieses Nachtrags waren beide noch nicht gemergt.
+
+| PR | Inhalt | Kapitel-8-Punkt |
+|---|---|---|
+| #4 | `FollowUpPath` und `LandingPageFollowUpData` nur noch in `src/types/landing-page.ts`. Platzhalter `/api/landingpages/route.ts` gelöscht (Unterrouten bleiben). `audit:code` prüft Dateigröße (neue Dateien max. 600 Zeilen, große Dateien nicht über ihre Baseline) und Auth je API-Route. | 2, 4, 5 |
+| #5 | GitHub-Actions-Workflow für lint, typecheck, Tests und `audit:code`. ESLint von 233 Fehlern auf 0, `any` als Warnung mit Obergrenze 183. Zwei React-Fehler behoben (siehe unten). | neu |
+
+Bei der ESLint-Bereinigung in #5 sind zwei Fehler aufgefallen, die dieser Abgleich nicht gefunden hatte: In `GoogleAdsWidget.tsx` und `PromptTrackingCard.tsx` lief ein `useMemo` erst nach einem frühen `return`. Wechselt ein Widget zwischen „keine Daten“ und „Daten da“, bricht React mit „Rendered more hooks than during the previous render“ ab.
+
+Bis #5 hatte das Repo keine CI, und `audit:code` lief nur, wenn es jemand von Hand startete. Nach dem Merge von #5 laufen `audit:code`, Typen, Tests und ESLint bei jedem PR.
