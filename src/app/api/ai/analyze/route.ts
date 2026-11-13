@@ -85,8 +85,8 @@ export async function POST(req: NextRequest) {
     // ==========================================
 
     const body = await req.json();
-    const { projectId, dateRange, googleAdsData } = body;
-    const userRole = session.user.role;
+    const { projectId, dateRange, googleAdsData, customerView } = body;
+    const userRole = customerView === true ? 'BENUTZER' : session.user.role; // Kundenansicht: Rolle nur herabsetzen
 
     if (!projectId || !dateRange) {
       return NextResponse.json({ message: 'Fehlende Parameter' }, { status: 400 });

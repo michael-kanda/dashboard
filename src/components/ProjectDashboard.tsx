@@ -12,6 +12,7 @@ import DashboardInfoWidget from '@/components/dashboard/DashboardInfoWidget';
 import DashboardLoadingOverlay from '@/components/dashboard/DashboardLoadingOverlay';
 import DashboardOverviewWidgets from '@/components/dashboard/DashboardOverviewWidgets';
 import DashboardSearchWidgets from '@/components/dashboard/DashboardSearchWidgets';
+import DashboardViewSwitch, { type DashboardViewMode } from '@/components/dashboard/DashboardViewSwitch';
 import { buildDashboardViewModel } from '@/components/dashboard/view-model';
 import type { ProjectDashboardProps } from '@/components/dashboard/types';
 import { formatReportingPeriod } from '@/lib/reporting-period';
@@ -29,6 +30,7 @@ export default function ProjectDashboard({
   semrushTrackingId02,
   projectTimelineActive = false,
   userRole = 'USER',
+  viewerRole,
   userEmail = '',
   userAnsprache = null,
   showLandingPages = false,
@@ -82,6 +84,18 @@ export default function ProjectDashboard({
     onDateRangeChange?.(range);
   };
 
+  const canSwitchView = viewerRole === 'ADMIN' || viewerRole === 'SUPERADMIN';
+  const viewMode: DashboardViewMode = canSwitchView && userRole === 'BENUTZER' ? 'kunde' : 'admin';
+  const handleViewModeChange = (mode: DashboardViewMode) => {
+    if (mode === viewMode) return;
+    setIsUpdating(true);
+    const params = new URLSearchParams(searchParams.toString());
+    if (mode === 'kunde') params.set('ansicht', 'kunde');
+    else params.delete('ansicht');
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  };
+
   return (
     <div className="relative flex min-h-screen flex-col bg-page">
       {isUpdating && !isLoading && <DashboardLoadingOverlay />}
@@ -96,6 +110,10 @@ export default function ProjectDashboard({
           userEmail={userEmail}
           userAnsprache={userAnsprache}
         />
+
+        {canSwitchView && (
+          <DashboardViewSwitch value={viewMode} onChange={handleViewModeChange} />
+        )}
 
         {/* Nur im Ausdruck: der Kopf oben ist beim Drucken ausgeblendet. */}
         <div className="mb-4 hidden border-b-2 border-black pb-2 print:block">

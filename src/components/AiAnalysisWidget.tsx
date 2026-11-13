@@ -3,6 +3,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { Lightbulb, ExclamationTriangle, InfoCircle, GraphUpArrow } from 'react-bootstrap-icons';
 import { getRangeLabel, DateRangeOption } from '@/components/DateRangeSelector';
 import ExportButton from '@/components/ExportButton';
@@ -34,6 +35,8 @@ export default function AiAnalysisWidget({
   kpis,
   googleAdsData, // ✅ Google Ads Daten
 }: Props) {
+  // Kundenansicht der Admins (?ansicht=kunde): Analyse wie fuer den Kunden anfordern.
+  const customerView = useSearchParams().get('ansicht') === 'kunde';
   // Content States
   const [statusContent, setStatusContent] = useState('');
   const [analysisContent, setAnalysisContent] = useState('');
@@ -90,7 +93,7 @@ export default function AiAnalysisWidget({
     };
 
     prefetchData();
-  }, [projectId, dateRange]);
+  }, [projectId, dateRange, customerView]);
 
   const handleAnalyze = async () => {
     setIsLoading(true);
@@ -115,7 +118,7 @@ export default function AiAnalysisWidget({
       const response = await fetch('/api/ai/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, dateRange, googleAdsData: adsPayload }),
+        body: JSON.stringify({ projectId, dateRange, googleAdsData: adsPayload, customerView }),
         signal: abortControllerRef.current.signal
       });
 

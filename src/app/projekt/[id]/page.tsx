@@ -17,7 +17,7 @@ export default async function ProjectPage({
   searchParams 
 }: { 
   params: { id: string },
-  searchParams: { range?: string }
+  searchParams: { range?: string; ansicht?: string }
 }) {
   const projectId = params.id;
   const dateRange = (searchParams.range as DateRangeOption) || '30d';
@@ -27,6 +27,11 @@ export default async function ProjectPage({
   if (!session?.user) {
     redirect('/login');
   }
+
+  // Admins und Superadmins koennen das Dashboard so ansehen, wie es der Kunde sieht.
+  const viewerRole = session.user.role;
+  const isStaff = viewerRole === 'ADMIN' || viewerRole === 'SUPERADMIN';
+  const customerView = isStaff && searchParams.ansicht === 'kunde';
 
   if (!(await canAccessProject(session.user, projectId))) {
     redirect('/');
@@ -63,9 +68,10 @@ export default async function ProjectPage({
         countryData={effectiveDashboardData.countryData}
         channelData={effectiveDashboardData.channelData}
         deviceData={effectiveDashboardData.deviceData}
-        userRole={session.user.role}
+        userRole={customerView ? 'BENUTZER' : viewerRole}
+        viewerRole={viewerRole}
         userEmail={supportEmail}
-        userAnsprache={session.user.ansprache || null}
+        userAnsprache={(customerView ? projectUser.ansprache : session.user.ansprache) || null}
         showLandingPages={projectUser.settings_show_landingpages !== false}
         showGoogleAds={projectUser.settings_show_google_ads === true}
         showPromptTracking={projectUser.settings_show_prompt_tracking === true}

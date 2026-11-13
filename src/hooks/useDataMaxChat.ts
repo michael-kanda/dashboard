@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 export interface ChatMessage {
   id: string;
@@ -37,6 +38,8 @@ function isStreamDisconnectError(error: unknown): boolean {
 
 export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
   const { projectId, dateRange = '30d', onError } = options;
+  // Kundenansicht der Admins (?ansicht=kunde): Antworten wie fuer den Kunden anfordern.
+  const customerView = useSearchParams().get('ansicht') === 'kunde';
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -112,6 +115,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
             message: content.trim(),
             projectId,
             dateRange,
+            customerView,
           }),
           signal: currentController.signal,
         });
@@ -257,7 +261,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
         }
       }
     },
-    [projectId, dateRange, isLoading, onError]
+    [projectId, dateRange, customerView, isLoading, onError]
   );
 
   // Chat zurücksetzen

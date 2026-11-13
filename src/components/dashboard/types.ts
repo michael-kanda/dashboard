@@ -21,7 +21,10 @@ export interface ProjectDashboardProps {
   channelData?: ChartEntry[];
   deviceData?: ChartEntry[];
   bingData?: unknown[];
+  /** Rolle, mit der das Dashboard gerendert wird (in der Kundenansicht 'BENUTZER'). */
   userRole?: string;
+  /** Rolle der angemeldeten Person; steuert, ob der Umschalter Admin/Kunde erscheint. */
+  viewerRole?: string;
   userEmail?: string;
   userAnsprache?: string | null;
   showLandingPages?: boolean;
