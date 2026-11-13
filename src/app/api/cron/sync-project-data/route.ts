@@ -15,22 +15,19 @@ import {
   isRetryableInfrastructureError,
   withInfrastructureRetry,
 } from '@/lib/sync/retry';
-import { pickNextProjectSyncJobType } from '@/lib/sync/dispatcher-policy';
+import {
+  MAX_JOBS_PER_RUN,
+  getRunQuota,
+  parseDispatchMode,
+  pickNextProjectSyncJobType,
+} from '@/lib/sync/dispatcher-policy';
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 const DISPATCH_DEADLINE_MS = 235_000;
-const MAX_JOBS_PER_RUN = 9;
 
-// Reservierte Slots je Lauf. Indexing bekommt den größten Anteil, weil ein Projekt
-// mehrere Chargen braucht, bis alle Sitemap-URLs geprüft sind.
-const JOB_TYPE_QUOTA: Record<ProjectSyncJob['jobType'], number> = {
-  indexing: 4,
-  dashboard: 3,
-  'gsc-history': 2,
-};
 const JOB_TYPE_RESERVE_MS: Record<ProjectSyncJob['jobType'], number> = {
   indexing: 100_000,
   dashboard: 130_000,
@@ -106,6 +103,8 @@ export async function GET(request: NextRequest) {
 
   const startedAt = Date.now();
   const deadlineAt = startedAt + DISPATCH_DEADLINE_MS;
+  // ?only=dashboard: Morgenlauf, der ausschließlich Dashboard-Snapshots aktualisiert.
+  const mode = parseDispatchMode(request.nextUrl.searchParams.get('only'));
   try {
     const seeded = await retryDatabaseOperation('Jobs einplanen', seedDueProjectSyncJobs);
     const sourceStates = await retryDatabaseOperation('Queue-Zustand lesen', getQueueSourceStates);
@@ -118,7 +117,7 @@ export async function GET(request: NextRequest) {
       failureKind?: ProjectSyncFailureKind;
       message: string;
     }> = [];
-    const remainingQuota: Record<ProjectSyncJob['jobType'], number> = { ...JOB_TYPE_QUOTA };
+    const remainingQuota: Record<ProjectSyncJob['jobType'], number> = getRunQuota(mode);
     const processedByType: Record<ProjectSyncJob['jobType'], number> = {
       dashboard: 0,
       'gsc-history': 0,
@@ -214,13 +213,14 @@ export async function GET(request: NextRequest) {
     }
 
     const queueAfter = await retryDatabaseOperation('Queue-Rueckstau lesen', getQueueSourceStates);
-    logger.info('[Sync Dispatcher] Kapazitaet', JSON.stringify({ sourceStates, queueAfter, jobTimings }));
+    logger.info('[Sync Dispatcher] Kapazitaet', JSON.stringify({ mode, sourceStates, queueAfter, jobTimings }));
     const failures = results.filter((result) => !result.success);
     const transientFailures = failures.filter((result) => result.failureKind !== 'permanent');
     const permanentFailures = failures.length - transientFailures.length;
     return NextResponse.json({
       success: transientFailures.length === 0,
       degraded: permanentFailures > 0,
+      mode,
       seeded,
       processed: results.length,
       successful: results.filter((result) => result.success).length,

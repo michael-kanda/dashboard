@@ -80,3 +80,18 @@ test('prioritizes older waiting work but does not repeatedly reward an ancient b
     exhaustedTypes: new Set(), fits: () => true, sourceStates,
   }), 'indexing');
 });
+
+test('morning run reserves every slot for dashboard snapshots', async () => {
+  const { getRunQuota, parseDispatchMode, MAX_JOBS_PER_RUN } = await import('../../src/lib/sync/dispatcher-policy.ts');
+  assert.equal(parseDispatchMode('dashboard'), 'dashboard');
+  assert.equal(parseDispatchMode(null), 'mixed');
+  assert.equal(parseDispatchMode('indexing'), 'mixed');
+  assert.deepEqual(getRunQuota('dashboard'), { dashboard: MAX_JOBS_PER_RUN, 'gsc-history': 0, indexing: 0 });
+  assert.deepEqual(getRunQuota('mixed'), { dashboard: 3, 'gsc-history': 2, indexing: 4 });
+  assert.equal(pickNextProjectSyncJobType({
+    remainingQuota: getRunQuota('dashboard'),
+    processedByType: { dashboard: 5, 'gsc-history': 0, indexing: 0 },
+    exhaustedTypes: new Set(),
+    fits: () => true,
+  }), 'dashboard');
+});

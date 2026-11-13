@@ -9,6 +9,10 @@
     {
       "path": "/api/cron/sync-project-data",
       "schedule": "0 */12 * * *"
+    },
+    {
+      "path": "/api/cron/sync-project-data?only=dashboard",
+      "schedule": "*/10 4-6 * * *"
     }
   ]
 }
