@@ -180,8 +180,8 @@ export async function seedDueProjectSyncJobs() {
         project_sync_jobs.status = 'failed'
         AND project_sync_jobs.updated_at < NOW() - (
           CASE WHEN project_sync_jobs.failure_kind = 'permanent'
-            THEN ${PERMANENT_FAILURE_COOLDOWN_HOURS}
-            ELSE ${TRANSIENT_FAILURE_COOLDOWN_HOURS}
+            THEN ${PERMANENT_FAILURE_COOLDOWN_HOURS}::int
+            ELSE ${TRANSIENT_FAILURE_COOLDOWN_HOURS}::int
           END * INTERVAL '1 hour'
         )
       )
@@ -208,8 +208,8 @@ export async function seedDueProjectSyncJobs() {
         project_sync_jobs.status = 'failed'
         AND project_sync_jobs.updated_at < NOW() - (
           CASE WHEN project_sync_jobs.failure_kind = 'permanent'
-            THEN ${PERMANENT_FAILURE_COOLDOWN_HOURS}
-            ELSE ${TRANSIENT_FAILURE_COOLDOWN_HOURS}
+            THEN ${PERMANENT_FAILURE_COOLDOWN_HOURS}::int
+            ELSE ${TRANSIENT_FAILURE_COOLDOWN_HOURS}::int
           END * INTERVAL '1 hour'
         )
       )
@@ -241,8 +241,8 @@ export async function seedDueProjectSyncJobs() {
         project_sync_jobs.status = 'failed'
         AND project_sync_jobs.updated_at < NOW() - (
           CASE WHEN project_sync_jobs.failure_kind = 'permanent'
-            THEN ${PERMANENT_FAILURE_COOLDOWN_HOURS}
-            ELSE ${TRANSIENT_FAILURE_COOLDOWN_HOURS}
+            THEN ${PERMANENT_FAILURE_COOLDOWN_HOURS}::int
+            ELSE ${TRANSIENT_FAILURE_COOLDOWN_HOURS}::int
           END * INTERVAL '1 hour'
         )
       )

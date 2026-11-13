@@ -1,6 +1,6 @@
 # Datenaktualisierung im DataPeak-Dashboard
 
-Stand: 31. Oktober 2026
+Stand: 13. November 2026
 
 Dieses Dokument beschreibt, wie DataPeak die Dashboard-Daten aus Google Search Console (GSC), Google Analytics 4 (GA4), Google Ads, Sitemaps und Google-Unternehmensprofilen aktualisiert. Es trennt dabei bewusst zwischen dauerhaft gespeicherten Dashboard-Snapshots, der URL-Indexierungsprüfung und den bei Bedarf geladenen, ebenfalls gespeicherten Profilvorschauen.
 
@@ -47,7 +47,7 @@ Der Datenloader begrenzt Abrufe auf die frühere Grenze aus Dispatcher-Deadline 
 
 ### Zentraler Dispatcher
 
-Vercel ruft `GET /api/cron/sync-project-data` alle zwölf Stunden um 00:00 und 12:00 UTC auf. Der Endpunkt ist mit `CRON_SECRET` geschützt und verarbeitet drei Arten von Aufträgen:
+Vercel ruft `GET /api/cron/sync-project-data` alle zwölf Stunden um 00:00 und 12:00 UTC auf. Zusätzlich läuft zwischen 04:00 und 06:50 UTC alle zehn Minuten ein **Morgenlauf** (`?only=dashboard`), der ausschließlich Dashboard-Aufträge abarbeitet. Er sorgt dafür, dass die `30d`-Snapshots aller Projekte vor dem ersten Einstieg bis zum Vortag reichen; ohne fällige Aufträge endet er sofort. Der Endpunkt ist mit `CRON_SECRET` geschützt und verarbeitet drei Arten von Aufträgen:
 
 | Auftrag | Aufgabe |
 | --- | --- |
@@ -55,7 +55,7 @@ Vercel ruft `GET /api/cron/sync-project-data` alle zwölf Stunden um 00:00 und 1
 | `gsc-history` | Historische GSC-Tageswerte und gespeicherte Landingpage-Werte aktualisieren |
 | `indexing` | Sitemap einlesen und ausgewählte URLs mit der URL Inspection API prüfen |
 
-Pro Cronlauf werden maximal neun Aufträge innerhalb eines Zeitbudgets von 235 Sekunden verarbeitet: vier Indexierungs-, drei Dashboard- und zwei GSC-Historienaufträge. Vor jedem Start prüft der Dispatcher, ob das verbleibende Zeitbudget für den jeweiligen Auftragstyp reicht. Nicht passende Typen werden nicht reserviert und verbrauchen deshalb keinen Versuch oder Defer.
+Pro Cronlauf werden maximal neun Aufträge innerhalb eines Zeitbudgets von 235 Sekunden verarbeitet: im regulären Lauf vier Indexierungs-, drei Dashboard- und zwei GSC-Historienaufträge, im Morgenlauf nur Dashboard-Aufträge. Vor jedem Start prüft der Dispatcher, ob das verbleibende Zeitbudget für den jeweiligen Auftragstyp reicht. Nicht passende Typen werden nicht reserviert und verbrauchen deshalb keinen Versuch oder Defer.
 
 Die Auswahl berücksichtigt zuerst, wie viele Aufträge jeder Typ im aktuellen Lauf bereits erhalten hat. Bei Gleichstand zählt die früheste Wartezeit seit dem späteren Zeitpunkt aus ältestem fälligen Auftrag und letztem gespeicherten Start dieses Typs. Dadurch beginnt ein neuer Cronlauf nicht grundsätzlich wieder mit Dashboard, selbst wenn im vorigen Lauf nur ein Auftrag ausgeführt werden konnte. Ein fehlgeschlagener oder verschobener Versuch zählt ebenfalls als erhaltener Zug. Innerhalb eines Typs werden ältere Fälligkeiten zuerst bedient; bei gleichem Termin entscheidet die Priorität. Die benötigten Zeitstempel stammen aus `project_sync_jobs`; es gibt keine zusätzliche Scheduler-Tabelle und keine neue Migration.
 
@@ -76,7 +76,7 @@ Google-API-Fehler werden fachlich in `transient`, `quota`, `permanent` und `unkn
 
 ### Welche Daten werden geladen?
 
-Der normale Dashboard-Snapshot und die GSC-Historie verwenden dasselbe Berichtsfenster. Es endet zwei Tage vor dem aktuellen Datum, damit verzögert eintreffende Search-Console-Werte nicht als künstlicher Einbruch erscheinen. Der Snapshot enthält unter anderem:
+Der normale Dashboard-Snapshot und die GSC-Historie verwenden dasselbe Berichtsfenster. Es endet am Vortag nach Wiener Zeit. GSC wird dafür mit `dataState: "all"` abgefragt, die Werte des Vortags sind also noch nicht endgültig. Ein Snapshot, dessen Enddatum vor dem Vortag liegt, gilt unabhängig von seiner Cache-Dauer als fällig. Der Snapshot enthält unter anderem:
 
 - Klicks, Impressionen, CTR und durchschnittliche Position
 - Tagesverlauf für den gewählten Zeitraum
@@ -108,7 +108,7 @@ Neben dem Dashboard-Snapshot gibt es einen eigenen Historienlauf:
 
 - beim ersten Lauf werden bis zu 90 Tage geladen;
 - danach wird inkrementell ein überlappendes Sieben-Tage-Fenster aktualisiert;
-- der Zeitraum endet zwei Tage vor dem aktuellen Datum, weil GSC-Daten verzögert eintreffen können;
+- der Zeitraum endet am Vortag nach Wiener Zeit;
 - aktuelle und vorherige 30-Tage-Werte der gespeicherten Landingpages werden aktualisiert;
 - der nächste reguläre Lauf wird nach 48 Stunden geplant, bei einem Fehler weiterhin nach sechs Stunden.
 
@@ -143,7 +143,7 @@ Aktueller Zeitraum und Vergleichszeitraum werden nacheinander geladen. Auch die 
 
 ### Cache und Aktualisierung
 
-GA4 und GSC werden im selben Dashboard-Snapshot in `google_data_cache` gespeichert. Deshalb gelten für GA4 dieselben Cache-Dauern und dasselbe um zwei Tage verzögerte Berichtsfenster wie für GSC. Dieser bewusste Konsistenz-Trade-off verhindert unterschiedliche Datumsgrenzen innerhalb eines Widgets und vermeidet API-Aufrufe beim Seitenaufruf.
+GA4 und GSC werden im selben Dashboard-Snapshot in `google_data_cache` gespeichert. Deshalb gelten für GA4 dieselben Cache-Dauern und dasselbe am Vortag endende Berichtsfenster wie für GSC. Dieser bewusste Konsistenz-Trade-off verhindert unterschiedliche Datumsgrenzen innerhalb eines Widgets und vermeidet API-Aufrufe beim Seitenaufruf.
 
 ### Fehlerverhalten und Abdeckung
 
