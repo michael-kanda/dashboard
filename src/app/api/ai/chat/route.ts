@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { message, projectId, dateRange = '30d' } = body;
+    const { message, projectId, dateRange = '30d', customerView } = body;
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'Nachricht fehlt' }, { status: 400 });
@@ -44,7 +44,8 @@ export async function POST(req: NextRequest) {
 
     // 2. Ziel-User bestimmen
     const userId = session.user.id;
-    const userRole = session.user.role;
+    // Kundenansicht der Admins: Antworten wie fuer den Kunden (setzt die Rolle nur herab).
+    const userRole = customerView === true ? 'BENUTZER' : session.user.role;
     const targetUserId = projectId || userId;
 
     // Fremde Projekte nur mit Berechtigung (Kunden ausschließlich das eigene)
