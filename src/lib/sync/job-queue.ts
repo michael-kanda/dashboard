@@ -381,14 +381,20 @@ export async function finishProjectSyncJob(
   result: { success: boolean; error?: string; kind?: ProjectSyncFailureKind },
 ) {
   if (result.success) {
-    await sql`
+    const { rows } = await sql<{ status: ProjectSyncJobStatus }>`
       UPDATE project_sync_jobs
       SET
         status = 'completed', completed_at = NOW(), lease_until = NULL,
         last_error = NULL, failure_kind = NULL, defer_count = 0,
         priority = 0, updated_at = NOW()
       WHERE id = ${job.id}::bigint
+      RETURNING status
     `;
+    if (rows[0]?.status !== 'completed') {
+      console.warn('[Sync Queue] Abschluss nicht gespeichert', JSON.stringify({
+        jobId: job.id, type: job.jobType, userId: job.userId, returned: rows.length,
+      }));
+    }
     return;
   }
 

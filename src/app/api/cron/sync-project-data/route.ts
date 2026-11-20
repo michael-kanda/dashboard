@@ -124,6 +124,9 @@ export async function GET(request: NextRequest) {
       indexing: 0,
     };
     const exhaustedTypes = new Set<ProjectSyncJob['jobType']>();
+    // Schutz gegen Endlosschleifen: Ein Auftrag wird pro Lauf höchstens einmal bearbeitet.
+    // Kommt derselbe Auftrag erneut zurück, ist sein Abschluss nicht gespeichert worden.
+    const claimedJobIds = new Set<string>();
 
     const timeLeft = () => deadlineAt - Date.now();
     const fits = (type: ProjectSyncJob['jobType']) => JOB_TYPE_RESERVE_MS[type] <= timeLeft();
@@ -152,6 +155,16 @@ export async function GET(request: NextRequest) {
       // Never claim a type that the remaining runtime cannot accommodate.
       const job = preferredJob;
       if (!job) break;
+      if (claimedJobIds.has(job.id)) {
+        logger.warn('[Sync Dispatcher] Auftrag im selben Lauf erneut reserviert, Typ wird für diesen Lauf beendet', JSON.stringify({
+          jobId: job.id, type: job.jobType, userId: job.userId, dateRange: job.dateRange,
+          status: job.status, attempts: job.attempts, deferCount: job.deferCount,
+        }));
+        exhaustedTypes.add(job.jobType);
+        if (pickNextType()) continue;
+        break;
+      }
+      claimedJobIds.add(job.id);
       if (!fits(job.jobType)) {
         await retryDatabaseOperation(
           'Job wegen Zeitbudget verschieben',

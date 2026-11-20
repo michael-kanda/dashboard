@@ -47,7 +47,7 @@ Der Datenloader begrenzt Abrufe auf die frühere Grenze aus Dispatcher-Deadline 
 
 ### Zentraler Dispatcher
 
-Vercel ruft `GET /api/cron/sync-project-data` alle zwölf Stunden um 00:00 und 12:00 UTC auf. Zusätzlich läuft zwischen 04:00 und 06:50 UTC alle zehn Minuten ein **Morgenlauf** (`?only=dashboard`), der ausschließlich Dashboard-Aufträge abarbeitet. Er sorgt dafür, dass die `30d`-Snapshots aller Projekte vor dem ersten Einstieg bis zum Vortag reichen; ohne fällige Aufträge endet er sofort. Der Endpunkt ist mit `CRON_SECRET` geschützt und verarbeitet drei Arten von Aufträgen:
+Vercel ruft `GET /api/cron/sync-project-data` alle zwölf Stunden um 00:00 und 12:00 UTC auf. Zusätzlich läuft zwischen 04:00 und 06:40 UTC alle zwanzig Minuten ein **Morgenlauf** (`?only=dashboard`), der ausschließlich Dashboard-Aufträge abarbeitet. Er sorgt dafür, dass die `30d`-Snapshots aller Projekte vor dem ersten Einstieg bis zum Vortag reichen; ohne fällige Aufträge endet er sofort. Jeder Auftrag wird pro Lauf höchstens einmal bearbeitet; kommt derselbe Auftrag zurück, beendet der Lauf diesen Typ und protokolliert eine Warnung. Der Endpunkt ist mit `CRON_SECRET` geschützt und verarbeitet drei Arten von Aufträgen:
 
 | Auftrag | Aufgabe |
 | --- | --- |

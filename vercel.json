@@ -12,7 +12,7 @@
     },
     {
       "path": "/api/cron/sync-project-data?only=dashboard",
-      "schedule": "*/10 4-6 * * *"
+      "schedule": "*/20 4-6 * * *"
     }
   ]
 }
