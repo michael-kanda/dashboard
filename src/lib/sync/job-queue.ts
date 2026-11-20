@@ -1,5 +1,6 @@
 import { sql } from '@vercel/postgres';
 import { getDashboardCacheDurationHours, getReportingWindow } from './cache-policy';
+import { logger } from '@/lib/logger';
 
 export type ProjectSyncJobType = 'dashboard' | 'gsc-history' | 'indexing';
 export type ProjectSyncJobStatus = 'pending' | 'running' | 'completed' | 'failed';
@@ -21,6 +22,8 @@ export interface ProjectSyncJob {
   maxAttempts: number;
   deferCount: number;
   failureKind: ProjectSyncFailureKind | null;
+  /** Diagnose: Zeitpunkt und Sitzung der Datenbank, die die Zeile geliefert hat. */
+  diagnostics?: { dbNow: string | null; backendPid: number | null; startedAt: string | null };
 }
 
 function mapJob(row: Record<string, unknown>): ProjectSyncJob {
@@ -37,6 +40,11 @@ function mapJob(row: Record<string, unknown>): ProjectSyncJob {
     maxAttempts: Number(row.max_attempts ?? 5),
     deferCount: Number(row.defer_count ?? 0),
     failureKind: (row.failure_kind as ProjectSyncFailureKind | null) ?? null,
+    diagnostics: row.db_now === undefined ? undefined : {
+      dbNow: row.db_now ? String(row.db_now) : null,
+      backendPid: row.backend_pid === undefined || row.backend_pid === null ? null : Number(row.backend_pid),
+      startedAt: row.started_at ? new Date(String(row.started_at)).toISOString() : null,
+    },
   };
 }
 
@@ -311,7 +319,7 @@ export async function claimNextProjectSyncJob(
       updated_at = NOW()
     FROM candidate
     WHERE job.id = candidate.id
-    RETURNING job.*
+    RETURNING job.*, clock_timestamp()::text AS db_now, pg_backend_pid() AS backend_pid
   `;
   return rows[0] ? mapJob(rows[0]) : null;
 }
@@ -381,19 +389,24 @@ export async function finishProjectSyncJob(
   result: { success: boolean; error?: string; kind?: ProjectSyncFailureKind },
 ) {
   if (result.success) {
-    const { rows } = await sql<{ status: ProjectSyncJobStatus }>`
+    const { rows } = await sql<{ status: ProjectSyncJobStatus; completed_at: string | null; db_now: string; backend_pid: number }>`
       UPDATE project_sync_jobs
       SET
         status = 'completed', completed_at = NOW(), lease_until = NULL,
         last_error = NULL, failure_kind = NULL, defer_count = 0,
         priority = 0, updated_at = NOW()
       WHERE id = ${job.id}::bigint
-      RETURNING status
+      RETURNING status, completed_at::text AS completed_at, clock_timestamp()::text AS db_now, pg_backend_pid() AS backend_pid
     `;
+    const finishDiagnostics = JSON.stringify({
+      jobId: job.id, type: job.jobType, userId: job.userId, returned: rows.length,
+      status: rows[0]?.status ?? null, completedAt: rows[0]?.completed_at ?? null,
+      dbNow: rows[0]?.db_now ?? null, backendPid: rows[0]?.backend_pid ?? null,
+    });
     if (rows[0]?.status !== 'completed') {
-      console.warn('[Sync Queue] Abschluss nicht gespeichert', JSON.stringify({
-        jobId: job.id, type: job.jobType, userId: job.userId, returned: rows.length,
-      }));
+      console.warn('[Sync Queue] Abschluss nicht gespeichert', finishDiagnostics);
+    } else {
+      logger.info('[Sync Queue] Abschluss', finishDiagnostics);
     }
     return;
   }

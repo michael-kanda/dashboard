@@ -165,6 +165,12 @@ export async function GET(request: NextRequest) {
         break;
       }
       claimedJobIds.add(job.id);
+      // Diagnose: Liegt dbNow weit vor der echten Uhrzeit oder fehlt der frische
+      // startedAt, kam die Antwort nicht frisch aus der Datenbank.
+      logger.info('[Sync Dispatcher] Auftrag reserviert', JSON.stringify({
+        mode, jobId: job.id, type: job.jobType, userId: job.userId, dateRange: job.dateRange,
+        attempts: job.attempts, functionNow: new Date().toISOString(), ...job.diagnostics,
+      }));
       if (!fits(job.jobType)) {
         await retryDatabaseOperation(
           'Job wegen Zeitbudget verschieben',
