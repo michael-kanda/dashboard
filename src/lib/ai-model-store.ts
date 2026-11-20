@@ -16,11 +16,27 @@ export async function readAiModels(): Promise<AiModels> {
   }
 }
 
-// Für jeden KI-Aufruf: gecacht, beim Speichern über das Tag geleert.
-export const getAiModels = unstable_cache(readAiModels, ['ai-models'], {
+async function readAiModelsOrThrow(): Promise<AiModels> {
+  const { rows } = await sql`SELECT value FROM app_settings WHERE key = 'ai_models'`;
+  const parsed = aiModelsSchema.safeParse(rows[0]?.value);
+  return parsed.success ? parsed.data : { ...DEFAULT_AI_MODELS };
+}
+
+// Ohne Zeitablauf, damit die Datenbank nicht unnötig geweckt wird; beim Speichern
+// über das Tag geleert. Fehler werden nicht gecacht.
+const cachedAiModels = unstable_cache(readAiModelsOrThrow, ['ai-models'], {
   tags: [AI_MODELS_CACHE_TAG],
-  revalidate: 300,
+  revalidate: false,
 });
+
+export async function getAiModels(): Promise<AiModels> {
+  try {
+    return await cachedAiModels();
+  } catch (error) {
+    console.error('[KI-Modelle] Laden fehlgeschlagen, Standard aktiv:', error);
+    return { ...DEFAULT_AI_MODELS };
+  }
+}
 
 export async function saveAiModels(models: AiModels, updatedBy: string): Promise<void> {
   await sql`
