@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { sql } from '@vercel/postgres';
+import { freshSql as sql } from './fresh-sql';
 
 const LEASE_SECONDS = 90;
 const HEARTBEAT_SECONDS = 25;

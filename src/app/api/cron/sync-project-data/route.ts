@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { unstable_noStore as noStore } from 'next/cache';
 import { trySyncDashboardProjectSnapshot, classifyDashboardJobFailure } from '@/lib/sync/dashboard';
 import { syncGscHistoryForProject } from '@/lib/sync/gsc-history';
 import { syncIndexingProjectSnapshot } from '@/lib/sync/indexing';
@@ -24,6 +25,9 @@ import {
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
+// Datenbankantworten dürfen nie aus einem Zwischenspeicher kommen.
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 export const maxDuration = 300;
 
 const DISPATCH_DEADLINE_MS = 235_000;
@@ -92,6 +96,7 @@ async function executeJob(job: ProjectSyncJob, deadlineAt: number): Promise<JobO
 }
 
 export async function GET(request: NextRequest) {
+  noStore();
   const secret = process.env.CRON_SECRET;
   if (!secret) {
     console.error('[Sync Dispatcher] CRON_SECRET ist nicht gesetzt.');

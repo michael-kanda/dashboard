@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { freshSql as sql } from './fresh-sql';
 import { getDashboardCacheDurationHours, getReportingWindow } from './cache-policy';
 import { logger } from '@/lib/logger';
 
