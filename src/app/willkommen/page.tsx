@@ -89,7 +89,7 @@ const FEATURES = [
   { icon: Stars, title: 'KI-Traffic pro Modell.', text: 'Sitzungen, Conversions und Verlauf für jede KI-Quelle.' },
   { icon: BellFill, title: 'Anomalie-Erkennung.', text: 'Starke Anstiege und Einbrüche bei KI-Quellen erkennt DataPeak von selbst.' },
   { icon: GeoAltFill, title: 'Lokale Sichtbarkeit.', text: 'Standorte auf der Karte, mit Unternehmensprofil und Vergleich.' },
-  { icon: ChatQuoteFill, title: 'Prompt Tracking.', text: 'Lange, fragenartige Suchanfragen aus der Search Console.' },
+  { icon: ChatQuoteFill, title: 'Fragen-Radar.', text: 'Lange, fragenartige Suchanfragen aus der Search Console.' },
   { icon: CloudSunFill, title: 'Wetter und Feiertage.', text: 'Im Verlauf sehen Sie, was den Traffic an einem Tag beeinflusst hat.' },
   { icon: ListCheck, title: 'Indexierungsstatus.', text: 'Welche Seiten Google kennt und wo es hakt.' },
   { icon: FileEarmarkBarGraphFill, title: 'PDF-Bericht.', text: 'Eine saubere Zusammenfassung auf Knopfdruck.' },
@@ -120,7 +120,7 @@ const FAQ = [
         a: 'Aus Google Analytics 4. Besuche, die von ChatGPT, Perplexity, Gemini, Claude und weiteren KI-Diensten kommen, werden erkannt und pro Quelle ausgewertet, inklusive Conversions und Folgeseiten.',
       },
       {
-        q: 'Was ist Prompt Tracking?',
+        q: 'Was zeigt das Fragen-Radar?',
         a: 'DataPeak filtert lange, fragenartige Suchanfragen ab zehn Wörtern aus der Search Console. So sehen Sie, wie Menschen ihre Fragen formulieren, und finden Themen, die auf Ihrer Website noch fehlen.',
       },
     ],

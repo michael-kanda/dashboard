@@ -12,6 +12,19 @@ export interface ChatMessage {
   isStreaming?: boolean;
 }
 
+/** Tageslimit aus der API; limit null = unbegrenzt. */
+export interface DataMaxUsage {
+  limit: number | null;
+  remaining: number | null;
+}
+
+function usageFromHeaders(headers: Headers): DataMaxUsage | null {
+  const limit = headers.get('X-DataMax-Limit');
+  const remaining = headers.get('X-DataMax-Remaining');
+  if (limit === null || remaining === null) return null;
+  return { limit: Number(limit), remaining: Number(remaining) };
+}
+
 interface UseDataMaxChatOptions {
   projectId?: string;
   dateRange?: string;
@@ -44,6 +57,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const [usage, setUsage] = useState<DataMaxUsage | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // ----------------------------------------------------------------------
@@ -71,6 +85,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
       if (response.ok) {
         const data = await response.json();
         setSuggestedQuestions(data.questions || []);
+        if (data.usage) setUsage(data.usage);
       }
     } catch (error) {
       console.warn('Konnte Suggested Questions nicht laden:', error);
@@ -120,8 +135,22 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
           signal: currentController.signal,
         });
 
+        const headerUsage = usageFromHeaders(response.headers);
+        if (headerUsage) setUsage(headerUsage);
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
+          if (errorData.limitReached) {
+            setUsage({ limit: errorData.limit ?? null, remaining: 0 });
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessage.id
+                  ? { ...msg, content: errorData.error, isStreaming: false }
+                  : msg
+              )
+            );
+            return;
+          }
           throw new Error(errorData.error || `Fehler: ${response.status}`);
         }
 
@@ -287,6 +316,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
     messages,
     isLoading,
     suggestedQuestions,
+    usage,
     sendMessage,
     clearChat,
     cancelRequest,

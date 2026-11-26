@@ -44,7 +44,7 @@ export const DASHBOARD_WIDGET_DEFINITIONS = [
   {
     key: 'promptTracking',
     group: 'KI',
-    label: 'Prompt Tracking',
+    label: 'Fragen-Radar',
     description: 'Prompt-Auswertung und Prompt Research; wird über KI-Traffic geöffnet.',
   },
   {

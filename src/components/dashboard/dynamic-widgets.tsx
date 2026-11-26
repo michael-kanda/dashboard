@@ -14,7 +14,7 @@ export const PromptTrackingCard = dynamic(
   () => import('@/components/PromptTrackingCard'),
   {
     ssr: false,
-    loading: () => <WidgetLoading label="Prompt-Tracking" />,
+    loading: () => <WidgetLoading label="Fragen-Radar" />,
   },
 );
 

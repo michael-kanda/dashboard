@@ -14,6 +14,7 @@ import { generateSuggestedQuestions } from '@/lib/ai-chat/fallback';
 import { buildSystemPrompt } from '@/lib/ai-chat/prompt';
 import { logger } from '@/lib/logger';
 import { readAnalyticsSettings } from '@/lib/vercel-analytics/settings';
+import { consumeDataMaxQuota, quotaExceededResponse, quotaHeaders, readDataMaxQuota } from '@/lib/datamax-quota';
 export const maxDuration = 60;
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,6 +46,10 @@ export async function POST(req: NextRequest) {
 
     // 2. Ziel-User bestimmen
     const userId = session.user.id;
+
+    // Tageslimit vorab prüfen, damit bei erreichtem Limit keine Daten geladen werden.
+    const quotaBefore = await readDataMaxQuota(userId, session.user.role);
+    if (!quotaBefore.allowed) return quotaExceededResponse(quotaBefore);
     // Kundenansicht der Admins: Antworten wie fuer den Kunden (setzt die Rolle nur herab).
     const userRole = customerView === true ? 'BENUTZER' : session.user.role;
     const targetUserId = projectId || userId;
@@ -130,7 +135,10 @@ export async function POST(req: NextRequest) {
     
     const systemPrompt = buildSystemPrompt(context, isAdmin, selectedDateRange, effectiveDateRange);
 
-    // 7. Stream-Response
+    // 7. Frage zählen (atomar, falls parallel gesendet wurde) und Stream starten
+    const quotaState = await consumeDataMaxQuota(userId, session.user.role);
+    if (!quotaState.allowed) return quotaExceededResponse(quotaState);
+
     const result = await streamTextSafe({
       system: systemPrompt,
       prompt: message,
@@ -142,6 +150,9 @@ export async function POST(req: NextRequest) {
     
     const response = result.toTextStreamResponse();
     response.headers.set('X-Suggested-Questions', questionsBase64);
+    for (const [key, value] of Object.entries(quotaHeaders(quotaState))) {
+      response.headers.set(key, value);
+    }
     
     return response;
 
@@ -230,7 +241,8 @@ export async function GET(req: NextRequest) {
         );
       } catch { return false; }
     })());
-    return NextResponse.json({ questions });
+    const usage = await readDataMaxQuota(session.user.id, session.user.role);
+    return NextResponse.json({ questions, usage: { limit: usage.limit, remaining: usage.remaining } });
 
   } catch (error) {
     console.error('[DataMax Questions] Fehler:', error);

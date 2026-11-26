@@ -12,6 +12,7 @@ import type { User } from '@/lib/schemas';
 import { getAiModels } from '@/lib/ai-config';
 import { getProjectIndexingStatus } from '@/lib/indexing-status';
 import { logger } from '@/lib/logger';
+import { consumeDataMaxQuota, quotaExceededResponse, quotaHeaders } from '@/lib/datamax-quota';
 import { analyticsSourceNote } from '@/lib/vercel-analytics/ai-note';
 
 const google = createGoogleGenerativeAI({
@@ -39,9 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 });
     }
 
-    // ==========================================
-    // ✅ DEMO-MODUS CHECK
-    // ==========================================
+    // Demo-Modus: simulierte Antwort ohne KI-Aufruf
     const isDemo = session.user.is_demo === true;
     
     if (isDemo) {
@@ -81,9 +80,6 @@ export async function POST(req: NextRequest) {
         headers: { 'Content-Type': 'text/plain; charset=utf-8' }
       });
     }
-    // ==========================================
-    // ENDE DEMO-MODUS
-    // ==========================================
 
     const body = await req.json();
     const { projectId, dateRange, googleAdsData, customerView } = body;
@@ -621,6 +617,10 @@ export async function POST(req: NextRequest) {
       `;
     }
 
+    // Tageslimit: nur echte KI-Aufrufe zählen, gespeicherte Analysen (Cache) sind frei.
+    const quotaState = await consumeDataMaxQuota(session.user.id, session.user.role);
+    if (!quotaState.allowed) return quotaExceededResponse(quotaState);
+
     const result = streamText({
       model: google((await getAiModels()).primary),
       system: systemPrompt,
@@ -638,7 +638,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    return result.toTextStreamResponse();
+    return result.toTextStreamResponse({ headers: quotaHeaders(quotaState) });
 
   } catch (error) {
     console.error('[AI Analyze] Fehler:', error);

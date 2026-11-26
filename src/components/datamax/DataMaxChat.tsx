@@ -53,6 +53,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
     messages,
     isLoading,
     suggestedQuestions,
+    usage,
     sendMessage,
     clearChat,
     cancelRequest,
@@ -60,6 +61,8 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
   } = useDataMaxChat({ projectId, dateRange });
 
   const fontSizeClass = FONT_SIZES[fontSizeIndex].class;
+  // Tageslimit: ohne Angabe (Superadmin) unbegrenzt.
+  const limitReached = usage?.remaining === 0;
 
   // Auto-scroll zu neuen Nachrichten
   useEffect(() => {
@@ -93,13 +96,14 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim() && !isLoading) {
+    if (inputValue.trim() && !isLoading && !limitReached) {
       sendMessage(inputValue);
       setInputValue('');
     }
   };
 
   const handleSuggestedClick = (question: string) => {
+    if (limitReached) return;
     sendMessage(question);
   };
 
@@ -270,8 +274,8 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Frag DataMax..."
-                  disabled={isLoading}
+                  placeholder={limitReached ? 'Tageslimit erreicht' : 'Frag DataMax...'}
+                  disabled={isLoading || limitReached}
                   className={`
                     flex-1 px-4 py-2.5
                     bg-surface-secondary border border-border-subtle rounded-md
@@ -298,7 +302,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                 ) : (
                   <button
                     type="submit"
-                    disabled={!inputValue.trim()}
+                    disabled={!inputValue.trim() || limitReached}
                     className="
                       p-2.5 rounded-md
                       bg-accent-solid text-white
@@ -311,6 +315,13 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                   </button>
                 )}
               </div>
+              {usage?.limit != null && usage.remaining != null && (
+                <p className="mt-2 text-[12px] text-muted" role="status" aria-live="polite">
+                  {limitReached
+                    ? `Tageslimit von ${usage.limit} Fragen erreicht. Ab morgen geht es weiter.`
+                    : `Noch ${usage.remaining} von ${usage.limit} Fragen heute.`}
+                </p>
+              )}
             </form>
           </motion.div>
         )}

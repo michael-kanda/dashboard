@@ -122,7 +122,11 @@ export default function AiAnalysisWidget({
         signal: abortControllerRef.current.signal
       });
 
-      if (!response.ok) throw new Error('Verbindung fehlgeschlagen');
+      if (!response.ok) {
+        // Tageslimit oder andere Meldung des Servers anzeigen
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Verbindung fehlgeschlagen');
+      }
       if (!response.body) throw new Error('Kein Stream');
 
       const reader = response.body.getReader();
