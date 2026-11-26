@@ -97,7 +97,12 @@ async function request<T>(
 
   if (!response.ok) {
     const body = await response.text().catch(() => '');
-    throw new VercelAnalyticsError(describeVercelAnalyticsStatus(response.status, body), response.status);
+    // Projekt und Team in der Meldung: ein 404 entsteht meist durch falsches Projekt oder fehlendes Team.
+    const team = target.teamId?.trim() || process.env.VERCEL_ANALYTICS_TEAM_ID?.trim() || 'kein Team gesetzt';
+    throw new VercelAnalyticsError(
+      `${describeVercelAnalyticsStatus(response.status, body)} [Projekt: ${target.projectId}, Team: ${team}]`,
+      response.status,
+    );
   }
   const payload = await response.json() as { data?: T };
   return (payload.data ?? ([] as unknown as T));
