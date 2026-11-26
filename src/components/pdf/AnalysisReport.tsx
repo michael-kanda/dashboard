@@ -309,7 +309,7 @@ export const AnalysisReport = ({
         {/* HINWEIS */}
         <View style={styles.note}>
           <Text style={styles.noteText}>
-            Hinweis: Dieser Bericht ist eine Zusammenfassung. Detaillierte interaktive Charts finden Sie im Dashboard unter https://dashboard.datapeak.at
+            Hinweis: Dieser Bericht ist eine Zusammenfassung. Detaillierte interaktive Charts finden Sie im Dashboard unter https://app.datapeak.at
           </Text>
         </View>
 

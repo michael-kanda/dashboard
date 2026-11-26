@@ -3,7 +3,10 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { headers } from 'next/headers';
 import MainLayout from '@/components/MainLayout';
+import MarketingShell from '@/components/marketing/MarketingShell';
+import { SITE_HEADER } from '@/lib/site-hosts';
 import { Toaster } from 'sonner';
 import * as Sentry from '@sentry/nextjs';
 import { themeToCss } from '@/lib/theme';
@@ -57,6 +60,8 @@ export default async function RootLayout({
 }>) {
   // Vom Superadmin gewählte Farben, Rahmen und Schatten; leer, solange nichts geändert wurde.
   const themeCss = themeToCss(await getCachedTheme());
+  // Die Middleware markiert Aufrufe der Landingpage (www.datapeak.at); dort gibt es keine Sidebar.
+  const isMarketing = headers().get(SITE_HEADER) === 'marketing';
 
   return (
     <html lang="de" className={inter.variable} suppressHydrationWarning>
@@ -67,9 +72,13 @@ export default async function RootLayout({
       <body className="bg-page">
         <Providers>
           <Toaster position="top-right" richColors closeButton />
-          <MainLayout>
-            {children}
-          </MainLayout>
+          {isMarketing ? (
+            <MarketingShell>{children}</MarketingShell>
+          ) : (
+            <MainLayout>
+              {children}
+            </MainLayout>
+          )}
         </Providers>
       </body>
     </html>
