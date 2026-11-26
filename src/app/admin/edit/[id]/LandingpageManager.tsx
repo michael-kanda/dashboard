@@ -135,7 +135,7 @@ export default function LandingpageManager({ userId }: Props) {
         {/* Modus: DATEI */}
         {mode === 'file' && (
           <div className="animate-in fade-in slide-in-from-left-2 duration-200">
-            <label className="block text-sm font-medium text-body mb-2">
+            <label className="dp-label mb-2">
               Datei auswählen (.xlsx oder .csv)
             </label>
             <div className="flex items-center gap-3">
@@ -155,7 +155,7 @@ export default function LandingpageManager({ userId }: Props) {
         {/* Modus: GOOGLE SHEET */}
         {mode === 'sheet' && (
           <div className="animate-in fade-in slide-in-from-right-2 duration-200">
-            <label className="block text-sm font-medium text-body mb-2">
+            <label className="dp-label mb-2">
               Google Sheet Link
             </label>
             <input
@@ -163,7 +163,7 @@ export default function LandingpageManager({ userId }: Props) {
               value={sheetUrl}
               onChange={(e) => setSheetUrl(e.target.value)}
               placeholder="https://docs.google.com/spreadsheets/d/..."
-              className="block w-full px-4 py-2 border border-border rounded-md focus:ring-accent focus:border-accent text-sm"
+              className="dp-field px-4 text-sm"
             />
             
             <div className="mt-3 bg-accent-tint border border-border rounded-md p-3">

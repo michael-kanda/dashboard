@@ -23,8 +23,8 @@ export default function ProjectTimelineSection({
   isSubmitting,
 }: ProjectTimelineSectionProps) {
   return (
-    <fieldset className="border-t pt-4 mt-4">
-      <legend className="text-sm font-medium text-body mb-2">Projekt-Timeline</legend>
+    <fieldset className="mt-8">
+      <legend className="dp-section-title">Projekt-Timeline</legend>
   
       <div className="mb-4">
         <label 
@@ -57,7 +57,7 @@ export default function ProjectTimelineSection({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Startdatum */}
           <div>
-            <label className="block text-sm font-medium text-body flex items-center gap-1">
+            <label className="dp-label flex items-center gap-1">
               <CalendarEvent size={14} /> Projekt-Startdatum
             </label>
             <div className="relative mt-1">
@@ -66,7 +66,7 @@ export default function ProjectTimelineSection({
                 name="project_start_date"
                 value={formData.project_start_date}
                 onChange={handleInputChange} 
-                className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed"
+                className="dp-field pr-10"
                 disabled={isSubmitting}
               />
               {formData.project_start_date && !isSubmitting && (
@@ -80,7 +80,7 @@ export default function ProjectTimelineSection({
 
           {/* Dauer */}
           <div>
-            <label className="block text-sm font-medium text-body flex items-center gap-1">
+            <label className="dp-label flex items-center gap-1">
               <ClockHistory size={14} /> Projektdauer (Monate)
             </label>
             <div className="relative mt-1">
@@ -88,7 +88,7 @@ export default function ProjectTimelineSection({
                 name="project_duration_months"
                 value={formData.project_duration_months}
                 onChange={handleInputChange} 
-                className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed"
+                className="dp-field pr-10"
                 disabled={isSubmitting}
               >
                 <option value="6">6 Monate</option>

@@ -16,12 +16,12 @@ export default function GoogleAdsSection({
   isSubmitting,
 }: GoogleAdsSectionProps) {
   return (
-    <fieldset className="border-t pt-4 mt-4">
-      <legend className="text-sm font-medium text-body mb-2">Google Ads</legend>
+    <fieldset className="mt-8">
+      <legend className="dp-section-title">Google Ads</legend>
   
       {/* Google Ads Sheet ID */}
       <div>
-        <label className="block text-sm font-medium text-body">
+        <label className="dp-label">
           Google Ads Sheet ID
         </label>
         <div className="relative mt-1">
@@ -31,7 +31,7 @@ export default function GoogleAdsSection({
             value={formData.googleAdsSheetId}
             onChange={handleInputChange} 
             placeholder="Google-Sheets-URL oder Spreadsheet-ID"
-            className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+            className="dp-field pr-10"
             disabled={isSubmitting}
           />
           {formData.googleAdsSheetId && !isSubmitting && (

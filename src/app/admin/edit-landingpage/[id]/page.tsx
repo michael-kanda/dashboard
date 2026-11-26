@@ -100,31 +100,31 @@ export default function EditLandingpagePage() {
 
       <form onSubmit={handleSubmit} className="space-y-4 bg-surface p-6 rounded-lg">
         <div>
-          <label className="block text-sm font-medium text-body">Titel</label>
+          <label className="dp-label">Titel</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent"
+            className="dp-field mt-1"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-body">URL (Relativ, z.B. /seo-text)</label>
+          <label className="dp-label">URL (Relativ, z.B. /seo-text)</label>
           <input
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent"
+            className="dp-field mt-1"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-body">Status (Redaktionsplan)</label>
+          <label className="dp-label">Status (Redaktionsplan)</label>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as Landingpage['status'])}
-            className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent"
+            className="dp-field mt-1"
           >
             {/* Diese Status basieren auf deinem DB-Schema */}
             <option value="Offen">Offen</option>

@@ -35,7 +35,7 @@ export default function AccountSection({
     <>
       {/* --- E-Mail --- */}
       <div>
-        <label className="block text-sm font-medium text-body">E-Mail *</label>
+        <label className="dp-label">E-Mail *</label>
         <div className="relative mt-1">
           <input
             type="email"
@@ -43,7 +43,7 @@ export default function AccountSection({
             value={formData.email}
             onChange={handleInputChange} 
             required
-            className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed"
+            className="dp-field pr-10"
             disabled={isSubmitting}
           />
           {formData.email && !isSubmitting && (
@@ -58,7 +58,7 @@ export default function AccountSection({
       {/* --- Passwort --- */}
       <div>
         <div className="flex items-center justify-between gap-3">
-          <label htmlFor="new-user-password" className="block text-sm font-medium text-body">Passwort</label>
+          <label htmlFor="new-user-password" className="dp-label">Passwort</label>
           <button
             type="button"
             onClick={() => { setIsChangingPassword(!isChangingPassword); setPassword(''); }}
@@ -78,7 +78,7 @@ export default function AccountSection({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={`Neues Passwort, mindestens ${MIN_PASSWORD_LENGTH} Zeichen`}
-              className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+              className="dp-field mt-1"
               disabled={isSubmitting}
               autoFocus
             />
@@ -93,15 +93,15 @@ export default function AccountSection({
 
       {/* --- Mandant-ID --- */}
       <div className="border-t pt-4 mt-4">
-        <label className="block text-sm font-medium text-body">Mandant-ID (Label)</label>
+        <label className="dp-label">Mandant-ID (Label)</label>
         <div className="relative mt-1">
           <input
             type="text"
             name="mandantId"
             value={formData.mandantId}
             onChange={handleInputChange} 
-            placeholder="z.B. max-online"
-            className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+            placeholder="max-online"
+            className="dp-field pr-10"
             disabled={isSubmitting || !isSuperAdmin}
             readOnly={!isSuperAdmin}
           />
@@ -116,15 +116,15 @@ export default function AccountSection({
 
       {/* --- Ansprache --- */}
       <div>
-        <label className="block text-sm font-medium text-body">Ansprache</label>
+        <label className="dp-label">Ansprache</label>
         <div className="relative mt-1">
           <input
             type="text"
             name="ansprache"
             value={formData.ansprache}
             onChange={handleInputChange}
-            placeholder="z.B. Herr Muster oder Frau Muster"
-            className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+            placeholder="Herr Muster oder Frau Muster"
+            className="dp-field pr-10"
             disabled={isSubmitting}
           />
           {formData.ansprache && !isSubmitting && (
@@ -142,7 +142,7 @@ export default function AccountSection({
       {/* --- Admin-Berechtigungen --- */}
       {isSuperAdmin && user.role === 'ADMIN' && (
         <div>
-          <label className="block text-sm font-medium text-body">
+          <label className="dp-label">
             Admin-Berechtigungen (kommagetrennt)
           </label>
           <div className="relative mt-1">
@@ -152,7 +152,7 @@ export default function AccountSection({
               value={formData.permissions}
               onChange={handleInputChange} 
               placeholder={isSuperAdmin ? "z.B. kann_admins_verwalten" : "Nur von Superadmin editierbar"}
-              className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+              className="dp-field pr-10"
               disabled={isSubmitting || !isSuperAdmin}
               readOnly={!isSuperAdmin}
             />

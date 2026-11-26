@@ -153,6 +153,11 @@
   --dp-input-text:   var(--dp-text-heading);
   --dp-focus-ring:   var(--dp-accent);
 
+  /* --- Formularfelder (.dp-field): gefüllt, ohne Rand, Fokus weiß mit Akzentrand --- */
+  --dp-field-bg:          #F2F2F4;
+  --dp-field-bg-hover:    #EAEAED;
+  --dp-field-placeholder: #8E8E93;
+
   /* --- Charts (Recharts) --- */
   --dp-chart-1: #0066CC;   /* Hauptreihe, Klicks */
   --dp-chart-2: #34C759;
@@ -227,4 +232,8 @@
   --dp-chart-5: #BF5AF2;
   --dp-chart-6: #64D2FF;
   --dp-shadow-dialog:   0 20px 60px rgba(0, 0, 0, 0.5);
+
+  --dp-field-bg:          #2C2C2E;
+  --dp-field-bg-hover:    #333336;
+  --dp-field-placeholder: #7C7C80;
 }

@@ -24,10 +24,10 @@ export default function LocalSeoSection({
   isSubmitting,
 }: LocalSeoSectionProps) {
   return (
-    <fieldset className="border-t pt-4 mt-4">
+    <fieldset className="mt-8">
       <div className="flex items-center justify-between gap-3 mb-3">
         <div>
-          <legend className="text-sm font-medium text-body">Standorte / Local SEO</legend>
+          <legend className="dp-section-title mb-0">Standorte / Local SEO</legend>
           <p className="mt-1 text-xs text-muted">
             Optional: Standorte mit PLZ, Zielseiten und lokalen Keywords für das Local-SEO-Widget.
           </p>
@@ -66,81 +66,81 @@ export default function LocalSeoSection({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-muted">Name *</label>
+                  <label className="dp-label text-[13px]">Name *</label>
                   <input
                     type="text"
                     value={location.name}
                     onChange={(event) => updateProjectLocation(index, 'name', event.target.value)}
-                    placeholder="z.B. Wien Innenstadt"
-                    className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary placeholder:text-muted"
+                    placeholder="Wien Innenstadt"
+                    className="dp-field mt-1"
                     disabled={isSubmitting}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted">PLZ</label>
+                  <label className="dp-label text-[13px]">PLZ</label>
                   <input
                     type="text"
                     value={location.postalCode || ''}
                     onChange={(event) => updateProjectLocation(index, 'postalCode', event.target.value)}
-                    placeholder="z.B. 1010"
-                    className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary placeholder:text-muted"
+                    placeholder="1010"
+                    className="dp-field mt-1"
                     disabled={isSubmitting}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted">Stadt</label>
+                  <label className="dp-label text-[13px]">Stadt</label>
                   <input
                     type="text"
                     value={location.city || ''}
                     onChange={(event) => updateProjectLocation(index, 'city', event.target.value)}
-                    placeholder="z.B. Wien"
-                    className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary placeholder:text-muted"
+                    placeholder="Wien"
+                    className="dp-field mt-1"
                     disabled={isSubmitting}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted">Land</label>
+                  <label className="dp-label text-[13px]">Land</label>
                   <input
                     type="text"
                     value={location.country || 'AT'}
                     onChange={(event) => updateProjectLocation(index, 'country', event.target.value)}
                     placeholder="AT"
-                    className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary placeholder:text-muted"
+                    className="dp-field mt-1"
                     disabled={isSubmitting}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted">Latitude</label>
+                  <label className="dp-label text-[13px]">Latitude</label>
                   <input
                     type="number"
                     step="0.000001"
                     value={location.lat ?? ''}
                     onChange={(event) => updateProjectLocation(index, 'lat', event.target.value === '' ? null : Number(event.target.value))}
                     placeholder="48.2082"
-                    className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary placeholder:text-muted"
+                    className="dp-field mt-1"
                     disabled={isSubmitting}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted">Longitude</label>
+                  <label className="dp-label text-[13px]">Longitude</label>
                   <input
                     type="number"
                     step="0.000001"
                     value={location.lng ?? ''}
                     onChange={(event) => updateProjectLocation(index, 'lng', event.target.value === '' ? null : Number(event.target.value))}
                     placeholder="16.3738"
-                    className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary placeholder:text-muted"
+                    className="dp-field mt-1"
                     disabled={isSubmitting}
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-muted">Google Place ID</label>
+                  <label className="dp-label text-[13px]">Google Place ID</label>
                   <input
                     type="text"
                     value={location.googlePlaceId || ''}
                     onChange={(event) => updateProjectLocation(index, 'googlePlaceId', event.target.value)}
-                    placeholder="z.B. ChIJ..."
-                    className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary placeholder:text-muted"
+                    placeholder="ChIJ..."
+                    className="dp-field mt-1"
                     disabled={isSubmitting}
                   />
                   <p className="mt-1 text-[12px] text-muted">
@@ -148,46 +148,46 @@ export default function LocalSeoSection({
                   </p>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-muted">Google Unternehmensprofil URL / Maps-Link</label>
+                  <label className="dp-label text-[13px]">Google Unternehmensprofil URL / Maps-Link</label>
                   <input
                     type="url"
                     value={location.googleBusinessProfileUrl || ''}
                     onChange={(event) => updateProjectLocation(index, 'googleBusinessProfileUrl', event.target.value)}
                     placeholder="https://maps.app.goo.gl/..."
-                    className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary placeholder:text-muted"
+                    className="dp-field mt-1"
                     disabled={isSubmitting}
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-muted">Google Unternehmensprofil Bild URL</label>
+                  <label className="dp-label text-[13px]">Google Unternehmensprofil Bild URL</label>
                   <input
                     type="url"
                     value={location.googleBusinessProfileImageUrl || ''}
                     onChange={(event) => updateProjectLocation(index, 'googleBusinessProfileImageUrl', event.target.value)}
                     placeholder="https://..."
-                    className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary placeholder:text-muted"
+                    className="dp-field mt-1"
                     disabled={isSubmitting}
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-muted">Landingpages (kommagetrennt)</label>
+                  <label className="dp-label text-[13px]">Landingpages (kommagetrennt)</label>
                   <input
                     type="text"
                     value={listToCsv(location.landingPages)}
                     onChange={(event) => updateProjectLocation(index, 'landingPages', csvToList(event.target.value))}
                     placeholder="/rechtsanwalt-wien/, /standort-wien/"
-                    className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary placeholder:text-muted"
+                    className="dp-field mt-1"
                     disabled={isSubmitting}
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-muted">Keywords/Aliase (kommagetrennt)</label>
+                  <label className="dp-label text-[13px]">Keywords/Aliase (kommagetrennt)</label>
                   <input
                     type="text"
                     value={listToCsv(location.keywords)}
                     onChange={(event) => updateProjectLocation(index, 'keywords', csvToList(event.target.value))}
                     placeholder="wien, 1010, innere stadt, rechtsanwalt wien"
-                    className="mt-1 block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary placeholder:text-muted"
+                    className="dp-field mt-1"
                     disabled={isSubmitting}
                   />
                 </div>

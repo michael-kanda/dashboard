@@ -1,12 +1,10 @@
 import type { ReactNode } from 'react';
 
 export const inputClasses =
-  'h-9 w-full rounded-control border border-border bg-surface px-3 text-[14px] text-heading placeholder:text-muted ' +
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60';
+  'dp-field h-9 py-0 px-3 text-[14px]';
 
 export const textareaClasses =
-  'w-full rounded-control border border-border bg-surface px-3 py-2 text-[14px] text-heading placeholder:text-muted ' +
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent';
+  'dp-field px-3 py-2 text-[14px]';
 
 export function Field({
   label,
@@ -23,7 +21,7 @@ export function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={htmlFor} className="text-[13px] font-semibold text-muted">{label}</label>
+      <label htmlFor={htmlFor} className="dp-label text-[13px]">{label}</label>
       {children}
       {hint && !error && <p className="text-[13px] text-muted">{hint}</p>}
       {error && <p className="text-[13px] text-danger" role="alert">{error}</p>}
