@@ -1,152 +1,112 @@
 // src/app/api/projects/[id]/assign/route.ts
+// Betreuung eines Projekts: Admins (und durch Superadmins auch Superadmins)
+// einem Projekt zuweisen oder die Zuweisung entfernen.
 
 import { NextRequest, NextResponse } from 'next/server';
-// KORREKTUR: 'Session' importieren und auth
-import { type Session } from 'next-auth'; 
-import { auth } from '@/lib/auth'; // KORRIGIERT
+import { type Session } from 'next-auth';
+import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';
 import { logger } from '@/lib/logger';
 
-// Berechtigungsprüfung: Darf der eingeloggte Admin Zuweisungen ändern?
-// KORREKTUR: 'any' ersetzt durch 'Session | null'
-async function hasAssignmentPermission(session: Session | null) {
+type AssignmentCheck =
+  | { ok: true; staffEmail: string; projectEmail: string }
+  | { ok: false; status: number; message: string };
+
+/** Darf die angemeldete Person Zuweisungen ändern? */
+function hasAssignmentPermission(session: Session | null) {
   if (!session?.user) return false;
   if (session.user.role === 'SUPERADMIN') return true;
-  if (session.user.role === 'ADMIN' && session.user.permissions?.includes('kann_admins_verwalten')) {
-    return true;
-  }
-  return false;
+  return session.user.role === 'ADMIN' && Boolean(session.user.permissions?.includes('kann_admins_verwalten'));
 }
 
-// Weist einen Benutzer (Admin) einem Projekt zu
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+/**
+ * Gemeinsame Prüfung für Zuweisen und Entfernen:
+ * - Projekt muss ein Projekt (Rolle BENUTZER) sein.
+ * - Betreuer muss ein Admin sein; Superadmins dürfen auch Superadmins zuweisen.
+ * - Label-Admins (kann_admins_verwalten) nur innerhalb ihres eigenen Labels.
+ */
+async function checkAssignment(session: Session, staffId: string, projectId: string): Promise<AssignmentCheck> {
+  const { rows: staffRows } = await sql`
+    SELECT email, role, mandant_id FROM users WHERE id::text = ${staffId}
+  `;
+  const staff = staffRows[0];
+  const isSuperAdmin = session.user.role === 'SUPERADMIN';
+  const allowedRoles = isSuperAdmin ? ['ADMIN', 'SUPERADMIN'] : ['ADMIN'];
+  if (!staff || !allowedRoles.includes(staff.role)) {
+    return { ok: false, status: 404, message: 'Betreuer ist kein Admin' };
+  }
+
+  const { rows: projectRows } = await sql`
+    SELECT email, role, mandant_id FROM users WHERE id::text = ${projectId}
+  `;
+  const project = projectRows[0];
+  if (!project || project.role !== 'BENUTZER') {
+    return { ok: false, status: 404, message: 'Projekt nicht gefunden' };
+  }
+
+  if (!isSuperAdmin) {
+    const label = session.user.mandant_id;
+    if (!label || staff.mandant_id !== label || project.mandant_id !== label) {
+      return { ok: false, status: 403, message: 'Admins dürfen nur Zuweisungen innerhalb ihres eigenen Labels ändern.' };
+    }
+  }
+  return { ok: true, staffEmail: staff.email, projectEmail: project.email };
+}
+
+async function readRequest(request: NextRequest, params: Promise<{ id: string }>) {
+  const { id: projectId } = await params;
+  const session = await auth();
+  if (!session || !hasAssignmentPermission(session)) {
+    return { error: NextResponse.json({ message: 'Nicht autorisiert. Nur Superadmins oder Admins mit "kann_admins_verwalten" dürfen dies.' }, { status: 403 }) };
+  }
+  const body = await request.json().catch(() => ({}));
+  const staffId = typeof body?.userId === 'string' ? body.userId : '';
+  if (!staffId || !projectId) {
+    return { error: NextResponse.json({ message: 'Betreuer oder Projekt fehlt' }, { status: 400 }) };
+  }
+  const check = await checkAssignment(session, staffId, projectId);
+  if (!check.ok) return { error: NextResponse.json({ message: check.message }, { status: check.status }) };
+  return { projectId, staffId, check };
+}
+
+// Weist einem Projekt einen Betreuer zu
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id: projectId } = await params;
-    const session = await auth(); // KORRIGIERT: auth() aufgerufen
-    
-    logger.debug('[POST /api/projects/[id]/assign] Start');
-    
-    // KORREKTUR: Prüft auf 'kann_admins_verwalten' oder SUPERADMIN
-    if (!(await hasAssignmentPermission(session))) {
-      console.warn('[POST] ❌ Nicht autorisiert - Rolle:', session?.user?.role);
-      return NextResponse.json({ message: 'Nicht autorisiert. Nur Superadmins oder Admins mit "kann_admins_verwalten" dürfen dies.' }, { status: 403 });
-    }
+    const result = await readRequest(request, params);
+    if ('error' in result) return result.error;
+    const { projectId, staffId, check } = result;
 
-    const body = await request.json();
-    const { userId } = body; // Der Admin, der zugewiesen wird
-    
-    logger.debug('[POST] User ID (Admin):', userId);
-    logger.debug('[POST] Project ID (Kunde):', projectId);
-
-
-    if (!userId || !projectId) {
-      return NextResponse.json({ message: 'Benutzer-ID oder Projekt-ID fehlt' }, { status: 400 });
-    }
-
-    // Validiere, dass beide IDs existieren
-    const { rows: adminCheck } = await sql`
-      SELECT id, email, role, mandant_id FROM users WHERE id::text = ${userId};
-    `;
-    if (adminCheck.length === 0 || adminCheck[0].role !== 'ADMIN') {
-      return NextResponse.json({ message: 'Ziel-Benutzer ist kein Admin' }, { status: 404 });
-    }
-
-    const { rows: projectCheck } = await sql`
-      SELECT id, email, role, mandant_id FROM users WHERE id::text = ${projectId};
-    `;
-    if (projectCheck.length === 0 || projectCheck[0].role !== 'BENUTZER') {
-      return NextResponse.json({ message: 'Ziel-Projekt ist kein Benutzer (Kunde)' }, { status: 404 });
-    }
-
-    if (session?.user?.role === 'ADMIN') {
-      const adminMandantId = session.user.mandant_id;
-      const targetAdminMandantId = adminCheck[0].mandant_id;
-      const projectMandantId = projectCheck[0].mandant_id;
-
-      if (!adminMandantId || targetAdminMandantId !== adminMandantId || projectMandantId !== adminMandantId) {
-        return NextResponse.json(
-          { message: 'Admins dürfen nur Projektzuweisungen innerhalb ihres eigenen Labels ändern.' },
-          { status: 403 }
-        );
-      }
-    }
-
-    logger.debug('[POST] ✅ Validierung erfolgreich');
-    logger.debug('[POST] Admin:', adminCheck[0].email);
-    logger.debug('[POST] Projekt:', projectCheck[0].email);
-
-    // Führe die Zuweisung durch
     await sql`
       INSERT INTO project_assignments (user_id, project_id)
-      VALUES (${userId}::uuid, ${projectId}::uuid)
-      ON CONFLICT (user_id, project_id) DO NOTHING;
+      VALUES (${staffId}::uuid, ${projectId}::uuid)
+      ON CONFLICT (user_id, project_id) DO NOTHING
     `;
-
-    logger.info('[POST] ✅ Zuweisung erfolgreich erstellt');
-
-    return NextResponse.json({ 
-      message: 'Admin erfolgreich zugewiesen.',
-      admin: adminCheck[0].email,
-      project: projectCheck[0].email
-    }, { status: 200 });
-
+    logger.info(`[Betreuung] ${check.staffEmail} betreut jetzt ${check.projectEmail}`);
+    return NextResponse.json({ message: 'Betreuung zugewiesen.' });
   } catch (error) {
-    console.error('[POST] ❌ Fehler bei der Zuweisung:', error);
-    return NextResponse.json({ 
-      message: 'Fehler bei der Zuweisung',
-      error: 'Ein unbekannter Fehler'
-    }, { status: 500 });
+    console.error('[POST /api/projects/[id]/assign] Fehler:', error);
+    return NextResponse.json({ message: 'Fehler bei der Zuweisung' }, { status: 500 });
   }
 }
 
-// Entfernt die Zuweisung eines Benutzers (Admin) von einem Projekt
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// Entfernt einen Betreuer von einem Projekt
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id: projectId } = await params;
-    const session = await auth(); // KORRIGIERT: auth() aufgerufen
-    
-    logger.debug('[DELETE /api/projects/[id]/assign] Start');
+    const result = await readRequest(request, params);
+    if ('error' in result) return result.error;
+    const { projectId, staffId, check } = result;
 
-    // KORREKTUR: Prüft auf 'kann_admins_verwalten' oder SUPERADMIN
-    if (!(await hasAssignmentPermission(session))) {
-      console.warn('[DELETE] ❌ Nicht autorisiert');
-      return NextResponse.json({ message: 'Nicht autorisiert. Nur Superadmins oder Admins mit "kann_admins_verwalten" dürfen dies.' }, { status: 403 });
-    }
-    
-    const body = await request.json();
-    const { userId } = body; // Der Admin, dessen Zuweisung entfernt wird
-    
-    logger.debug('[DELETE] User ID (Admin):', userId);
-    
-    if (!userId) {
-      return NextResponse.json({ message: 'Benutzer-ID fehlt' }, { status: 400 });
-    }
-
-    const result = await sql`
+    const deleted = await sql`
       DELETE FROM project_assignments
-      WHERE user_id::text = ${userId} AND project_id::text = ${projectId}
-      RETURNING user_id, project_id;
+      WHERE user_id::text = ${staffId} AND project_id::text = ${projectId}
     `;
-
-    if (result.rowCount === 0) {
+    if (deleted.rowCount === 0) {
       return NextResponse.json({ message: 'Keine Zuweisung gefunden' }, { status: 404 });
     }
-
-    logger.info('[DELETE] ✅ Zuweisung erfolgreich entfernt');
-
-    return NextResponse.json({ message: 'Zuweisung erfolgreich entfernt.' }, { status: 200 });
-
+    logger.info(`[Betreuung] ${check.staffEmail} betreut ${check.projectEmail} nicht mehr`);
+    return NextResponse.json({ message: 'Betreuung entfernt.' });
   } catch (error) {
-    console.error('[DELETE] ❌ Fehler:', error);
-    return NextResponse.json({ 
-      message: 'Fehler beim Entfernen der Zuweisung',
-      error: 'Ein unbekannter Fehler'
-    }, { status: 500 });
+    console.error('[DELETE /api/projects/[id]/assign] Fehler:', error);
+    return NextResponse.json({ message: 'Fehler beim Entfernen der Zuweisung' }, { status: 500 });
   }
 }

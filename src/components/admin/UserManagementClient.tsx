@@ -20,6 +20,7 @@ import { Toggle } from '@/components/ui/Toggle';
 import { Dialog } from '@/components/ui/Dialog';
 import { inputClasses } from '@/components/ui/Field';
 import { Spinner } from '@/components/ui/Spinner';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import GoogleConnectionCheck from '@/components/admin/GoogleConnectionCheck';
 
 // Formularzeile einer Grouped List: Label links, Feld rechts.
@@ -54,11 +55,16 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
   
   // ✅ NEU: Such-State
   const [searchTerm, setSearchTerm] = useState('');
+  // Auswahl: alle Einträge, nur Projekte (Rolle BENUTZER) oder nur Admins (inkl. Superadmin)
+  const [roleFilter, setRoleFilter] = useState<'alle' | 'projekte' | 'admins'>('alle');
 
   const isSuperAdmin = sessionUser.role === 'SUPERADMIN';
 
   // ✅ NEU: Filter-Logik (wie in ProjectsClientView)
-  const filteredUsers = users.filter(user => 
+  const matchesRole = (role: string) =>
+    roleFilter === 'alle' || (roleFilter === 'projekte' ? role === 'BENUTZER' : role !== 'BENUTZER');
+  const projectCount = users.filter((u) => u.role === 'BENUTZER').length;
+  const filteredUsers = users.filter(user => matchesRole(user.role)).filter(user => 
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (user.ansprache && user.ansprache.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (user.domain && user.domain.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -161,6 +167,17 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
         </Button>
       </PageHeader>
 
+      <SegmentedControl
+        label="Anzeigen"
+        value={roleFilter}
+        onChange={setRoleFilter}
+        options={[
+          { value: 'alle', label: `Alle (${users.length})` },
+          { value: 'projekte', label: `Projekte (${projectCount})` },
+          { value: 'admins', label: `Admins (${users.length - projectCount})` },
+        ]}
+      />
+
       <DataList label="Nutzer" minWidth={960}>
         <DataListHead>
           <Th>Nutzer</Th>
@@ -195,7 +212,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
                   )}
                 </Td>
                 <Td>
-                  {user.role === 'ADMIN' ? (
+                  {user.role !== 'BENUTZER' ? (
                     projects.length > 0 ? (
                       <span className="text-muted tabular-nums" title={projects.join(', ')}>
                         {projects.length} {projects.length === 1 ? 'Projekt' : 'Projekte'}
@@ -210,7 +227,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
                 <Td className="text-right">
                   <div className="flex justify-end gap-1.5">
                     <ButtonLink href={`/admin/edit/${user.id}`} aria-label={`${user.email} bearbeiten`}>Bearbeiten</ButtonLink>
-                    {isSuperAdmin && (
+                    {isSuperAdmin && user.role !== 'SUPERADMIN' && (
                       <Button variant="destructive" size="sm" onClick={() => void handleDelete(user.id)} aria-label={`${user.email} löschen`}>
                         Löschen
                       </Button>
@@ -243,7 +260,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
             <Button variant="secondary" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>Abbrechen</Button>
             <Button type="submit" form="create-user-form" disabled={isSubmitting}>
               {isSubmitting && <Spinner size={14} className="" />}
-              {isSubmitting ? 'Speichere …' : (selectedRole === 'BENUTZER' ? 'Kunden erstellen' : 'Admin erstellen')}
+              {isSubmitting ? 'Speichere …' : (selectedRole === 'BENUTZER' ? 'Projekt erstellen' : 'Admin erstellen')}
             </Button>
           </>
         }
@@ -259,7 +276,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
                 className={inputClasses}
                 disabled={isSubmitting}
               >
-                <option value="BENUTZER">Kunde (Benutzer)</option>
+                <option value="BENUTZER">Projekt</option>
                 {isSuperAdmin && <option value="ADMIN">Admin</option>}
               </select>
             </FormRow>

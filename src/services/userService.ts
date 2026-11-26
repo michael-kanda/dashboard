@@ -17,11 +17,15 @@ export async function getUsersForManagement(user: UserSession): Promise<User[]> 
       const result = await sql`
         SELECT 
           u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
-          (
-            SELECT STRING_AGG(DISTINCT admins.email, ', ')
-            FROM project_assignments pa_sub
-            JOIN users admins ON pa_sub.user_id = admins.id
-            WHERE pa_sub.project_id = u.id
+          COALESCE(
+            (
+              SELECT STRING_AGG(DISTINCT admins.email, ', ')
+              FROM project_assignments pa_sub
+              JOIN users admins ON pa_sub.user_id = admins.id
+              WHERE pa_sub.project_id = u.id
+            ),
+            -- Ohne Zuweisung betreut der Ersteller das Projekt (auch ein Superadmin).
+            (SELECT creator.email FROM users creator WHERE creator.id = u."createdByAdminId" AND u.role = 'BENUTZER')
           ) as assigned_admins,
           (
             SELECT STRING_AGG(DISTINCT p.domain, ', ')
@@ -30,7 +34,6 @@ export async function getUsersForManagement(user: UserSession): Promise<User[]> 
             WHERE pa_sub2.user_id = u.id
           ) as assigned_projects
         FROM users u
-        WHERE u.role != 'SUPERADMIN'
         ORDER BY u.mandant_id ASC, u.role DESC, u.email ASC
       `;
       rows = result.rows;
@@ -45,11 +48,15 @@ export async function getUsersForManagement(user: UserSession): Promise<User[]> 
       const kundenRes = await sql`
         SELECT DISTINCT 
           u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
-          (
-            SELECT STRING_AGG(DISTINCT admins.email, ', ')
-            FROM project_assignments pa_sub
-            JOIN users admins ON pa_sub.user_id = admins.id
-            WHERE pa_sub.project_id = u.id
+          COALESCE(
+            (
+              SELECT STRING_AGG(DISTINCT admins.email, ', ')
+              FROM project_assignments pa_sub
+              JOIN users admins ON pa_sub.user_id = admins.id
+              WHERE pa_sub.project_id = u.id
+            ),
+            -- Ohne Zuweisung betreut der Ersteller das Projekt (auch ein Superadmin).
+            (SELECT creator.email FROM users creator WHERE creator.id = u."createdByAdminId" AND u.role = 'BENUTZER')
           ) as assigned_admins,
           (
             SELECT STRING_AGG(DISTINCT p.domain, ', ')
@@ -73,11 +80,15 @@ export async function getUsersForManagement(user: UserSession): Promise<User[]> 
         const adminsRes = await sql`
           SELECT 
             u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
-            (
-              SELECT STRING_AGG(DISTINCT admins.email, ', ')
-              FROM project_assignments pa_sub
-              JOIN users admins ON pa_sub.user_id = admins.id
-              WHERE pa_sub.project_id = u.id
+            COALESCE(
+              (
+                SELECT STRING_AGG(DISTINCT admins.email, ', ')
+                FROM project_assignments pa_sub
+                JOIN users admins ON pa_sub.user_id = admins.id
+                WHERE pa_sub.project_id = u.id
+              ),
+              -- Ohne Zuweisung betreut der Ersteller das Projekt (auch ein Superadmin).
+              (SELECT creator.email FROM users creator WHERE creator.id = u."createdByAdminId" AND u.role = 'BENUTZER')
             ) as assigned_admins,
             (
               SELECT STRING_AGG(DISTINCT p.domain, ', ')
