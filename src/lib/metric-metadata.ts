@@ -5,7 +5,7 @@ import { getReportingWindow } from './sync/cache-policy.ts';
 
 export { DASHBOARD_SNAPSHOT_VERSION } from './sync/dashboard-snapshot-contract.ts';
 
-export type MetricSource = 'gsc' | 'ga4' | 'google-ads' | 'local-seo' | 'indexing';
+export type MetricSource = 'gsc' | 'ga4' | 'vercel' | 'google-ads' | 'local-seo' | 'indexing';
 export type MetricUnit = 'count' | 'percent' | 'seconds' | 'currency';
 export type MetricCoverageStatus = 'complete' | 'partial' | 'modeled' | 'unknown';
 
@@ -40,6 +40,7 @@ export interface MetricMetadata {
 
 const GSC_COVERAGE = 'Search Console kann seltene Suchanfragen aus Datenschutzgründen ausblenden.';
 const GA4_COVERAGE = 'GA4 ist consent-abhängig; Consent Mode kann modellierte Werte enthalten.';
+const VERCEL_COVERAGE = 'Vercel Web Analytics zählt cookielos; Besucher werden pro Tag anonym erkannt, Sitzungen gibt es nicht.';
 const ADS_COVERAGE = 'Abdeckung entspricht den im Projekt konfigurierten Google-Ads-Daten.';
 const LOCAL_COVERAGE = 'GA4 wird über Standort-Landingpages oder Stadt zugeordnet; GSC über Landingpages und Keyword-Aliase.';
 const INDEXING_COVERAGE = 'URL-Inspection wird innerhalb des API-Budgets schrittweise fortgesetzt.';
@@ -58,6 +59,10 @@ export const METRIC_CATALOG: Record<string, MetricDefinition> = {
   'ga4.paidSearch': { key: 'ga4.paidSearch', source: 'ga4', unit: 'count', calculationMethod: 'GA4-Sitzungen mit Session Default Channel Group Paid Search', calculationVersion: 2, defaultCoverage: 'modeled', coverageNote: GA4_COVERAGE },
   'ga4.aiTrafficSessions': { key: 'ga4.aiTrafficSessions', source: 'ga4', unit: 'count', calculationMethod: 'GA4 Medium ai-assistant plus erkannte KI-Referrer', calculationVersion: 2, defaultCoverage: 'partial', coverageNote: 'Nur identifizierbare KI-Referrer und das GA4-Medium ai-assistant sind enthalten.' },
   'ga4.aiTrafficUsers': { key: 'ga4.aiTrafficUsers', source: 'ga4', unit: 'count', calculationMethod: 'Nutzer aus GA4 ai-assistant und erkannten KI-Referrern', calculationVersion: 2, defaultCoverage: 'partial', coverageNote: 'Nur identifizierbare KI-Referrer und das GA4-Medium ai-assistant sind enthalten.' },
+  'vercel.visitors': { key: 'vercel.visitors', source: 'vercel', unit: 'count', calculationMethod: 'Vercel Web Analytics: eindeutige Besucher im Zeitraum', calculationVersion: 1, defaultCoverage: 'partial', coverageNote: VERCEL_COVERAGE },
+  'vercel.pageviews': { key: 'vercel.pageviews', source: 'vercel', unit: 'count', calculationMethod: 'Vercel Web Analytics: Seitenaufrufe im Zeitraum', calculationVersion: 1, defaultCoverage: 'partial', coverageNote: VERCEL_COVERAGE },
+  'vercel.conversions': { key: 'vercel.conversions', source: 'vercel', unit: 'count', calculationMethod: 'Summe der als Conversion konfigurierten Vercel-Events', calculationVersion: 1, defaultCoverage: 'partial', coverageNote: VERCEL_COVERAGE },
+  'vercel.aiTrafficVisitors': { key: 'vercel.aiTrafficVisitors', source: 'vercel', unit: 'count', calculationMethod: 'Besucher mit Referrer eines bekannten KI-Assistenten', calculationVersion: 1, defaultCoverage: 'partial', coverageNote: 'Nur Besuche mit übermitteltem KI-Referrer sind enthalten.' },
   'googleAds.cost': { key: 'googleAds.cost', source: 'google-ads', unit: 'currency', calculationMethod: 'Summe der Google-Ads-Kosten', calculationVersion: 1, defaultCoverage: 'complete', coverageNote: ADS_COVERAGE },
   'googleAds.clicks': { key: 'googleAds.clicks', source: 'google-ads', unit: 'count', calculationMethod: 'Summe der Google-Ads-Klicks', calculationVersion: 1, defaultCoverage: 'complete', coverageNote: ADS_COVERAGE },
   'googleAds.impressions': { key: 'googleAds.impressions', source: 'google-ads', unit: 'count', calculationMethod: 'Summe der Google-Ads-Impressionen', calculationVersion: 1, defaultCoverage: 'complete', coverageNote: ADS_COVERAGE },
@@ -122,18 +127,25 @@ export function extractDashboardMetricValues(data: ProjectDashboardData) {
   addKpi('gsc.clicks', data.kpis?.clicks?.value);
   addKpi('gsc.impressions', data.kpis?.impressions?.value);
   addKpi('gsc.genAiImpressions', data.kpis?.genAiImpressions?.value);
-  addKpi('ga4.sessions', data.kpis?.sessions?.value);
-  addKpi('ga4.totalUsers', data.kpis?.totalUsers?.value);
-  addKpi('ga4.newUsers', data.kpis?.newUsers?.value);
-  addKpi('ga4.conversions', data.kpis?.conversions?.value);
-  addKpi('ga4.engagementRate', data.kpis?.engagementRate?.value);
-  addKpi('ga4.bounceRate', data.kpis?.bounceRate?.value);
-  addKpi('ga4.avgEngagementTime', data.kpis?.avgEngagementTime?.value);
-  addKpi('ga4.paidSearch', data.kpis?.paidSearch?.value);
-
-  if (data.aiTraffic) {
-    addKpi('ga4.aiTrafficSessions', data.aiTraffic.totalSessions);
-    addKpi('ga4.aiTrafficUsers', data.aiTraffic.totalUsers);
+  if (data.analyticsSource === 'vercel') {
+    // Eigene Schlüssel: Vercel-Werte dürfen sich nie mit der GA4-Historie mischen.
+    addKpi('vercel.visitors', data.kpis?.totalUsers?.value);
+    addKpi('vercel.pageviews', data.vercelAnalytics?.pageviews.value);
+    if (data.vercelAnalytics?.conversionsConfigured) addKpi('vercel.conversions', data.kpis?.conversions?.value);
+    if (data.aiTraffic) addKpi('vercel.aiTrafficVisitors', data.aiTraffic.totalUsers);
+  } else {
+    addKpi('ga4.sessions', data.kpis?.sessions?.value);
+    addKpi('ga4.totalUsers', data.kpis?.totalUsers?.value);
+    addKpi('ga4.newUsers', data.kpis?.newUsers?.value);
+    addKpi('ga4.conversions', data.kpis?.conversions?.value);
+    addKpi('ga4.engagementRate', data.kpis?.engagementRate?.value);
+    addKpi('ga4.bounceRate', data.kpis?.bounceRate?.value);
+    addKpi('ga4.avgEngagementTime', data.kpis?.avgEngagementTime?.value);
+    addKpi('ga4.paidSearch', data.kpis?.paidSearch?.value);
+    if (data.aiTraffic) {
+      addKpi('ga4.aiTrafficSessions', data.aiTraffic.totalSessions);
+      addKpi('ga4.aiTrafficUsers', data.aiTraffic.totalUsers);
+    }
   }
   if (data.googleAdsData) {
     addKpi('googleAds.cost', data.googleAdsData.totals.cost);
@@ -160,7 +172,7 @@ function resolveCoverageOverride(
     ? data.apiErrors?.genAi
     : metricKey.startsWith('gsc.')
       ? data.apiErrors?.gsc
-      : metricKey.startsWith('ga4.')
+      : metricKey.startsWith('ga4.') || metricKey.startsWith('vercel.')
         ? data.apiErrors?.ga4
         : metricKey.startsWith('googleAds.')
           ? data.apiErrors?.googleAds

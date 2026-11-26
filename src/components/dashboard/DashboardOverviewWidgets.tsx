@@ -71,6 +71,7 @@ export default function DashboardOverviewWidgets({
               apiErrors={model.errors}
               dateRange={dateRange}
               reportingPeriod={model.reportingPeriod}
+              analyticsSource={model.analyticsSource}
             />
           )}
         </div>
@@ -84,6 +85,8 @@ export default function DashboardOverviewWidgets({
             allChartData={model.allChartData}
             weatherData={data.weatherData}
             reportingPeriod={model.reportingPeriod}
+            kpiKeys={model.trendKpis}
+            webSourceLabel={model.analyticsSource === 'vercel' ? 'Vercel' : undefined}
           />
         </div>
       )}

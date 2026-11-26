@@ -19,6 +19,7 @@ import {
   createEmptyLocation,
   normalizeLocations,
   extractGoogleSpreadsheetId,
+  analyticsFormFields,
   type ApiPayload,
 } from './sections/edit-user-form-helpers';
 import AccountSection from './sections/AccountSection';
@@ -27,6 +28,7 @@ import ProjectTimelineSection from './sections/ProjectTimelineSection';
 import DashboardVisibilitySection from './sections/DashboardVisibilitySection';
 import LocalSeoSection from './sections/LocalSeoSection';
 import ConfigurationSection from './sections/ConfigurationSection';
+import AnalyticsSourceSection from './sections/AnalyticsSourceSection';
 import GoogleAdsSection from './sections/GoogleAdsSection';
 import SemrushSection from './sections/SemrushSection';
 import { logger } from '@/lib/logger';
@@ -51,6 +53,10 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
     semrushTrackingId: '',
     semrushTrackingId02: '',
     googleAdsSheetId: '',
+    analyticsSource: 'ga4' as 'ga4' | 'vercel',
+    vercelProjectId: '',
+    vercelTeamId: '',
+    vercelConversionEvents: '',
     favicon_url: '',
     project_start_date: '',    
     project_duration_months: '6', 
@@ -94,6 +100,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         semrushTrackingId: user.semrush_tracking_id || '',
         semrushTrackingId02: user.semrush_tracking_id_02 || '',
         googleAdsSheetId: user.google_ads_sheet_id || '',
+        ...analyticsFormFields(user),
         favicon_url: user.favicon_url || '',
         project_start_date: formatDateForInput(user.project_start_date), 
         project_duration_months: String(user.project_duration_months || 6),
@@ -185,6 +192,10 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         semrush_tracking_id: formData.semrushTrackingId || null,
         semrush_tracking_id_02: formData.semrushTrackingId02 || null,
         google_ads_sheet_id: extractGoogleSpreadsheetId(formData.googleAdsSheetId) || null,
+        analytics_source: formData.analyticsSource,
+        vercel_project_id: formData.vercelProjectId.trim() || null,
+        vercel_team_id: formData.vercelTeamId.trim() || null,
+        vercel_conversion_events: formData.vercelConversionEvents.trim() || null,
         project_start_date: formData.project_start_date || null,
         project_duration_months: parseInt(formData.project_duration_months, 10) || 6,
         project_timeline_active: formData.project_timeline_active,
@@ -249,6 +260,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         semrushTrackingId: updatedUser.semrush_tracking_id || '',
         semrushTrackingId02: updatedUser.semrush_tracking_id_02 || '',
         googleAdsSheetId: updatedUser.google_ads_sheet_id || '',
+        ...analyticsFormFields(updatedUser),
         favicon_url: updatedUser.favicon_url || '',
         project_start_date: formatDateForInput(updatedUser.project_start_date),
         project_duration_months: String(updatedUser.project_duration_months || 6),
@@ -352,6 +364,12 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
 
             {/* --- Konfiguration --- */}
             <ConfigurationSection
+              formData={formData}
+              handleInputChange={handleInputChange}
+              isSubmitting={isSubmitting}
+            />
+
+            <AnalyticsSourceSection
               formData={formData}
               handleInputChange={handleInputChange}
               isSubmitting={isSubmitting}

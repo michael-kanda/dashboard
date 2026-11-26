@@ -8,7 +8,8 @@ import EditUserForm from './EditUserForm';
 import LandingpageManager from './LandingpageManager';
 import ProjectAssignmentManager from './ProjectAssignmentManager';
 import UserLogbook from '@/components/UserLogbook';
-import { logger } from '@/lib/logger'; 
+import { logger } from '@/lib/logger';
+import { loadAnalyticsSettingsColumns } from '@/lib/vercel-analytics/settings-repository';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -65,7 +66,10 @@ async function getUserData(id: string): Promise<UserWithAssignments | null> {
       return null;
     }
     // Cast to unknown first to avoid intersection type issues with Omit
-    const user = users[0] as unknown as Omit<User, 'assigned_projects'>;
+    const user = {
+      ...users[0],
+      ...(await loadAnalyticsSettingsColumns(String(users[0].id))),
+    } as unknown as Omit<User, 'assigned_projects'>;
     
     // 2. Projekt-Zuweisungen (Ausnahmen) laden
     let assigned_projects: { project_id: string }[] = [];

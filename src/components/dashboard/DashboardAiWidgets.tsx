@@ -64,9 +64,11 @@ export default function DashboardAiWidgets({
               dateRange={dateRange}
               reportingPeriod={model.reportingPeriod}
               error={model.modules.ga4.data.displayError ?? undefined}
-              onDetailClick={projectId ? () => setShowTrafficDetail((current) => !current) : undefined}
+              // Die Detailansicht fragt GA4 live ab; mit Vercel Analytics entfällt sie.
+              onDetailClick={projectId && model.analyticsSource !== 'vercel' ? () => setShowTrafficDetail((current) => !current) : undefined}
               onPromptTrackingClick={model.render.promptTracking ? handlePromptTrackingClick : undefined}
               detailOpen={showTrafficDetail}
+              analyticsSource={model.analyticsSource}
               promptTrackingOpen={showPromptTracking}
               promptTracking={data.promptTracking}
               promptTrackingEnabled={model.render.promptTracking}

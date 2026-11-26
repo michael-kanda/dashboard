@@ -19,6 +19,8 @@ export interface ExtendedKpis {
   engagementRate?: KpiDatum;
   bounceRate?: KpiDatum;
   avgEngagementTime?: KpiDatum;
+  /** Nur bei Vercel Web Analytics. */
+  pageviews?: KpiDatum;
 }
 
 export interface TableauKpiGridProps {
@@ -28,6 +30,7 @@ export interface TableauKpiGridProps {
   apiErrors?: ApiErrorStatus;
   dateRange?: string;
   reportingPeriod?: ReportingPeriod;
+  analyticsSource?: 'ga4' | 'vercel';
 }
 
 function KpiSectionHeader({
@@ -57,6 +60,7 @@ export default function TableauKpiGrid({
   apiErrors,
   dateRange = '30d',
   reportingPeriod,
+  analyticsSource = 'ga4',
 }: TableauKpiGridProps) {
   const dateSubtitle = useMemo(() => {
     const storedPeriod = formatReportingPeriod(reportingPeriod);
@@ -77,6 +81,9 @@ export default function TableauKpiGrid({
 
   const gscError = apiErrors?.gsc;
   const ga4Error = apiErrors?.ga4;
+  // Website-Kennzahlen stammen aus GA4 oder Vercel Web Analytics.
+  const webSource = analyticsSource === 'vercel' ? 'Vercel' : 'GA4';
+  const hasQualityKpis = Boolean(kpis.engagementRate || kpis.conversions || kpis.avgEngagementTime || kpis.bounceRate);
   const rangeLabel = getRangeLabel(dateRange as DateRangeOption);
   const formatPercent = (value: number) => `${value.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
   const formatTime = (value: number) => `${Math.floor(value / 60)}m ${Math.floor(value % 60)}s`;
@@ -100,7 +107,7 @@ export default function TableauKpiGrid({
           </div>
         </div>
         <p className="widget-meta whitespace-nowrap text-muted sm:pt-1">
-          Quelle: GSC + GA4{dateSubtitle ? ` · ${dateSubtitle}` : ''}
+          Quelle: GSC + {analyticsSource === 'vercel' ? 'Vercel Analytics' : 'GA4'}{dateSubtitle ? ` · ${dateSubtitle}` : ''}
         </p>
       </div>
 
@@ -141,7 +148,21 @@ export default function TableauKpiGrid({
             error={ga4Error}
             isLoading={isLoading}
             comparison={getComparison(kpis.newUsers)}
-            source="GA4"
+            source={webSource}
+          />
+        ) : null}
+        {kpis.pageviews ? (
+          <TableauKpiCard
+            title="Seitenaufrufe"
+            description="Wie oft Seiten Ihrer Website aufgerufen wurden."
+            value={kpis.pageviews.value}
+            change={kpis.pageviews.change}
+            data={allChartData?.pageviews}
+            color="var(--dp-chart-1)"
+            error={ga4Error}
+            isLoading={isLoading}
+            comparison={getComparison(kpis.pageviews)}
+            source={webSource}
           />
         ) : null}
         <TableauKpiCard
@@ -154,12 +175,12 @@ export default function TableauKpiGrid({
           error={ga4Error}
           isLoading={isLoading}
           comparison={getComparison(kpis.totalUsers)}
-          source="GA4"
+          source={webSource}
         />
       </div>
 
-      <KpiSectionHeader index="02" title="Qualität & Interaktion" rangeLabel={rangeLabel} />
-      <div className="kpi-quiet-grid__metrics grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      {hasQualityKpis && <KpiSectionHeader index="02" title="Qualität & Interaktion" rangeLabel={rangeLabel} />}
+      {hasQualityKpis && <div className="kpi-quiet-grid__metrics grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.engagementRate ? (
           <TableauKpiCard
             title="Interaktionsrate"
@@ -172,7 +193,7 @@ export default function TableauKpiGrid({
             isLoading={isLoading}
             formatValue={formatPercent}
             comparison={getComparison(kpis.engagementRate)}
-            source="GA4"
+            source={webSource}
           />
         ) : null}
         {kpis.conversions ? (
@@ -186,7 +207,7 @@ export default function TableauKpiGrid({
             error={ga4Error}
             isLoading={isLoading}
             comparison={getComparison(kpis.conversions)}
-            source="GA4"
+            source={webSource}
           />
         ) : null}
         {kpis.avgEngagementTime ? (
@@ -201,7 +222,7 @@ export default function TableauKpiGrid({
             isLoading={isLoading}
             formatValue={formatTime}
             comparison={getComparison(kpis.avgEngagementTime)}
-            source="GA4"
+            source={webSource}
           />
         ) : null}
         {kpis.bounceRate ? (
@@ -216,10 +237,10 @@ export default function TableauKpiGrid({
             isLoading={isLoading}
             formatValue={formatPercent}
             comparison={getComparison(kpis.bounceRate)}
-            source="GA4"
+            source={webSource}
           />
         ) : null}
-      </div>
+      </div>}
     </section>
   );
 }

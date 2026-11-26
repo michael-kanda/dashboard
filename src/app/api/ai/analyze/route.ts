@@ -12,6 +12,7 @@ import type { User } from '@/lib/schemas';
 import { getAiModels } from '@/lib/ai-config';
 import { getProjectIndexingStatus } from '@/lib/indexing-status';
 import { logger } from '@/lib/logger';
+import { analyticsSourceNote } from '@/lib/vercel-analytics/ai-note';
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
@@ -364,6 +365,7 @@ export async function POST(req: NextRequest) {
 
     const summaryData = `
       DOMAIN: ${project.domain}
+      ${analyticsSourceNote(data)}
       ZEITPLAN STATUS: ${timelineInfo}
       START: ${startDateStr}
       ENDE: ${endDateStr}

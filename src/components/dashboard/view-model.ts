@@ -64,16 +64,22 @@ export function buildDashboardViewModel({
     semrushTrackingId02,
   });
 
+  // Vercel Web Analytics kennt weder Sitzungsqualität noch neue Besucher; diese
+  // Kennzahlen entfallen statt als 0 zu erscheinen. Conversions nur mit Events.
+  const analyticsSource = data.analyticsSource === 'vercel' ? 'vercel' as const : 'ga4' as const;
+  const isVercel = analyticsSource === 'vercel';
+  const ga4Only = <T,>(value: T) => (isVercel ? undefined : value);
   const extendedKpis = data.kpis ? {
     clicks: modules.gsc.data.kpis.clicks,
     impressions: modules.gsc.data.kpis.impressions,
     sessions: modules.ga4.data.kpis.sessions,
     totalUsers: modules.ga4.data.kpis.totalUsers,
-    conversions: modules.ga4.data.kpis.conversions,
-    engagementRate: modules.ga4.data.kpis.engagementRate,
-    bounceRate: modules.ga4.data.kpis.bounceRate,
-    newUsers: modules.ga4.data.kpis.newUsers,
-    avgEngagementTime: modules.ga4.data.kpis.avgEngagementTime,
+    conversions: isVercel && !data.vercelAnalytics?.conversionsConfigured ? undefined : modules.ga4.data.kpis.conversions,
+    engagementRate: ga4Only(modules.ga4.data.kpis.engagementRate),
+    bounceRate: ga4Only(modules.ga4.data.kpis.bounceRate),
+    newUsers: ga4Only(modules.ga4.data.kpis.newUsers),
+    avgEngagementTime: ga4Only(modules.ga4.data.kpis.avgEngagementTime),
+    pageviews: isVercel ? safeKpi(data.vercelAnalytics?.pageviews) : undefined,
     genAiImpressions: safeKpi(data.kpis.genAiImpressions),
   } : undefined;
 
@@ -81,7 +87,8 @@ export function buildDashboardViewModel({
     date: item.date,
     value: item.sessions,
   }));
-  const allChartData: Record<ActiveKpi, ChartPoint[]> = {
+  const allChartData: Record<ActiveKpi, ChartPoint[]> & { pageviews?: ChartPoint[] } = {
+    pageviews: data.vercelAnalytics?.pageviewsDaily ?? [],
     clicks: data.charts?.clicks ?? [],
     impressions: data.charts?.impressions ?? [],
     sessions: data.charts?.sessions ?? [],
@@ -99,17 +106,25 @@ export function buildDashboardViewModel({
     paidSearch: modules.ga4.data.charts.paidSearch ?? [],
   };
 
-  const exportKpis: DashboardExportKpi[] = extendedKpis ? [
-    { label: 'Impressionen', value: extendedKpis.impressions.value.toLocaleString('de-DE'), change: extendedKpis.impressions.change },
-    { label: 'Klicks', value: extendedKpis.clicks.value.toLocaleString('de-DE'), change: extendedKpis.clicks.change },
-    { label: 'Nutzer', value: extendedKpis.totalUsers.value.toLocaleString('de-DE'), change: extendedKpis.totalUsers.change },
-    { label: 'Sitzungen', value: extendedKpis.sessions.value.toLocaleString('de-DE'), change: extendedKpis.sessions.change },
-    { label: 'Engagement', value: extendedKpis.engagementRate.value.toFixed(1), change: extendedKpis.engagementRate.change, unit: '%' },
-    { label: 'Conversions', value: extendedKpis.conversions.value.toLocaleString('de-DE'), change: extendedKpis.conversions.change },
-    { label: 'KI-Traffic', value: modules.ga4.data.aiTraffic.totalUsers.toLocaleString('de-DE'), change: modules.ga4.data.aiTraffic.totalUsersChange ?? 0 },
-    { label: 'Google GenAI', value: (data.googleGenAi?.totalImpressions ?? 0).toLocaleString('de-DE'), change: data.googleGenAi?.impressionsChange ?? 0 },
-    { label: 'Ø Zeit', value: extendedKpis.avgEngagementTime.value.toLocaleString('de-DE'), change: extendedKpis.avgEngagementTime.change },
-  ] : [];
+  const exportKpis: DashboardExportKpi[] = extendedKpis ? ([
+    { label: 'Impressionen', kpi: extendedKpis.impressions },
+    { label: 'Klicks', kpi: extendedKpis.clicks },
+    { label: isVercel ? 'Besucher' : 'Nutzer', kpi: extendedKpis.totalUsers },
+    { label: 'Sitzungen', kpi: ga4Only(extendedKpis.sessions) },
+    { label: 'Seitenaufrufe', kpi: extendedKpis.pageviews },
+    { label: 'Engagement', kpi: extendedKpis.engagementRate, unit: '%', decimals: 1 },
+    { label: 'Conversions', kpi: extendedKpis.conversions },
+    { label: 'KI-Traffic', kpi: { value: modules.ga4.data.aiTraffic.totalUsers, change: modules.ga4.data.aiTraffic.totalUsersChange ?? 0 } },
+    { label: 'Google GenAI', kpi: { value: data.googleGenAi?.totalImpressions ?? 0, change: data.googleGenAi?.impressionsChange ?? 0 } },
+    { label: 'Ø Zeit', kpi: extendedKpis.avgEngagementTime },
+  ] as Array<{ label: string; kpi?: KpiDatum; unit?: string; decimals?: number }>)
+    .filter((row): row is { label: string; kpi: KpiDatum; unit?: string; decimals?: number } => Boolean(row.kpi))
+    .map(({ label, kpi, unit, decimals }) => ({
+      label,
+      value: decimals !== undefined ? kpi.value.toFixed(decimals) : kpi.value.toLocaleString('de-DE'),
+      change: kpi.change,
+      ...(unit ? { unit } : {}),
+    })) : [];
 
   return {
     modules,
@@ -129,6 +144,12 @@ export function buildDashboardViewModel({
     },
     render: policy.render,
     hasAiTraffic: modules.ga4.data.aiTraffic.totalSessions > 0,
+    analyticsSource,
+    // Mit Vercel nur Kennzahlen mit echten Daten im Trend-Diagramm anbieten.
+    trendKpis: isVercel
+      ? ['impressions', 'clicks', 'totalUsers', 'pageviews', 'aiTraffic', 'genAiImpressions',
+        ...(data.vercelAnalytics?.conversionsConfigured ? ['conversions'] : [])]
+      : undefined,
   };
 }
 

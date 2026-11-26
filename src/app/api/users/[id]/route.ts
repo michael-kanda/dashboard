@@ -11,6 +11,8 @@ import { canAccessProject } from '@/lib/project-access';
 import { User } from '@/types';
 import { normalizeDashboardWidgetVisibility } from '@/lib/dashboard-widget-visibility';
 import { logger } from '@/lib/logger';
+import { parseAnalyticsSettingsInput } from '@/lib/vercel-analytics/settings';
+import { loadAnalyticsSettingsColumns, saveAnalyticsSettingsColumns } from '@/lib/vercel-analytics/settings-repository';
 export const revalidate = 0;
 
 type ProjectLocationPayload = {
@@ -173,7 +175,7 @@ export async function GET(
       }
     }
     
-    return NextResponse.json(userToGet);
+    return NextResponse.json({ ...userToGet, ...(await loadAnalyticsSettingsColumns(targetUserId)) });
   } catch {
     return NextResponse.json({ message: 'Interner Serverfehler' }, { status: 500 });
   }
@@ -239,6 +241,11 @@ export async function PUT(
     const ga4Property = parseGa4PropertyId(ga4_property_id);
     if (!ga4Property.ok) {
       return NextResponse.json({ message: ga4Property.message }, { status: 400 });
+    }
+    // Analytics-Quelle nur ändern, wenn das Formular sie mitschickt.
+    const analyticsSettings = 'analytics_source' in body ? parseAnalyticsSettingsInput(body) : null;
+    if (analyticsSettings && !analyticsSettings.ok) {
+      return NextResponse.json({ message: analyticsSettings.message }, { status: 400 });
     }
 
     const { rows: existingUsers } = await sql`
@@ -342,6 +349,10 @@ export async function PUT(
     );
     const normalizedProjectLocations = normalizeProjectLocations(project_locations);
     const normalizedGoogleAdsSheetId = extractGoogleSpreadsheetId(google_ads_sheet_id);
+    if (analyticsSettings?.ok) {
+      const saved = await saveAnalyticsSettingsColumns(targetUserId, analyticsSettings.columns);
+      if (!saved.ok) return NextResponse.json({ message: saved.message }, { status: 409 });
+    }
 
     const { rows } = password && password.trim().length > 0
       ? // Query MIT Passwort
@@ -455,6 +466,7 @@ export async function PUT(
     
     return NextResponse.json({
       ...rows[0],
+      ...(analyticsSettings?.ok ? analyticsSettings.columns : await loadAnalyticsSettingsColumns(targetUserId)),
       message: 'Benutzer erfolgreich aktualisiert'
     });
 

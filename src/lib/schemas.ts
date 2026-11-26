@@ -26,6 +26,11 @@ export const UserSchema = z.object({
   semrush_tracking_id: z.string().nullable().optional(),
   semrush_tracking_id_02: z.string().nullable().optional(),
   google_ads_sheet_id: z.string().nullable().optional(),
+  // Analytics-Quelle (Migration 010): GA4 oder Vercel Web Analytics
+  analytics_source: z.enum(['ga4', 'vercel']).nullable().optional(),
+  vercel_project_id: z.string().nullable().optional(),
+  vercel_team_id: z.string().nullable().optional(),
+  vercel_conversion_events: z.string().nullable().optional(),
   
   // Metadaten für Dashboard/Admin
   assigned_admins: z.string().nullable().optional(),

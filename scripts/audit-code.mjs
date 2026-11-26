@@ -39,13 +39,13 @@ const MAX_LINES = 600;
 const lineBaseline = new Map([
   ['src/components/LocalSeoMapWidget.tsx', 852],
   ['src/lib/google/gsc.ts', 832],
-  ['src/lib/google-data-loader.ts', 823],
+  ['src/lib/google-data-loader.ts', 838],
   ['src/components/IndexingStatusWidget.tsx', 798],
   ['src/lib/google/ads.ts', 706],
   ['src/lib/google/ga4.ts', 683],
   ['src/components/AiTrafficDetailCardV2.tsx', 674],
-  ['src/app/api/ai/analyze/route.ts', 645],
-  ['src/components/charts/LandingPageChart.tsx', 611],
+  ['src/app/api/ai/analyze/route.ts', 647],
+  ['src/components/charts/LandingPageChart.tsx', 613],
   ['src/components/GoogleAdsWidget.tsx', 602],
 ]);
 const shrunk = [];

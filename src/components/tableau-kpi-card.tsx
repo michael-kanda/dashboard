@@ -20,7 +20,7 @@ interface TableauKpiCardProps {
   };
   formatValue?: (value: number) => string;
   description?: string;
-  source: 'GSC' | 'GA4';
+  source: 'GSC' | 'GA4' | 'Vercel';
 }
 
 export default function TableauKpiCard({

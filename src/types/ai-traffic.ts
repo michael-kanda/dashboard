@@ -52,4 +52,6 @@ export interface AiTrafficCardProps {
   promptTracking?: import('@/lib/dashboard-shared').PromptTrackingResult;
   /** Wird Prompt-Tracking überhaupt angeboten? Steuert ob die Bridge angezeigt wird. */
   promptTrackingEnabled?: boolean;
+  /** Quelle der KI-Traffic-Werte; bei 'vercel' Besucher statt Sitzungen. */
+  analyticsSource?: 'ga4' | 'vercel';
 }

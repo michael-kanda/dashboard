@@ -60,7 +60,9 @@ import { GOOGLE_ADS_SHEET_DATA_VERSION } from '@/lib/google-ads-sheet';
 import { requestBudgetOptions, withRequestBudget } from './sync/request-budget';
 import { parseGa4PropertyId } from '@/lib/ga4-property-id';
 import { logger } from '@/lib/logger';
-import { errorFields } from '@/lib/errors';
+import { errorFields, getErrorMessage } from '@/lib/errors';
+import { readAnalyticsSettings } from '@/lib/vercel-analytics/settings';
+import { loadVercelAnalyticsDashboard, toLoaderSeries, type VercelAnalyticsDashboard } from '@/lib/vercel-analytics/dashboard';
 // Gleiche Kurzmeldung wie in den GA4-Libs (cause -> Google-API-Body -> message).
 import { getShortGoogleError as getShortErrorMessage } from '@/lib/google/ga4-runtime';
 
@@ -564,8 +566,19 @@ async function loadGoogleData(
     }
   }
 
+  const analytics = readAnalyticsSettings(user);
+  let vercelData: VercelAnalyticsDashboard | undefined;
   const ga4Property = parseGa4PropertyId(user.ga4_property_id);
-  if (!ga4Property.ok) {
+  if (analytics.source === 'vercel') {
+    try {
+      vercelData = await loadVercelAnalyticsDashboard(analytics, { since: startDateStr, until: endDateStr }, { since: prevStartStr, until: prevEndStr });
+      const series = toLoaderSeries(vercelData);
+      currentData = { ...currentData, ...series.current };
+      prevData = { ...prevData, ...series.previous };
+      ({ aiTraffic, channelData, countryData, deviceData, topConvertingPages } = vercelData);
+      topQueries = addLandingPageConversions(topQueries, topConvertingPages);
+    } catch (e) { apiErrors.ga4 = getErrorMessage(e); console.warn('[Vercel Analytics]', apiErrors.ga4); }
+  } else if (!ga4Property.ok) {
     // Ohne gültige ID nicht bei Google anfragen; GSC-Daten werden trotzdem gespeichert.
     console.warn(`[GA4] ${ga4Property.message}`);
     apiErrors.ga4 = ga4Property.message;
@@ -769,6 +782,8 @@ async function loadGoogleData(
     localSeo: buildLocalSeoData(user.project_locations, topQueries, topConvertingPages, cityData),
     aiTraffic, countryData, channelData, deviceData,
     bingData, weatherData, googleAdsData, googleGenAi, promptTracking,
+    analyticsSource: analytics.source,
+    ...(vercelData ? { vercelAnalytics: { pageviews: { value: vercelData.current.pageviews.total, change: calculateChange(vercelData.current.pageviews.total, vercelData.previous.pageviews) }, pageviewsDaily: vercelData.current.pageviews.daily, conversionsConfigured: vercelData.conversionsConfigured } } : {}),
     apiErrors: Object.keys(apiErrors).length > 0 ? apiErrors : undefined,
     snapshotVersion: DASHBOARD_SNAPSHOT_VERSION,
   };

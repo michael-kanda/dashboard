@@ -32,6 +32,7 @@ interface Props {
   queryData?: LandingPageQueries;
   projectId?: string;
   headerAction?: React.ReactNode;
+  sessionsLabel?: string; // 'Besucher' bei Vercel Analytics
 }
 
 export default function LandingPageChart({
@@ -42,7 +43,8 @@ export default function LandingPageChart({
   reportingPeriod,
   queryData,
   projectId,
-  headerAction
+  headerAction,
+  sessionsLabel = 'Sessions',
 }: Props) {
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -171,7 +173,7 @@ export default function LandingPageChart({
     const header = [
       'Pfad',
       'Neue Nutzer',
-      'Sessions',
+      sessionsLabel,
       'Engagement Rate (%)',
       'CTR (%)',
       'Conversions',
@@ -343,7 +345,7 @@ export default function LandingPageChart({
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="text-xs text-muted flex flex-wrap gap-x-3.5 gap-y-1">
                       <span>
-                        <span className="text-faint">Sessions</span>{' '}
+                        <span className="text-faint">{sessionsLabel}</span>{' '}
                         <span className="text-strong font-medium">{sessions.toLocaleString('de-DE')}</span>
                       </span>
                       <span>
@@ -413,7 +415,7 @@ export default function LandingPageChart({
                 <span className="text-strong font-medium ml-1">{totalNewUsers.toLocaleString('de-DE')}</span>
               </span>
               <span>
-                <span className="text-faint">Sessions gesamt</span>{' '}
+                <span className="text-faint">{sessionsLabel} gesamt</span>{' '}
                 <span className="text-strong font-medium ml-1">{totalSessions.toLocaleString('de-DE')}</span>
               </span>
               <span>
