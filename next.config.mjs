@@ -45,6 +45,17 @@ const nextConfig = {
       },
     ],
   },
+  // Nur www.datapeak.at (und datapeak.at) darf in Suchmaschinen erscheinen.
+  // Das Dashboard auf app.datapeak.at, vercel.app und Previews sind noindex.
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        missing: [{ type: 'host', value: '(www\\.)?datapeak\\.at' }],
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+    ];
+  },
   // WICHTIG: Damit @react-pdf/renderer im App Router funktioniert
   experimental: {
     optimizePackageImports: ['react-bootstrap-icons', 'lucide-react'],

@@ -1,6 +1,5 @@
 // src/app/willkommen/page.tsx
 // Landingpage für www.datapeak.at. Die Middleware schreibt "/" der Marketing-Domain hierher um.
-/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import {
@@ -8,30 +7,45 @@ import {
   BellFill,
   ChatQuoteFill,
   CheckCircleFill,
+  CloudSunFill,
   FileEarmarkBarGraphFill,
   GeoAltFill,
   Grid1x2Fill,
   Link45deg,
   ListCheck,
-  PencilSquare,
   Search,
   Stars,
 } from 'react-bootstrap-icons';
+import DataMaxIllustration from '@/components/marketing/DataMaxIllustration';
 import ProductPreview from '@/components/marketing/ProductPreview';
 import { MARKETING_ORIGIN, appOriginFor } from '@/lib/site-hosts';
 
+const PAGE_TITLE = 'DataPeak – SEO- und KI-Sichtbarkeit in einem Dashboard';
+const PAGE_DESCRIPTION =
+  'DataPeak bündelt Search Console, Analytics, Google Ads und KI-Traffic aus ChatGPT & Co. in einem Dashboard. Der KI-Assistent DataMax erklärt die Zahlen in Klartext.';
+const OG_IMAGE = `${MARKETING_ORIGIN}/og-datapeak.png`;
+
 export const metadata: Metadata = {
-  title: 'DataPeak – SEO- und KI-Sichtbarkeit in einem Dashboard',
-  description:
-    'DataPeak bündelt Search Console, Analytics, Google Ads und KI-Traffic in einem Dashboard und erklärt die Zahlen in Klartext.',
-  alternates: { canonical: `${MARKETING_ORIGIN}/` },
+  metadataBase: new URL(MARKETING_ORIGIN),
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
+  applicationName: 'DataPeak',
+  alternates: { canonical: '/' },
+  robots: { index: true, follow: true, 'max-image-preview': 'large' },
   openGraph: {
-    title: 'DataPeak – SEO- und KI-Sichtbarkeit in einem Dashboard',
-    description: 'Search Console, Analytics, Google Ads und KI-Traffic an einem Ort. Verständlich erklärt von DataMax.',
-    url: `${MARKETING_ORIGIN}/`,
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: '/',
     siteName: 'DataPeak',
     locale: 'de_AT',
     type: 'website',
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'DataPeak – Ihre Daten. Endlich verständlich.' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    images: [OG_IMAGE],
   },
 };
 
@@ -62,7 +76,7 @@ const STEPS = [
   },
   {
     title: 'Automatisch aktuell',
-    text: 'DataPeak holt die Zahlen mehrmals täglich im Hintergrund. Beim Öffnen sehen Sie sofort den letzten Stand, ohne zu warten.',
+    text: 'DataPeak holt die Zahlen einmal täglich im Hintergrund. Beim Öffnen sehen Sie sofort den letzten Stand, ohne zu warten.',
   },
   {
     title: 'Verstehen und handeln',
@@ -76,7 +90,7 @@ const FEATURES = [
   { icon: BellFill, title: 'Anomalie-Erkennung.', text: 'Starke Anstiege und Einbrüche bei KI-Quellen erkennt DataPeak von selbst.' },
   { icon: GeoAltFill, title: 'Lokale Sichtbarkeit.', text: 'Standorte auf der Karte, mit Unternehmensprofil und Vergleich.' },
   { icon: ChatQuoteFill, title: 'Prompt Tracking.', text: 'Lange, fragenartige Suchanfragen aus der Search Console.' },
-  { icon: PencilSquare, title: 'KI Content Studio.', text: 'Landingpages und Artikel aus Ihren echten Suchdaten.' },
+  { icon: CloudSunFill, title: 'Wetter und Feiertage.', text: 'Im Verlauf sehen Sie, was den Traffic an einem Tag beeinflusst hat.' },
   { icon: ListCheck, title: 'Indexierungsstatus.', text: 'Welche Seiten Google kennt und wo es hakt.' },
   { icon: FileEarmarkBarGraphFill, title: 'PDF-Bericht.', text: 'Eine saubere Zusammenfassung auf Knopfdruck.' },
 ];
@@ -99,15 +113,11 @@ const FAQ = [
       },
       {
         q: 'Wie aktuell sind die Zahlen?',
-        a: 'DataPeak aktualisiert die Daten mehrmals täglich im Hintergrund. Beim Öffnen des Dashboards sehen Sie sofort den zuletzt gespeicherten Stand; wann er abgerufen wurde, steht direkt dabei.',
+        a: 'DataPeak aktualisiert die Daten einmal täglich im Hintergrund. Beim Öffnen des Dashboards sehen Sie sofort den zuletzt gespeicherten Stand; wann er abgerufen wurde, steht direkt dabei.',
       },
       {
         q: 'Woher weiß DataPeak, wie viele Besucher von ChatGPT kommen?',
         a: 'Aus Google Analytics 4. Besuche, die von ChatGPT, Perplexity, Gemini, Claude und weiteren KI-Diensten kommen, werden erkannt und pro Quelle ausgewertet, inklusive Conversions und Folgeseiten.',
-      },
-      {
-        q: 'Was ist der GEO-Sichtbarkeits-Score?',
-        a: 'Eine Kennzahl von 0 bis 100, die Ihre Position in der KI-Suche zusammenfasst. Sie setzt sich aus dem Anteil des KI-Traffics, der Vielfalt der KI-Quellen und dem Wachstum zusammen.',
       },
       {
         q: 'Was ist Prompt Tracking?',
@@ -151,6 +161,49 @@ const FAQ = [
   },
 ];
 
+// Strukturierte Daten für Suchmaschinen: Organisation, Website, Software und FAQ.
+const STRUCTURED_DATA = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${MARKETING_ORIGIN}/#organization`,
+      name: 'DataPeak',
+      url: `${MARKETING_ORIGIN}/`,
+      logo: `${MARKETING_ORIGIN}/logo-data-peak.webp`,
+      email: CONTACT_MAIL,
+      founder: { '@type': 'Person', name: 'Michael Kanda' },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${MARKETING_ORIGIN}/#website`,
+      url: `${MARKETING_ORIGIN}/`,
+      name: 'DataPeak',
+      inLanguage: 'de-AT',
+      publisher: { '@id': `${MARKETING_ORIGIN}/#organization` },
+    },
+    {
+      '@type': 'SoftwareApplication',
+      name: 'DataPeak',
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      url: `${MARKETING_ORIGIN}/`,
+      description: PAGE_DESCRIPTION,
+      inLanguage: 'de-AT',
+      publisher: { '@id': `${MARKETING_ORIGIN}/#organization` },
+      featureList: FEATURES.map((feature) => feature.title.replace(/\.$/, '')),
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: FAQ.flatMap((group) => group.items).map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
+    },
+  ],
+};
+
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
     <p className="mb-3 flex items-center gap-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-accent">
@@ -176,6 +229,10 @@ export default function LandingPage() {
 
   return (
     <div className="text-body">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replace(/</g, '\\u003c') }}
+      />
       {/* ── Hero ─────────────────────────────────────────── */}
       <section className="mx-auto grid max-w-[1120px] items-center gap-12 px-4 pb-20 pt-14 sm:px-6 md:pt-20 lg:grid-cols-[1fr_1.05fr]">
         <div>
@@ -248,7 +305,7 @@ export default function LandingPage() {
           <div className="hidden items-center text-muted lg:flex"><ArrowRight size={18} /></div>
           <div className="rounded-container border border-accent/40 bg-accent-tint p-5">
             <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-accent">DataPeak</p>
-            <p className="mt-3 text-[15px] font-semibold text-heading">Mehrmals täglich aktualisiert</p>
+            <p className="mt-3 text-[15px] font-semibold text-heading">Einmal täglich aktualisiert</p>
             <p className="mt-1 text-[13px] text-body">Gespeichert, verglichen und auf Auffälligkeiten geprüft.</p>
           </div>
           <div className="hidden items-center text-muted lg:flex"><ArrowRight size={18} /></div>
@@ -298,8 +355,8 @@ export default function LandingPage() {
 
       {/* ── DataMax ──────────────────────────────────────── */}
       <section className="mx-auto grid max-w-[1120px] items-center gap-12 px-4 py-20 sm:px-6 md:grid-cols-[0.8fr_1fr]">
-        <div className="mx-auto w-full max-w-[340px] overflow-hidden rounded-[24px] bg-white p-6">
-          <img src="/data-max-stolz.webp" alt="DataMax, der KI-Assistent von DataPeak" width={668} height={800} className="h-auto w-full" />
+        <div className="mx-auto w-full max-w-[340px] overflow-hidden rounded-[24px] bg-accent-tint p-8">
+          <DataMaxIllustration className="h-auto w-full" title="DataMax, der KI-Assistent von DataPeak" />
         </div>
         <div>
           <SectionHeading

@@ -1,7 +1,7 @@
 // src/hooks/useAiTrafficExtended.ts
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { AiTrafficExtendedData } from '@/lib/ai-traffic-extended-v2';
 
 /**
@@ -20,6 +20,12 @@ interface CacheEntry {
 }
 
 const cache = new Map<string, CacheEntry>();
+
+/**
+ * Feste Daten statt API-Abruf, z. B. für die öffentliche Demo ohne Projekt.
+ * Ist ein Wert gesetzt, fragt der Hook keine Daten vom Server ab.
+ */
+export const AiTrafficExtendedDemoContext = createContext<AiTrafficExtendedData | null>(null);
 const CACHE_TTL_MS = 60_000; // 1 min — selber Visit, gleicher Filter → kein Refetch
 const QUOTA_CACHE_TTL_MS = 55 * 60 * 1000;
 const TRANSIENT_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -62,11 +68,18 @@ async function fetchExtended(projectId: string | undefined, dateRange: string): 
 }
 
 export function useAiTrafficExtended(projectId: string | undefined, dateRange: string) {
-  const [data, setData] = useState<AiTrafficExtendedData | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(Boolean(projectId));
+  const demoData = useContext(AiTrafficExtendedDemoContext);
+  const [data, setData] = useState<AiTrafficExtendedData | undefined>(demoData ?? undefined);
+  const [isLoading, setIsLoading] = useState(!demoData && Boolean(projectId));
   const [error, setError] = useState<string | undefined>(undefined);
 
   const load = useCallback(async (force = false) => {
+    if (demoData) {
+      setData(demoData);
+      setError(undefined);
+      setIsLoading(false);
+      return;
+    }
     if (!projectId) {
       setData(undefined);
       setError(undefined);
@@ -134,7 +147,7 @@ export function useAiTrafficExtended(projectId: string | undefined, dateRange: s
     } finally {
       setIsLoading(false);
     }
-  }, [projectId, dateRange]);
+  }, [projectId, dateRange, demoData]);
 
   useEffect(() => {
     load();
