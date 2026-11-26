@@ -1,14 +1,62 @@
 // src/middleware.ts
 import NextAuth from 'next-auth';
 import { baseAuthConfig } from '@/lib/auth-config';
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { TWO_FACTOR_SETUP_PATH } from '@/lib/two-factor/policy';
+import {
+  APP_HOST,
+  LANDING_PATH,
+  MARKETING_ORIGIN,
+  MARKETING_PAGES,
+  SITE_HEADER,
+  appOriginFor,
+  isMarketingHost,
+  normalizeHost,
+} from '@/lib/site-hosts';
 
 const { auth } = NextAuth(baseAuthConfig);
 
+/** Leitet den Request weiter und markiert ihn für das Layout als Landingpage. */
+function marketingResponse(req: NextRequest, rewriteTo?: string) {
+  const headers = new Headers(req.headers);
+  headers.set(SITE_HEADER, 'marketing');
+  return rewriteTo
+    ? NextResponse.rewrite(new URL(rewriteTo, req.url), { request: { headers } })
+    : NextResponse.next({ request: { headers } });
+}
+
+/**
+ * www.datapeak.at zeigt die Landingpage, Impressum und Datenschutz.
+ * Alle anderen Pfade (alte Lesezeichen, Gastlinks, Login) führen ins Dashboard.
+ */
+function handleSiteRouting(req: NextRequest) {
+  const { pathname, search } = req.nextUrl;
+  const host = req.headers.get('host');
+
+  if (isMarketingHost(host)) {
+    if (pathname === '/') return marketingResponse(req, LANDING_PATH);
+    if (pathname === LANDING_PATH) return NextResponse.redirect(new URL('/', req.url), 308);
+    if (MARKETING_PAGES.has(pathname)) return marketingResponse(req);
+    return NextResponse.redirect(new URL(`${pathname}${search}`, appOriginFor(host)), 308);
+  }
+
+  if (pathname === LANDING_PATH) {
+    // Im Dashboard gibt es die Landingpage nicht; lokal und in Previews bleibt sie zum Prüfen erreichbar.
+    if (normalizeHost(host) === APP_HOST) return NextResponse.redirect(`${MARKETING_ORIGIN}/`, 308);
+    return marketingResponse(req);
+  }
+  return null;
+}
+
 export default auth(async (req) => {
   const { nextUrl } = req;
+  const isStaticFile = /\.[^/]+$/.test(nextUrl.pathname);
+  if (!isStaticFile) {
+    const siteResponse = handleSiteRouting(req);
+    if (siteResponse) return siteResponse;
+  }
+
   const isLoggedIn = !!req.auth;
   const userId = req.auth?.user?.id;
   const userRole = req.auth?.user?.role;
