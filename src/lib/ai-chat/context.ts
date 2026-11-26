@@ -8,6 +8,7 @@ import type { ProjectDashboardData } from '@/lib/dashboard-shared';
 import type { DailyWeather } from '@/lib/weather';
 import type { AiTrafficDetailData } from '@/types/ai-traffic-detail';
 import { getDateRangeLabel } from './date-range';
+import { analyticsSourceNote } from '@/lib/vercel-analytics/ai-note';
 
 // ============================================================================
 // HELPER: Wetter- & Feiertags-Kontext
@@ -394,6 +395,7 @@ HINWEIS: Conversions sind nur auf Kampagnen- und Anzeigengruppen-Ebene zuverlaes
   return `
 PROJEKT: ${user.domain || 'Unbekannt'}
 ZEITRAUM: ${getDateRangeLabel(dateRange)}
+${analyticsSourceNote(data)}
 
 === HAUPT-KPIs ===
 Nutzer: ${fmt(kpis.totalUsers?.value)} (${pct(kpis.totalUsers?.change)})

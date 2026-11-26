@@ -78,7 +78,10 @@ export default function AiTrafficCard({
   projectId,
   promptTracking,
   promptTrackingEnabled = true,
+  analyticsSource = 'ga4',
 }: AiTrafficCardProps) {
+  const isVercel = analyticsSource === 'vercel';
+  const sourceName = isVercel ? 'Vercel Analytics' : 'GA4';
 
   const safePercentage = typeof percentage === 'number' && !isNaN(percentage) ? percentage : 0;
   const safeTopAiSources = Array.isArray(topAiSources) ? topAiSources : [];
@@ -96,7 +99,8 @@ export default function AiTrafficCard({
   const [selectedModel, setSelectedModel] = useState<string | undefined>(undefined);
 
   // Geteilte Extended-Daten (Hook deduped via Module-Cache)
-  const { data: extendedData } = useAiTrafficExtended(projectId, dateRange);
+  // Die erweiterte Auswertung fragt GA4 live ab; mit Vercel Analytics entfällt sie.
+  const { data: extendedData } = useAiTrafficExtended(isVercel ? undefined : projectId, dateRange);
 
   // Sparkline-Daten pro normalisiertem Modell-Key vorbereiten (letzte ~14 Tage)
   const sparklinesByModel = useMemo<Record<string, number[]>>(() => {
@@ -195,7 +199,7 @@ export default function AiTrafficCard({
       {error ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center my-4">
           <AlertTriangle className="text-danger w-8 h-8 mb-3" />
-          <p className="text-sm text-danger font-semibold">Fehler bei GA4-Daten</p>
+          <p className="text-sm text-danger font-semibold">Fehler bei {sourceName}-Daten</p>
           <p className="text-xs text-muted mt-1" title={error}>
             Die KI-Traffic-Daten konnten nicht geladen werden.
           </p>
@@ -215,7 +219,7 @@ export default function AiTrafficCard({
               {/* Meta-Info: Quelle und Datum */}
               <div className="widget-meta flex items-center gap-2">
                 <span className="bg-surface-tertiary text-body px-2 py-0.5 rounded font-medium">
-                  Quelle: GA4
+                  Quelle: {sourceName}
                 </span>
                 {formattedDateRange && (
                   <>
@@ -358,18 +362,22 @@ export default function AiTrafficCard({
             {/* ── Spalte 2: Sitzungs-Trend nach KI-Modell + Action-Buttons ── */}
             <div className="min-w-0 flex flex-col">
               <p className="widget-eyebrow text-muted mb-3">
-                Sitzungs-Trend nach KI-Modell
+                {isVercel ? 'KI-Besucher' : 'Sitzungs-Trend nach KI-Modell'}
               </p>
 
-              <AiTrafficModelTrendChart
-                projectId={projectId}
-                dateRange={dateRange}
-                externalPrimaryModel={selectedModel}
-                onPrimaryModelChange={setSelectedModel}
-              />
+              {!isVercel && (
+                <AiTrafficModelTrendChart
+                  projectId={projectId}
+                  dateRange={dateRange}
+                  externalPrimaryModel={selectedModel}
+                  onPrimaryModelChange={setSelectedModel}
+                />
+              )}
 
               <p className="text-xs text-muted mt-4">
-                KI-Traffic umfasst GA4-Besuche über das offizielle Medium ai-assistant sowie ergänzend erkannte KI-Referrer. Google-GenAI-Sichtbarkeit und Prompt Tracking werden separat ausgewertet.
+                {isVercel
+                  ? 'KI-Traffic umfasst Besucher, deren Browser den Referrer eines bekannten KI-Assistenten übermittelt hat (Vercel Web Analytics, ohne Sitzungen). Google-GenAI-Sichtbarkeit und Prompt Tracking werden separat ausgewertet.'
+                  : 'KI-Traffic umfasst GA4-Besuche über das offizielle Medium ai-assistant sowie ergänzend erkannte KI-Referrer. Google-GenAI-Sichtbarkeit und Prompt Tracking werden separat ausgewertet.'}
               </p>
 
               {/* Action-Buttons — an den unteren Rand gezogen für die Balance */}

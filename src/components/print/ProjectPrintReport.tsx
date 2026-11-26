@@ -113,16 +113,19 @@ export default function ProjectPrintReport({
   const period = formatReportingPeriod(model.reportingPeriod);
   const kpis = model.extendedKpis;
 
+  // Website-Kennzahlen aus GA4 oder Vercel; fehlende Kennzahlen (z. B. bei Vercel) entfallen.
+  const web = model.analyticsSource === 'vercel' ? 'Vercel' : 'GA4';
   const kpiRows = kpis ? [
     { label: 'Impressionen', kpi: kpis.impressions, format: formatCount, source: 'GSC' },
     { label: 'Google Klicks', kpi: kpis.clicks, format: formatCount, source: 'GSC' },
-    { label: 'Neue Besucher', kpi: kpis.newUsers, format: formatCount, source: 'GA4' },
-    { label: 'Besucher', kpi: kpis.totalUsers, format: formatCount, source: 'GA4' },
-    { label: 'Interaktionsrate', kpi: kpis.engagementRate, format: formatPercent, source: 'GA4' },
-    { label: 'Conversions', kpi: kpis.conversions, format: formatCount, source: 'GA4' },
-    { label: 'Ø Verweildauer', kpi: kpis.avgEngagementTime, format: formatTime, source: 'GA4' },
-    { label: 'Absprungrate', kpi: kpis.bounceRate, format: formatPercent, source: 'GA4', lowerIsBetter: true },
-  ] : [];
+    { label: 'Neue Besucher', kpi: kpis.newUsers, format: formatCount, source: web },
+    { label: 'Seitenaufrufe', kpi: kpis.pageviews, format: formatCount, source: web },
+    { label: 'Besucher', kpi: kpis.totalUsers, format: formatCount, source: web },
+    { label: 'Interaktionsrate', kpi: kpis.engagementRate, format: formatPercent, source: web },
+    { label: 'Conversions', kpi: kpis.conversions, format: formatCount, source: web },
+    { label: 'Ø Verweildauer', kpi: kpis.avgEngagementTime, format: formatTime, source: web },
+    { label: 'Absprungrate', kpi: kpis.bounceRate, format: formatPercent, source: web, lowerIsBetter: true },
+  ].filter((row): row is typeof row & { kpi: NonNullable<typeof row.kpi> } => Boolean(row.kpi)) : [];
 
   const trend = useMemo(() => {
     const byDate = new Map<number, { date: number; clicks?: number; impressions?: number }>();

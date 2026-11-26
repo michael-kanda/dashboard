@@ -13,6 +13,7 @@ import { buildChatContext } from '@/lib/ai-chat/context';
 import { generateSuggestedQuestions } from '@/lib/ai-chat/fallback';
 import { buildSystemPrompt } from '@/lib/ai-chat/prompt';
 import { logger } from '@/lib/logger';
+import { readAnalyticsSettings } from '@/lib/vercel-analytics/settings';
 export const maxDuration = 60;
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -77,7 +78,8 @@ export async function POST(req: NextRequest) {
     // =========================================================================
     let aiTrafficDetail = null;
     
-    if (user.ga4_property_id) {
+    // Die erweiterte KI-Auswertung kommt aus GA4; bei Vercel Analytics entfällt sie.
+    if (user.ga4_property_id && readAnalyticsSettings(user).source !== 'vercel') {
       try {
         const dateRanges = getDateRanges(effectiveDateRange);
         aiTrafficDetail = await getAiTrafficDetailWithComparison(
@@ -191,7 +193,8 @@ export async function GET(req: NextRequest) {
 
     // Extended AI Traffic für bessere Fragen
     let aiTrafficDetail = null;
-    if (user.ga4_property_id) {
+    // Die erweiterte KI-Auswertung kommt aus GA4; bei Vercel Analytics entfällt sie.
+    if (user.ga4_property_id && readAnalyticsSettings(user).source !== 'vercel') {
       try {
         const dateRanges = getDateRanges(dateRange);
         aiTrafficDetail = await getAiTrafficDetailWithComparison(

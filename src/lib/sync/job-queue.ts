@@ -173,6 +173,8 @@ export async function seedDueProjectSyncJobs() {
         NULLIF(BTRIM(u.gsc_site_url), '') IS NOT NULL
         OR NULLIF(BTRIM(u.ga4_property_id), '') IS NOT NULL
         OR NULLIF(BTRIM(u.google_ads_sheet_id), '') IS NOT NULL
+        -- Vercel Analytics (Migration 010); to_jsonb bleibt auch ohne die Spalte gültig.
+        OR NULLIF(BTRIM(to_jsonb(u)->>'vercel_project_id'), '') IS NOT NULL
       )
       AND (
         cache.last_fetched IS NULL

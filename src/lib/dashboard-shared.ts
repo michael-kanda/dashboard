@@ -251,6 +251,14 @@ export interface ProjectDashboardData {
   channelData?: ChartEntry[];
   deviceData?: ChartEntry[];
   apiErrors?: ApiErrorStatus;
+  /** Quelle der Website-Kennzahlen; fehlt bei älteren Snapshots (= GA4). */
+  analyticsSource?: 'ga4' | 'vercel';
+  /** Nur bei analyticsSource 'vercel': Sitzungs-/Nutzerfelder enthalten Besucher. */
+  vercelAnalytics?: {
+    pageviews: KpiDatum;
+    pageviewsDaily: ChartPoint[];
+    conversionsConfigured: boolean;
+  };
   snapshotVersion?: number;
   metricMetadata?: Record<string, MetricMetadata>;
   fromCache?: boolean;

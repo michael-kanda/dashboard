@@ -153,6 +153,25 @@ GA4 und GSC werden im selben Dashboard-Snapshot in `google_data_cache` gespeiche
 - Quelle, Aktualisierungszeit, Zeitraum, Abdeckung und Berechnungsmethode werden zusätzlich in `project_metric_snapshots` dokumentiert.
 - GA4-Daten bleiben von Consent, Consent Mode und gegebenenfalls modellierten Werten abhängig. Sie sind deshalb nicht direkt mit cookie-unabhängigen GSC-Impressionen gleichzusetzen.
 
+### Vercel Web Analytics statt GA4 (optional)
+
+Pro Projekt lässt sich unter **Website-Analytics** statt GA4 auch Vercel Web Analytics als Quelle wählen. Dafür sind das Vercel-Projekt (Name oder `prj_…`), optional das Team und optional Event-Namen für Conversions hinterlegt (Spalten `analytics_source`, `vercel_project_id`, `vercel_team_id`, `vercel_conversion_events`, Migration 010). Ohne Migration bleibt jedes Projekt bei GA4; nur das Speichern von „Vercel“ meldet dann, dass `npm run db:migrate` fehlt.
+
+DataPeak fragt die REST-API `/v1/query/web-analytics/…` im selben Dashboard-Auftrag ab wie sonst GA4, mit derselben Fehlerbehandlung: 429 und 5xx gelten als vorübergehend und überschreiben keinen guten Snapshot, 401/403/404 als dauerhaft. Benötigt werden die Umgebungsvariablen `VERCEL_ANALYTICS_TOKEN` (Vercel-Token mit Zugriff auf das Team) und optional `VERCEL_ANALYTICS_TEAM_ID` (Standard-Team, wenn beim Projekt keines eingetragen ist).
+
+| Dashboard | Mit Vercel Web Analytics |
+| --- | --- |
+| Besucher | eindeutige Besucher (`visitors`); stehen intern auch im Sitzungsfeld, damit Anteile wie „KI-Traffic an allen Besuchen“ dieselbe Einheit haben |
+| Seitenaufrufe | eigene Kachel und Trendlinie |
+| Conversions | Summe der konfigurierten Vercel-Events; ohne Events ausgeblendet |
+| Kanäle | aus dem Referrer abgeleitet (Direct, Organic Search, Organic Social, AI Assistant, Referral) |
+| KI-Traffic | Besucher mit Referrer eines bekannten KI-Assistenten |
+| Länder, Geräte, Top-Seiten | direkt aus Vercel |
+| Neue Besucher, Interaktionsrate, Verweildauer, Absprungrate, Paid Search | nicht verfügbar und ausgeblendet |
+| Folgepfade, KI-Traffic-Detailanalyse, GA4-Ergänzung zu Google Ads | entfallen |
+
+Einschränkungen (geprüft am 26.11.2026): UTM-Dimensionen verlangen bei Vercel Enterprise oder das Add-on Web Analytics Plus (HTTP 402) und werden deshalb nicht abgefragt. Vercel zählt Tage in UTC; der Berichtszeitraum endet wie bei GA4 am Vortag. Vergleichswerte entstehen erst, wenn Vercel für den Vorzeitraum Daten gesammelt hat. Kennzahlen werden in der Historie unter eigenen Schlüsseln (`vercel.*`) gespeichert und mischen sich nicht mit GA4-Werten. KI-Analyse und DataMax-Chat erhalten einen Hinweis auf die Quelle und die fehlenden Kennzahlen.
+
 ## 4. Google-Ads-Daten
 
 Google Ads wird innerhalb desselben `dashboard`-Auftrags wie GSC und GA4 geladen und zusammen mit dem Dashboard-Snapshot gespeichert. Es gibt zwei klar priorisierte Datenwege:

@@ -49,7 +49,9 @@ export default function DashboardSearchWidgets({
                   dateRange={dateRange}
                   reportingPeriod={model.reportingPeriod}
                   queryData={gsc.data.landingPageQueries}
-                  projectId={projectId}
+                  // Folgepfade kommen aus GA4; mit Vercel Analytics gibt es sie nicht.
+                  projectId={model.analyticsSource === 'vercel' ? undefined : projectId}
+                  sessionsLabel={model.analyticsSource === 'vercel' ? 'Besucher' : undefined}
                 />
               </div>
             </div>

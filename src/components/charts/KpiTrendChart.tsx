@@ -35,6 +35,7 @@ const KPI_CONFIG: Record<string, { label: string; color: string; gradientId: str
   avgEngagementTime: { label: 'Ø Verweildauer', color: 'var(--dp-chart-3)', gradientId: 'gradAmber', source: 'GA4' },
   bounceRate: { label: 'Absprungrate', color: 'var(--dp-chart-4)', gradientId: 'gradRose', source: 'GA4' },
   paidSearch: { label: 'Paid Search', color: '#14b8a6', gradientId: 'gradTeal', source: 'GA4' },
+  pageviews: { label: 'Seitenaufrufe', color: 'var(--dp-chart-6)', gradientId: 'gradCyan', source: 'Vercel' },
 };
 
 const WEEKDAY_SHORT: Record<number, string> = {
@@ -129,6 +130,10 @@ interface KpiTrendChartProps {
   reportingPeriod?: ReportingPeriod;
   isLoading?: boolean;
   className?: string;
+  /** Wählbare Kennzahlen; ohne Angabe alle GA4-/GSC-Kennzahlen. */
+  kpiKeys?: string[];
+  /** Ersetzt die Quellenangabe 'GA4', z. B. durch 'Vercel'. */
+  webSourceLabel?: string;
 }
 
 const isPercentageKpi = (kpi: string) => ['engagementRate', 'bounceRate'].includes(kpi);
@@ -224,8 +229,11 @@ export default function KpiTrendChart({
   weatherData,
   reportingPeriod,
   isLoading,
-  className
+  className,
+  kpiKeys,
+  webSourceLabel,
 }: KpiTrendChartProps) {
+  const visibleKeys = kpiKeys ?? Object.keys(KPI_CONFIG).filter((key) => key !== 'pageviews');
   
   const [compareKpi, setCompareKpi] = useState<string>('none');
 
@@ -328,7 +336,7 @@ export default function KpiTrendChart({
           </div>
           <div className="widget-meta mt-2 flex items-center gap-2 text-muted">
             <span className="rounded bg-surface-tertiary px-1.5 py-0.5 font-medium text-secondary">
-              Quelle: {activeConfig.source}
+              Quelle: {activeConfig.source === 'GA4' && webSourceLabel ? webSourceLabel : activeConfig.source}
             </span>
             {reportingPeriodLabel && (
               <>
@@ -346,7 +354,7 @@ export default function KpiTrendChart({
               onChange={(e) => onKpiChange(e.target.value)}
               className="widget-control appearance-none bg-surface-secondary hover:bg-surface border border-border hover:border-border text-body rounded-md focus:ring-accent focus:border-accent block w-full pl-3 pr-10 py-2 cursor-pointer transition-colors"
             >
-              {Object.keys(KPI_CONFIG).map((key) => (
+              {visibleKeys.map((key) => (
                 <option key={key} value={key}>
                   {KPI_CONFIG[key].label}
                 </option>
@@ -367,7 +375,7 @@ export default function KpiTrendChart({
               className="widget-control appearance-none bg-surface border border-border hover:border-border text-secondary rounded-md focus:ring-purple-500 focus:border-purple-500 block w-full pl-9 pr-8 py-2 cursor-pointer transition-colors"
             >
               <option value="none">Kein Vergleich</option>
-              {Object.keys(KPI_CONFIG)
+              {visibleKeys
                 .filter((k) => k !== activeKpi)
                 .map((key) => (
                   <option key={key} value={key}>
