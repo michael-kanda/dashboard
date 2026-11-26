@@ -7,6 +7,8 @@ import type { User } from '@/types';
 import EditUserForm from './EditUserForm';
 import LandingpageManager from './LandingpageManager';
 import ProjectAssignmentManager from './ProjectAssignmentManager';
+import ProjectSupportManager, { type SupportStaff } from './ProjectSupportManager';
+import { roleLabel } from '@/lib/ui-labels';
 import UserLogbook from '@/components/UserLogbook';
 import { logger } from '@/lib/logger';
 import { loadAnalyticsSettingsColumns } from '@/lib/vercel-analytics/settings-repository';
@@ -113,6 +115,36 @@ async function getAllProjects(): Promise<Project[]> {
   }
 }
 
+// Betreuung eines Projekts: mögliche Betreuer, aktuelle Zuweisungen und Ersteller.
+// Superadmins sehen alle Admins und Superadmins, Label-Admins nur Admins ihres Labels.
+async function getProjectSupport(
+  projectId: string,
+  viewer: { role: string; mandant_id?: string | null },
+): Promise<{ staff: SupportStaff[]; assignedIds: string[]; creatorEmail: string | null }> {
+  const isSuperAdmin = viewer.role === 'SUPERADMIN';
+  const label = viewer.mandant_id ?? null;
+  const [staffResult, assignedResult, creatorResult] = await Promise.all([
+    isSuperAdmin
+      ? sql<SupportStaff>`
+          SELECT id::text AS id, email, role, mandant_id FROM users
+          WHERE role IN ('ADMIN', 'SUPERADMIN')
+          ORDER BY role DESC, mandant_id ASC NULLS FIRST, email ASC`
+      : sql<SupportStaff>`
+          SELECT id::text AS id, email, role, mandant_id FROM users
+          WHERE role = 'ADMIN' AND mandant_id = ${label}
+          ORDER BY email ASC`,
+    sql<{ user_id: string }>`SELECT user_id::text AS user_id FROM project_assignments WHERE project_id = ${projectId}::uuid`,
+    sql<{ email: string }>`
+      SELECT creator.email FROM users p JOIN users creator ON creator.id = p."createdByAdminId"
+      WHERE p.id = ${projectId}::uuid`,
+  ]);
+  return {
+    staff: staffResult.rows,
+    assignedIds: assignedResult.rows.map((row) => row.user_id),
+    creatorEmail: creatorResult.rows[0]?.email ?? null,
+  };
+}
+
 // --- Hauptkomponente der Seite ---
 
 export default async function EditUserPage({ params }: PageProps) {
@@ -166,6 +198,10 @@ export default async function EditUserPage({ params }: PageProps) {
   const canManageAssignments = currentUserIsSuperAdmin || currentUserIsKlasse1;
   
   const userBeingEditedIsAdmin = user.role === 'ADMIN';
+  // Label-Admins verwalten nur die Betreuung von Projekten ihres eigenen Labels.
+  const canManageSupport = user.role === 'BENUTZER' && canManageAssignments
+    && (currentUserIsSuperAdmin || user.mandant_id === session.user.mandant_id);
+  const support = canManageSupport ? await getProjectSupport(id, session.user) : null;
 
   return (
     <div className="min-h-screen bg-page px-[clamp(16px,3vw,40px)] pt-7 pb-12">
@@ -184,7 +220,7 @@ export default async function EditUserPage({ params }: PageProps) {
                 </span>
               )}
               <span className="bg-accent-tint text-accent px-3 py-1 rounded-full text-sm font-medium">
-                {user.role}
+                {roleLabel(user.role)}
               </span>
             </div>
           </div>
@@ -201,6 +237,16 @@ export default async function EditUserPage({ params }: PageProps) {
             <LandingpageManager userId={id} />
             <UserLogbook userId={id} />
           </>
+        )}
+
+        {/* Betreuung des Projekts */}
+        {support && (
+          <ProjectSupportManager
+            projectId={id}
+            staff={support.staff}
+            assignedIds={support.assignedIds}
+            creatorEmail={support.creatorEmail}
+          />
         )}
 
         {/* Projektzuweisungen */}
