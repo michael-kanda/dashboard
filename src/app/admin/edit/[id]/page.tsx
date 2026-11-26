@@ -5,16 +5,15 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import type { User } from '@/types';
 import EditUserForm from './EditUserForm';
-import LandingpageManager from './LandingpageManager';
 import ProjectAssignmentManager from './ProjectAssignmentManager';
-import ProjectSupportManager, { type SupportStaff } from './ProjectSupportManager';
+import type { SupportStaff } from './ProjectSupportManager';
 import { roleLabel } from '@/lib/ui-labels';
-import UserLogbook from '@/components/UserLogbook';
 import { logger } from '@/lib/logger';
 import { loadAnalyticsSettingsColumns } from '@/lib/vercel-analytics/settings-repository';
 
 type PageProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string | string[] }>;
 };
 
 // Projekt-Interface (Kunde)
@@ -147,7 +146,7 @@ async function getProjectSupport(
 
 // --- Hauptkomponente der Seite ---
 
-export default async function EditUserPage({ params }: PageProps) {
+export default async function EditUserPage({ params, searchParams }: PageProps) {
   const session = await auth();
 
   if (!session?.user || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPERADMIN')) {
@@ -156,6 +155,7 @@ export default async function EditUserPage({ params }: PageProps) {
 
   const resolvedParams = await params;
   const { id } = resolvedParams;
+  const { tab } = await searchParams;
 
   if (!id || typeof id !== 'string' || id.length !== 36) {
     return (
@@ -225,29 +225,15 @@ export default async function EditUserPage({ params }: PageProps) {
             </div>
           </div>
          {/* Hier muss Cast verwendet werden, da EditUserForm das normale User Interface erwartet */}
+         {/* Projekte bekommen Tabs; Betreuung, Landingpages und Logbuch liegen dort in eigenen Tabs. */}
          <EditUserForm 
            user={user as unknown as User}
            isSuperAdmin={currentUserIsSuperAdmin}
+           projectTabs={user.role === 'BENUTZER'
+             ? { initialTab: typeof tab === 'string' ? tab : undefined, support }
+             : undefined}
          />
         </div>
-
-        {/* Landingpage Manager UND Logbuch (Nur für Kunden) */}
-        {user.role === 'BENUTZER' && (
-          <>
-            <LandingpageManager userId={id} />
-            <UserLogbook userId={id} />
-          </>
-        )}
-
-        {/* Betreuung des Projekts */}
-        {support && (
-          <ProjectSupportManager
-            projectId={id}
-            staff={support.staff}
-            assignedIds={support.assignedIds}
-            creatorEmail={support.creatorEmail}
-          />
-        )}
 
         {/* Projektzuweisungen */}
         {canManageAssignments && userBeingEditedIsAdmin && (
