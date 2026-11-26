@@ -2,7 +2,7 @@
 // Betreuung eines Projekts: welche Admins (und Superadmins) das Projekt betreuen.
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PeopleFill } from 'react-bootstrap-icons';
 import { toast } from 'sonner';
 import { roleLabel } from '@/lib/ui-labels';
@@ -20,6 +20,8 @@ interface ProjectSupportManagerProps {
   assignedIds: string[];
   /** Ersteller des Projekts; betreut es, solange niemand zugewiesen ist. */
   creatorEmail: string | null;
+  /** Meldet die Zahl der zugewiesenen Betreuer, z. B. für die Statuszeile. */
+  onAssignedCountChange?: (count: number) => void;
 }
 
 export default function ProjectSupportManager({
@@ -27,9 +29,14 @@ export default function ProjectSupportManager({
   staff,
   assignedIds,
   creatorEmail,
+  onAssignedCountChange,
 }: ProjectSupportManagerProps) {
   const [assigned, setAssigned] = useState<string[]>(assignedIds);
   const [pendingId, setPendingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    onAssignedCountChange?.(assigned.length);
+  }, [assigned.length, onAssignedCountChange]);
 
   const toggle = async (member: SupportStaff) => {
     const isAssigned = assigned.includes(member.id);

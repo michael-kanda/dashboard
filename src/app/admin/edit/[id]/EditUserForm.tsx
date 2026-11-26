@@ -31,15 +31,25 @@ import ConfigurationSection from './sections/ConfigurationSection';
 import AnalyticsSourceSection from './sections/AnalyticsSourceSection';
 import GoogleAdsSection from './sections/GoogleAdsSection';
 import SemrushSection from './sections/SemrushSection';
+import ProjectEditTabs, { type ProjectSupportData } from './ProjectEditTabs';
 import { logger } from '@/lib/logger';
+
+const PROJECT_FORM_ID = 'projekt-bearbeiten-form';
 
 interface EditUserFormProps {
   user: User;
   onUserUpdated?: () => void;
   isSuperAdmin: boolean; 
+  /** Für Projekte (BENUTZER): Ansicht mit Tabs statt einer langen Seite. */
+  projectTabs?: {
+    /** Roher Wert aus `?tab=`. */
+    initialTab?: string;
+    /** Betreuungsdaten, nur wenn der Betrachter sie verwalten darf. */
+    support: ProjectSupportData | null;
+  };
 }
 
-export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: EditUserFormProps) {
+export default function EditUserForm({ user, onUserUpdated, isSuperAdmin, projectTabs }: EditUserFormProps) {
   const [formData, setFormData] = useState({
     email: '',
     mandantId: '',
@@ -295,6 +305,173 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
   // Prüfen ob Wartungsmodus für diesen User erlaubt ist
   const canSetMaintenanceMode = user.role !== 'SUPERADMIN';
 
+  // --- Bausteine des Formulars (klassische Ansicht und Projekt-Tabs teilen sie) ---
+  const accessSections = (
+    <>
+      <AccountSection
+        user={user}
+        isSuperAdmin={isSuperAdmin}
+        formData={formData}
+        handleInputChange={handleInputChange}
+        password={password}
+        setPassword={setPassword}
+        isChangingPassword={isChangingPassword}
+        setIsChangingPassword={setIsChangingPassword}
+        isSubmitting={isSubmitting}
+      />
+
+      <MaintenanceModeSection
+        canSetMaintenanceMode={canSetMaintenanceMode}
+        formData={formData}
+        handleInputChange={handleInputChange}
+        isSubmitting={isSubmitting}
+      />
+    </>
+  );
+
+  const timelineSection = (
+    <ProjectTimelineSection
+      formData={formData}
+      handleInputChange={handleInputChange}
+      isSubmitting={isSubmitting}
+    />
+  );
+
+  const visibilitySection = (
+    <DashboardVisibilitySection
+      widgetVisibility={widgetVisibility}
+      setWidgetVisibility={setWidgetVisibility}
+      isSubmitting={isSubmitting}
+    />
+  );
+
+  const localSeoSection = (
+    <LocalSeoSection
+      projectLocations={projectLocations}
+      addProjectLocation={addProjectLocation}
+      removeProjectLocation={removeProjectLocation}
+      updateProjectLocation={updateProjectLocation}
+      isSubmitting={isSubmitting}
+    />
+  );
+
+  const dataSourceSections = (
+    <>
+      {/* --- Konfiguration --- */}
+      <ConfigurationSection
+        formData={formData}
+        handleInputChange={handleInputChange}
+        isSubmitting={isSubmitting}
+      />
+
+      <AnalyticsSourceSection
+        formData={formData}
+        handleInputChange={handleInputChange}
+        isSubmitting={isSubmitting}
+      />
+
+      {/* --- GOOGLE ADS --- */}
+      <GoogleAdsSection
+        formData={formData}
+        handleInputChange={handleInputChange}
+        isSubmitting={isSubmitting}
+      />
+
+      {/* --- SEMRUSH --- */}
+      <SemrushSection
+        formData={formData}
+        handleInputChange={handleInputChange}
+        isSubmitting={isSubmitting}
+      />
+    </>
+  );
+
+  // WARTUNGSMODUS BANNER - wenn aktiv
+  const maintenanceBanner = formData.maintenance_mode && (
+    <div className="mb-4 p-3 bg-warning-bg border border-border rounded-lg flex items-center gap-2 text-warning">
+      <ConeStriped className="text-warning flex-shrink-0" size={20} />
+      <div>
+        <span className="font-semibold">Wartungsmodus aktiv</span>
+        <span className="text-sm ml-2">– Dieser Benutzer sieht nur die Wartungsseite.</span>
+      </div>
+    </div>
+  );
+
+  const renderSubmitButton = (formId: string | undefined, widthClass: string) => (
+    <button
+      type="submit"
+      form={formId}
+      disabled={isSubmitting}
+      className={`${widthClass} px-4 py-2 font-normal text-white bg-accent-solid border-[3px] border-accent rounded-[3px] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2`}
+    >
+      {isSubmitting ? (
+        <Spinner size={18} className="" />
+      ) : (
+        <CheckCircle size={18} />
+      )}
+      <span>{isSubmitting ? 'Wird gespeichert...' : 'Änderungen speichern'}</span>
+    </button>
+  );
+
+  const feedback = (
+    <>
+      {successMessage && (
+        <p className="text-sm text-success font-medium mt-4 p-3 bg-success-bg rounded border border-border">
+          {successMessage}
+        </p>
+      )}
+      {message && !successMessage && (
+        <p className="text-sm text-danger font-medium mt-4 p-3 bg-danger-bg rounded border border-border">
+          {message}
+        </p>
+      )}
+    </>
+  );
+
+  // --- Projekte (BENUTZER): Tabs mit Statuszeile und gemeinsamer Speichern-Leiste ---
+  if (projectTabs && user.role === 'BENUTZER') {
+    const analytics =
+      formData.analyticsSource === 'vercel'
+        ? (formData.vercelProjectId.trim() ? 'Vercel' : null)
+        : (formData.ga4PropertyId.trim() ? 'GA4' : null);
+
+    return (
+      <ProjectEditTabs
+        projectId={user.id}
+        initialTab={projectTabs.initialTab}
+        support={projectTabs.support}
+        status={{
+          gscConnected: formData.gscSiteUrl.trim().length > 0,
+          analytics,
+          googleAdsConnected: formData.googleAdsSheetId.trim().length > 0,
+        }}
+        formId={PROJECT_FORM_ID}
+        onSubmit={handleSubmit}
+        banner={maintenanceBanner}
+        formPanels={{
+          zugang: accessSections,
+          datenquellen: dataSourceSections,
+          dashboard: (
+            <>
+              {visibilitySection}
+              {timelineSection}
+            </>
+          ),
+          localseo: localSeoSection,
+        }}
+        footer={
+          <div className="sticky bottom-0 z-10 -mx-6 -mb-6 rounded-b-container border-t border-border bg-surface px-6 py-4">
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <p className="mr-auto text-sm text-muted">Speichern gilt für alle Tabs</p>
+              {renderSubmitButton(PROJECT_FORM_ID, 'w-full sm:w-auto')}
+            </div>
+            {feedback}
+          </div>
+        }
+      />
+    );
+  }
+
   // --- Rendering des Formulars ---
   return (
     <div className="bg-surface p-6 rounded-lg border border-border">
@@ -302,120 +479,27 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin }: Edit
         <Pencil size={20} /> Benutzerinformationen bearbeiten
       </h2>
 
-      {/* WARTUNGSMODUS BANNER - wenn aktiv */}
-      {formData.maintenance_mode && (
-        <div className="mb-4 p-3 bg-warning-bg border border-border rounded-lg flex items-center gap-2 text-warning">
-          <ConeStriped className="text-warning flex-shrink-0" size={20} />
-          <div>
-            <span className="font-semibold">Wartungsmodus aktiv</span>
-            <span className="text-sm ml-2">– Dieser Benutzer sieht nur die Wartungsseite.</span>
-          </div>
-        </div>
-      )}
+      {maintenanceBanner}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        
-        <AccountSection
-          user={user}
-          isSuperAdmin={isSuperAdmin}
-          formData={formData}
-          handleInputChange={handleInputChange}
-          password={password}
-          setPassword={setPassword}
-          isChangingPassword={isChangingPassword}
-          setIsChangingPassword={setIsChangingPassword}
-          isSubmitting={isSubmitting}
-        />
 
-        <MaintenanceModeSection
-          canSetMaintenanceMode={canSetMaintenanceMode}
-          formData={formData}
-          handleInputChange={handleInputChange}
-          isSubmitting={isSubmitting}
-        />
+        {accessSections}
 
         {/* --- Wrapper für BENUTZER-spezifische Felder --- */}
         {user.role === 'BENUTZER' && (
           <>
-            {/* --- Projekt-Timeline --- */}
-            <ProjectTimelineSection
-              formData={formData}
-              handleInputChange={handleInputChange}
-              isSubmitting={isSubmitting}
-            />
-
-            {/* --- Dashboard-Sichtbarkeit --- */}
-            {user.role === 'BENUTZER' && (
-              <DashboardVisibilitySection
-                widgetVisibility={widgetVisibility}
-                setWidgetVisibility={setWidgetVisibility}
-                isSubmitting={isSubmitting}
-              />
-            )}
-
-            {/* --- Standorte / Local SEO --- */}
-            <LocalSeoSection
-              projectLocations={projectLocations}
-              addProjectLocation={addProjectLocation}
-              removeProjectLocation={removeProjectLocation}
-              updateProjectLocation={updateProjectLocation}
-              isSubmitting={isSubmitting}
-            />
-
-            {/* --- Konfiguration --- */}
-            <ConfigurationSection
-              formData={formData}
-              handleInputChange={handleInputChange}
-              isSubmitting={isSubmitting}
-            />
-
-            <AnalyticsSourceSection
-              formData={formData}
-              handleInputChange={handleInputChange}
-              isSubmitting={isSubmitting}
-            />
-
-            {/* --- GOOGLE ADS --- */}
-            <GoogleAdsSection
-              formData={formData}
-              handleInputChange={handleInputChange}
-              isSubmitting={isSubmitting}
-            />
-
-            {/* --- SEMRUSH --- */}
-            <SemrushSection
-              formData={formData}
-              handleInputChange={handleInputChange}
-              isSubmitting={isSubmitting}
-            />
+            {timelineSection}
+            {visibilitySection}
+            {localSeoSection}
+            {dataSourceSections}
           </>
         )}
         {/* --- ENDE Wrapper --- */}
-        
-        {/* (Button & Messages) */}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full px-4 py-2 font-normal text-white bg-accent-solid border-[3px] border-accent rounded-[3px] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
-        >
-          {isSubmitting ? (
-            <Spinner size={18} className="" />
-          ) : (
-            <CheckCircle size={18} />
-          )}
-          <span>{isSubmitting ? 'Wird gespeichert...' : 'Änderungen speichern'}</span>
-        </button>
 
-        {successMessage && (
-          <p className="text-sm text-success font-medium mt-4 p-3 bg-success-bg rounded border border-border">
-            {successMessage}
-          </p>
-        )}
-        {message && !successMessage && (
-          <p className="text-sm text-danger font-medium mt-4 p-3 bg-danger-bg rounded border border-border">
-            {message}
-          </p>
-        )}
+        {/* (Button & Messages) */}
+        {renderSubmitButton(undefined, 'w-full')}
+
+        {feedback}
       </form>
     </div>
   );
