@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Impressum | Data Peak',
   description: 'Impressum und Anbieterkennzeichnung für das Data Peak Dashboard.',
+  alternates: { canonical: 'https://www.datapeak.at/impressum' },
 };
 
 export default function ImpressumPage() {

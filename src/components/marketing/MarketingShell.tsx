@@ -1,6 +1,7 @@
 // src/components/marketing/MarketingShell.tsx
 // Rahmen für www.datapeak.at: Kopfzeile, Inhalt, Fußzeile. Ohne Sidebar und ohne Login.
 import { headers } from 'next/headers';
+import { Analytics } from '@vercel/analytics/next';
 import ThemeProvider from '@/components/ThemeProvider';
 import { appOriginFor } from '@/lib/site-hosts';
 import MarketingHeader from './MarketingHeader';
@@ -16,6 +17,8 @@ export default function MarketingShell({ children }: { children: React.ReactNode
         <main className="flex-grow">{children}</main>
         <MarketingFooter appOrigin={appOrigin} />
       </div>
+      {/* Vercel Web Analytics nur auf der Landingpage, ohne Cookies. */}
+      <Analytics />
     </ThemeProvider>
   );
 }

@@ -7,9 +7,19 @@ import type {
   GoogleAdsData,
   ProjectDashboardData,
 } from '@/lib/dashboard-shared';
+import { AiTrafficExtendedDemoContext } from '@/hooks/useAiTrafficExtended';
+import { DEMO_START, demoAiTrafficExtended, demoLocalSeo, demoWeatherData } from './demo-extras';
 
 const DAY = 24 * 60 * 60 * 1000;
-const START = Date.UTC(2026, 3, 13);
+const START = DEMO_START;
+
+const AI_SOURCE_LABELS: Record<string, string> = {
+  'chatgpt.com': 'ChatGPT',
+  'perplexity.ai': 'Perplexity',
+  'gemini.google.com': 'Gemini',
+  'copilot.microsoft.com': 'Copilot',
+  'claude.ai': 'Claude',
+};
 
 function trend(values: number[]) {
   return values.map((value, index) => ({
@@ -170,25 +180,23 @@ const demoData: ProjectDashboardData = {
     ],
   },
   aiTraffic: {
-    totalSessions: 86,
-    totalUsers: 61,
+    totalSessions: demoAiTrafficExtended.totalSessions,
+    totalUsers: demoAiTrafficExtended.totalUsers,
     totalSessionsChange: 42.6,
     totalUsersChange: 36.4,
-    sessionsBySource: {
-      ChatGPT: 39,
-      Perplexity: 22,
-      Gemini: 14,
-      Copilot: 8,
-      Claude: 3,
-    },
-    topAiSources: [
-      { source: 'ChatGPT', sessions: 39, users: 28, percentage: 45.3 },
-      { source: 'Perplexity', sessions: 22, users: 17, percentage: 25.6 },
-      { source: 'Gemini', sessions: 14, users: 10, percentage: 16.3 },
-      { source: 'Copilot', sessions: 8, users: 5, percentage: 9.3 },
-    ],
-    trend: aiTrend([1, 2, 1, 2, 2, 3, 2, 4, 3, 4, 5, 3, 5, 4, 5, 6, 5, 7, 6, 8, 7, 8, 9, 8, 10, 9, 11, 12, 11, 13]),
+    sessionsBySource: Object.fromEntries(
+      demoAiTrafficExtended.sources.map((source) => [AI_SOURCE_LABELS[source.source] ?? source.source, source.sessions]),
+    ),
+    topAiSources: demoAiTrafficExtended.sources.map((source) => ({
+      source: AI_SOURCE_LABELS[source.source] ?? source.source,
+      sessions: source.sessions,
+      users: source.users,
+      percentage: source.percentage,
+    })),
+    trend: aiTrend(demoAiTrafficExtended.trend.map((day) => day.sessions)),
   },
+  weatherData: demoWeatherData,
+  localSeo: demoLocalSeo,
   googleGenAi: {
     status: 'available',
     message: 'Demo-Daten: fiktive Search-Console-Sichtbarkeit in Google GenAI.',
@@ -242,20 +250,22 @@ export default function DemoAnwaltDashboard() {
   const dashboardData = useMemo(() => demoData, []);
 
   return (
-    <ProjectDashboard
-      data={dashboardData}
-      isLoading={false}
-      dateRange={dateRange}
-      onDateRangeChange={setDateRange}
-      domain="kanzlei-demo.at"
-      userRole="BENUTZER"
-      userEmail="demo@datapeak.at"
-      userAnsprache="Willkommen in der oeffentlichen Demo"
-      showLandingPages
-      showGoogleAds
-      showPromptTracking={false}
-      dashboardInfoText="Demo-Hinweis: Diese oeffentliche Ansicht verwendet ausschliesslich fiktive Werte fuer eine Rechtsanwaltskanzlei. Es werden keine echten Kunden-, Google- oder Backend-Daten geladen."
-      dataMaxEnabled={false}
-    />
+    <AiTrafficExtendedDemoContext.Provider value={demoAiTrafficExtended}>
+      <ProjectDashboard
+        data={dashboardData}
+        isLoading={false}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        domain="kanzlei-demo.at"
+        userRole="BENUTZER"
+        userEmail="demo@datapeak.at"
+        userAnsprache="Willkommen in der oeffentlichen Demo"
+        showLandingPages
+        showGoogleAds
+        showPromptTracking={false}
+        dashboardInfoText="Demo-Hinweis: Diese oeffentliche Ansicht verwendet ausschliesslich fiktive Werte fuer eine Rechtsanwaltskanzlei. Es werden keine echten Kunden-, Google- oder Backend-Daten geladen."
+        dataMaxEnabled={false}
+      />
+    </AiTrafficExtendedDemoContext.Provider>
   );
 }

@@ -2,9 +2,9 @@
 // Nachgebaute Dashboard-Ansicht mit Beispieldaten für die Landingpage.
 'use client';
 
-/* eslint-disable @next/next/no-img-element */
 import { useId, useState } from 'react';
 import { BarChartLineFill, ChatQuoteFill, Stars } from 'react-bootstrap-icons';
+import DataMaxIllustration from './DataMaxIllustration';
 
 const TABS = [
   { id: 'uebersicht', label: 'Übersicht', icon: BarChartLineFill },
@@ -122,7 +122,9 @@ function DataMaxPanel() {
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-3">
-        <img src="/data-max.webp" alt="" width={400} height={218} className="h-10 w-auto flex-shrink-0 rounded-[8px] bg-white object-contain" />
+        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-accent-tint">
+          <DataMaxIllustration headOnly className="h-7 w-7" title="" />
+        </span>
         <div className="rounded-[12px] rounded-tl-[4px] border border-border-subtle bg-surface px-3 py-2.5 text-[13px] leading-[1.5] text-body">
           <p className="font-semibold text-heading">Gute Nachrichten für diesen Monat.</p>
           <p className="mt-1">

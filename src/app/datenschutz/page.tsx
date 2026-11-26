@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Datenschutzerklärung | Data Peak',
   description: 'Datenschutzerklärung für das Data Peak Dashboard.',
+  alternates: { canonical: 'https://www.datapeak.at/datenschutz' },
 };
 
 export default function DatenschutzPage() {
@@ -136,6 +137,16 @@ export default function DatenschutzPage() {
               Datenschutzniveau sichergestellt wird.
             </li>
             <li>
+              <strong>Vercel Web Analytics (nur www.datapeak.at):</strong> Auf
+              der öffentlichen Startseite messen wir mit Vercel Web Analytics
+              anonymisiert, wie oft Seiten aufgerufen werden und woher Besucher
+              kommen (z.B. Suchmaschine, Land, Gerätetyp). Es werden keine
+              Cookies gesetzt und keine IP-Adressen gespeichert; Besuche werden
+              nur über einen täglich wechselnden Hashwert gezählt und nicht
+              websiteübergreifend verfolgt. Im Dashboard selbst ist Web Analytics
+              nicht aktiv (Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO).
+            </li>
+            <li>
               <strong>Brevo (E-Mail-Versand):</strong> Für den Versand von
               Systembenachrichtigungen (z.B. bei Statusänderungen) wird der
               Dienst Brevo (ehemals Sendinblue) genutzt. Hierzu wird Ihre
@@ -161,8 +172,9 @@ export default function DatenschutzPage() {
             `next-auth` setzt technisch notwendige Cookies (Session-Cookies), um
             Ihre Sitzung aufrechtzuerhalten und Sie als eingeloggten Benutzer zu
             erkennen. Diese Cookies sind für die Funktion des Dashboards zwingend
-            erforderlich (Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO). Es findet
-            kein darüber hinausgehendes Tracking statt.
+            erforderlich (Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO). Darüber
+            hinaus werden keine Cookies gesetzt; die anonyme Reichweitenmessung
+            auf der Startseite (siehe Abschnitt 4) kommt ohne Cookies aus.
           </p>
         </section>
 

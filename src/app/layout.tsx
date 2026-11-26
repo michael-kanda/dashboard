@@ -23,7 +23,10 @@ const inter = Inter({
 
 // Metadata mit Sentry Tracing
 export function generateMetadata(): Metadata {
+  // Das Dashboard soll nicht in Suchmaschinen erscheinen, nur die Landingpage.
+  const isMarketing = headers().get(SITE_HEADER) === 'marketing';
   return {
+    robots: isMarketing ? { index: true, follow: true } : { index: false, follow: false },
     title: 'Data Peak | SEO & Analytics Dashboard',
     description:
       'Data Peak ist das zentrale Dashboard zur Analyse Ihrer Web-Performance.',
