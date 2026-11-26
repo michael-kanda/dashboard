@@ -91,7 +91,7 @@ export default function LogoManager() {
               type="text"
               value={mandantId}
               onChange={(e) => setMandantId(e.target.value)}
-              placeholder="z. B. max-online"
+              placeholder="max-online"
               required
               className={inputClasses}
             />

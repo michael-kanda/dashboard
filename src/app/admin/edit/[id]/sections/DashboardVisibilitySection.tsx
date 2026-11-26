@@ -21,10 +21,10 @@ export default function DashboardVisibilitySection({
   isSubmitting,
 }: DashboardVisibilitySectionProps) {
   return (
-    <fieldset className="border-t pt-4 mt-4">
+    <fieldset className="mt-8">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <legend className="text-sm font-medium text-body">Dashboard-Sichtbarkeit</legend>
+          <legend className="dp-section-title mb-0">Dashboard-Sichtbarkeit</legend>
           <p className="mt-1 text-xs text-muted">
             Steuert die Kundenansicht. Admins sehen verfügbare Widgets weiterhin.
           </p>
@@ -69,7 +69,7 @@ export default function DashboardVisibilitySection({
                       className="flex min-h-[72px] cursor-pointer items-start justify-between gap-3 rounded-md border border-border bg-surface-secondary px-3 py-2.5"
                     >
                       <span>
-                        <span className="block text-sm font-medium text-body">{widget.label}</span>
+                        <span className="dp-label">{widget.label}</span>
                         <span className="mt-0.5 block text-xs leading-4 text-muted">{widget.description}</span>
                       </span>
                       <span className="flex shrink-0 items-center">

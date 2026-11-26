@@ -13,7 +13,7 @@ interface AnalyticsSourceSectionProps {
 }
 
 const inputClassName =
-  'block w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted';
+  'dp-field';
 
 // Wahl der Website-Analytics: GA4 (Standard) oder Vercel Web Analytics.
 export default function AnalyticsSourceSection({
@@ -24,11 +24,11 @@ export default function AnalyticsSourceSection({
   const isVercel = formData.analyticsSource === 'vercel';
 
   return (
-    <fieldset className="border-t pt-4 mt-4">
-      <legend className="text-sm font-medium text-body mb-2">Website-Analytics</legend>
+    <fieldset className="mt-8">
+      <legend className="dp-section-title">Website-Analytics</legend>
 
       <div className="mb-4">
-        <label htmlFor="analyticsSource" className="block text-sm font-medium text-body">Quelle</label>
+        <label htmlFor="analyticsSource" className="dp-label">Quelle</label>
         <select
           id="analyticsSource"
           name="analyticsSource"
@@ -52,36 +52,37 @@ export default function AnalyticsSourceSection({
       {isVercel && (
         <>
           <div className="mb-4">
-            <label htmlFor="vercelProjectId" className="block text-sm font-medium text-body">Vercel-Projekt</label>
+            <label htmlFor="vercelProjectId" className="dp-label">Vercel-Projekt</label>
             <input
               id="vercelProjectId"
               type="text"
               name="vercelProjectId"
               value={formData.vercelProjectId}
               onChange={handleInputChange}
-              placeholder="Projektname oder ID, z. B. designare oder prj_…"
+              placeholder="designare oder prj_…"
               className={`mt-1 ${inputClassName}`}
               disabled={isSubmitting}
             />
           </div>
 
           <div className="mb-4">
-            <label htmlFor="vercelTeamId" className="block text-sm font-medium text-body">Vercel-Team (optional)</label>
+            <label htmlFor="vercelTeamId" className="dp-label">Vercel-Team <span className="dp-label-optional">· optional</span></label>
             <input
               id="vercelTeamId"
               type="text"
               name="vercelTeamId"
               value={formData.vercelTeamId}
               onChange={handleInputChange}
-              placeholder="Team-Slug oder team_…; leer = Standard-Team von DataPeak"
+              placeholder="team_…"
               className={`mt-1 ${inputClassName}`}
               disabled={isSubmitting}
             />
+            <p className="mt-1 text-xs text-muted">Team-Slug oder ID. Leer lassen für das Standard-Team von DataPeak.</p>
           </div>
 
           <div className="mb-4">
-            <label htmlFor="vercelConversionEvents" className="block text-sm font-medium text-body">
-              Conversion-Events (optional)
+            <label htmlFor="vercelConversionEvents" className="dp-label">
+              Conversion-Events <span className="dp-label-optional">· optional</span>
             </label>
             <input
               id="vercelConversionEvents"
@@ -89,7 +90,7 @@ export default function AnalyticsSourceSection({
               name="vercelConversionEvents"
               value={formData.vercelConversionEvents}
               onChange={handleInputChange}
-              placeholder="Event-Namen mit Komma getrennt, z. B. kontakt_gesendet, anruf"
+              placeholder="kontakt_gesendet, anruf"
               className={`mt-1 ${inputClassName}`}
               disabled={isSubmitting}
             />

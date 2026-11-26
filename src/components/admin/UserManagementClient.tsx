@@ -326,11 +326,11 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
               />
             </FormRow>
             <FormRow id="new-ansprache" label="Ansprache">
-              <input id="new-ansprache" name="ansprache" type="text" placeholder="z. B. Herr Muster oder Frau Muster" className={inputClasses} disabled={isSubmitting} />
+              <input id="new-ansprache" name="ansprache" type="text" placeholder="Herr Muster oder Frau Muster" className={inputClasses} disabled={isSubmitting} />
             </FormRow>
             {isSuperAdmin && selectedRole === 'ADMIN' && (
               <FormRow id="new-permissions" label="Berechtigungen">
-                <input id="new-permissions" name="permissions" type="text" placeholder="z. B. label1, label2" className={inputClasses} disabled={isSubmitting} />
+                <input id="new-permissions" name="permissions" type="text" placeholder="label1, label2" className={inputClasses} disabled={isSubmitting} />
               </FormRow>
             )}
           </GroupedSection>
@@ -356,7 +356,7 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
 
               <GroupedSection title="Web-Daten & APIs">
                 <FormRow id="new-domain" label="Domain">
-                  <input id="new-domain" name="domain" type="text" required placeholder="z. B. kundendomain.at" className={inputClasses} disabled={isSubmitting} />
+                  <input id="new-domain" name="domain" type="text" required placeholder="kundendomain.at" className={inputClasses} disabled={isSubmitting} />
                 </FormRow>
                 <FormRow id="new-favicon" label="Favicon URL (optional)">
                   <input id="new-favicon" name="favicon_url" type="text" placeholder="https://example.com/icon.png" className={inputClasses} disabled={isSubmitting} />

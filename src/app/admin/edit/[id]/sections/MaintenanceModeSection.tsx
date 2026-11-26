@@ -29,8 +29,8 @@ export default function MaintenanceModeSection({
           NEU: WARTUNGSMODUS SEKTION - für BENUTZER und ADMIN
           ===================================================== */}
       {canSetMaintenanceMode && (
-        <fieldset className={`border-t pt-4 mt-4 ${formData.maintenance_mode ? 'bg-warning-bg -mx-6 px-6 pb-4 border-border' : ''}`}>
-          <legend className="text-sm font-medium text-body mb-2 flex items-center gap-2">
+        <fieldset className={`mt-8 ${formData.maintenance_mode ? 'bg-warning-bg -mx-6 px-6 py-4' : ''}`}>
+          <legend className="dp-section-title">
             <ConeStriped className={formData.maintenance_mode ? 'text-warning' : 'text-muted'} size={16} />
             Wartungsmodus
           </legend>

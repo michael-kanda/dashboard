@@ -186,6 +186,68 @@
    ═══════════════════════════════════════════════════════════ */
 @layer components {
 
+  /* ── 0. Formularfelder: gefüllt statt umrandet (Variante C) ──
+     Wert kräftig, Platzhalter zurückhaltend, Fokus weiß mit Akzentrand.
+     Abstände und Höhe setzen die Utilities am Element (px-3, py-2, h-9 …). */
+  .dp-field {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--dp-field-bg);
+    border: 1px solid transparent;
+    border-radius: var(--dp-radius-control);
+    color: var(--dp-text-heading);
+    font-weight: 500;
+    transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+  }
+  .dp-field::placeholder {
+    color: var(--dp-field-placeholder);
+    font-weight: 400;
+    opacity: 1;
+  }
+  .dp-field:hover:not(:focus):not(:disabled) {
+    background-color: var(--dp-field-bg-hover);
+  }
+  .dp-field:focus,
+  .dp-field:focus-visible {
+    outline: none;
+    background-color: var(--dp-bg-primary);
+    border-color: var(--dp-accent);
+    box-shadow: 0 0 0 3px var(--dp-accent-tint);
+  }
+  .dp-field:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  .dp-field[aria-invalid="true"] {
+    border-color: var(--dp-danger);
+  }
+
+  /* Abschnittstitel in Formularen: kleine Überschrift statt Linie */
+  .dp-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--dp-text-muted);
+  }
+
+  /* Feldbeschriftung */
+  .dp-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dp-text-heading);
+  }
+  .dp-label-optional {
+    font-weight: 400;
+    color: var(--dp-text-muted);
+  }
+
   /* ── 1. Dashboard Page Background (Stil „B · Liste“: ruhig, ohne Verlauf) ── */
   .dashboard-gradient {
     background: var(--dp-page);
@@ -947,11 +1009,11 @@
 }
 
 /* ── Inputs with hardcoded light colors ─────────────────── */
-.dark input[type="text"],
-.dark input[type="email"],
-.dark input[type="search"],
-.dark select,
-.dark textarea {
+.dark input[type="text"]:not(.dp-field),
+.dark input[type="email"]:not(.dp-field),
+.dark input[type="search"]:not(.dp-field),
+.dark select:not(.dp-field),
+.dark textarea:not(.dp-field) {
   background-color: var(--dp-input-bg);
   border-color: var(--dp-input-border);
   color: var(--dp-input-text);

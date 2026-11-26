@@ -20,20 +20,20 @@ export default function ConfigurationSection({
   isSubmitting,
 }: ConfigurationSectionProps) {
   return (
-    <fieldset className="border-t pt-4 mt-4">
-      <legend className="text-sm font-medium text-body mb-2">Konfiguration</legend>
+    <fieldset className="mt-8">
+      <legend className="dp-section-title">Konfiguration</legend>
   
       {/* Domain */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-body">Domain</label>
+        <label className="dp-label">Domain</label>
         <div className="relative mt-1">
           <input
             type="text"
             name="domain"
             value={formData.domain}
             onChange={handleInputChange} 
-            placeholder="z.B. www.kundendomain.at"
-            className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+            placeholder="www.kundendomain.at"
+            className="dp-field pr-10"
             disabled={isSubmitting}
           />
           {formData.domain && !isSubmitting && (
@@ -47,15 +47,15 @@ export default function ConfigurationSection({
 
       {/* Favicon URL */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-body">Favicon URL</label>
+        <label className="dp-label">Favicon URL <span className="dp-label-optional">· optional</span></label>
         <div className="relative mt-1">
           <input
             type="text"
             name="favicon_url"
             value={formData.favicon_url}
             onChange={handleInputChange} 
-            placeholder="Optional: https://example.com/favicon.png"
-            className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+            placeholder="https://example.com/favicon.png"
+            className="dp-field pr-10"
             disabled={isSubmitting}
           />
           {formData.favicon_url && !isSubmitting && (
@@ -69,15 +69,15 @@ export default function ConfigurationSection({
 
       {/* GSC Site URL */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-body">GSC Site URL</label>
+        <label className="dp-label">GSC Site URL</label>
         <div className="relative mt-1">
           <input
             type="text"
             name="gscSiteUrl"
             value={formData.gscSiteUrl}
             onChange={handleInputChange} 
-            placeholder="z.B. sc-domain:kundendomain.at"
-            className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+            placeholder="sc-domain:kundendomain.at"
+            className="dp-field pr-10"
             disabled={isSubmitting}
           />
           {formData.gscSiteUrl && !isSubmitting && normalizeGscSiteUrl(formData.gscSiteUrl).ok && (
@@ -91,15 +91,15 @@ export default function ConfigurationSection({
 
       {/* Sitemap URL */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-body">Sitemap URL</label>
+        <label className="dp-label">Sitemap URL <span className="dp-label-optional">· optional</span></label>
         <div className="relative mt-1">
           <input
             type="url"
             name="sitemapUrl"
             value={formData.sitemapUrl}
             onChange={handleInputChange}
-            placeholder="Optional: https://kundendomain.at/sitemap.xml"
-            className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+            placeholder="https://kundendomain.at/sitemap.xml"
+            className="dp-field pr-10"
             disabled={isSubmitting}
           />
           {formData.sitemapUrl && !isSubmitting && (
@@ -116,15 +116,15 @@ export default function ConfigurationSection({
 
       {/* GA4 Property ID */}
       <div>
-        <label className="block text-sm font-medium text-body">GA4 Property ID</label>
+        <label className="dp-label">GA4 Property ID</label>
         <div className="relative mt-1">
           <input
             type="text"
             name="ga4PropertyId"
             value={formData.ga4PropertyId}
             onChange={handleInputChange} 
-            placeholder="z.B. 123456789"
-            className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+            placeholder="123456789"
+            className="dp-field pr-10"
             disabled={isSubmitting}
           />
           {formData.ga4PropertyId && !isSubmitting && parseGa4PropertyId(formData.ga4PropertyId).ok && (

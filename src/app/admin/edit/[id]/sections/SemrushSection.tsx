@@ -16,12 +16,12 @@ export default function SemrushSection({
   isSubmitting,
 }: SemrushSectionProps) {
   return (
-    <fieldset className="border-t pt-4 mt-4">
-      <legend className="text-sm font-medium text-body mb-2">Semrush</legend>
+    <fieldset className="mt-8">
+      <legend className="dp-section-title">Semrush</legend>
   
       {/* Semrush Projekt ID */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-body">
+        <label className="dp-label">
           Semrush Projekt ID
         </label>
         <div className="relative mt-1">
@@ -30,8 +30,8 @@ export default function SemrushSection({
             name="semrushProjectId"
             value={formData.semrushProjectId}
             onChange={handleInputChange} 
-            placeholder="z.B. 12920575"
-            className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+            placeholder="12920575"
+            className="dp-field pr-10"
             disabled={isSubmitting}
           />
           {formData.semrushProjectId && !isSubmitting && (
@@ -45,7 +45,7 @@ export default function SemrushSection({
 
       {/* Semrush Tracking-ID (Kampagne 1) */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-body">
+        <label className="dp-label">
           Semrush Tracking-ID (Kampagne 1)
         </label>
         <div className="relative mt-1">
@@ -54,8 +54,8 @@ export default function SemrushSection({
             name="semrushTrackingId"
             value={formData.semrushTrackingId}
             onChange={handleInputChange} 
-            placeholder="z.B. 1209408"
-            className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+            placeholder="1209408"
+            className="dp-field pr-10"
             disabled={isSubmitting}
           />
           {formData.semrushTrackingId && !isSubmitting && (
@@ -69,7 +69,7 @@ export default function SemrushSection({
 
       {/* Semrush Tracking-ID 02 (Kampagne 2) */}
       <div>
-        <label className="block text-sm font-medium text-body">
+        <label className="dp-label">
           Semrush Tracking-ID (Kampagne 2)
         </label>
         <div className="relative mt-1">
@@ -78,8 +78,8 @@ export default function SemrushSection({
             name="semrushTrackingId02"
             value={formData.semrushTrackingId02}
             onChange={handleInputChange} 
-            placeholder="z.B. 1209491"
-            className="block w-full px-3 py-2 pr-10 border border-border rounded-md focus:outline-none focus:ring-accent focus:border-accent disabled:bg-surface-tertiary disabled:cursor-not-allowed placeholder:text-muted"
+            placeholder="1209491"
+            className="dp-field pr-10"
             disabled={isSubmitting}
           />
           {formData.semrushTrackingId02 && !isSubmitting && (
