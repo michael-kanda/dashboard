@@ -24,6 +24,7 @@ declare module 'next-auth' {
     settings_show_prompt_tracking?: boolean | null;
     is_demo?: boolean;
     password_fingerprint?: string;
+    two_factor_enabled?: boolean;
   }
 
   /**
@@ -49,6 +50,8 @@ declare module 'next-auth' {
       brand_keywords?: string[] | null;        // <--- NEU (Prompt-Tracking v3)
       settings_show_prompt_tracking?: boolean | null;
       is_demo?: boolean;
+      /** Admin ohne aktive Zwei-Faktor-Anmeldung: muss sie zuerst einrichten. */
+      two_factor_setup_required?: boolean;
     } & DefaultSession['user'];
   }
 }
@@ -74,6 +77,7 @@ declare module 'next-auth/jwt' {
     settings_show_prompt_tracking?: boolean | null;
     is_demo?: boolean;
     password_fingerprint?: string;
+    two_factor_enabled?: boolean;
     refreshed_at?: number;
   }
 }

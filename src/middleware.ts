@@ -3,6 +3,7 @@ import NextAuth from 'next-auth';
 import { baseAuthConfig } from '@/lib/auth-config';
 import { NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
+import { TWO_FACTOR_SETUP_PATH } from '@/lib/two-factor/policy';
 
 const { auth } = NextAuth(baseAuthConfig);
 
@@ -23,6 +24,11 @@ export default auth(async (req) => {
   // Wenn es eine API, Login oder statische Datei ist -> Durchlassen
   if (isApiRoute || isLoginRoute || isPublicDemoRoute || isShareRoute || isStaticAsset) {
     return;
+  }
+
+  // Admins und Superadmins ohne aktive Zwei-Faktor-Anmeldung richten sie zuerst ein.
+  if (isLoggedIn && req.auth?.user?.two_factor_setup_required && nextUrl.pathname !== TWO_FACTOR_SETUP_PATH) {
+    return NextResponse.redirect(new URL(TWO_FACTOR_SETUP_PATH, nextUrl));
   }
 
   // 2. Per-User Wartungsmodus prüfen (nur für eingeloggte User)

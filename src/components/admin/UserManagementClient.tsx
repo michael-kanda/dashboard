@@ -152,6 +152,20 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
     }
   };
 
+  // Superadmin: Zwei-Faktor-Anmeldung zurücksetzen (z. B. verlorenes Handy)
+  const handleTwoFactorReset = async (userId: string, email: string) => {
+    if (!window.confirm(`Zwei-Faktor-Anmeldung von ${email} zurücksetzen? Die Person muss sie danach neu einrichten.`)) return;
+    try {
+      const response = await fetch(`/api/users/${userId}/two-factor-reset`, { method: 'POST' });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.message || `HTTP ${response.status}`);
+      setUsers((current) => current.map((u) => (u.id === userId ? { ...u, two_factor_enabled: false } : u)));
+      toast.success('Zwei-Faktor-Anmeldung zurückgesetzt');
+    } catch (error) {
+      toast.error('Zurücksetzen fehlgeschlagen', { description: error instanceof Error ? error.message : 'Unbekannter Fehler' });
+    }
+  };
+
   return (
     <PageContainer>
       <PageHeader title="Admin-Bereich" count={users.length} subtitle="Benutzer, Projekte und Mandanten verwalten">
@@ -195,7 +209,14 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
                 <Td>
                   <PrimaryCell icon={<PersonCircle size={16} />} title={user.email} subtitle={user.ansprache || undefined} />
                 </Td>
-                <Td><StatusPill>{roleLabel(user.role)}</StatusPill></Td>
+                <Td>
+                  <StatusPill>{roleLabel(user.role)}</StatusPill>
+                  {(user.role !== 'BENUTZER' || user.two_factor_enabled) && (
+                    <span className={`ml-2 text-[12px] ${user.two_factor_enabled ? 'text-success' : 'text-danger'}`}>
+                      {user.two_factor_enabled ? '2FA aktiv' : 'ohne 2FA'}
+                    </span>
+                  )}
+                </Td>
                 <Td className="text-muted">{user.mandant_id || '–'}</Td>
                 <Td>
                   {user.domain ? (
@@ -227,6 +248,11 @@ export default function UserManagementClient({ initialUsers, sessionUser }: Prop
                 <Td className="text-right">
                   <div className="flex justify-end gap-1.5">
                     <ButtonLink href={`/admin/edit/${user.id}`} aria-label={`${user.email} bearbeiten`}>Bearbeiten</ButtonLink>
+                    {isSuperAdmin && user.two_factor_enabled && (
+                      <Button variant="secondary" size="sm" onClick={() => void handleTwoFactorReset(user.id, user.email)} aria-label={`Zwei-Faktor-Anmeldung von ${user.email} zurücksetzen`}>
+                        2FA zurücksetzen
+                      </Button>
+                    )}
                     {isSuperAdmin && user.role !== 'SUPERADMIN' && (
                       <Button variant="destructive" size="sm" onClick={() => void handleDelete(user.id)} aria-label={`${user.email} löschen`}>
                         Löschen

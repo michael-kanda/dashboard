@@ -12,7 +12,7 @@ import {
   BoxArrowRight, BoxArrowInRight, HddNetwork, Magic, Palette,
   LayoutSidebarInset, SunFill, MoonStarsFill,
   ChevronDown, ChevronUp,
-  BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search, Google, GeoAlt
+  BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search, Google, GeoAlt, ShieldCheck
 } from 'react-bootstrap-icons';
 import { roleLabel } from '@/lib/ui-labels';
 import { Avatar } from '@/components/ui/AvatarStack';
@@ -196,6 +196,7 @@ export default function Sidebar() {
     { href: '/admin/redaktionsplan', label: 'Redaktionspläne', icon: <CalendarCheck size={16} />, visible: isAdmin },
     { href: '/dashboard/freigabe', label: 'Redaktionsplan', icon: <CalendarCheck size={16} />, visible: shouldShowRedaktionsplanForUser },
     { href: '/admin/ki-tool', label: 'Content Studio', icon: <Magic size={16} />, visible: shouldShowKiTool },
+    { href: '/konto/zwei-faktor', label: 'Zwei-Faktor-Anmeldung', icon: <ShieldCheck size={16} />, visible: isAdmin || isUser },
   ];
 
   const adminNavItems: NavItem[] = [

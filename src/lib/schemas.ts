@@ -31,6 +31,8 @@ export const UserSchema = z.object({
   vercel_project_id: z.string().nullable().optional(),
   vercel_team_id: z.string().nullable().optional(),
   vercel_conversion_events: z.string().nullable().optional(),
+  // Zwei-Faktor-Anmeldung aktiv (Migration 011); nur in der Admin-Liste gesetzt
+  two_factor_enabled: z.boolean().nullable().optional(),
   
   // Metadaten für Dashboard/Admin
   assigned_admins: z.string().nullable().optional(),
