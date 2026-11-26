@@ -8,10 +8,21 @@ import { baseAuthConfig } from '@/lib/auth-config';
 import { clearLoginFailures, isLoginLocked, readClientIp, recordLoginFailure } from '@/lib/login-throttle';
 import { fingerprintPasswordHash } from '@/lib/session-state';
 import { logger } from '@/lib/logger';
+import { loadTwoFactorState, verifySecondFactor } from '@/lib/two-factor/repository';
 
 // Code erscheint im Login-Formular als Hinweis auf die vorübergehende Sperre.
 class LoginLockedError extends CredentialsSignin {
   code = 'locked';
+}
+
+// Passwort stimmt, die Zwei-Faktor-Anmeldung ist aktiv: das Formular fragt nach dem Code.
+class TwoFactorRequiredError extends CredentialsSignin {
+  code = 'totp_required';
+}
+
+// Code aus der App bzw. Wiederherstellungscode falsch oder schon benutzt.
+class TwoFactorInvalidError extends CredentialsSignin {
+  code = 'totp_invalid';
 }
 
 // Vergleichs-Hash für unbekannte E-Mails, damit die Antwortzeit nichts über existierende Konten verrät.
@@ -24,7 +35,8 @@ export const authConfig = {
       name: 'Credentials',
       credentials: {
         email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        code: { label: "Code", type: "text" }
       },
       async authorize(credentials, request) {
         noStore();
@@ -42,6 +54,7 @@ export const authConfig = {
         logger.debug('[Authorize] Suche Benutzer:', normalizedEmail);
 
         let user;
+        let twoFactor: Awaited<ReturnType<typeof loadTwoFactorState>> | undefined;
         try {
           // 1. Benutzerdaten holen — mit Fallback, falls Prompt-Tracking-Spalten
           // in einer bestehenden DB noch nicht migriert wurden.
@@ -103,6 +116,19 @@ export const authConfig = {
             throw new Error('Das Passwort ist nicht korrekt');
           }
 
+          // 3. Zweiter Faktor, wenn aktiv (Pflicht für Admins wird nach dem Login erzwungen)
+          twoFactor = await loadTwoFactorState(String(user.id));
+          if (twoFactor.enabled) {
+            const code = typeof credentials.code === 'string' ? credentials.code.trim() : '';
+            if (!code) throw new TwoFactorRequiredError();
+            const method = await verifySecondFactor(String(user.id), code);
+            if (!method) {
+              await recordLoginFailure(normalizedEmail, clientIp);
+              throw new TwoFactorInvalidError();
+            }
+            if (method === 'recovery') logger.info('[Authorize] Wiederherstellungscode benutzt:', user.email);
+          }
+
           logger.info('[Authorize] Login erfolgreich für:', user.email);
           await clearLoginFailures(normalizedEmail);
 
@@ -156,6 +182,8 @@ export const authConfig = {
           brand_keywords: user.brand_keywords || null,
           settings_show_prompt_tracking: user.settings_show_prompt_tracking ?? false,
           password_fingerprint: await fingerprintPasswordHash(user.password),
+          // undefined (Migration 011 fehlt) erzwingt keine Einrichtung.
+          two_factor_enabled: twoFactor?.available ? twoFactor.enabled : undefined,
         };
       }
     })

@@ -17,6 +17,7 @@ export async function getUsersForManagement(user: UserSession): Promise<User[]> 
       const result = await sql`
         SELECT 
           u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
+          (to_jsonb(u)->>'totp_enabled_at') IS NOT NULL AS two_factor_enabled,
           COALESCE(
             (
               SELECT STRING_AGG(DISTINCT admins.email, ', ')
@@ -48,6 +49,7 @@ export async function getUsersForManagement(user: UserSession): Promise<User[]> 
       const kundenRes = await sql`
         SELECT DISTINCT 
           u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
+          (to_jsonb(u)->>'totp_enabled_at') IS NOT NULL AS two_factor_enabled,
           COALESCE(
             (
               SELECT STRING_AGG(DISTINCT admins.email, ', ')
@@ -80,6 +82,7 @@ export async function getUsersForManagement(user: UserSession): Promise<User[]> 
         const adminsRes = await sql`
           SELECT 
             u.id::text as id, u.email, u.role, u.domain, u.mandant_id, u.ansprache, u.permissions, u.favicon_url,
+          (to_jsonb(u)->>'totp_enabled_at') IS NOT NULL AS two_factor_enabled,
             COALESCE(
               (
                 SELECT STRING_AGG(DISTINCT admins.email, ', ')

@@ -1,6 +1,7 @@
 import type { NextAuthConfig } from 'next-auth';
 import { isDemoProject } from '@/lib/demo-project';
 import { loadSessionState } from '@/lib/session-state';
+import { needsTwoFactorSetup } from '@/lib/two-factor/policy';
 
 // Rolle, Rechte und Mandant werden spätestens nach diesem Intervall aus der Datenbank übernommen.
 const SESSION_REFRESH_MS = 5 * 60 * 1000;
@@ -32,6 +33,7 @@ export const baseAuthConfig = {
         token.settings_show_prompt_tracking = user.settings_show_prompt_tracking;
         token.is_demo = isDemoProject(user);
         token.password_fingerprint = user.password_fingerprint;
+        token.two_factor_enabled = user.two_factor_enabled;
         token.refreshed_at = Date.now();
         return token;
       }
@@ -49,6 +51,7 @@ export const baseAuthConfig = {
           token.mandant_id = current.mandant_id;
           token.permissions = current.permissions;
           token.password_fingerprint = current.passwordFingerprint;
+          token.two_factor_enabled = current.twoFactorEnabled;
           token.refreshed_at = Date.now();
         }
       }
@@ -69,6 +72,12 @@ export const baseAuthConfig = {
         session.user.brand_keywords = token.brand_keywords as string[] | null | undefined;
         session.user.settings_show_prompt_tracking = token.settings_show_prompt_tracking as boolean | null | undefined;
         session.user.is_demo = token.is_demo as boolean | undefined;
+        session.user.two_factor_setup_required = needsTwoFactorSetup(token.role as string, token.two_factor_enabled as boolean | undefined);
+        // Bis zur Einrichtung keine Admin-Rechte: API-Routen prüfen die Rolle, die Middleware nur Seiten.
+        if (session.user.two_factor_setup_required) {
+          session.user.role = 'BENUTZER';
+          session.user.permissions = [];
+        }
       }
       return session;
     },

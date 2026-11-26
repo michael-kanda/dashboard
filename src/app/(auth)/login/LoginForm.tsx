@@ -22,9 +22,14 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [successAnsprache, setSuccessAnsprache] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  // Zweiter Schritt bei aktiver Zwei-Faktor-Anmeldung
+  const [needsCode, setNeedsCode] = useState(false);
+  const [code, setCode] = useState('');
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (error) setError('');
+    setNeedsCode(false);
+    setCode('');
     setEmail(e.target.value);
   };
 
@@ -43,13 +48,20 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
       callbackUrl,
       email,
       password,
+      ...(needsCode ? { code } : {}),
     });
 
     if (result?.error) {
       setIsLoading(false);
+      if (result.code === 'totp_required') {
+        setNeedsCode(true);
+        return;
+      }
       setError(result.code === 'locked'
         ? 'Zu viele Fehlversuche. Bitte in 15 Minuten erneut versuchen.'
-        : 'E-Mail oder Passwort ist falsch.');
+        : result.code === 'totp_invalid'
+          ? 'Der Code stimmt nicht oder wurde schon benutzt.'
+          : 'E-Mail oder Passwort ist falsch.');
     } else {
       const session = await getSession();
       setSuccessAnsprache(session?.user?.ansprache?.trim() || '');
@@ -123,6 +135,29 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
                   </button>
                 </div>
               </div>
+
+              {needsCode && (
+                <div className="overflow-hidden rounded-container border border-border bg-surface">
+                  <div className={rowClasses}>
+                    <label htmlFor="login-code" className="w-[72px] flex-shrink-0 text-[14px] text-heading">Code</label>
+                    <input
+                      id="login-code"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      autoFocus
+                      required
+                      value={code}
+                      onChange={(e) => { if (error) setError(''); setCode(e.target.value); }}
+                      className={fieldClasses}
+                      placeholder="6-stelliger Code aus der App"
+                      disabled={isLoading || isSuccess}
+                    />
+                  </div>
+                </div>
+              )}
+              {needsCode && (
+                <p className="text-[13px] text-muted">Kein Zugriff auf die App? Stattdessen einen Wiederherstellungscode eingeben.</p>
+              )}
 
               {error && <p className="text-[13px] text-danger" role="alert">{error}</p>}
 

@@ -12,13 +12,18 @@ export interface SessionState {
   mandant_id: string | null;
   permissions: string[];
   passwordFingerprint: string;
+  /** undefined, solange Migration 011 fehlt. */
+  twoFactorEnabled: boolean | undefined;
 }
 
 // null: Benutzer existiert nicht mehr. undefined: Datenbank nicht erreichbar.
 export async function loadSessionState(userId: string): Promise<SessionState | null | undefined> {
   try {
     const { rows } = await sql`
-      SELECT role, mandant_id, permissions, password
+      SELECT role, mandant_id, permissions, password,
+        -- to_jsonb bleibt auch ohne Spalte (Migration 011) gültig.
+        to_jsonb(users) ? 'totp_enabled_at' AS two_factor_available,
+        to_jsonb(users)->>'totp_enabled_at' AS totp_enabled_at
       FROM users
       WHERE id::text = ${userId}
       LIMIT 1
@@ -30,6 +35,7 @@ export async function loadSessionState(userId: string): Promise<SessionState | n
       mandant_id: row.mandant_id ?? null,
       permissions: row.permissions ?? [],
       passwordFingerprint: await fingerprintPasswordHash(String(row.password ?? '')),
+      twoFactorEnabled: row.two_factor_available ? Boolean(row.totp_enabled_at) : undefined,
     };
   } catch (error) {
     console.warn('[Session] Auffrischen fehlgeschlagen:', error instanceof Error ? error.message : error);
