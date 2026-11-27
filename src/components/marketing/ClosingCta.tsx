@@ -1,7 +1,8 @@
 // src/components/marketing/ClosingCta.tsx
 // Abschluss der Landingpage: Karte mit Text links und Dashboard-Ausschnitt rechts.
 // Die Grafik nutzt Design-Tokens und passt sich hell und dunkel an.
-import { ArrowRight } from 'react-bootstrap-icons';
+import { ArrowRight, Download } from 'react-bootstrap-icons';
+import { HANDBOOK_FILENAME, HANDBOOK_META, HANDBOOK_PATH } from '@/lib/handbook';
 import AccessRequestButton from './AccessRequestButton';
 
 const KPIS = [
@@ -62,6 +63,14 @@ export default function ClosingCta({ demoHref }: { demoHref: string }) {
             </a>
             <AccessRequestButton className="inline-flex h-11 items-center rounded-full border border-border-strong px-6 text-[15px] font-semibold text-heading transition-colors duration-150 hover:bg-fill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" />
           </div>
+          <a
+            href={HANDBOOK_PATH}
+            download={HANDBOOK_FILENAME}
+            className="mt-6 inline-flex items-center gap-2 text-[15px] font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            <Download size={15} aria-hidden="true" />
+            Handbuch herunterladen <span className="text-muted">({HANDBOOK_META})</span>
+          </a>
         </div>
         <div className="hidden items-end pl-6 pt-10 md:flex">
           <DashboardSnippet />

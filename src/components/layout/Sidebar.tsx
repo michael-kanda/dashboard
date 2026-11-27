@@ -12,8 +12,9 @@ import {
   BoxArrowRight, BoxArrowInRight, HddNetwork, Magic, Palette,
   LayoutSidebarInset, SunFill, MoonStarsFill,
   ChevronDown, ChevronUp,
-  BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search, Google, GeoAlt, ShieldCheck
+  BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search, Google, GeoAlt, ShieldCheck, Book
 } from 'react-bootstrap-icons';
+import { HANDBOOK_FILENAME, HANDBOOK_PATH } from '@/lib/handbook';
 import { roleLabel } from '@/lib/ui-labels';
 import { Avatar } from '@/components/ui/AvatarStack';
 import FontSizeControl from '@/components/FontSizeControl';
@@ -217,7 +218,21 @@ export default function Sidebar() {
   const userLabel = session?.user?.name ?? session?.user?.email ?? '';
   const themeLabel = theme === 'dark' ? 'Heller Modus' : 'Dunkler Modus';
 
-  const hasMainNav = mainNavItems.some(item => item.visible !== false);
+  const showHandbook = isAdmin || isUser || isDemoPage;
+  const hasMainNav = showHandbook || mainNavItems.some(item => item.visible !== false);
+
+  // Handbuch als PDF-Download, für Kunden, Admins und in der Demo.
+  const renderHandbookLink = (collapsed: boolean) => showHandbook && (
+    <a
+      href={HANDBOOK_PATH}
+      download={HANDBOOK_FILENAME}
+      title={collapsed ? 'Handbuch (PDF)' : 'Handbuch als PDF herunterladen'}
+      className={`flex h-9 items-center gap-2.5 rounded-lg px-3 text-[14px] font-medium text-secondary transition-colors duration-150 ease-out hover:bg-fill ${collapsed ? 'md:justify-center md:px-0' : ''}`}
+    >
+      <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center text-accent"><Book size={16} /></span>
+      <span className={collapsed ? 'md:sr-only' : 'truncate'}>Handbuch (PDF)</span>
+    </a>
+  );
 
   const renderDemoContact = () => (
     <div className="mx-1 mt-4 rounded-lg bg-fill px-3 py-2.5 text-[12px] leading-[1.45] text-muted">
@@ -336,7 +351,7 @@ export default function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto px-2.5 pb-3 scrollbar-thin">
         {!isCollapsed && hasMainNav && groupTitle('Arbeit')}
-        <div className="space-y-0.5">{mainNavItems.map((item, i) => renderNavLink(item, i, isCollapsed))}</div>
+        <div className="space-y-0.5">{mainNavItems.map((item, i) => renderNavLink(item, i, isCollapsed))}{renderHandbookLink(isCollapsed)}</div>
 
         {isDashboardPage && !isCollapsed && visibleSections.length > 0 && renderSections()}
         {isDemoPage && !isCollapsed && renderDemoContact()}
@@ -438,7 +453,7 @@ export default function Sidebar() {
           className="absolute left-0 top-full z-50 max-h-[80vh] w-full overflow-y-auto border-b border-border bg-sidebar px-3 pb-4"
         >
           {hasMainNav && groupTitle('Arbeit')}
-          <div className="space-y-0.5">{mainNavItems.map((item, i) => renderNavLink(item, i, false))}</div>
+          <div className="space-y-0.5">{mainNavItems.map((item, i) => renderNavLink(item, i, false))}{renderHandbookLink(false)}</div>
 
           {isDashboardPage && visibleSections.length > 0 && renderSections(() => setIsMobileMenuOpen(false))}
           {isDemoPage && renderDemoContact()}
