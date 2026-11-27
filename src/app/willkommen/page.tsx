@@ -16,6 +16,7 @@ import {
   Search,
   Stars,
 } from 'react-bootstrap-icons';
+import ClosingCta from '@/components/marketing/ClosingCta';
 import DataMaxChatPreview from '@/components/marketing/DataMaxChatPreview';
 import ProductPreview from '@/components/marketing/ProductPreview';
 import { MARKETING_ORIGIN, appOriginFor } from '@/lib/site-hosts';
@@ -50,7 +51,6 @@ export const metadata: Metadata = {
 };
 
 const CONTACT_MAIL = 'michael@designare.at';
-const CONTACT_HREF = `mailto:${CONTACT_MAIL}?subject=${encodeURIComponent('Zugang zu DataPeak')}`;
 
 const SOURCES = ['Search Console', 'Analytics 4', 'Google Ads', 'Semrush', 'Bing Webmaster', 'Unternehmensprofile'];
 
@@ -147,7 +147,7 @@ const FAQ = [
     items: [
       {
         q: 'Wie bekomme ich Zugang?',
-        a: `DataPeak ist nicht frei registrierbar. Schreiben Sie an ${CONTACT_MAIL}, dann richten wir Ihr Projekt ein und schicken Ihnen die Zugangsdaten.`,
+        a: `DataPeak ist nicht frei registrierbar. Fragen Sie über „Zugang anfragen“ unten auf dieser Seite einen Zugang an oder schreiben Sie an ${CONTACT_MAIL}. Wir richten Ihr Projekt ein und schicken Ihnen die Zugangsdaten.`,
       },
       {
         q: 'Wer sieht meine Daten?',
@@ -420,22 +420,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Abschluss ────────────────────────────────────── */}
-      <section className="px-4 pb-24 sm:px-6">
-        <div className="mx-auto max-w-[1120px] rounded-[24px] bg-accent-solid px-6 py-14 text-center text-white sm:px-12">
-          <h2 className="text-[clamp(28px,4vw,40px)] font-bold leading-[1.1] tracking-[-0.025em]">Sehen Sie selbst.</h2>
-          <p className="mx-auto mt-4 max-w-[560px] text-[17px] leading-[1.55] text-white/85">
-            Die Demo zeigt das echte Dashboard mit Beispieldaten, ohne Anmeldung. Für Ihr eigenes Projekt schreiben Sie uns einfach.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <a href={demoHref} className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-[#0066CC] transition-opacity duration-150 hover:opacity-90">
-              Demo ansehen <ArrowRight size={15} aria-hidden="true" />
-            </a>
-            <a href={CONTACT_HREF} className="inline-flex h-11 items-center rounded-full border border-white/50 px-6 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-white/10">
-              Zugang anfragen
-            </a>
-          </div>
-        </div>
-      </section>
+      <ClosingCta demoHref={demoHref} />
     </div>
   );
 }

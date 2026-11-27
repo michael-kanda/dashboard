@@ -137,6 +137,16 @@ export default function DatenschutzPage() {
               Datenschutzniveau sichergestellt wird.
             </li>
             <li>
+              <strong>Formular „Zugang anfragen“ (www.datapeak.at):</strong>{' '}
+              Wenn Sie über das Formular einen Zugang anfragen, verarbeiten wir
+              Name, E-Mail-Adresse sowie freiwillig Firma, Website und Nachricht,
+              um Ihre Anfrage zu beantworten (Rechtsgrundlage: Art. 6 Abs. 1 lit.
+              b DSGVO). Die Angaben werden per E-Mail über Brevo an uns
+              weitergeleitet und zusätzlich bei Vercel gespeichert; zur Abwehr von
+              Missbrauch speichern wir Ihre IP-Adresse nur als Hashwert. Die
+              gespeicherten Anfragen werden nach 180 Tagen gelöscht.
+            </li>
+            <li>
               <strong>Vercel Web Analytics (nur www.datapeak.at):</strong> Auf
               der öffentlichen Startseite messen wir mit Vercel Web Analytics
               anonymisiert, wie oft Seiten aufgerufen werden und woher Besucher

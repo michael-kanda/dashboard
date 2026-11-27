@@ -74,6 +74,9 @@ for (const [file, content] of contents) {
 // deshalb selbst eine Session, eine Rollenpruefung oder ein Cron-Secret pruefen.
 const publicRoutes = new Set([
   'src/app/api/auth/[...nextauth]/route.ts',
+  // Kontaktformular der Landingpage: bewusst öffentlich, geschützt durch
+  // Honeypot, Mindest-Ausfüllzeit und Begrenzung pro IP und Tag.
+  'src/app/api/zugang-anfragen/route.ts',
 ]);
 const authPattern = /\bauth\(\)|\bgetServerSession\(|\brequireContentStudioProject\(|\bCRON_SECRET\b/;
 
