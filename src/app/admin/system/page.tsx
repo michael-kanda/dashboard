@@ -331,7 +331,7 @@ export default function SystemHealthPage() {
     return (
       <PageContainer>
         <PageHeader title="System" subtitle="Dienste, Zugriffe und Anmeldungen" />
-        <p className="text-[14px] text-danger" role="alert">Fehler beim Laden.</p>
+        <p className="text-14 text-danger" role="alert">Fehler beim Laden.</p>
       </PageContainer>
     );
   }
@@ -472,7 +472,7 @@ export default function SystemHealthPage() {
             </tbody>
           </DataList>
 
-          <p className="text-[13px] text-muted">
+          <p className="text-13 text-muted">
             Fragen/Tag: DataMax-Chat und KI-Analysen pro Login und Tag. Leer lassen für den Standard
             (Projekte {DATAMAX_DAILY_LIMITS.BENUTZER}, Admins {DATAMAX_DAILY_LIMITS.ADMIN}); Superadmins sind unbegrenzt.
           </p>

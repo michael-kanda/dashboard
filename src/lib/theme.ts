@@ -14,6 +14,7 @@ export const THEME_COLOR_KEYS = [
   'text',
   'muted',
   'border',
+  'placeholder',
 ] as const;
 export type ThemeColorKey = (typeof THEME_COLOR_KEYS)[number];
 
@@ -27,6 +28,7 @@ export const THEME_COLOR_FIELDS: { key: ThemeColorKey; label: string; descriptio
   { key: 'text', label: 'Fließtext', description: 'Normaler Text' },
   { key: 'muted', label: 'Nebentext', description: 'Beschriftungen, Datum, Hinweise' },
   { key: 'border', label: 'Rahmenfarbe', description: 'Rahmen um Widgets und Listen' },
+  { key: 'placeholder', label: 'Platzhaltertext', description: 'Grauer Hinweis in leeren Eingabefeldern' },
 ];
 
 // Muss zu design-tokens.css passen; die Rahmenfarbe ist dort halbtransparent, hier der sichtbare Mischwert.
@@ -41,6 +43,7 @@ export const THEME_DEFAULT_COLORS: Record<ThemeMode, Record<ThemeColorKey, strin
     text: '#3A3A3C',
     muted: '#636366',
     border: '#EBEBEB',
+    placeholder: '#8E8E93',
   },
   dark: {
     accent: '#2997FF',
@@ -52,6 +55,7 @@ export const THEME_DEFAULT_COLORS: Record<ThemeMode, Record<ThemeColorKey, strin
     text: '#D1D1D6',
     muted: '#A1A1A6',
     border: '#333335',
+    placeholder: '#7C7C80',
   },
 };
 
@@ -95,6 +99,20 @@ export const FONT_WEIGHT_FIELDS: { key: FontWeightKey; label: string; descriptio
 
 const ALLOWED_WEIGHTS = [300, 400, 450, 500, 600, 700, 800, 900] as const;
 
+// Schriftgröße in Prozent, getrennt für Fließtext (bis 17 px) und Überschriften (ab 18 px).
+export const FONT_SIZE_KEYS = ['text', 'heading'] as const;
+export type FontSizeKey = (typeof FONT_SIZE_KEYS)[number];
+
+export const FONT_SIZE_FIELDS: { key: FontSizeKey; label: string; description: string }[] = [
+  { key: 'text', label: 'Fließtext und Beschriftungen', description: 'Texte, Listen, Tabellen, Buttons und Eingabefelder' },
+  { key: 'heading', label: 'Überschriften und Kennzahlen', description: 'Titel, Abschnittsüberschriften und große Zahlen' },
+];
+
+export const DEFAULT_FONT_SIZE = 100;
+export const MIN_FONT_SIZE = 80;
+export const MAX_FONT_SIZE = 130;
+export const FONT_SIZE_STEP = 5;
+
 export const DEFAULT_RADIUS = 14;
 export const MAX_RADIUS = 24;
 
@@ -103,6 +121,7 @@ export const HEX_COLOR = /^#[0-9A-F]{6}$/;
 const hexColor = z.string().regex(HEX_COLOR, 'Farbe als #RRGGBB angeben');
 const modeColors = z.partialRecord(z.enum(THEME_COLOR_KEYS), hexColor);
 const fontWeight = z.number().int().refine((value) => (ALLOWED_WEIGHTS as readonly number[]).includes(value));
+const fontSize = z.number().int().min(MIN_FONT_SIZE).max(MAX_FONT_SIZE).multipleOf(FONT_SIZE_STEP);
 
 // Nur diese Werte kommen ins CSS; alles andere wird abgelehnt.
 export const themeSchema = z.object({
@@ -112,6 +131,7 @@ export const themeSchema = z.object({
   shadow: z.enum(SHADOW_LEVELS).default('none'),
   radius: z.number().int().min(0).max(MAX_RADIUS).default(DEFAULT_RADIUS),
   weights: z.partialRecord(z.enum(FONT_WEIGHT_KEYS), fontWeight).default({}),
+  sizes: z.partialRecord(z.enum(FONT_SIZE_KEYS), fontSize).default({}),
 });
 
 export type ThemeSettings = z.infer<typeof themeSchema>;
@@ -203,6 +223,7 @@ function modeDeclarations(theme: ThemeSettings, mode: ThemeMode): string[] {
     set('--dp-text-secondary', colors.text);
   }
   if (colors.muted) set('--dp-text-muted', colors.muted);
+  if (colors.placeholder) set('--dp-field-placeholder', colors.placeholder);
 
   if (!theme.border) set('--dp-card-border', 'transparent');
   else if (colors.border) set('--dp-card-border', colors.border);
@@ -221,12 +242,16 @@ export function themeToCss(input: ThemeSettings): string {
   const light = modeDeclarations(theme, 'light');
   const dark = modeDeclarations(theme, 'dark');
 
-  // Radius und Schriftstärken gelten in beiden Modi; html:root schlägt auch .dark.
+  // Radius, Schriftstärken und Schriftgrößen gelten in beiden Modi; html:root schlägt auch .dark.
   const global: string[] = [];
   if (theme.radius !== DEFAULT_RADIUS) global.push(`--dp-radius-container:${theme.radius}px`);
   for (const key of FONT_WEIGHT_KEYS) {
     const weight = theme.weights[key];
     if (weight !== undefined) global.push(`--dp-weight-${key}:${weight}`);
+  }
+  for (const key of FONT_SIZE_KEYS) {
+    const size = theme.sizes[key];
+    if (size !== undefined && size !== DEFAULT_FONT_SIZE) global.push(`--dp-fs-${key}:${size / 100}`);
   }
 
   const blocks: string[] = [];

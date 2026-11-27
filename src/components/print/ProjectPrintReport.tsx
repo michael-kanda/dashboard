@@ -40,7 +40,7 @@ export interface ProjectPrintReportProps {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="report-section mt-6">
-      <h2 className="mb-2 border-b border-[#d2d2d7] pb-1 text-[13px] font-semibold uppercase tracking-[0.04em] text-[#1d1d1f]">{title}</h2>
+      <h2 className="mb-2 border-b border-[#d2d2d7] pb-1 text-13 font-semibold uppercase tracking-[0.04em] text-[#1d1d1f]">{title}</h2>
       {children}
     </section>
   );
@@ -52,13 +52,13 @@ function Breakdown({ title, entries }: { title: string; entries: ChartEntry[] })
   if (rows.length === 0) return null;
   return (
     <div className="flex min-w-0 flex-col items-center">
-      <h3 className="mb-1 text-[12px] font-semibold text-[#1d1d1f]">{title}</h3>
+      <h3 className="mb-1 text-12 font-semibold text-[#1d1d1f]">{title}</h3>
       <PieChart width={130} height={130}>
         <Pie data={rows} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={34} outerRadius={60} paddingAngle={1} isAnimationActive={false} stroke="#fff">
           {rows.map((entry, index) => <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />)}
         </Pie>
       </PieChart>
-      <ul className="mt-1 w-full space-y-0.5 text-[11px]">
+      <ul className="mt-1 w-full space-y-0.5 text-11">
         {rows.map((entry, index) => (
           <li key={entry.name} className="flex items-center gap-1.5">
             <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
@@ -145,7 +145,7 @@ export default function ProjectPrintReport({
   return (
     <div className="print-report min-h-screen bg-white text-[#1d1d1f]">
       <div className="report-toolbar sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#e5e5ea] bg-white/95 px-6 py-3 print:hidden">
-        <span className="text-[14px] text-[#636366]">Druckansicht · A4 hoch</span>
+        <span className="text-14 text-[#636366]">Druckansicht · A4 hoch</span>
         <div className="flex gap-2">
           <Button variant="plain" onClick={() => window.close()}>Schließen</Button>
           <Button onClick={() => window.print()}>
@@ -158,13 +158,13 @@ export default function ProjectPrintReport({
       <div className="report-page mx-auto max-w-[760px] px-6 py-8 print:max-w-none print:p-0">
         <div className="report-head flex items-end justify-between gap-4 border-b-2 border-[#1d1d1f] pb-3">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-[9px] bg-[#0066CC] text-[14px] font-bold text-white">DP</span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-[9px] bg-[#0066CC] text-14 font-bold text-white">DP</span>
             <div>
-              <h1 className="report-title text-[22px] font-bold leading-tight">{domain || 'Projekt'}</h1>
-              <p className="text-[12px] text-[#636366]">SEO &amp; Analytics Bericht</p>
+              <h1 className="report-title text-22 font-bold leading-tight">{domain || 'Projekt'}</h1>
+              <p className="text-12 text-[#636366]">SEO &amp; Analytics Bericht</p>
             </div>
           </div>
-          <div className="text-right text-[12px] text-[#3a3a3c]">
+          <div className="text-right text-12 text-[#3a3a3c]">
             {period && <div>Zeitraum: <span className="font-semibold">{period}</span></div>}
             <div>Erstellt am {new Date().toLocaleDateString('de-AT')}</div>
           </div>
@@ -179,9 +179,9 @@ export default function ProjectPrintReport({
                 const previous = kpi.change === -100 ? 0 : kpi.value / (1 + kpi.change / 100);
                 return (
                   <div key={label} className="bg-white px-3 py-2.5">
-                    <div className="flex justify-between text-[11px] text-[#636366]"><span>{label}</span><span>{source}</span></div>
-                    <div className="mt-0.5 text-[20px] font-semibold tabular-nums">{format(kpi.value)}</div>
-                    <div className="text-[11px] tabular-nums">
+                    <div className="flex justify-between text-11 text-[#636366]"><span>{label}</span><span>{source}</span></div>
+                    <div className="mt-0.5 text-20 font-semibold tabular-nums">{format(kpi.value)}</div>
+                    <div className="text-11 tabular-nums">
                       <span className={`font-semibold ${tone}`}>{formatChange(kpi.change)}</span>
                       {Number.isFinite(previous) && <span className="text-[#636366]"> · vorher {format(previous)}</span>}
                     </div>
@@ -202,7 +202,7 @@ export default function ProjectPrintReport({
               <Line yAxisId="clicks" dataKey="clicks" name="Klicks" stroke="#0066CC" strokeWidth={2} dot={false} isAnimationActive={false} />
               <Line yAxisId="impressions" dataKey="impressions" name="Impressionen" stroke="#AF52DE" strokeWidth={1.5} dot={false} isAnimationActive={false} />
             </LineChart>
-            <div className="mt-1 flex gap-4 text-[11px] text-[#3a3a3c]">
+            <div className="mt-1 flex gap-4 text-11 text-[#3a3a3c]">
               <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-[#0066CC]" />Klicks (links)</span>
               <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-[#AF52DE]" />Impressionen (rechts)</span>
             </div>
@@ -221,7 +221,7 @@ export default function ProjectPrintReport({
 
         {model.render.topQueries && topQueries.length > 0 && (
           <Section title={`Top ${topQueries.length} Suchanfragen`}>
-            <table className="w-full table-fixed text-[11px]">
+            <table className="w-full table-fixed text-11">
               <colgroup><col /><col className="w-[64px]" /><col className="w-[72px]" /><col className="w-[64px]" /><col className="w-[52px]" /></colgroup>
               <thead>
                 <tr className="border-b border-[#d2d2d7] text-left text-[#636366]">
@@ -249,7 +249,7 @@ export default function ProjectPrintReport({
 
         {model.render.landingPages && topPages.length > 0 && (
           <Section title={`Top ${topPages.length} Landingpages`}>
-            <table className="w-full table-fixed text-[11px]">
+            <table className="w-full table-fixed text-11">
               <colgroup><col /><col className="w-[88px]" /><col className="w-[80px]" /><col className="w-[88px]" /></colgroup>
               <thead>
                 <tr className="border-b border-[#d2d2d7] text-left text-[#636366]">
@@ -275,14 +275,14 @@ export default function ProjectPrintReport({
 
         {model.canShow('aiTraffic') && aiTraffic.totalSessions > 0 && (
           <Section title="KI-Traffic">
-            <p className="text-[12px] text-[#3a3a3c]">
+            <p className="text-12 text-[#3a3a3c]">
               {number.format(aiTraffic.totalSessions)} Sitzungen und {number.format(aiTraffic.totalUsers)} Nutzer kamen über KI-Assistenten
               {typeof aiTraffic.totalUsersChange === 'number' ? ` (${formatChange(aiTraffic.totalUsersChange)} zum Vorzeitraum)` : ''}.
             </p>
           </Section>
         )}
 
-        <div className="mt-8 border-t border-[#e5e5ea] pt-2 text-[10px] text-[#8e8e93]">
+        <div className="mt-8 border-t border-[#e5e5ea] pt-2 text-10 text-[#8e8e93]">
           Erstellt mit Data Peak · Quellen: Google Search Console und Google Analytics 4
         </div>
       </div>

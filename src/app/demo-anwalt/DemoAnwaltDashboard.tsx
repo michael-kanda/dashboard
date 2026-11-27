@@ -15,7 +15,7 @@ export default function DemoAnwaltDashboard() {
   return (
     <AiTrafficExtendedDemoContext.Provider value={demoAiTrafficExtended}>
       <div className="px-[clamp(16px,3vw,40px)] pt-5 print:hidden">
-        <div className="flex items-start gap-3 rounded-container border border-border bg-accent-tint px-4 py-3 text-[14px] leading-[1.5] text-body" role="note">
+        <div className="flex items-start gap-3 rounded-container border border-border bg-accent-tint px-4 py-3 text-14 leading-[1.5] text-body" role="note">
           <InfoCircleFill size={16} className="mt-0.5 flex-shrink-0 text-accent" aria-hidden="true" />
           <p>
             <span className="font-semibold text-heading">Demo mit Beispieldaten.</span>{' '}

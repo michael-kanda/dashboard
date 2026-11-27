@@ -13,8 +13,8 @@ export default function DataMaxChatPreview() {
             <Robot size={18} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-semibold leading-tight text-heading">DataMax</p>
-            <p className="text-[12px] text-muted">SEO &amp; Analytics Assistent</p>
+            <p className="text-15 font-semibold leading-tight text-heading">DataMax</p>
+            <p className="text-12 text-muted">SEO &amp; Analytics Assistent</p>
           </div>
           <span className="flex items-center gap-3 text-muted" aria-hidden="true">
             <ArrowClockwise size={14} />
@@ -23,7 +23,7 @@ export default function DataMaxChatPreview() {
         </div>
 
         {/* Gespräch */}
-        <div className="flex flex-col gap-3 bg-surface-secondary px-4 py-5 text-[14px] leading-[1.5]">
+        <div className="flex flex-col gap-3 bg-surface-secondary px-4 py-5 text-14 leading-[1.5]">
           <p className="max-w-[85%] self-end rounded-[14px] rounded-br-[4px] bg-accent-solid px-3.5 py-2.5 text-white">
             Warum ist der Traffic diesen Monat gestiegen?
           </p>
@@ -41,7 +41,7 @@ export default function DataMaxChatPreview() {
 
         {/* Eingabezeile (nur Darstellung) */}
         <div className="flex items-center gap-2 border-t border-border-subtle bg-surface px-4 py-3" aria-hidden="true">
-          <span className="flex-1 rounded-control border border-border bg-surface-secondary px-3 py-2 text-[14px] text-muted">
+          <span className="flex-1 rounded-control border border-border bg-surface-secondary px-3 py-2 text-14 text-muted">
             Frag DataMax …
           </span>
           <span className="flex h-9 w-9 items-center justify-center rounded-control bg-accent-solid text-white">
@@ -49,7 +49,7 @@ export default function DataMaxChatPreview() {
           </span>
         </div>
       </div>
-      <figcaption className="mt-3 text-[13px] leading-[1.5] text-muted">
+      <figcaption className="mt-3 text-13 leading-[1.5] text-muted">
         Beispielgespräch mit den Zahlen der Demo-Kanzlei.
       </figcaption>
     </figure>

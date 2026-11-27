@@ -264,26 +264,26 @@ export function PromptResearchTool({
           <div key={`${item.rank}-${item.topic}-${item.intent}`} className="grid grid-cols-[44px_1fr] lg:grid-cols-[44px_120px_1fr_110px] gap-3 rounded-md bg-surface p-3">
             <div className="widget-metric-sm text-heading">#{item.rank}</div>
             <div className="hidden lg:block">
-              <div className="text-[11px] font-semibold text-muted">{item.intent}</div>
+              <div className="text-11 font-semibold text-muted">{item.intent}</div>
               <div className="text-xs font-medium tabular-nums text-body">Score {item.score}</div>
-              <div className="text-[11px] text-muted">{item.source}</div>
+              <div className="text-11 text-muted">{item.source}</div>
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1 lg:hidden">
-                <span className="text-[11px] font-semibold text-muted">{item.intent}</span>
+                <span className="text-11 font-semibold text-muted">{item.intent}</span>
                 <span className="text-xs font-medium tabular-nums text-body">Score {item.score}</span>
-                <span className="text-[11px] text-muted">{item.source}</span>
+                <span className="text-11 text-muted">{item.source}</span>
               </div>
-              <div className="text-[12px] text-muted mb-1">{item.topic}</div>
+              <div className="text-12 text-muted mb-1">{item.topic}</div>
               <p className="text-sm leading-relaxed text-body">{item.prompt}</p>
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[12px] leading-relaxed text-muted">
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-12 leading-relaxed text-muted">
                 <span>{item.reason}</span>
                 {setup.landingPage && normalizePath(setup.landingPage) !== '/' && (
                   <span>· Zielseite: {normalizePath(setup.landingPage)}</span>
                 )}
               </div>
             </div>
-            <div className="col-span-2 lg:col-span-1 text-[12px] leading-relaxed text-muted lg:text-right">
+            <div className="col-span-2 lg:col-span-1 text-12 leading-relaxed text-muted lg:text-right">
               {item.action}
             </div>
           </div>

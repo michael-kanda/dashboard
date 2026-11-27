@@ -571,7 +571,7 @@ export default function AiTrafficDetailCardV2({
                               {page.path === '/' ? '/ (Startseite)' : page.path}</div>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {page.sources.slice(0, 2).map((s, j) => (
-                                <span key={j} className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium"
+                                <span key={j} className="inline-flex items-center px-1.5 py-0.5 rounded text-11 font-medium"
                                   style={{ backgroundColor: `${getSourceColor(s.source)}15`, color: getSourceColor(s.source) }}>
                                   {getSourceLabel(s.source)}</span>
                               ))}

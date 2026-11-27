@@ -28,15 +28,38 @@
   --font-weight-semibold: var(--dp-weight-semibold);
   --font-weight-bold: var(--dp-weight-bold);
 
+  /*
+   * Schriftgrößen wachsen mit den Faktoren aus Admin → Design:
+   * --dp-fs-text für Texte bis 17 px, --dp-fs-heading für Überschriften und Kennzahlen ab 18 px.
+   * Feste Größen bitte als text-13 usw. schreiben, nicht als text-[13px], sonst wachsen sie nicht mit.
+   */
   /* Alle Tailwind-Schriftstufen 1 px größer als der Standard */
-  --text-xs: 13px;
-  --text-sm: 15px;
-  --text-base: 17px;
-  --text-lg: 19px;
-  --text-xl: 21px;
-  --text-2xl: 25px;
-  --text-3xl: 31px;
-  --text-4xl: 37px;
+  --text-xs: calc(13px * var(--dp-fs-text));
+  --text-sm: calc(15px * var(--dp-fs-text));
+  --text-base: calc(17px * var(--dp-fs-text));
+  --text-lg: calc(19px * var(--dp-fs-heading));
+  --text-xl: calc(21px * var(--dp-fs-heading));
+  --text-2xl: calc(25px * var(--dp-fs-heading));
+  --text-3xl: calc(31px * var(--dp-fs-heading));
+  --text-4xl: calc(37px * var(--dp-fs-heading));
+
+  /* Pixelgenaue Stufen (text-11 … text-29) */
+  --text-10: calc(10px * var(--dp-fs-text));
+  --text-11: calc(11px * var(--dp-fs-text));
+  --text-12: calc(12px * var(--dp-fs-text));
+  --text-13: calc(13px * var(--dp-fs-text));
+  --text-14: calc(14px * var(--dp-fs-text));
+  --text-15: calc(15px * var(--dp-fs-text));
+  --text-16: calc(16px * var(--dp-fs-text));
+  --text-17: calc(17px * var(--dp-fs-text));
+  --text-18: calc(18px * var(--dp-fs-heading));
+  --text-19: calc(19px * var(--dp-fs-heading));
+  --text-20: calc(20px * var(--dp-fs-heading));
+  --text-22: calc(22px * var(--dp-fs-heading));
+  --text-23: calc(23px * var(--dp-fs-heading));
+  --text-25: calc(25px * var(--dp-fs-heading));
+  --text-28: calc(28px * var(--dp-fs-heading));
+  --text-29: calc(29px * var(--dp-fs-heading));
 
   --color-page: var(--dp-page);
   --color-sidebar: var(--dp-sidebar);
@@ -53,6 +76,7 @@
   --color-secondary: var(--dp-text-secondary);
   --color-muted: var(--dp-text-muted);
   --color-faint: var(--dp-text-faint);
+  --color-placeholder: var(--dp-field-placeholder);
 
   --color-border: var(--dp-border-default);
   --color-border-subtle: var(--dp-border-subtle);
@@ -111,6 +135,12 @@
   /* Persönliche Schriftgröße (Sidebar → Schriftgröße), Sidebar selbst bleibt unverändert. */
   .app-content {
     zoom: var(--dp-content-zoom, 1);
+  }
+
+  /* Platzhaltertext in allen Eingabefeldern (Farbe in Admin → Design) */
+  ::placeholder {
+    color: var(--dp-field-placeholder);
+    opacity: 1;
   }
 
   body {
@@ -230,7 +260,7 @@
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 0.75rem;
-    font-size: 12px;
+    font-size: calc(12px * var(--dp-fs-text));
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -240,7 +270,7 @@
   /* Feldbeschriftung */
   .dp-label {
     display: block;
-    font-size: 14px;
+    font-size: calc(14px * var(--dp-fs-text));
     font-weight: 600;
     color: var(--dp-text-heading);
   }
@@ -651,7 +681,7 @@
 
   .admin-clean input::placeholder,
   .admin-clean textarea::placeholder {
-    color: var(--dp-text-muted);
+    color: var(--dp-field-placeholder);
   }
 
   .admin-clean input:focus,
@@ -785,7 +815,7 @@
     padding: 0 0.5rem;
     border-radius: var(--dp-radius-full);
     border: 1px solid transparent;
-    font-size: 12px;
+    font-size: calc(12px * var(--dp-fs-text));
     line-height: 1.25;
     font-weight: 700;
   }
@@ -814,7 +844,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    font-size: 11px;
+    font-size: calc(11px * var(--dp-fs-text));
     font-weight: 600;
     border-radius: var(--dp-radius-full);
     white-space: nowrap;
@@ -939,7 +969,7 @@
   align-items: center;
   padding: 0 0.375rem;
   border-radius: var(--dp-radius-full);
-  font-size: 11px;
+  font-size: calc(11px * var(--dp-fs-text));
   font-weight: 600;
   line-height: 1.5;
   white-space: nowrap;

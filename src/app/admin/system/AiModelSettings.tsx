@@ -55,7 +55,7 @@ export default function AiModelSettings({
         autoComplete="off"
         value={draft[key]}
         onChange={(e) => setDraft((prev) => ({ ...prev, [key]: e.target.value }))}
-        className={`${inputClasses} w-[260px] font-mono text-[13px]`}
+        className={`${inputClasses} w-[260px] font-mono text-13`}
       />
     </GroupedRow>
   );

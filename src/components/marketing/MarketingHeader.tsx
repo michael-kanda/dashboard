@@ -25,7 +25,7 @@ export default function MarketingHeader({ appOrigin }: { appOrigin: string }) {
 
         <nav aria-label="Hauptnavigation" className="hidden items-center gap-6 md:flex">
           {NAV.map((item) => (
-            <a key={item.href} href={item.href} className="text-[14px] font-medium text-body transition-colors duration-150 hover:text-heading">
+            <a key={item.href} href={item.href} className="text-14 font-medium text-body transition-colors duration-150 hover:text-heading">
               {item.label}
             </a>
           ))}
@@ -44,13 +44,13 @@ export default function MarketingHeader({ appOrigin }: { appOrigin: string }) {
           href={`${appOrigin}/demo-anwalt`}
           target="_blank"
           rel="noopener"
-          className="hidden h-9 items-center rounded-full bg-accent-tint px-4 text-[14px] font-semibold text-accent transition-colors duration-150 hover:bg-accent-solid hover:text-white sm:inline-flex"
+          className="hidden h-9 items-center rounded-full bg-accent-tint px-4 text-14 font-semibold text-accent transition-colors duration-150 hover:bg-accent-solid hover:text-white sm:inline-flex"
         >
           Demo
         </a>
         <a
           href={`${appOrigin}/login`}
-          className="inline-flex h-9 items-center gap-2 rounded-full border border-border px-4 text-[14px] font-semibold text-heading transition-colors duration-150 hover:bg-fill"
+          className="inline-flex h-9 items-center gap-2 rounded-full border border-border px-4 text-14 font-semibold text-heading transition-colors duration-150 hover:bg-fill"
         >
           <BoxArrowInRight size={15} aria-hidden="true" />
           Anmelden

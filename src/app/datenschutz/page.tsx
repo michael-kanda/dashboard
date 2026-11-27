@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 export default function DatenschutzPage() {
   return (
     <div className="bg-page px-[clamp(16px,3vw,40px)] pt-7 pb-12">
-      <div className="max-w-[680px] space-y-6 text-[16px] leading-[1.6]">
-        <h1 className="text-[29px] font-bold leading-[1.1] tracking-[-0.02em] text-heading">
+      <div className="max-w-[680px] space-y-6 text-16 leading-[1.6]">
+        <h1 className="text-29 font-bold leading-[1.1] tracking-[-0.02em] text-heading">
           Datenschutzerklärung
         </h1>
 
@@ -34,7 +34,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-[23px] font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
+          <h2 className="text-23 font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
             1. Allgemeines
           </h2>
           <p className="text-body">
@@ -48,7 +48,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-[23px] font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
+          <h2 className="text-23 font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
             2. Art der verarbeiteten Daten
           </h2>
           <p className="text-body mb-4">
@@ -96,7 +96,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-[23px] font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
+          <h2 className="text-23 font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
             3. Zweck und Rechtsgrundlage der Verarbeitung
           </h2>
           <p className="text-body mb-4">
@@ -142,7 +142,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-[23px] font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
+          <h2 className="text-23 font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
             4. Empfänger der Daten / Drittanbieter
           </h2>
           <p className="text-body mb-4">
@@ -222,7 +222,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-[23px] font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
+          <h2 className="text-23 font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
             5. Cookies
           </h2>
           <p className="text-body">
@@ -237,7 +237,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-[23px] font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
+          <h2 className="text-23 font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
             6. Speicherdauer
           </h2>
           <p className="text-body">
@@ -254,7 +254,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <h2 className="text-[23px] font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
+          <h2 className="text-23 font-semibold tracking-[-0.015em] text-heading mt-8 mb-3">
             7. Ihre Rechte
           </h2>
           <p className="text-body">
@@ -267,7 +267,7 @@ export default function DatenschutzPage() {
           </p>
         </section>
 
-        <p className="text-[14px] text-muted mt-8">Stand: 27. November 2026</p>
+        <p className="text-14 text-muted mt-8">Stand: 27. November 2026</p>
       </div>
     </div>
   );

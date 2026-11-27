@@ -79,22 +79,22 @@ export default function ShareLinkDialog({
         </>
       }
     >
-      <div className="space-y-3 text-[15px] text-body">
+      <div className="space-y-3 text-15 text-body">
         <p>
           Wer den Link hat, sieht dieses Projekt 24 Stunden lang ohne Anmeldung, nur zum Lesen.
           Bearbeiten, KI-Analyse und Chat sind gesperrt.
         </p>
         {link && (
           <div className="space-y-1.5">
-            <label htmlFor="share-link-url" className="text-[13px] font-semibold text-muted">Gastlink</label>
+            <label htmlFor="share-link-url" className="text-13 font-semibold text-muted">Gastlink</label>
             <input
               id="share-link-url"
               readOnly
               value={link.url}
               onFocus={(e) => e.currentTarget.select()}
-              className={`${inputClasses} font-mono text-[13px]`}
+              className={`${inputClasses} font-mono text-13`}
             />
-            <p className="text-[13px] text-muted">Gültig bis {expiresLabel} Uhr.</p>
+            <p className="text-13 text-muted">Gültig bis {expiresLabel} Uhr.</p>
           </div>
         )}
       </div>

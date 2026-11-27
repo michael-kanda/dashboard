@@ -22,7 +22,7 @@ export default function ThemeModeSwitch() {
             type="button"
             aria-pressed={active}
             onClick={() => setTheme(value)}
-            className={`inline-flex h-8 items-center gap-1.5 rounded-[7px] px-3 text-[13px] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-accent
+            className={`inline-flex h-8 items-center gap-1.5 rounded-[7px] px-3 text-13 transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-accent
               ${active ? 'bg-surface font-semibold text-heading shadow-segment' : 'font-medium text-muted hover:text-heading'}`}
           >
             <Icon size={13} aria-hidden="true" />

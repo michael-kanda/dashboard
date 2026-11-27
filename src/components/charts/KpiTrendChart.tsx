@@ -186,7 +186,7 @@ const CustomTooltip = ({ active, payload, label, kpi1, kpi2, holidayMap, weather
                 <span className="text-xs font-medium text-body truncate max-w-[130px]">
                   {holiday.name}
                 </span>
-                <span className="text-[11px] font-semibold text-faint ml-1">
+                <span className="text-11 font-semibold text-faint ml-1">
                   {holiday.countries.join(' · ')}
                 </span>
               </div>

@@ -13,16 +13,22 @@ import { Toggle } from '@/components/ui/Toggle';
 import { StatusDot } from '@/components/ui/Status';
 import { inputClasses } from '@/components/ui/Field';
 import {
+  DEFAULT_FONT_SIZE,
   DEFAULT_RADIUS,
   DEFAULT_THEME,
+  FONT_SIZE_FIELDS,
+  FONT_SIZE_STEP,
   FONT_WEIGHT_FIELDS,
+  MAX_FONT_SIZE,
   MAX_RADIUS,
+  MIN_FONT_SIZE,
   SHADOW_OPTIONS,
   THEME_COLOR_FIELDS,
   THEME_DEFAULT_COLORS,
   findContrastIssues,
   normalizeHex,
   themeToCss,
+  type FontSizeKey,
   type FontWeightKey,
   type ThemeColorKey,
   type ThemeMode,
@@ -89,7 +95,7 @@ function ColorInput({
           if (hex) onChange(hex);
           setDraft(hex ?? value);
         }}
-        className={`h-9 w-[104px] rounded-control border bg-surface px-2.5 font-mono text-[14px] uppercase text-heading
+        className={`h-9 w-[104px] rounded-control border bg-surface px-2.5 font-mono text-14 uppercase text-heading
           focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${invalid ? 'border-danger' : 'border-border'}`}
       />
       <IconButton label={`${label} auf Standard zurücksetzen`} onClick={onReset} disabled={isDefault} className="disabled:invisible">
@@ -153,6 +159,15 @@ export default function DesignSettingsClient({ initialTheme }: { initialTheme: T
     });
   };
 
+  const setSize = (key: FontSizeKey, value: number) => {
+    setTheme((prev) => {
+      const sizes = { ...prev.sizes };
+      if (value === DEFAULT_FONT_SIZE) delete sizes[key];
+      else sizes[key] = value;
+      return { ...prev, sizes };
+    });
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -178,7 +193,7 @@ export default function DesignSettingsClient({ initialTheme }: { initialTheme: T
     <PageContainer>
       <PageHeader
         title="Design"
-        subtitle={isDirty ? 'Ungespeicherte Änderungen, die Vorschau zeigt sie bereits' : 'Farben, Rahmen und Schatten für alle Nutzer'}
+        subtitle={isDirty ? 'Ungespeicherte Änderungen, die Vorschau zeigt sie bereits' : 'Farben, Schrift, Rahmen und Schatten für alle Nutzer, auch auf der Landingpage'}
       >
         <Button variant="plain" onClick={() => setTheme(saved)} disabled={!isDirty || isSaving}>
           Verwerfen
@@ -254,10 +269,40 @@ export default function DesignSettingsClient({ initialTheme }: { initialTheme: T
             </GroupedRow>
           </GroupedSection>
 
+          <GroupedSection title="Schriftgröße" help="Gilt in beiden Modi. 100 % ist der Standard. Die persönliche Schriftgröße in der Sidebar kommt noch dazu.">
+            {FONT_SIZE_FIELDS.map(({ key, label, description }) => {
+              const size = theme.sizes[key] ?? DEFAULT_FONT_SIZE;
+              return (
+                <GroupedRow key={key} label={label} description={description} htmlFor={`size-${key}`}>
+                  <input
+                    id={`size-${key}`}
+                    type="range"
+                    min={MIN_FONT_SIZE}
+                    max={MAX_FONT_SIZE}
+                    step={FONT_SIZE_STEP}
+                    value={size}
+                    aria-valuetext={`${size} Prozent`}
+                    onChange={(e) => setSize(key, Number(e.target.value))}
+                    className="w-40 accent-[var(--dp-accent)]"
+                  />
+                  <span className="w-14 whitespace-nowrap text-right tabular-nums text-heading">{size} %</span>
+                  <IconButton
+                    label={`${label} auf Standard zurücksetzen`}
+                    onClick={() => setSize(key, DEFAULT_FONT_SIZE)}
+                    disabled={size === DEFAULT_FONT_SIZE}
+                    className="disabled:invisible"
+                  >
+                    <ArrowCounterclockwise size={15} aria-hidden="true" />
+                  </IconButton>
+                </GroupedRow>
+              );
+            })}
+          </GroupedSection>
+
           <GroupedSection title="Schriftstärke" help="Gilt in beiden Modi. 400 ist normal, 700 ist fett.">
             {FONT_WEIGHT_FIELDS.map(({ key, label, description, defaultLabel, options }) => (
               <GroupedRow key={key} label={label} description={description} htmlFor={`weight-${key}`}>
-                <span className="w-10 text-right text-[17px] text-heading" style={{ fontWeight: theme.weights[key] ?? `var(--dp-weight-${key})` }} aria-hidden="true">
+                <span className="w-10 text-right text-17 text-heading" style={{ fontWeight: theme.weights[key] ?? `var(--dp-weight-${key})` }} aria-hidden="true">
                   Aa
                 </span>
                 <select
@@ -279,22 +324,30 @@ export default function DesignSettingsClient({ initialTheme }: { initialTheme: T
             <Button variant="destructive" onClick={() => setTheme(DEFAULT_THEME)} disabled={isDefault || isSaving}>
               Alles auf Standard zurücksetzen
             </Button>
-            <p className="mt-1 text-[13px] text-muted">Wirkt erst nach „Speichern“.</p>
+            <p className="mt-1 text-13 text-muted">Wirkt erst nach „Speichern“.</p>
           </div>
         </div>
 
         <aside className="min-w-0 space-y-8 lg:sticky lg:top-6 lg:self-start">
           <section>
-            <SectionTitle title="Vorschau" help="So sieht ein Widget aus." />
+            <SectionTitle title="Vorschau" help="So sehen ein Widget und ein Eingabefeld aus." />
             <div className="dashboard-widget-surface p-5">
               <p className="widget-eyebrow font-semibold uppercase tracking-wide text-muted">Traffic</p>
-              <p className="mt-1 text-[18px] font-semibold text-heading">Klicks letzte 30 Tage</p>
-              <p className="mt-1 text-[28px] font-bold tabular-nums text-heading">12.480</p>
-              <p className="mt-2 text-[15px] text-body">Fließtext im Widget, gut lesbar auf dem Hintergrund.</p>
-              <p className="mt-1 text-[13px] text-muted">Aktualisiert vor 5 Minuten</p>
+              <p className="mt-1 text-18 font-semibold text-heading">Klicks letzte 30 Tage</p>
+              <p className="mt-1 text-28 font-bold tabular-nums text-heading">12.480</p>
+              <p className="mt-2 text-15 text-body">Fließtext im Widget, gut lesbar auf dem Hintergrund.</p>
+              <p className="mt-1 text-13 text-muted">Aktualisiert vor 5 Minuten</p>
+              <input
+                type="text"
+                tabIndex={-1}
+                readOnly
+                aria-label="Beispiel-Eingabefeld"
+                placeholder="Platzhaltertext im Eingabefeld"
+                className={`${inputClasses} mt-4`}
+              />
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <Button size="sm" tabIndex={-1}>Button</Button>
-                <span className="text-[14px] font-medium text-accent">Link</span>
+                <span className="text-14 font-medium text-accent">Link</span>
               </div>
             </div>
           </section>

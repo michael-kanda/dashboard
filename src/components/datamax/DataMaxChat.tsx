@@ -194,7 +194,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                   >
                     A−
                   </button>
-                  <span className="text-[11px] text-muted w-6 text-center select-none">
+                  <span className="text-11 text-muted w-6 text-center select-none">
                     {FONT_SIZES[fontSizeIndex].label}
                   </span>
                   <button
@@ -280,7 +280,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                     flex-1 px-4 py-2.5
                     bg-surface-secondary border border-border-subtle rounded-md
                     ${fontSizeClass} text-heading
-                    placeholder:text-muted
+                    placeholder:text-placeholder
                     focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15
                     disabled:opacity-50
                     transition-all
@@ -316,7 +316,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                 )}
               </div>
               {usage?.limit != null && usage.remaining != null && (
-                <p className="mt-2 text-[12px] text-muted" role="status" aria-live="polite">
+                <p className="mt-2 text-12 text-muted" role="status" aria-live="polite">
                   {limitReached
                     ? `Tageslimit von ${usage.limit} Fragen erreicht. Ab morgen geht es weiter.`
                     : `Noch ${usage.remaining} von ${usage.limit} Fragen heute.`}

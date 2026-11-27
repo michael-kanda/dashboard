@@ -18,7 +18,7 @@ function openReport(projectId: string | null) {
 export default function ProjectActions({ projectId, collapsed = false }: { projectId: string | null; collapsed?: boolean }) {
   const [isShareOpen, setIsShareOpen] = useState(false);
 
-  const item = `flex h-8 items-center gap-2 rounded-lg text-[13px] font-medium text-muted transition-colors duration-150 ease-out
+  const item = `flex h-8 items-center gap-2 rounded-lg text-13 font-medium text-muted transition-colors duration-150 ease-out
     hover:bg-fill hover:text-heading focus-visible:outline-2 focus-visible:outline-accent ${collapsed ? 'w-9 justify-center' : 'px-2.5'}`;
 
   return (

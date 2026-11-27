@@ -9,7 +9,7 @@ export function FooterLine({ className = '' }: { className?: string }) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <p className={`text-[13px] text-muted ${className}`}>
+    <p className={`text-13 text-muted ${className}`}>
       &copy; {currentYear}{' '}
       <a href="https://designare.at/" target="_blank" rel="noopener noreferrer" className={linkClass}>
         Michael Kanda

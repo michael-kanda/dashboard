@@ -239,7 +239,7 @@ export default function Sidebar() {
       href={HANDBOOK_PATH}
       download={HANDBOOK_FILENAME}
       title={collapsed ? 'Handbuch (PDF)' : 'Handbuch als PDF herunterladen'}
-      className={`flex h-9 items-center gap-2.5 rounded-lg px-3 text-[14px] font-medium text-secondary transition-colors duration-150 ease-out hover:bg-fill ${collapsed ? 'md:justify-center md:px-0' : ''}`}
+      className={`flex h-9 items-center gap-2.5 rounded-lg px-3 text-14 font-medium text-secondary transition-colors duration-150 ease-out hover:bg-fill ${collapsed ? 'md:justify-center md:px-0' : ''}`}
     >
       <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center text-accent"><Book size={16} /></span>
       <span className={collapsed ? 'md:sr-only' : 'truncate'}>Handbuch (PDF)</span>
@@ -247,7 +247,7 @@ export default function Sidebar() {
   );
 
   const renderDemoContact = () => (
-    <div className="mx-1 mt-4 rounded-lg bg-fill px-3 py-2.5 text-[12px] leading-[1.45] text-muted">
+    <div className="mx-1 mt-4 rounded-lg bg-fill px-3 py-2.5 text-12 leading-[1.45] text-muted">
       Fragen zur Demo?{' '}
       <a href="mailto:michael@designare.at" className="font-medium text-accent hover:underline">
         michael@designare.at
@@ -256,7 +256,7 @@ export default function Sidebar() {
   );
 
   const groupTitle = (label: string) => (
-    <div className="px-3 pt-4 pb-1.5 text-[12px] font-semibold text-muted">{label}</div>
+    <div className="px-3 pt-4 pb-1.5 text-12 font-semibold text-muted">{label}</div>
   );
 
   const renderNavLink = (item: NavItem, index: number, collapsed: boolean) => {
@@ -269,7 +269,7 @@ export default function Sidebar() {
         onClick={handleLinkClick}
         aria-current={active ? 'page' : undefined}
         title={collapsed ? item.label : undefined}
-        className={`group flex h-9 items-center gap-2.5 rounded-lg px-3 text-[14px] transition-colors duration-150 ease-out
+        className={`group flex h-9 items-center gap-2.5 rounded-lg px-3 text-14 transition-colors duration-150 ease-out
           ${collapsed ? 'md:justify-center md:px-0' : ''}
           ${active
             ? 'bg-accent-solid font-semibold text-white'
@@ -290,7 +290,7 @@ export default function Sidebar() {
         type="button"
         onClick={() => setDashboardSubmenuOpen(!dashboardSubmenuOpen)}
         aria-expanded={dashboardSubmenuOpen}
-        className="flex w-full items-center justify-between rounded-lg px-3 pt-4 pb-1.5 text-[12px] font-semibold text-muted hover:text-heading"
+        className="flex w-full items-center justify-between rounded-lg px-3 pt-4 pb-1.5 text-12 font-semibold text-muted hover:text-heading"
       >
         <span>Abschnitte</span>
         {dashboardSubmenuOpen ? <ChevronUp size={11} aria-hidden="true" /> : <ChevronDown size={11} aria-hidden="true" />}
@@ -305,7 +305,7 @@ export default function Sidebar() {
                 type="button"
                 onClick={() => { scrollToSection(id); onSelect?.(); }}
                 aria-current={isActiveSection ? 'location' : undefined}
-                className={`flex h-8 w-full items-center gap-2.5 rounded-lg px-3 text-left text-[13px] transition-colors duration-150 ease-out
+                className={`flex h-8 w-full items-center gap-2.5 rounded-lg px-3 text-left text-13 transition-colors duration-150 ease-out
                   ${isActiveSection ? 'bg-accent-tint font-semibold text-accent' : 'font-medium text-muted hover:bg-fill hover:text-heading'}`}
               >
                 <span className="flex-shrink-0 text-accent" aria-hidden="true">{icon}</span>
@@ -326,10 +326,10 @@ export default function Sidebar() {
         </span>
       ) : (
         <>
-          <span className="flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-[7px] bg-accent-solid text-[12px] font-bold text-white">
+          <span className="flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-[7px] bg-accent-solid text-12 font-bold text-white">
             DP
           </span>
-          {!collapsed && <span className="truncate text-[16px] font-semibold text-heading">DataPeak</span>}
+          {!collapsed && <span className="truncate text-16 font-semibold text-heading">DataPeak</span>}
         </>
       )}
     </Link>
@@ -394,8 +394,8 @@ export default function Sidebar() {
             <Avatar email={session.user.email || userLabel} size={30} />
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[14px] font-semibold text-heading">{userLabel}</div>
-                <div className="truncate text-[12px] text-muted">{roleLabel(session.user.role)}</div>
+                <div className="truncate text-14 font-semibold text-heading">{userLabel}</div>
+                <div className="truncate text-12 text-muted">{roleLabel(session.user.role)}</div>
               </div>
             )}
             <button type="button" onClick={toggleTheme} aria-label={themeLabel} title={themeLabel} className={`${iconButton} text-muted hover:text-heading`}>
@@ -413,7 +413,7 @@ export default function Sidebar() {
           </>
         ) : (
           <>
-            <Link href="/login" className="flex h-9 flex-1 items-center gap-2.5 rounded-lg px-3 text-[14px] font-medium text-accent hover:bg-fill">
+            <Link href="/login" className="flex h-9 flex-1 items-center gap-2.5 rounded-lg px-3 text-14 font-medium text-accent hover:bg-fill">
               <BoxArrowInRight size={16} aria-hidden="true" />
               {!isCollapsed && <span>Anmelden</span>}
             </Link>
@@ -491,13 +491,13 @@ export default function Sidebar() {
           <div className="mt-1.5 flex items-center gap-2.5 border-t border-border pt-3">
             <Avatar email={session?.user?.email || userLabel} size={30} />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[14px] font-semibold text-heading">{userLabel}</div>
-              <div className="truncate text-[12px] text-muted">{roleLabel(session?.user?.role)}</div>
+              <div className="truncate text-14 font-semibold text-heading">{userLabel}</div>
+              <div className="truncate text-12 text-muted">{roleLabel(session?.user?.role)}</div>
             </div>
             <button
               type="button"
               onClick={() => signOut({ callbackUrl: '/login' })}
-              className="flex h-9 items-center gap-2 rounded-lg px-3 text-[14px] font-medium text-danger hover:bg-fill"
+              className="flex h-9 items-center gap-2 rounded-lg px-3 text-14 font-medium text-danger hover:bg-fill"
             >
               <BoxArrowRight size={16} aria-hidden="true" /> Abmelden
             </button>
@@ -506,7 +506,7 @@ export default function Sidebar() {
             <Link
               href="/login"
               onClick={handleLinkClick}
-              className="mt-1.5 flex h-9 items-center gap-2.5 border-t border-border px-3 pt-3 text-[14px] font-medium text-accent"
+              className="mt-1.5 flex h-9 items-center gap-2.5 border-t border-border px-3 pt-3 text-14 font-medium text-accent"
             >
               <BoxArrowInRight size={16} aria-hidden="true" /> Anmelden
             </Link>

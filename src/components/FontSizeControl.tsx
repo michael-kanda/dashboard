@@ -42,15 +42,15 @@ export default function FontSizeControl() {
 
   return (
     <div className="flex items-center justify-between gap-2" role="group" aria-label="Schriftgröße">
-      <span className="text-[13px] font-medium text-muted">Schriftgröße</span>
+      <span className="text-13 font-medium text-muted">Schriftgröße</span>
       <div className="flex items-center gap-0.5">
-        <button type="button" className={`${button} text-[13px]`} onClick={() => change(-1)} disabled={index <= 0} aria-label="Schrift kleiner" title="Schrift kleiner">
+        <button type="button" className={`${button} text-13`} onClick={() => change(-1)} disabled={index <= 0} aria-label="Schrift kleiner" title="Schrift kleiner">
           A−
         </button>
-        <span className="w-11 text-center text-[13px] tabular-nums text-muted" aria-live="polite">
+        <span className="w-11 text-center text-13 tabular-nums text-muted" aria-live="polite">
           {Math.round(scale * 100)} %
         </span>
-        <button type="button" className={`${button} text-[16px]`} onClick={() => change(1)} disabled={index >= FONT_SCALE_STEPS.length - 1} aria-label="Schrift größer" title="Schrift größer">
+        <button type="button" className={`${button} text-16`} onClick={() => change(1)} disabled={index >= FONT_SCALE_STEPS.length - 1} aria-label="Schrift größer" title="Schrift größer">
           A+
         </button>
       </div>

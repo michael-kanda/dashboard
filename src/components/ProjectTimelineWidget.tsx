@@ -272,8 +272,8 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
             <div className="relative h-10 w-full bg-surface-tertiary/80 rounded-lg border border-border/60 overflow-hidden">
               <div className="absolute top-0 left-0 h-full bg-indigo-200 border-r-2 border-accent transition-all duration-1000" style={{ width: `${timeElapsedPercentage}%` }} />
               <div className="absolute inset-0 flex justify-between items-center px-4 text-xs font-medium text-muted pointer-events-none">
-                <div className="flex flex-col items-start z-10"><span className="text-[11px] text-muted">Start</span><span className="text-strong">{format(startDate, 'dd.MM.yyyy')}</span></div>
-                <div className="flex flex-col items-end z-10"><span className="text-[11px] text-faint">Ende</span><span className="text-muted">{format(endDate, 'dd.MM.yyyy')}</span></div>
+                <div className="flex flex-col items-start z-10"><span className="text-11 text-muted">Start</span><span className="text-strong">{format(startDate, 'dd.MM.yyyy')}</span></div>
+                <div className="flex flex-col items-end z-10"><span className="text-11 text-faint">Ende</span><span className="text-muted">{format(endDate, 'dd.MM.yyyy')}</span></div>
               </div>
             </div>
           </div>
@@ -296,7 +296,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
                 </>
               ) : (<div className="w-full h-full flex items-center justify-center text-xs text-faint">Keine Daten</div>)}
             </div>
-            <div className="flex flex-wrap gap-3 mt-2 text-[12px] text-muted justify-between">
+            <div className="flex flex-wrap gap-3 mt-2 text-12 text-muted justify-between">
               <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span>Freig.: {counts.Freigegeben}</div>
               <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400"></span>Prüf.: {counts['In Prüfung']}</div>
               <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400"></span>Gesp.: {counts.Gesperrt}</div>
@@ -360,7 +360,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
               <Trophy className="text-warning" size={20} />
               <h3>Top-Performer (GSC)</h3>
             </div>
-            <span className="text-[11px] px-2 py-0.5 bg-surface-tertiary text-muted rounded-full">Trend (90T)</span>
+            <span className="text-11 px-2 py-0.5 bg-surface-tertiary text-muted rounded-full">Trend (90T)</span>
           </div>
           {topMovers && topMovers.length > 0 ? (
             <div className="flex-grow overflow-hidden space-y-2">
@@ -370,7 +370,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
                     <div className="widget-item-title text-heading truncate" title={page.haupt_keyword || page.url}>
                       {page.haupt_keyword || <span className="text-faint italic">Kein Keyword</span>}
                     </div>
-                    <div className="text-[11px] text-faint truncate mt-0.5">{new URL(page.url).pathname}</div>
+                    <div className="text-11 text-faint truncate mt-0.5">{new URL(page.url).pathname}</div>
                   </div>
                   <div className="widget-control flex items-center gap-1 text-success bg-surface px-1.5 py-0.5 rounded border border-border">
                     <ArrowUp size={10} />
@@ -396,7 +396,7 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
             </div>
             
             {/* Legende */}
-            <div className="flex gap-3 text-[11px]">
+            <div className="flex gap-3 text-11">
                <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-accent-solid"></span> GSC</div>
                <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500"></span> KI</div>
                <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-500"></span> GenAI</div>

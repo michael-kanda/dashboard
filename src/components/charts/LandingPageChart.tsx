@@ -329,7 +329,7 @@ export default function LandingPageChart({
                       <div className="widget-item-title text-strong leading-tight">
                         {newUsers.toLocaleString('de-DE')}
                       </div>
-                      <div className="text-[12px] text-faint mt-1">Neue Nutzer</div>
+                      <div className="text-12 text-faint mt-1">Neue Nutzer</div>
                     </div>
                   </div>
 
@@ -384,7 +384,7 @@ export default function LandingPageChart({
                   {/* Expanded: weitere Suchbegriffe */}
                   {isExpanded && additionalQueries.length > 0 && (
                     <div className="ml-3 mt-3 pl-3 border-l-2 border-border-subtle">
-                      <div className="text-[11px] text-faint mb-1.5 font-medium">Weitere Suchbegriffe</div>
+                      <div className="text-11 text-faint mb-1.5 font-medium">Weitere Suchbegriffe</div>
                       <div className="text-xs text-body flex flex-wrap gap-x-3 gap-y-1">
                         {additionalQueries.map((q, qi) => (
                           <span
@@ -394,7 +394,7 @@ export default function LandingPageChart({
                           >
                             <span>{q.query}</span>
                             {q.clicks > 0 && (
-                              <span className="ml-1 text-[11px] text-faint">({q.clicks})</span>
+                              <span className="ml-1 text-11 text-faint">({q.clicks})</span>
                             )}
                           </span>
                         ))}
@@ -600,7 +600,7 @@ export default function LandingPageChart({
 
             {/* Modal Footer */}
             {followUpData && !isLoadingFollowUp && !followUpError && (
-              <div className="px-6 py-4 border-t border-border-subtle bg-surface-secondary text-[12px] text-muted">
+              <div className="px-6 py-4 border-t border-border-subtle bg-surface-secondary text-12 text-muted">
                 Die Prozentangabe rechts zeigt, wie viel Prozent der gesamten Einstiege auf diesen speziellen Folgepfad weitergeklickt haben.
               </div>
             )}

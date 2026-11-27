@@ -66,7 +66,7 @@ export default function LocalSeoSection({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="dp-label text-[13px]">Name *</label>
+                  <label className="dp-label text-13">Name *</label>
                   <input
                     type="text"
                     value={location.name}
@@ -77,7 +77,7 @@ export default function LocalSeoSection({
                   />
                 </div>
                 <div>
-                  <label className="dp-label text-[13px]">PLZ</label>
+                  <label className="dp-label text-13">PLZ</label>
                   <input
                     type="text"
                     value={location.postalCode || ''}
@@ -88,7 +88,7 @@ export default function LocalSeoSection({
                   />
                 </div>
                 <div>
-                  <label className="dp-label text-[13px]">Stadt</label>
+                  <label className="dp-label text-13">Stadt</label>
                   <input
                     type="text"
                     value={location.city || ''}
@@ -99,7 +99,7 @@ export default function LocalSeoSection({
                   />
                 </div>
                 <div>
-                  <label className="dp-label text-[13px]">Land</label>
+                  <label className="dp-label text-13">Land</label>
                   <input
                     type="text"
                     value={location.country || 'AT'}
@@ -110,7 +110,7 @@ export default function LocalSeoSection({
                   />
                 </div>
                 <div>
-                  <label className="dp-label text-[13px]">Latitude</label>
+                  <label className="dp-label text-13">Latitude</label>
                   <input
                     type="number"
                     step="0.000001"
@@ -122,7 +122,7 @@ export default function LocalSeoSection({
                   />
                 </div>
                 <div>
-                  <label className="dp-label text-[13px]">Longitude</label>
+                  <label className="dp-label text-13">Longitude</label>
                   <input
                     type="number"
                     step="0.000001"
@@ -134,7 +134,7 @@ export default function LocalSeoSection({
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="dp-label text-[13px]">Google Place ID</label>
+                  <label className="dp-label text-13">Google Place ID</label>
                   <input
                     type="text"
                     value={location.googlePlaceId || ''}
@@ -143,12 +143,12 @@ export default function LocalSeoSection({
                     className="dp-field mt-1"
                     disabled={isSubmitting}
                   />
-                  <p className="mt-1 text-[12px] text-muted">
+                  <p className="mt-1 text-12 text-muted">
                     Optional, aber empfohlen. Echte Place IDs beginnen meist mit ChIJ. Reine Zahlen sind CIDs und werden ignoriert.
                   </p>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="dp-label text-[13px]">Google Unternehmensprofil URL / Maps-Link</label>
+                  <label className="dp-label text-13">Google Unternehmensprofil URL / Maps-Link</label>
                   <input
                     type="url"
                     value={location.googleBusinessProfileUrl || ''}
@@ -159,7 +159,7 @@ export default function LocalSeoSection({
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="dp-label text-[13px]">Google Unternehmensprofil Bild URL</label>
+                  <label className="dp-label text-13">Google Unternehmensprofil Bild URL</label>
                   <input
                     type="url"
                     value={location.googleBusinessProfileImageUrl || ''}
@@ -170,7 +170,7 @@ export default function LocalSeoSection({
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="dp-label text-[13px]">Landingpages (kommagetrennt)</label>
+                  <label className="dp-label text-13">Landingpages (kommagetrennt)</label>
                   <input
                     type="text"
                     value={listToCsv(location.landingPages)}
@@ -181,7 +181,7 @@ export default function LocalSeoSection({
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="dp-label text-[13px]">Keywords/Aliase (kommagetrennt)</label>
+                  <label className="dp-label text-13">Keywords/Aliase (kommagetrennt)</label>
                   <input
                     type="text"
                     value={listToCsv(location.keywords)}

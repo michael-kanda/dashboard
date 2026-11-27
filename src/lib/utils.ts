@@ -1,6 +1,16 @@
 import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { extendTailwindMerge } from "tailwind-merge"
 import { ConvertingPageData } from "@/lib/dashboard-shared"
+
+// Eigene Schriftstufen (text-11 … text-29, globals.css) als Schriftgröße bekannt machen.
+// Sonst hält tailwind-merge sie für eine Textfarbe und streicht sie neben text-muted & Co.
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      text: ['10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '22', '23', '25', '28', '29'],
+    },
+  },
+})
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
