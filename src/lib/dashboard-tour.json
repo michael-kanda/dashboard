@@ -1,0 +1,66 @@
+[
+  {
+    "id": "ueberblick",
+    "sectionIds": ["section-kpis"],
+    "label": "Überblick",
+    "title": "Kennzahlen im Überblick",
+    "text": "Acht Zahlen aus der Google-Suche und Google Analytics, jeweils mit dem Wert aus dem gleich langen Zeitraum davor.",
+    "honest": "Analytics zählt nur Besucher, die dem Cookie-Banner zustimmen. Die Besucherzahlen sind deshalb meist niedriger als in Wirklichkeit."
+  },
+  {
+    "id": "verlauf",
+    "sectionIds": ["section-verlauf"],
+    "label": "Verlauf",
+    "title": "Verlauf und Analyse",
+    "text": "Eine Kennzahl Tag für Tag, auf Wunsch mit einer zweiten zum Vergleich. Beim Darüberfahren zeigt jeder Tag Wetter und Feiertage.",
+    "honest": "Das Wetter stammt für .at-Adressen aus Wien, sonst aus Berlin, nicht von Ihrem Standort."
+  },
+  {
+    "id": "lokal",
+    "sectionIds": ["section-local-seo"],
+    "label": "Lokale Sichtbarkeit",
+    "title": "Lokale Sichtbarkeit",
+    "text": "Ihre Standorte auf einer Karte, mit Zahlen aus Suche und Analytics je Standort und dem Google-Unternehmensprofil.",
+    "honest": "Aufrufe, Anrufe und Routenanfragen aus dem Unternehmensprofil zeigt DataPeak nicht. Die Zuordnung zu Standorten ist eine Näherung."
+  },
+  {
+    "id": "google-ki",
+    "sectionIds": ["section-google-genai"],
+    "label": "Google-KI",
+    "title": "Google GenAI Sichtbarkeit",
+    "text": "Wie oft Google Ihre Seiten in seinen KI-Antworten (AI Overviews und AI Mode) eingeblendet hat, und welche Seiten das waren.",
+    "honest": "Die Werte kommen aus der Search Console, soweit Google sie dort bereitstellt. Für manche Websites liefert Google noch keine."
+  },
+  {
+    "id": "ki-traffic",
+    "sectionIds": ["section-ki-traffic"],
+    "label": "KI-Traffic",
+    "title": "KI-Traffic",
+    "text": "Besuche aus ChatGPT, Perplexity, Gemini, Claude und anderen KI-Diensten, nach Quelle getrennt und mit Verlauf.",
+    "honest": "DataPeak sieht nur Klicks aus einer KI-Antwort. Wie oft eine KI Ihre Firma erwähnt, ohne dass jemand klickt, misst es nicht."
+  },
+  {
+    "id": "suche",
+    "sectionIds": ["section-top-queries", "section-landingpages"],
+    "label": "Suchanfragen und Seiten",
+    "title": "Top Suchanfragen und Landingpages",
+    "text": "Wonach Menschen suchen und auf welchen Seiten ihr Besuch beginnt, mit Klicks, Position und Conversions. Beide Listen gibt es als CSV.",
+    "honest": "Die Position ist ein Durchschnitt über alle Einblendungen. Was Sie selbst bei Google sehen, kann anders aussehen."
+  },
+  {
+    "id": "zugriffe",
+    "sectionIds": ["section-zugriffe"],
+    "label": "Zugriffe",
+    "title": "Zugriffe nach Quelle",
+    "text": "Ob Besucher aus der Google-Suche, über Links, Social Media oder direkt kommen, aus welchem Land und mit welchem Gerät.",
+    "honest": "Manche Apps übergeben keine Herkunft. Solche Besuche landen bei „Direkt“."
+  },
+  {
+    "id": "google-ads",
+    "sectionIds": ["section-google-ads"],
+    "label": "Google Ads",
+    "title": "Google Ads Performance",
+    "text": "Die Ergebnisse Ihrer Anzeigen im selben Dashboard wie Suche und Besucher. Dieser Bereich wird auf Wunsch eingeschaltet.",
+    "honest": "Conversions in Google Ads und in Analytics werden unterschiedlich gezählt und weichen daher oft voneinander ab."
+  }
+]

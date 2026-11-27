@@ -18,6 +18,7 @@ import {
   Stars,
 } from 'react-bootstrap-icons';
 import ClosingCta from '@/components/marketing/ClosingCta';
+import DashboardTour from '@/components/marketing/DashboardTour';
 import DataMaxChatPreview from '@/components/marketing/DataMaxChatPreview';
 import ProductPreview from '@/components/marketing/ProductPreview';
 import { MARKETING_ORIGIN, appOriginFor } from '@/lib/site-hosts';
@@ -345,6 +346,9 @@ export default function LandingPage() {
             title="Alles im Blick."
             lead="Vom ersten Klick in Google bis zur Anfrage über ChatGPT: DataPeak zeigt, woher Ihre Besucher kommen und was sie suchen."
           />
+          <div className="mt-12">
+            <DashboardTour />
+          </div>
           <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {FEATURES.map(({ icon: Icon, title, text }) => (
               <li key={title} className="rounded-container border border-border bg-surface p-5">
