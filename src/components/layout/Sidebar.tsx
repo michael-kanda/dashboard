@@ -60,11 +60,9 @@ export default function Sidebar() {
   const [hasLandingpages, setHasLandingpages] = useState(false);
   const [isCheckingLandingpages, setIsCheckingLandingpages] = useState(true);
 
-  // NEU: State speichert alle Sektions-IDs, die tatsächlich im DOM existieren.
-  // Standardmäßig nehmen wir erstmal an, dass alle da sind, bis geprüft wurde.
-  const [availableSectionIds, setAvailableSectionIds] = useState<string[]>(
-    DASHBOARD_SECTIONS.map(s => s.id)
-  );
+  // Sektions-IDs, die tatsächlich im DOM existieren. Startet leer, damit nie ein
+  // Abschnitt aufblitzt, den das Projekt gar nicht hat (z. B. Semrush).
+  const [availableSectionIds, setAvailableSectionIds] = useState<string[]>([]);
 
   const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERADMIN';
   const isSuperAdmin = session?.user?.role === 'SUPERADMIN';
@@ -91,16 +89,21 @@ export default function Sidebar() {
     if (typeof IntersectionObserver === 'undefined') return;
 
     let observer: IntersectionObserver | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let lastKey = '';
 
-    const timer = setTimeout(() => {
-      // 1. NEU: DOM-Check - Welche Sektionen existieren wirklich auf der Seite?
+    // Prüft, welche Sektionen im DOM sind, und beobachtet sie für den Scroll-Spy.
+    // Läuft erneut, wenn das Dashboard nachlädt (MutationObserver).
+    const scan = () => {
       const foundIds = DASHBOARD_SECTIONS
         .map(sec => sec.id)
         .filter(id => document.getElementById(id) !== null);
-      
+      const key = foundIds.join(',');
+      if (key === lastKey) return;
+      lastKey = key;
       setAvailableSectionIds(foundIds);
 
-      // 2. Observer aufsetzen (nur für die gefundenen Sektionen)
+      observer?.disconnect();
       try {
         observer = new IntersectionObserver(
           (entries) => {
@@ -113,7 +116,6 @@ export default function Sidebar() {
           },
           { rootMargin: '-80px 0px -50% 0px', threshold: 0.1 }
         );
-
         foundIds.forEach((id) => {
           const el = document.getElementById(id);
           if (el && observer) observer.observe(el);
@@ -121,11 +123,21 @@ export default function Sidebar() {
       } catch {
         // Silent fail – Sektionen noch nicht im DOM
       }
-    }, 1000);
+    };
+
+    // Gedrosselt statt entprellt: Laufende Diagramm-Animationen verzögern den Check nicht.
+    const schedule = () => {
+      if (timer) return;
+      timer = setTimeout(() => { timer = null; scan(); }, 250);
+    };
+    schedule();
+    const mutations = new MutationObserver(schedule);
+    mutations.observe(document.body, { childList: true, subtree: true });
 
     return () => {
-      clearTimeout(timer);
-      if (observer) observer.disconnect();
+      if (timer) clearTimeout(timer);
+      mutations.disconnect();
+      observer?.disconnect();
     };
   }, [isDashboardPage, pathname]);
 
