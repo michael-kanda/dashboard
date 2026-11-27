@@ -59,7 +59,9 @@ export default function DatenschutzPage() {
             <li>
               <strong>Bestandsdaten:</strong> E-Mail-Adresse, Passwort
               (verschlüsselt gespeichert), zugewiesene Rolle (z.B. ADMIN,
-              BENUTZER), Mandanten-ID und Berechtigungen.
+              BENUTZER), Mandanten-ID und Berechtigungen. Nutzen Sie die
+              Zwei-Faktor-Anmeldung, speichern wir den dazugehörigen Schlüssel
+              verschlüsselt und die Wiederherstellungscodes nur als Hashwert.
             </li>
             <li>
               <strong>Konfigurationsdaten:</strong> Von Ihnen oder einem
@@ -80,7 +82,15 @@ export default function DatenschutzPage() {
             <li>
               <strong>Protokolldaten:</strong> Aktionen von Benutzern (z.B.
               Statusänderungen von Landingpages) werden zur Nachvollziehbarkeit
-              protokolliert.
+              protokolliert. Zu jeder Anmeldung speichern wir Zeitpunkt,
+              E-Mail-Adresse und Rolle; zu fehlgeschlagenen Anmeldeversuchen
+              zum Schutz vor Missbrauch zusätzlich die IP-Adresse.
+            </li>
+            <li>
+              <strong>Eingaben in KI-Funktionen:</strong> Fragen, die Sie an
+              den KI-Assistenten DataMax stellen, sowie die Anzahl Ihrer
+              DataMax-Anfragen pro Tag (für das Tageslimit). Der Chatverlauf
+              selbst wird nicht gespeichert.
             </li>
           </ul>
         </section>
@@ -111,6 +121,16 @@ export default function DatenschutzPage() {
               <strong>Benachrichtigungsfunktion:</strong> Um Administratoren und
               Benutzer per E-Mail (über den Dienst Brevo) und intern über
               Statusänderungen im Redaktionsplan zu informieren.
+            </li>
+            <li>
+              <strong>KI-Funktionen:</strong> Um Ihre Fragen an DataMax zu
+              beantworten, Auswertungen zu erstellen und Suchanfragen zu Themen
+              zu gruppieren (Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO).
+            </li>
+            <li>
+              <strong>Fehleranalyse:</strong> Um Fehler im Dashboard zu erkennen
+              und zu beheben (Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO -
+              Berechtigtes Interesse an einem stabilen Dienst).
             </li>
             <li>
               <strong>Sicherheit und Administration:</strong> Zur Verwaltung von
@@ -171,8 +191,32 @@ export default function DatenschutzPage() {
               freigegebene Google-Tabelle bzw. die Verknüpfung in GA4) und die
               Google Places API für Unternehmensprofile (Name, Bewertung,
               Öffnungsstatus, Foto). So werden die Dashboard-Daten
-              abgerufen. Es werden keine personenbezogenen Daten *an* diese
+              abgerufen. Dabei werden keine personenbezogenen Daten *an* diese
               Dienste gesendet, sondern nur Daten *von* diesen abgerufen.
+            </li>
+            <li>
+              <strong>Google Gemini (KI-Assistent DataMax):</strong> Für den
+              Chat, die KI-Analyse und das Gruppieren von Suchanfragen senden
+              wir Ihre Frage zusammen mit zusammengefassten Kennzahlen Ihres
+              Projekts (z.B. Domain, Klicks, Suchbegriffe, Seiten, Standorte)
+              an die Gemini API von Google (USA). Daten einzelner
+              Website-Besucher sind darin nicht enthalten. Bitte geben Sie im
+              Chat keine personenbezogenen Daten ein.
+            </li>
+            <li>
+              <strong>Sentry (Fehlerüberwachung):</strong> Treten im Dashboard
+              Fehler auf, senden wir einen Fehlerbericht an Sentry (Functional
+              Software, Inc.), Datenspeicherung in der EU. Der Bericht kann
+              IP-Adresse, Browser- und Gerätedaten sowie die aufgerufene Seite
+              enthalten. Bei einem Teil der Sitzungen und bei Fehlern wird
+              zusätzlich der Ablauf im Dashboard aufgezeichnet; Texte und
+              Eingaben werden dabei unkenntlich gemacht.
+            </li>
+            <li>
+              <strong>Open-Meteo (Wetterdaten):</strong> Für die Wetteranzeige
+              im Verlauf fragen wir beim Dienst Open-Meteo historische
+              Wetterdaten für Wien oder Berlin ab. Übermittelt werden nur Ort
+              und Zeitraum, keine personenbezogenen Daten.
             </li>
           </ul>
         </section>
@@ -198,10 +242,14 @@ export default function DatenschutzPage() {
           </h2>
           <p className="text-body">
             Ihre Bestands- und Konfigurationsdaten werden gespeichert, solange
-            Ihr Benutzerkonto für das &quot;Data Peak&quot; Dashboard besteht. Daten in
-            Caches (z.B. Google-Daten) werden periodisch, spätestens nach 48
-            Stunden, erneuert. Protokolldaten werden aus administrativen Gründen
-            für einen begrenzten Zeitraum aufbewahrt.
+            Ihr Benutzerkonto für das &quot;Data Peak&quot; Dashboard besteht. Die
+            zwischengespeicherten Google-Daten werden je nach Zeitraum nach zwei
+            bis sieben Tagen erneuert. Anmeldungen, KI-Auswertungen und
+            Protokolldaten bleiben gespeichert, solange Ihr Benutzerkonto
+            besteht; fehlgeschlagene Anmeldeversuche samt IP-Adresse löschen wir
+            nach einem Tag. Fehlerberichte bei Sentry werden nach Ablauf der dort
+            geltenden Aufbewahrungsfrist automatisch gelöscht. Auf Wunsch löschen
+            wir Ihr Konto und alle zugehörigen Daten.
           </p>
         </section>
 
@@ -219,7 +267,7 @@ export default function DatenschutzPage() {
           </p>
         </section>
 
-        <p className="text-[14px] text-muted mt-8">Stand: 03. November 2025</p>
+        <p className="text-[14px] text-muted mt-8">Stand: 27. November 2026</p>
       </div>
     </div>
   );

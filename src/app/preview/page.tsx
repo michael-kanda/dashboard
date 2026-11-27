@@ -94,7 +94,7 @@ export default function PreviewPage() {
                     <Activity className={kpi.tone} size={18} />
                   </div>
                   <div className="mt-4 text-3xl font-bold tracking-tight">{kpi.value}</div>
-                  <div className={`mt-2 text-sm font-semibold ${kpi.tone}`}>{kpi.change} zum Vormonat</div>
+                  <div className={`mt-2 text-sm font-semibold ${kpi.tone}`}>{kpi.change} zur Vorperiode</div>
                 </article>
               ))}
             </section>

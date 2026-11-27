@@ -178,7 +178,7 @@ export default function Sidebar() {
       if (status !== 'authenticated' || !session?.user) { setIsCheckingLandingpages(false); setHasLandingpages(false); return; }
       if (session.user.role === 'ADMIN' || session.user.role === 'SUPERADMIN') { setIsCheckingLandingpages(false); setHasLandingpages(true); return; }
       try {
-        const res = await fetch('/api/user/has-landingpages');
+        const res = await fetch('/api/users/has-landingpages');
         const data = await res.json();
         setHasLandingpages(data.hasLandingpages === true);
       } catch { setHasLandingpages(false); } finally { setIsCheckingLandingpages(false); }

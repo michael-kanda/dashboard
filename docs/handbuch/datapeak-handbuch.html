@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>DataPeak – Handbuch</title>
+<link rel="stylesheet" href="handbuch.css">
+</head>
+<body>
+
+<!-- ───────────── Titelseite ───────────── -->
+<section class="page cover">
+  <img class="cover-logo" style="height:40px" src="logo-data-peak.webp" alt="DataPeak">
+  <div class="cover-main">
+    <h1>Ihr Handbuch für<br>DataPeak<span class="dot">.</span></h1>
+    <p class="cover-sub">Was Ihr Dashboard zeigt, woher die Zahlen kommen und wo ihre Grenzen liegen. Schritt für Schritt, ohne Fachchinesisch.</p>
+  </div>
+  <svg class="cover-art" viewBox="0 0 600 320" aria-hidden="true">
+    <defs>
+      <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#0066CC" stop-opacity=".22"/>
+        <stop offset="1" stop-color="#0066CC" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <g stroke="#E5E5EA" stroke-width="1">
+      <line x1="0" y1="80" x2="600" y2="80"/><line x1="0" y1="160" x2="600" y2="160"/><line x1="0" y1="240" x2="600" y2="240"/>
+    </g>
+    <path d="M0 270 L60 250 L110 262 L170 220 L230 232 L290 170 L340 190 L400 110 L450 140 L510 60 L560 95 L600 80 L600 320 L0 320 Z" fill="url(#cg)"/>
+    <path d="M0 270 L60 250 L110 262 L170 220 L230 232 L290 170 L340 190 L400 110 L450 140 L510 60 L560 95 L600 80" fill="none" stroke="#0066CC" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="510" cy="60" r="9" fill="#fff" stroke="#0066CC" stroke-width="4"/>
+  </svg>
+  <div class="cover-meta">datapeak.at · Dashboard: app.datapeak.at<br>Stand: November 2026</div>
+</section>
+
+<!-- ───────────── Inhalt ───────────── -->
+<section class="page">
+  <h2>Inhalt<span class="dot">.</span></h2>
+  <ol class="toc">
+    <li><span class="n">1</span><span class="tt"><b>So arbeitet DataPeak</b><small>Was DataPeak kann und was bewusst nicht</small></span><span class="pg">3</span></li>
+    <li><span class="n">2</span><span class="tt"><b>Anmelden</b><small>Zugang, Zwei-Faktor-Code, Abmeldung</small></span><span class="pg">4</span></li>
+    <li><span class="n">3</span><span class="tt"><b>Das Dashboard im Überblick</b><small>Wo Sie was finden</small></span><span class="pg">5</span></li>
+    <li><span class="n">4</span><span class="tt"><b>Zeitraum und Aktualität</b><small>Wie frisch die Zahlen sind und womit verglichen wird</small></span><span class="pg">6</span></li>
+    <li><span class="n">5</span><span class="tt"><b>Kennzahlen und Verlauf</b><small>Was die Zahlen bedeuten, Wetter und Feiertage</small></span><span class="pg">7</span></li>
+    <li><span class="n">6</span><span class="tt"><b>KI-Traffic</b><small>Besucher aus ChatGPT, Perplexity, Gemini und Co.</small></span><span class="pg">8</span></li>
+    <li><span class="n">7</span><span class="tt"><b>Google-KI und Fragen-Radar</b><small>AI Overviews und lange Suchanfragen</small></span><span class="pg">9</span></li>
+    <li><span class="n">8</span><span class="tt"><b>Suchanfragen, Seiten und Zugriffe</b><small>Listen, Indexierung, CSV-Export</small></span><span class="pg">10</span></li>
+    <li><span class="n">9</span><span class="tt"><b>Lokale Sichtbarkeit</b><small>Standorte und Google-Unternehmensprofil</small></span><span class="pg">11</span></li>
+    <li><span class="n">10</span><span class="tt"><b>Google Ads</b><small>Kampagnen im selben Dashboard</small></span><span class="pg">12</span></li>
+    <li><span class="n">11</span><span class="tt"><b>DataMax, der KI-Assistent</b><small>Fragen stellen, Analyse, Tageslimit</small></span><span class="pg">13</span></li>
+    <li><span class="n">12</span><span class="tt"><b>Teilen und Berichte</b><small>PDF und Gastlink</small></span><span class="pg">14</span></li>
+    <li><span class="n">13</span><span class="tt"><b>Ihre Daten und Datenschutz</b><small>Was wir speichern und wer beteiligt ist</small></span><span class="pg">15</span></li>
+    <li><span class="n">14</span><span class="tt"><b>Was DataPeak nicht kann</b><small>Grenzen, offen gesagt</small></span><span class="pg">16</span></li>
+    <li><span class="n">15</span><span class="tt"><b>Häufige Fragen und Hilfe</b></span><span class="pg">17</span></li>
+  </ol>
+  <div class="box info">
+    <div class="lbl">Der schnellste Einstieg</div>
+    Anmelden (Kapitel 2) → Zwei-Faktor-Code einrichten (2) → Zeitraum verstehen (4) → einmal pro Woche „Kennzahlen im Überblick“ und „KI-Traffic“ ansehen (5, 6) → bei Fragen DataMax fragen (11).
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>2</span></div>
+</section>
+
+<!-- ───────────── 1 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">1</span><div><h2>So arbeitet DataPeak<span class="dot">.</span></h2></div></div>
+  <p class="lead">DataPeak holt die Zahlen Ihrer Website aus Google-Diensten, die Sie schon nutzen, und zeigt sie gemeinsam in einem Dashboard. Dazu erklärt der KI-Assistent DataMax, was sich verändert hat.</p>
+
+  <div class="figure">
+    <div class="flow">
+      <div class="flow-col">
+        <div class="src">Search Console</div><div class="src">Analytics 4</div><div class="src">Google Ads</div><div class="src">Unternehmensprofil</div>
+      </div>
+      <div class="arrow">holt die Zahlen<br><svg width="70" height="12"><path d="M0 6h62" stroke="#0066CC" stroke-width="2" stroke-dasharray="4 3"/><path d="M60 1l8 5-8 5" fill="none" stroke="#0066CC" stroke-width="2"/></svg></div>
+      <div class="flow-hub"><img src="logo-data-peak.webp" alt=""><span>speichert und vergleicht</span></div>
+      <div class="arrow">zeigt<br><svg width="70" height="12"><path d="M0 6h62" stroke="#0066CC" stroke-width="2" stroke-dasharray="4 3"/><path d="M60 1l8 5-8 5" fill="none" stroke="#0066CC" stroke-width="2"/></svg></div>
+      <div class="ui flow-ui">
+        <div class="ui-bar"><i></i><i></i><i></i></div>
+        <div style="padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div class="kpi"><div class="l">Klicks</div><div class="v">4.812</div><div class="d">+10 %</div></div>
+          <div class="kpi"><div class="l">Besucher</div><div class="v">3.960</div><div class="d">+6 %</div></div>
+        </div>
+        <svg viewBox="0 0 160 34" style="display:block;width:100%;padding:0 8px 8px"><path d="M0 28 L25 24 L45 26 L70 16 L95 19 L120 8 L160 4" fill="none" stroke="#0066CC" stroke-width="2"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div>
+      <h3>Was DataPeak macht</h3>
+      <ul class="dots">
+        <li>Führt Search Console, Analytics 4, Google Ads und Google-Unternehmensprofile in einem Dashboard zusammen.</li>
+        <li>Vergleicht jeden Zeitraum mit dem gleich langen Zeitraum davor.</li>
+        <li>Zeigt, wie viele Besucher über KI-Dienste wie ChatGPT oder Perplexity kommen.</li>
+        <li>Erklärt mit DataMax Veränderungen in Klartext und schlägt nächste Schritte vor.</li>
+        <li>Erstellt einen Bericht zum Drucken und einen Gastlink zum Teilen.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Was DataPeak bewusst nicht macht</h3>
+      <ul class="dots no">
+        <li>Kein eigenes Tracking: DataPeak baut nichts in Ihre Website ein und setzt dort keine Cookies.</li>
+        <li>Keine eigenen Messungen: Alle Zahlen stammen aus Google. Was Google nicht erfasst, kann DataPeak nicht zeigen.</li>
+        <li>Keine Daten über einzelne Besucher: DataPeak sieht nur Summen, etwa „120 Besuche aus Wien“.</li>
+        <li>Keine Änderungen an Ihrer Website, an Analytics oder an Ihren Anzeigen. DataPeak liest nur.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="box info">
+    <div class="lbl">Unser Versprechen</div>
+    Wo eine Zahl unsicher, geschätzt oder unvollständig ist, sagen wir es Ihnen. Darum finden Sie in jedem Kapitel einen Kasten <b>„Ehrlich gesagt“</b> mit den Grenzen der jeweiligen Auswertung, und in Kapitel 14 alle Grenzen auf einen Blick.
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>3</span></div>
+</section>
+
+<!-- ───────────── 2 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">2</span><div><h2>Anmelden<span class="dot">.</span></h2><div class="where">app.datapeak.at/login</div></div></div>
+  <p class="lead">Ihr Zugang besteht aus einer E-Mail-Adresse und einem Passwort. DataPeak ist nicht frei registrierbar: Wir legen Ihren Zugang an und schicken Ihnen die Daten.</p>
+
+  <div class="figure" style="display:flex;align-items:center;justify-content:center;gap:26px">
+    <div class="ui" style="width:220px;padding:14px">
+      <div style="font-weight:700;color:var(--heading);font-size:11pt">Willkommen zurück</div>
+      <div class="small" style="margin-bottom:8px">Ihre aktuellen Daten warten bereits.</div>
+      <div class="field-l">E-Mail</div><div class="field">office@ihre-firma.at</div>
+      <div class="field-l">Passwort</div><div class="field">• • • • • • • • • •</div>
+      <div class="btn">Anmelden</div>
+    </div>
+    <div class="small" style="text-align:center">wenn aktiviert<br><svg width="60" height="12"><path d="M0 6h52" stroke="#0066CC" stroke-width="2" stroke-dasharray="4 3"/><path d="M50 1l8 5-8 5" fill="none" stroke="#0066CC" stroke-width="2"/></svg></div>
+    <div class="phone"><div class="small" style="color:#A1A1A6">Authenticator</div><div class="code">482 913</div><div class="small" style="color:#A1A1A6">DataPeak</div></div>
+  </div>
+
+  <ol class="steps">
+    <li>Öffnen Sie <b>app.datapeak.at</b> (oder auf datapeak.at oben rechts „Anmelden“).</li>
+    <li>E-Mail-Adresse und Passwort eingeben, auf <span class="kbd">Anmelden</span> klicken.</li>
+    <li>Haben Sie die Zwei-Faktor-Anmeldung eingeschaltet, erscheint das Feld „Code“: den 6-stelligen Code aus Ihrer Authenticator-App eingeben.</li>
+  </ol>
+
+  <h3>Zwei-Faktor-Anmeldung einrichten (empfohlen)</h3>
+  <ol class="steps">
+    <li>In der Seitenleiste auf <span class="kbd">Zwei-Faktor-Anmeldung</span> und dann <span class="kbd">Jetzt einrichten</span> klicken.</li>
+    <li>Den QR-Code mit einer Authenticator-App scannen, z. B. Google Authenticator, Microsoft Authenticator oder 1Password.</li>
+    <li>Den angezeigten Code eingeben und <span class="kbd">Aktivieren</span>. Danach erhalten Sie acht Wiederherstellungscodes. Mit <span class="kbd">Codes herunterladen</span> speichern und gut aufbewahren: Jeder Code funktioniert einmal, falls Sie Ihr Handy nicht zur Hand haben.</li>
+  </ol>
+
+  <div class="box honest">
+    <div class="lbl">Ehrlich gesagt</div>
+    <b>Passwort vergessen?</b> Einen Link zum Selbst-Zurücksetzen gibt es derzeit nicht, und Sie können Ihr Passwort auch nicht selbst ändern. Schreiben Sie uns, dann setzen wir es zurück (mindestens 10 Zeichen). Dasselbe gilt, wenn Sie Handy und Wiederherstellungscodes verloren haben.
+  </div>
+  <div class="box info">
+    <div class="lbl">Sicherheit</div>
+    Nach etwa einer Stunde ohne Nutzung meldet Sie das Dashboard ab, ohne Vorwarnung. Nach fünf falschen Passwörtern ist die Anmeldung für 15 Minuten gesperrt. Abmelden: unten in der Seitenleiste auf <span class="kbd">Abmelden</span>.
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>4</span></div>
+</section>
+
+<!-- ───────────── 3 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">3</span><div><h2>Das Dashboard im Überblick<span class="dot">.</span></h2></div></div>
+  <p class="lead">Nach der Anmeldung landen Sie direkt in Ihrem Projekt. Links ist die Seitenleiste, rechts das Dashboard als lange Seite, die Sie von oben nach unten lesen.</p>
+
+  <div class="figure">
+    <div class="ui" style="display:grid;grid-template-columns:120px 1fr;overflow:hidden">
+      <div style="background:var(--surface2);border-right:1px solid var(--border-subtle);padding:10px 8px;font-size:7.6pt;line-height:1.9">
+        <img src="logo-data-peak.webp" alt="" style="height:14px;margin-bottom:6px"><br>
+        <b style="color:var(--heading)">Dashboard</b><br>Zwei-Faktor-Anmeldung<br>
+        <span style="color:var(--faint);font-size:6.6pt;letter-spacing:.06em">ABSCHNITTE</span><br>
+        Traffic &amp; Reichweite<br>Verlauf &amp; Analyse<br>KI-Traffic<br>Top Suchanfragen<br>…<br>
+        Drucken · Teilen<br>☾ · Abmelden
+        <div class="mark" style="left:100px;top:6px">1</div>
+      </div>
+      <div style="padding:10px 12px;position:relative">
+        <div style="font-weight:700;color:var(--heading);font-size:10pt">ihre-firma.at</div>
+        <div class="small" style="font-size:7.2pt">Guten Morgen · Betreut durch …</div>
+        <div style="margin:6px 0"><span class="chip" style="background:var(--heading);color:#fff;border-color:var(--heading)">Letzte 30 Tage</span><span class="chip">3 Monate</span><span class="chip">6 Monate</span><span class="chip">12 Monate</span></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px">
+          <div class="kpi"><div class="l">Impressionen</div><div class="v" style="font-size:10pt">182.400</div></div>
+          <div class="kpi"><div class="l">Google Klicks</div><div class="v" style="font-size:10pt">4.812</div></div>
+          <div class="kpi"><div class="l">Neue Besucher</div><div class="v" style="font-size:10pt">3.120</div></div>
+          <div class="kpi"><div class="l">Besucher</div><div class="v" style="font-size:10pt">3.960</div></div>
+        </div>
+        <div class="mark" style="right:10px;top:8px">2</div>
+        <div class="mark" style="right:10px;top:62px">3</div>
+        <div class="dm">DataMax<div class="mark" style="right:-8px;top:-8px">4</div></div>
+      </div>
+    </div>
+    <div class="figcap">1 Seitenleiste · 2 Zeitraum · 3 Kennzahlen und weitere Bereiche · 4 DataMax-Chat (rechts unten)</div>
+  </div>
+
+  <table class="t">
+    <tr><th>Bereich</th><th>Was Sie dort sehen</th></tr>
+    <tr><td>Projekt-Status</td><td>Zeitachse und Stand der Landingpages. Nur sichtbar, wenn wir aktiv an Ihrer Website arbeiten. Neue Texte geben Sie dann in der Seitenleiste unter „Redaktionsplan“ frei oder kommentieren sie.</td></tr>
+    <tr><td>Data Max (KI-Analyse)</td><td>Eine schriftliche Auswertung Ihrer Zahlen auf Knopfdruck (Kapitel 11).</td></tr>
+    <tr><td>Kennzahlen im Überblick</td><td>Die acht wichtigsten Zahlen mit dem Wert der Vorperiode (Kapitel 5).</td></tr>
+    <tr><td>Verlauf &amp; Analyse</td><td>Tagesverlauf einer Kennzahl, mit Wetter und Feiertagen.</td></tr>
+    <tr><td>Lokale Sichtbarkeit</td><td>Ihre Standorte auf der Karte (Kapitel 9).</td></tr>
+    <tr><td>Google GenAI Sichtbarkeit</td><td>Einblendungen in Googles KI-Antworten (Kapitel 7).</td></tr>
+    <tr><td>KI-Traffic</td><td>Besuche aus ChatGPT &amp; Co. und das Fragen-Radar (Kapitel 6 und 7).</td></tr>
+    <tr><td>Top Suchanfragen, Top Landingpages, Indexierungsstatus</td><td>Wonach gesucht wird, welche Seiten wirken, was Google kennt (Kapitel 8).</td></tr>
+    <tr><td>Zugriffe nach Channel, Land, Endgerät</td><td>Woher die Besucher kommen.</td></tr>
+    <tr><td>Google Ads Performance</td><td>Ihre Kampagnen (Kapitel 10).</td></tr>
+    <tr><td>Hinweis zur Datenbasis</td><td>Ganz unten: wie die Zahlen entstehen und wo ihre Grenzen liegen.</td></tr>
+  </table>
+  <p class="small">Welche Bereiche erscheinen, stellen wir pro Projekt ein. Fehlt Ihnen etwas, schreiben Sie uns. In der Seitenleiste springen Sie unter „Abschnitte“ direkt zu jedem Bereich; dort stellen Sie auch hell oder dunkel und die Schriftgröße ein.</p>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>5</span></div>
+</section>
+
+<!-- ───────────── 4 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">4</span><div><h2>Zeitraum und Aktualität<span class="dot">.</span></h2><div class="where">Dashboard → Zeitraum oben</div></div></div>
+  <p class="lead">Oben im Dashboard wählen Sie den Zeitraum. Jede Zahl wird automatisch mit dem gleich langen Zeitraum direkt davor verglichen.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 520 96" style="width:100%;display:block">
+      <rect x="20" y="30" width="220" height="30" rx="8" fill="#E5E5EA"/>
+      <rect x="250" y="30" width="220" height="30" rx="8" fill="#0066CC"/>
+      <text x="130" y="50" text-anchor="middle" font-size="12" fill="#3A3A3C" font-weight="600">Vorperiode: 30 Tage</text>
+      <text x="360" y="50" text-anchor="middle" font-size="12" fill="#fff" font-weight="600">Gewählter Zeitraum: 30 Tage</text>
+      <rect x="478" y="30" width="26" height="30" rx="6" fill="#fff" stroke="#FF9F0A" stroke-width="2" stroke-dasharray="3 2"/>
+      <text x="491" y="22" text-anchor="middle" font-size="10" fill="#8A4200">heute</text>
+      <text x="470" y="80" text-anchor="end" font-size="10.5" fill="#636366">endet gestern</text>
+      <text x="20" y="80" font-size="10.5" fill="#636366">„Vorher“-Wert im Dashboard</text>
+    </svg>
+  </div>
+
+  <h3>Die Zeiträume</h3>
+  <p><span class="kbd">Letzte 30 Tage</span> <span class="kbd">3 Monate</span> <span class="kbd">6 Monate</span> <span class="kbd">12 Monate</span> <span class="kbd">18 Monate</span> <span class="kbd">24 Monate</span>. Voreingestellt sind 30 Tage. Alle Zeiträume enden gestern; der heutige Tag ist nie enthalten.</p>
+
+  <h3>Wie aktuell sind die Zahlen?</h3>
+  <table class="t">
+    <tr><th>Zeitraum</th><th>Aktualisierung</th></tr>
+    <tr><td>Letzte 30 Tage</td><td>Jeden Morgen im Hintergrund, sodass die Daten bis gestern reichen.</td></tr>
+    <tr><td>3 Monate</td><td>Beim Öffnen, wenn der gespeicherte Stand älter als 2 Tage ist.</td></tr>
+    <tr><td>6 Monate</td><td>Beim Öffnen, wenn der gespeicherte Stand älter als 3 Tage ist.</td></tr>
+    <tr><td>12, 18, 24 Monate</td><td>Beim Öffnen, wenn der gespeicherte Stand älter als 7 Tage ist.</td></tr>
+  </table>
+  <p>Zur Erinnerung steht oben rechts im Dashboard „Daten bis gestern, die letzten Tage ergänzt Google noch“. Beim Öffnen sehen Sie sofort den zuletzt gespeicherten Stand. Ist er fällig, holt DataPeak im Hintergrund neue Zahlen. Dann steht oben „Gespeicherte Daten für … Aktualisierung ausstehend.“ Öffnen Sie einen langen Zeitraum zum ersten Mal, kann das Laden etwas dauern; ein Fenster zeigt den Fortschritt.</p>
+
+  <div class="box honest">
+    <div class="lbl">Ehrlich gesagt</div>
+    <ul class="dots" style="margin:2px 0 0">
+      <li><b>Gestern ist noch vorläufig.</b> Google ergänzt die Werte der letzten zwei bis drei Tage oft noch. Ein scheinbarer Einbruch am letzten Tag ist meist keiner.</li>
+      <li><b>Vorperiode, nicht Vormonat.</b> Bei „3 Monate“ vergleicht DataPeak mit den drei Monaten davor, nicht mit dem Vorjahr. Saisonale Schwankungen sind darin enthalten.</li>
+      <li>Wann genau die Zahlen zuletzt abgerufen wurden, zeigt das Dashboard derzeit nicht an. Sie sehen den Zeitraum, den die Zahlen abdecken.</li>
+    </ul>
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>6</span></div>
+</section>
+
+<!-- ───────────── 5 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">5</span><div><h2>Kennzahlen und Verlauf<span class="dot">.</span></h2><div class="where">Dashboard → Kennzahlen im Überblick · Verlauf &amp; Analyse</div></div></div>
+  <p class="lead">Acht Zahlen zeigen, wie Ihre Website gefunden wird und was Besucher dort tun. Unter jeder Zahl steht der Wert der Vorperiode.</p>
+
+  <table class="t">
+    <tr><th>Kennzahl</th><th>Was sie bedeutet</th><th style="width:16%">Quelle</th></tr>
+    <tr><td>Impressionen</td><td>Wie oft Ihre Seiten in der Google-Suche angezeigt wurden, mit oder ohne Klick.</td><td>Search Console</td></tr>
+    <tr><td>Google Klicks</td><td>Wie oft jemand in der Google-Suche auf Ihre Seite geklickt hat.</td><td>Search Console</td></tr>
+    <tr><td>Neue Besucher</td><td>Personen, die laut Analytics zum ersten Mal auf Ihrer Website waren.</td><td>Analytics 4</td></tr>
+    <tr><td>Besucher</td><td>Alle Personen, die Ihre Website besucht haben, aus jeder Quelle.</td><td>Analytics 4</td></tr>
+    <tr><td>Interaktionsrate</td><td>Anteil der Besuche mit mehr als 10 Sekunden, einer zweiten Seite oder einer Conversion.</td><td>Analytics 4</td></tr>
+    <tr><td>Conversions</td><td>Erreichte Ziele, z. B. Anfrage gesendet. Was zählt, legt Ihr Analytics fest.</td><td>Analytics 4</td></tr>
+    <tr><td>Ø Verweildauer</td><td>Wie lange ein Besuch im Schnitt aktiv dauerte.</td><td>Analytics 4</td></tr>
+    <tr><td>Absprungrate</td><td>Das Gegenteil der Interaktionsrate: Besuche ohne Interaktion.</td><td>Analytics 4</td></tr>
+  </table>
+
+  <h3>Verlauf &amp; Analyse</h3>
+  <div class="cols" style="align-items:center">
+    <div>
+      <p>Das Diagramm zeigt eine Kennzahl Tag für Tag. Über der Grafik wählen Sie, welche, und mit „vs. …“ eine zweite zum Vergleich. Fahren Sie mit der Maus über einen Tag, sehen Sie zusätzlich <b>Wetter</b> und <b>Feiertage</b>. So erklärt sich mancher Ausschlag von selbst, etwa ein ruhiger Feiertag oder ein verregnetes Wochenende.</p>
+    </div>
+    <div class="ui" style="padding:10px">
+      <svg viewBox="0 0 220 80" style="width:100%;display:block">
+        <path d="M0 60 L20 55 L40 58 L60 40 L80 44 L100 30 L120 62 L140 36 L160 28 L180 32 L200 20 L220 24" fill="none" stroke="#0066CC" stroke-width="2"/>
+        <line x1="120" y1="5" x2="120" y2="78" stroke="#C7C7CC" stroke-dasharray="2 2"/>
+        <circle cx="120" cy="62" r="3.5" fill="#0066CC"/>
+      </svg>
+      <div class="tip"><b>Mi, 8. Dez.</b><br>Klicks: 96<br>☀ 4 °C / −1 °C<br>AT Mariä Empfängnis</div>
+    </div>
+  </div>
+
+  <div class="box honest">
+    <div class="lbl">Ehrlich gesagt</div>
+    <ul class="dots" style="margin:2px 0 0">
+      <li>Analytics zählt nur Besucher, die dem Cookie-Banner zustimmen, und ergänzt je nach Einstellung Schätzungen. Die Besucherzahlen sind meist niedriger als in Wirklichkeit.</li>
+      <li>Search Console blendet seltene Suchanfragen aus Datenschutzgründen aus. Nicht jede einzelne Suche ist sichtbar.</li>
+      <li>Das Wetter stammt für .at-Adressen aus Wien, sonst aus Berlin, nicht von Ihrem Standort. Feiertage zeigen wir für Österreich und Deutschland.</li>
+    </ul>
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>7</span></div>
+</section>
+
+<!-- ───────────── 6 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">6</span><div><h2>KI-Traffic<span class="dot">.</span></h2><div class="where">Dashboard → KI-Traffic</div></div></div>
+  <p class="lead">Immer mehr Menschen fragen ChatGPT oder Perplexity statt Google. Klicken sie dort auf einen Link zu Ihrer Website, zeigt DataPeak das unter „KI-Traffic“.</p>
+
+  <div class="figure">
+    <div class="cols3" style="gap:10px">
+      <div class="ui" style="padding:10px"><div class="small">ChatGPT</div><div style="font-size:15pt;font-weight:700;color:var(--heading)">39</div><div class="bar"><span style="width:70%"></span></div></div>
+      <div class="ui" style="padding:10px"><div class="small">Perplexity</div><div style="font-size:15pt;font-weight:700;color:var(--heading)">12</div><div class="bar"><span style="width:24%"></span></div></div>
+      <div class="ui" style="padding:10px"><div class="small">Gemini</div><div style="font-size:15pt;font-weight:700;color:var(--heading)">7</div><div class="bar"><span style="width:14%"></span></div></div>
+    </div>
+    <div class="figcap">Beispielwerte: Sitzungen pro KI-Quelle im gewählten Zeitraum.</div>
+  </div>
+
+  <h3>Woher DataPeak das weiß</h3>
+  <p>Aus Google Analytics 4. Ein Besuch zählt als KI-Traffic, wenn Analytics ihn als „AI Assistant“ einordnet oder wenn er von einer bekannten KI-Adresse kommt: ChatGPT, Claude, Gemini, Perplexity, Microsoft Copilot, DeepSeek, Grok, You.com, Poe oder Character.ai. Was sich keiner Quelle zuordnen lässt, steht unter „Sonstige KI“.</p>
+
+  <h3>Was Sie hier sehen</h3>
+  <ul class="dots">
+    <li>Sitzungen, Nutzer und Conversions aus KI-Quellen, mit Verlauf und Anteil an allen Besuchen.</li>
+    <li><span class="kbd">KI-Traffic Analyse</span> öffnet Details: Trend je Quelle, Einstiegsseiten und welche Seiten die Besucher danach öffnen. Diese Ansicht wird live aus Analytics geladen und 30 Minuten zwischengespeichert; mit <span class="kbd">Aktualisieren</span> holen Sie den neuesten Stand.</li>
+    <li><b>Auffälligkeiten:</b> Verdoppeln sich die Besuche einer KI-Quelle in den letzten 7 Tagen gegenüber den 7 Tagen davor, oder halbieren sie sich, markiert DataPeak das mit einem Hinweis. Das gilt ab mindestens 5 Sitzungen.</li>
+  </ul>
+
+  <div class="box honest">
+    <div class="lbl">Ehrlich gesagt</div>
+    <ul class="dots" style="margin:2px 0 0">
+      <li>DataPeak sieht nur Besuche, also Klicks aus einer KI-Antwort. Wie oft eine KI Ihre Firma <b>erwähnt</b>, ohne dass jemand klickt, misst DataPeak nicht.</li>
+      <li>Manche KI-Apps übergeben keine Herkunft. Solche Besuche landen in Analytics bei „Direkt“ und fehlen hier. Die echte Zahl ist also eher höher.</li>
+      <li>Googles eigene KI-Antworten (AI Overviews, AI Mode) zählt Analytics zur normalen Google-Suche. Dafür gibt es Kapitel 7.</li>
+      <li>Bei kleinen Zahlen sind Prozentangaben wenig aussagekräftig: Von 2 auf 4 Besuche sind schon +100 %.</li>
+    </ul>
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>8</span></div>
+</section>
+
+<!-- ───────────── 7 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">7</span><div><h2>Google-KI und Fragen-Radar<span class="dot">.</span></h2><div class="where">Dashboard → Google GenAI Sichtbarkeit · KI-Traffic → Fragen-Radar</div></div></div>
+  <p class="lead">Zwei Auswertungen zeigen, wie Ihre Website in der KI-Suche von Google vorkommt und wie Menschen ihre Fragen formulieren.</p>
+
+  <h3>Google GenAI Sichtbarkeit</h3>
+  <p>Zeigt, wie oft Ihre Seiten in Googles KI-Antworten (AI Overviews und AI Mode) eingeblendet wurden, und welche Seiten das waren. Die Zahlen kommen aus der Search Console, soweit Google sie dort bereitstellt. Steht dort „Noch keine offiziellen Google-GenAI-Daten sichtbar“, liefert Google für Ihre Website (noch) keine Werte.</p>
+
+  <h3>Fragen-Radar</h3>
+  <div class="figure" style="padding:12px 16px">
+    <div class="ui" style="padding:10px 12px">
+      <div class="small" style="margin-bottom:4px">Quelle: GSC · ≥ 6 Wörter</div>
+      <div class="qrow">was kostet eine scheidung in österreich mit kindern <span>48 Impr.</span></div>
+      <div class="qrow">wie lange dauert ein verfahren beim arbeitsgericht <span>31 Impr.</span></div>
+      <div class="qrow">brauche ich einen anwalt für einen kaufvertrag <span>22 Impr.</span></div>
+    </div>
+  </div>
+  <p>Das Fragen-Radar filtert aus der Search Console alle Suchanfragen mit <b>mindestens sechs Wörtern</b>. Solche langen, fragenartigen Suchen ähneln dem, was Menschen in KI-Assistenten tippen. Sie sehen, wie viele es sind, wie oft sie eingeblendet und geklickt wurden, und können die Liste als <span class="kbd">CSV</span> laden.</p>
+  <p>Mit <span class="kbd">Mit AI clustern</span> fasst DataPeak ähnliche Fragen zu Themen zusammen. Dafür werden die Suchanfragen an Google Gemini geschickt (bis zu 20 Durchläufe pro Tag; ein Ergebnis bleibt 7 Tage gespeichert).</p>
+
+  <div class="box info">
+    <div class="lbl">Unser Tipp</div>
+    Beantworten Sie häufige Fragen direkt auf Ihrer Website, am besten mit der Frage als Zwischenüberschrift. Das hilft bei Google und bei KI-Suchen gleichermaßen. Die CSV-Liste können Sie an Ihre Texterin oder Agentur weitergeben.
+  </div>
+  <div class="box honest">
+    <div class="lbl">Ehrlich gesagt</div>
+    Das Fragen-Radar fragt <b>keine KI ab</b>. Es zeigt echte Google-Suchanfragen, die wie KI-Fragen aussehen. Es ist ein Hinweis, kein offizieller Wert für Ihre Sichtbarkeit in ChatGPT oder anderen Assistenten. Das Fragen-Radar ist nicht in jedem Projekt eingeschaltet; schreiben Sie uns, wenn Sie es nutzen möchten.
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>9</span></div>
+</section>
+
+<!-- ───────────── 8 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">8</span><div><h2>Suchanfragen, Seiten und Zugriffe<span class="dot">.</span></h2><div class="where">Dashboard → Top Suchanfragen · Top Landingpages · Indexierungsstatus · Zugriffe</div></div></div>
+  <p class="lead">Diese Listen zeigen, wonach Menschen suchen, auf welchen Seiten sie landen und woher sie kommen. Die meisten lassen sich als CSV herunterladen.</p>
+
+  <table class="t">
+    <tr><th>Bereich</th><th>Was er zeigt</th></tr>
+    <tr><td>Top Suchanfragen</td><td>Die 100 Suchbegriffe mit den meisten Klicks, jeweils mit der Seite, die dafür erscheint, Klicks, Impressionen, Klickrate und durchschnittlicher Position.</td></tr>
+    <tr><td>Top Landingpages</td><td>Die Seiten, auf denen Besuche beginnen, mit Besuchern, Interaktion und Conversions sowie den wichtigsten Suchbegriffen je Seite. Aufgeklappt: welche Seiten Besucher danach öffnen.</td></tr>
+    <tr><td>Indexierungsstatus</td><td>Welche Seiten aus Ihrer Sitemap Google kennt und wo es Probleme gibt.</td></tr>
+    <tr><td>Zugriffe nach Channel, Land, Endgerät</td><td>Ob Besucher aus der Google-Suche, über Links, Social Media oder direkt kommen, aus welchem Land und mit welchem Gerät.</td></tr>
+  </table>
+
+  <h3>Als CSV herunterladen</h3>
+  <ol class="steps">
+    <li>Beim gewünschten Bereich auf <span class="kbd">CSV</span> klicken. Möglich bei Top Suchanfragen, Top Landingpages, Fragen-Radar, Indexierungsstatus und Google GenAI.</li>
+    <li>Die Datei öffnet sich in Excel oder Numbers direkt richtig (Trennzeichen Semikolon, Umlaute korrekt).</li>
+  </ol>
+
+  <div class="box info">
+    <div class="lbl">Unser Tipp: Seiten mit Potenzial finden</div>
+    Suchen Sie in „Top Suchanfragen“ Begriffe mit vielen Impressionen, aber Position 5 bis 15. Dort fehlt oft nur wenig bis Seite 1. Eine bessere Überschrift oder ein Absatz zur Frage reicht häufig schon.
+  </div>
+  <div class="box honest">
+    <div class="lbl">Ehrlich gesagt</div>
+    <ul class="dots" style="margin:2px 0 0">
+      <li>Die Position ist ein Durchschnitt über alle Einblendungen. Was Sie selbst bei Google sehen, kann wegen Standort und Suchverlauf anders aussehen.</li>
+      <li>Der Indexierungsstatus prüft Ihre Sitemap etwa alle zwei Tage und stabile Seiten etwa alle 30 Tage. Er ist ein vorläufiger Stand und kann vom Bericht in der Search Console abweichen.</li>
+    </ul>
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>10</span></div>
+</section>
+
+<!-- ───────────── 9 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">9</span><div><h2>Lokale Sichtbarkeit<span class="dot">.</span></h2><div class="where">Dashboard → Lokale Sichtbarkeit</div></div></div>
+  <p class="lead">Haben Sie einen oder mehrere Standorte, zeigt DataPeak sie auf einer Karte, mit den Zahlen je Standort und Ihrem Google-Unternehmensprofil.</p>
+
+  <div class="figure">
+    <div class="cols" style="gap:14px;align-items:center">
+      <div class="ui map">
+        <svg viewBox="0 0 220 130" style="width:100%;display:block">
+          <rect width="220" height="130" fill="#EEF3F8"/>
+          <path d="M0 90 C40 70 80 100 120 80 S190 60 220 70" stroke="#D6E2EE" stroke-width="10" fill="none"/>
+          <path d="M60 0 L80 130" stroke="#fff" stroke-width="5"/><path d="M0 40 L220 55" stroke="#fff" stroke-width="5"/>
+          <g transform="translate(92 40)"><path d="M0 0c-8 0-14 6-14 14 0 10 14 24 14 24s14-14 14-24C14 6 8 0 0 0z" fill="#0066CC"/><circle cy="14" r="5" fill="#fff"/></g>
+          <g transform="translate(160 66)"><path d="M0 0c-6 0-10 4-10 10 0 7 10 17 10 17s10-10 10-17C10 4 6 0 0 0z" fill="#8E8E93"/><circle cy="10" r="3.5" fill="#fff"/></g>
+        </svg>
+      </div>
+      <div class="ui" style="padding:12px">
+        <div style="font-weight:700;color:var(--heading)">Kanzlei Muster</div>
+        <div class="small">Rechtsanwalt · <span style="color:var(--success);font-weight:600">Geöffnet</span></div>
+        <div style="margin:6px 0;font-size:9pt"><b>4,8</b> <span class="small">(57 Bewertungen)</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px">
+          <div class="kpi"><div class="l">GSC Klicks</div><div class="v" style="font-size:10pt">312</div></div>
+          <div class="kpi"><div class="l">Sessions</div><div class="v" style="font-size:10pt">540</div></div>
+          <div class="kpi"><div class="l">Conv.</div><div class="v" style="font-size:10pt">18</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Was zu jedem Standort angezeigt wird</h3>
+  <ul class="dots">
+    <li><b>Zahlen aus der Google-Suche:</b> Klicks, Impressionen, Klickrate und Position für Suchanfragen mit dem Namen, Ort oder der Postleitzahl des Standorts und für dessen Seiten.</li>
+    <li><b>Zahlen aus Analytics:</b> Besuche und Conversions auf den Seiten des Standorts. Sind keine eigenen Seiten hinterlegt, ordnet DataPeak nach der Stadt der Besucher zu.</li>
+    <li><b>Google-Unternehmensprofil:</b> Name, Kategorie, Foto, Bewertung mit Anzahl der Rezensionen, ob gerade geöffnet ist, und ein Link zum Profil.</li>
+  </ul>
+  <p>Ihre Standorte legen wir für Sie an. Neue Filiale, neue Adresse oder neues Profil? Kurz schreiben, wir ergänzen es.</p>
+
+  <div class="box honest">
+    <div class="lbl">Ehrlich gesagt</div>
+    <ul class="dots" style="margin:2px 0 0">
+      <li>Die Profildaten werden bis zu 48 Stunden zwischengespeichert. „Geöffnet“ oder „Geschlossen“ kann also veraltet sein; die Öffnungszeiten selbst zeigt DataPeak nicht.</li>
+      <li>Aufrufe, Anrufe und Routenanfragen aus dem Unternehmensprofil zeigt DataPeak nicht. Diese Zahlen finden Sie direkt in Ihrem Google-Unternehmensprofil.</li>
+      <li>Die Zuordnung zu Standorten ist eine Näherung: Eine Suche nach „Anwalt Wien“ gehört zu keinem Standort eindeutig. Search Console und Analytics ordnen außerdem unterschiedlich zu.</li>
+    </ul>
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>11</span></div>
+</section>
+
+<!-- ───────────── 10 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">10</span><div><h2>Google Ads<span class="dot">.</span></h2><div class="where">Dashboard → Google Ads Performance</div></div></div>
+  <p class="lead">Schalten Sie Google-Anzeigen, sehen Sie die Ergebnisse im selben Dashboard wie Ihre Suche und Ihre Besucher. Dieser Bereich wird auf Wunsch eingeschaltet.</p>
+
+  <h3>Zwei Wege, je nachdem was Sie haben</h3>
+  <div class="cols">
+    <div class="card">
+      <div class="lbl" style="color:var(--accent)">Weg 1 · empfohlen</div>
+      <b>Google-Tabelle</b>
+      <p class="small" style="margin-top:4px">Ein Skript in Ihrem Google-Ads-Konto schreibt die Zahlen regelmäßig in eine Google-Tabelle, die DataPeak lesen darf. Dann sehen Sie Kampagnen, Anzeigengruppen, Anzeigen, Suchbegriffe und Zielseiten. Oben steht „Sheet-Daten bis …“, also bis zu welchem Tag die Tabelle reicht.</p>
+    </div>
+    <div class="card">
+      <div class="lbl" style="color:var(--muted)">Weg 2</div>
+      <b>Über Analytics 4</b>
+      <p class="small" style="margin-top:4px">Ist Google Ads mit Ihrem Analytics verknüpft, zeigt DataPeak die Anzeigen-Zahlen, die Analytics kennt. Das ist weniger detailliert als Weg 1, braucht aber keine Tabelle.</p>
+    </div>
+  </div>
+  <p style="margin-top:12px">Die Einrichtung übernehmen wir. Sie geben uns dafür lesenden Zugriff; DataPeak kann in Ihrem Ads-Konto nichts ändern und keine Kosten auslösen.</p>
+
+  <div class="box honest">
+    <div class="lbl">Ehrlich gesagt</div>
+    <ul class="dots" style="margin:2px 0 0">
+      <li>Die Zahlen sind nur so aktuell wie die Tabelle. Läuft das Skript in Ihrem Ads-Konto nicht, zeigt DataPeak den letzten verfügbaren Stand und weist darauf hin.</li>
+      <li>Conversions in Google Ads und in Analytics werden unterschiedlich gezählt und weichen daher oft voneinander ab. Beides ist „richtig“, nur anders gemessen.</li>
+    </ul>
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>12</span></div>
+</section>
+
+<!-- ───────────── 11 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">11</span><div><h2>DataMax, der KI-Assistent<span class="dot">.</span></h2><div class="where">Chat rechts unten · Dashboard → Data Max</div></div></div>
+  <p class="lead">DataMax liest die Zahlen Ihres Projekts und erklärt sie in ganzen Sätzen. Sie können ihn auf zwei Arten nutzen.</p>
+
+  <div class="cols">
+    <div>
+      <h3>Im Chat fragen</h3>
+      <div class="chat">
+        <div class="me">Warum sind die Klicks gestiegen?</div>
+        <div class="bot">Vor allem wegen /scheidung: 132 Klicks aus Google (+38 %). Mein Tipp: Ergänzen Sie dort einen Abschnitt zu den Kosten.</div>
+      </div>
+      <p class="small">Den Chat öffnen Sie mit dem runden Knopf rechts unten. <span class="kbd">Chat zurücksetzen</span> leert das Gespräch.</p>
+    </div>
+    <div>
+      <h3>Analyse erstellen</h3>
+      <p>Im Bereich „Data Max“ auf <span class="kbd">Jetzt analysieren</span> klicken. DataMax schreibt eine Auswertung des gewählten Zeitraums mit Empfehlungen. Mit <span class="kbd">Als PDF exportieren</span> speichern Sie sie als Datei. Eine erstellte Analyse bleibt 48 Stunden gespeichert und kostet beim erneuten Öffnen keine Frage.</p>
+    </div>
+  </div>
+
+  <h3>Tageslimit</h3>
+  <p>Pro Person sind <b>10 DataMax-Anfragen am Tag</b> möglich; Chat-Fragen und neue Analysen zählen zusammen. Unter dem Chat steht „Noch x von 10 Fragen heute“. Um Mitternacht beginnt der Zähler neu. Brauchen Sie mehr, sagen Sie es uns.</p>
+
+  <h3>Was DataMax bekommt</h3>
+  <p>Mit jeder Frage gehen Ihre Frage und eine Zusammenfassung Ihrer Projektzahlen an das Sprachmodell <b>Google Gemini</b>: Domain, Zeitraum, Kennzahlen, wichtigste Suchbegriffe und Seiten, Kanäle, KI-Traffic, Standorte, Google Ads, Wetter und Feiertage. Daten einzelner Besucher sind nicht darunter, weil DataPeak keine hat.</p>
+
+  <div class="box honest">
+    <div class="lbl">Ehrlich gesagt</div>
+    <ul class="dots" style="margin:2px 0 0">
+      <li><b>DataMax kann sich irren.</b> Wie jede KI formuliert er überzeugend, auch wenn eine Schlussfolgerung nicht stimmt. Prüfen Sie wichtige Zahlen im Dashboard, bevor Sie Entscheidungen treffen.</li>
+      <li><b>Kein Gedächtnis.</b> Jede Frage wird einzeln beantwortet; DataMax kennt Ihre vorige Frage nicht. Stellen Sie jede Frage vollständig.</li>
+      <li>DataMax kennt nur die Zahlen aus dem Dashboard, nicht den Inhalt Ihrer Website und nicht Ihre Branche im Detail.</li>
+      <li>Der Chatverlauf wird nicht gespeichert. Nach dem Neuladen der Seite ist er weg.</li>
+    </ul>
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>13</span></div>
+</section>
+
+<!-- ───────────── 12 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">12</span><div><h2>Teilen und Berichte<span class="dot">.</span></h2><div class="where">Seitenleiste → Drucken · Teilen</div></div></div>
+  <p class="lead">Für Geschäftsführung, Team oder Agentur gibt es zwei Wege: einen Bericht als PDF oder einen Gastlink, über den jemand das Dashboard ohne eigenes Konto ansehen kann.</p>
+
+  <div class="cols">
+    <div>
+      <h3>Bericht drucken oder als PDF</h3>
+      <ol class="steps">
+        <li>Zeitraum wählen, dann in der Seitenleiste <span class="kbd">Drucken</span>.</li>
+        <li>Es öffnet sich der Bericht mit Kennzahlen, Verlauf, Zugriffen, den Top 15 Suchanfragen und Top 10 Landingpages.</li>
+        <li>Im Druckfenster „Als PDF sichern“ wählen oder drucken.</li>
+      </ol>
+      <p class="small">Der Bericht wird immer hell gedruckt, auch wenn Sie das Dashboard dunkel nutzen.</p>
+    </div>
+    <div>
+      <h3>Gastlink teilen</h3>
+      <ol class="steps">
+        <li>In der Seitenleiste auf <span class="kbd">Teilen</span> klicken und den Link erstellen.</li>
+        <li>Link kopieren und weitergeben.</li>
+        <li>Wer den Link hat, sieht Ihr Projekt <b>24 Stunden lang</b> ohne Anmeldung, nur zum Lesen.</li>
+      </ol>
+      <p class="small">Mit <span class="kbd">Alle Links widerrufen</span> sperren Sie alle noch gültigen Links sofort.</p>
+    </div>
+  </div>
+
+  <div class="figure" style="padding:12px 16px">
+    <div class="ui" style="padding:10px 12px;font-size:9pt">
+      <b style="color:var(--heading)">Gastlink teilen</b>
+      <div class="small" style="margin:4px 0 8px">Wer den Link hat, sieht dieses Projekt 24 Stunden lang ohne Anmeldung, nur zum Lesen. Bearbeiten, KI-Analyse und Chat sind gesperrt.</div>
+      <div style="display:flex;gap:6px"><div class="field" style="flex:1;margin:0">app.datapeak.at/teilen/…</div><div class="btn" style="margin:0;width:auto;padding:4px 12px">Kopieren</div></div>
+    </div>
+  </div>
+
+  <div class="box honest">
+    <div class="lbl">Ehrlich gesagt</div>
+    <ul class="dots" style="margin:2px 0 0">
+      <li>Ein Gastlink ist wie ein Schlüssel: Jeder, der ihn hat, kann ihn öffnen, auch wenn er weitergeleitet wird. Teilen Sie ihn nur mit Personen, die Ihre Zahlen sehen dürfen.</li>
+      <li>Über den Gastlink lassen sich die Detailansicht „KI-Traffic Analyse“ und die Folgepfade nicht laden; dafür ist eine Anmeldung nötig.</li>
+    </ul>
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>14</span></div>
+</section>
+
+<!-- ───────────── 13 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">13</span><div><h2>Ihre Daten und Datenschutz<span class="dot">.</span></h2></div></div>
+  <p class="lead">DataPeak arbeitet mit zusammengefassten Zahlen, nicht mit Daten über einzelne Menschen. Trotzdem sollen Sie genau wissen, was wo landet.</p>
+
+  <div class="cols">
+    <div>
+      <h3>Was DataPeak speichert</h3>
+      <ul class="dots">
+        <li>Ihr Konto: E-Mail-Adresse, Passwort (nur verschlüsselt als Prüfwert), Rolle und, falls aktiv, den Zwei-Faktor-Schlüssel verschlüsselt.</li>
+        <li>Die Einstellungen Ihres Projekts, z. B. welche Search-Console- und Analytics-Konten gelesen werden.</li>
+        <li>Die abgerufenen Zahlen (Summen wie Klicks, Besuche, Suchbegriffe, Seiten), damit das Dashboard schnell öffnet.</li>
+        <li>KI-Analysen und gruppierte Fragen, damit sie nicht neu erstellt werden müssen.</li>
+        <li>Anmeldungen mit Zeitpunkt sowie fehlgeschlagene Versuche mit IP-Adresse (Letztere einen Tag lang) zum Schutz Ihres Kontos.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Was DataPeak nicht hat</h3>
+      <ul class="dots no">
+        <li>Keine Daten einzelner Besucher Ihrer Website: keine IP-Adressen, keine Kennungen, keine Verläufe.</li>
+        <li>Keine Schreibrechte in Ihren Google-Konten.</li>
+        <li>Kein Tracking-Code auf Ihrer Website.</li>
+      </ul>
+      <h3>Wer Ihre Daten sieht</h3>
+      <p>Sie und die Personen, die Ihr Projekt bei uns betreuen (oben im Dashboard unter „Betreut durch“). Andere Kundinnen und Kunden sehen Ihr Projekt nicht.</p>
+    </div>
+  </div>
+
+  <h3>Beteiligte Dienste</h3>
+  <table class="t">
+    <tr><th>Dienst</th><th>Wofür</th></tr>
+    <tr><td>Vercel</td><td>Betrieb des Dashboards (Server).</td></tr>
+    <tr><td>Neon</td><td>Datenbank, in der die Zahlen und Ihr Konto liegen.</td></tr>
+    <tr><td>Google APIs</td><td>Abruf von Search Console, Analytics, Ads-Tabelle und Unternehmensprofilen; Google Gemini für DataMax und „Mit AI clustern“.</td></tr>
+    <tr><td>Sentry (EU)</td><td>Fehlerüberwachung des Dashboards. Bei einem Teil der Sitzungen und bei Fehlern wird der Ablauf im Dashboard aufgezeichnet, mit IP-Adresse und Browserdaten. Texte und Eingaben sind in der Aufzeichnung unkenntlich gemacht.</td></tr>
+    <tr><td>Open-Meteo</td><td>Wetterdaten für den Verlauf. Es wird nur der Ort (Wien oder Berlin) und das Datum übermittelt.</td></tr>
+    <tr><td>Brevo</td><td>Versand von E-Mails, etwa Benachrichtigungen zu Landingpages.</td></tr>
+  </table>
+  <p class="small">Die Datenschutzerklärung finden Sie unter datapeak.at/datenschutz. Möchten Sie Ihr Projekt beenden und die gespeicherten Daten löschen lassen, schreiben Sie uns.</p>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>15</span></div>
+</section>
+
+<!-- ───────────── 14 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">14</span><div><h2>Was DataPeak nicht kann<span class="dot">.</span></h2></div></div>
+  <p class="lead">Ein gutes Werkzeug kennt seine Grenzen. Hier sind die wichtigsten auf einer Seite, damit Sie die Zahlen richtig einordnen.</p>
+
+  <table class="t limits">
+    <tr><th>Grenze</th><th>Was das für Sie bedeutet</th></tr>
+    <tr><td>Keine Benachrichtigungen zu Ihren Zahlen</td><td>DataPeak schickt keine Wochenberichte und keine Warnungen per E-Mail. E-Mails gibt es nur, wenn wir im Redaktionsplan eine Anmerkung für Sie hinterlassen. Auffälligkeiten sehen Sie, wenn Sie das Dashboard öffnen. Am besten einmal pro Woche hineinschauen.</td></tr>
+    <tr><td>Daten bis gestern</td><td>Heute ist nie enthalten, und die letzten zwei bis drei Tage ergänzt Google noch.</td></tr>
+    <tr><td>Analytics zählt nicht alle</td><td>Wer Cookies ablehnt, fehlt ganz oder wird geschätzt. Besucherzahlen sind Untergrenzen.</td></tr>
+    <tr><td>KI-Erwähnungen ohne Klick</td><td>Wie oft ChatGPT &amp; Co. Sie nennen, ohne dass jemand klickt, kann DataPeak nicht messen.</td></tr>
+    <tr><td>Fragen-Radar ist ein Hinweis</td><td>Es zeigt lange Google-Suchen, keine Fragen aus KI-Assistenten.</td></tr>
+    <tr><td>DataMax kann sich irren</td><td>Wichtige Aussagen im Dashboard nachprüfen. DataMax hat kein Gedächtnis zwischen Fragen.</td></tr>
+    <tr><td>Keine Rankings auf Knopfdruck</td><td>Positionen sind Durchschnittswerte aus der Search Console, keine tagesaktuelle Platzierung.</td></tr>
+    <tr><td>Keine Konkurrenzdaten</td><td>DataPeak sieht nur Ihre eigenen Konten, nicht die Ihrer Mitbewerber.</td></tr>
+    <tr><td>Ein Zugang, eine Website</td><td>Jeder Zugang gehört zu genau einer Website. Eigene Zugänge für Kolleginnen und Kollegen zum selben Projekt gibt es derzeit nicht; zum Mitlesen eignet sich der Gastlink.</td></tr>
+    <tr><td>Selbstverwaltung</td><td>Passwort ändern, Standorte oder Datenquellen anpassen und Bereiche ein- oder ausblenden erledigen wir für Sie.</td></tr>
+    <tr><td>Wetter und Feiertage</td><td>Wetter aus Wien (.at) oder Berlin, nicht von Ihrem Standort; Feiertage für Österreich und Deutschland.</td></tr>
+  </table>
+
+  <div class="box ok">
+    <div class="lbl">Was Sie sich darauf verlassen können</div>
+    Jede Zahl im Dashboard beruht auf Ihren Google-Konten. DataPeak rechnet nichts schön und erfindet keine Werte: Fehlt eine Quelle, zeigt das Dashboard das an, statt Nullen einzusetzen.
+  </div>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>16</span></div>
+</section>
+
+<!-- ───────────── 15 ───────────── -->
+<section class="page">
+  <div class="chead"><span class="cnum">15</span><div><h2>Häufige Fragen und Hilfe<span class="dot">.</span></h2></div></div>
+
+  <table class="t faq">
+    <tr><th>Frage</th><th>Antwort</th></tr>
+    <tr><td>Die Zahlen in DataPeak weichen von Analytics ab.</td><td>Prüfen Sie, ob in beiden derselbe Zeitraum gewählt ist. DataPeak endet immer gestern und rechnet nach Wiener Zeit. Kleine Unterschiede entstehen, weil Google die letzten Tage noch nachträgt.</td></tr>
+    <tr><td>Oben steht „Aktualisierung ausstehend“.</td><td>Sie sehen den gespeicherten Stand, neue Zahlen werden im Hintergrund geholt. Laden Sie die Seite nach ein paar Minuten neu.</td></tr>
+    <tr><td>Ein Bereich zeigt keine Daten oder einen Fehler.</td><td>Meist fehlt der Zugriff auf ein Google-Konto, etwa nach einem Wechsel der Agentur oder neuen Berechtigungen. Schreiben Sie uns, wir prüfen die Verbindung.</td></tr>
+    <tr><td>Ein Bereich aus dem Handbuch fehlt bei mir.</td><td>Nicht jeder Bereich ist in jedem Projekt eingeschaltet, Google Ads und Fragen-Radar zum Beispiel nur auf Wunsch. Sagen Sie uns, was Sie sehen möchten.</td></tr>
+    <tr><td>Ich habe mein Passwort vergessen.</td><td>Schreiben Sie uns, wir setzen es zurück. Einen Link zum Selbst-Zurücksetzen gibt es derzeit nicht.</td></tr>
+    <tr><td>Handy mit dem Zwei-Faktor-Code verloren.</td><td>Mit einem der acht Wiederherstellungscodes anmelden. Sind auch die weg, setzen wir die Zwei-Faktor-Anmeldung zurück.</td></tr>
+    <tr><td>DataMax antwortet nicht mehr.</td><td>Vermutlich ist das Tageslimit erreicht („Tageslimit erreicht“). Ab Mitternacht geht es weiter.</td></tr>
+    <tr><td>Kann ich das Dashboard am Handy nutzen?</td><td>Ja, auf Handy, Tablet und Computer, hell oder dunkel (Mond-Symbol in der Seitenleiste).</td></tr>
+    <tr><td>Kann ich DataPeak jemandem zeigen, der keinen Zugang hat?</td><td>Mit einem Gastlink für 24 Stunden (Kapitel 12) oder mit der öffentlichen Demo unter app.datapeak.at/demo-anwalt. Die Demo zeigt eine erfundene Kanzlei; DataMax und das Fragen-Radar sind dort nicht aktiv.</td></tr>
+  </table>
+
+  <div class="box info">
+    <div class="lbl">Wir helfen gern</div>
+    Schreiben Sie an <b>michael@designare.at</b> oder rufen Sie an unter <b>+43 664 94 60 890</b>. Am schnellsten geht es mit dem Namen Ihrer Website und einem Bildschirmfoto.
+  </div>
+
+  <p class="small" style="position:absolute;left:18mm;right:18mm;bottom:16mm">DataPeak · datapeak.at · Dashboard: app.datapeak.at · Stand November 2026. Funktionen können sich weiterentwickeln; dieses Handbuch beschreibt den Stand zum angegebenen Datum.</p>
+  <div class="pfoot"><span>DataPeak · Handbuch</span><span>17</span></div>
+</section>
+
+</body>
+</html>

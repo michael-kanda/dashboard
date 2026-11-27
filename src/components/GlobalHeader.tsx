@@ -58,7 +58,7 @@ export default function GlobalHeader({
         </div>
 
         <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:items-end">
-          <span className="text-[13px] text-muted">Google Updates: 24 h · Semrush Updates: 14 Tage</span>
+          <span className="text-[13px] text-muted">Daten bis gestern, die letzten Tage ergänzt Google noch</span>
           <DateRangeSelector value={dateRange} onChange={onDateRangeChange} className="w-full sm:w-auto" />
         </div>
       </div>

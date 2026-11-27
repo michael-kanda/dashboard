@@ -271,7 +271,7 @@ export const AnalysisReport = ({
                       styles.kpiChange,
                       kpi.change >= 0 ? styles.kpiChangePositive : styles.kpiChangeNegative
                     ]}>
-                      {formatChange(kpi.change)} vs. Vormonat
+                      {formatChange(kpi.change)} vs. Vorperiode
                     </Text>
                   )}
                 </View>

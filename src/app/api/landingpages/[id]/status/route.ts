@@ -202,7 +202,7 @@ export async function PUT(
       // +++ KORREKTUR: Generische Nachrichten (nicht mehr Seitenspezifisch) +++
       const adminMessage = `Kunde "${customerDomain}" hat mit der Freigabe von Landingpages begonnen (z.B. "${pageUrl}" auf "${newStatus}").`;
       const emailSubject = `Neue Status-Updates von ${customerDomain} gibt Landingpages frei`;
-      const emailTextContent = `Hallo,\n\nDer Kunde "${customerDomain}" hat soeben mit der Freigabe von Landingpages begonnen (z.B. wurde die Seite "${pageUrl}" auf "${newStatus}" gesetzt).\n\nDies ist eine Sammel-Benachrichtigung. Weitere Aktionen dieses Kunden innerhalb der nächsten 30 Minuten werden keine neue E-Mail auslösen.\n\nAlle Details zu den einzelnen Änderungen finden Sie im Redaktionsplan oder in der Benachrichtigungs-Glocke im Dashboard.\n\nGesendet von,\nDeinem Data Peak Dashboard`;
+      const emailTextContent = `Hallo,\n\nDer Kunde "${customerDomain}" hat soeben mit der Freigabe von Landingpages begonnen (z.B. wurde die Seite "${pageUrl}" auf "${newStatus}" gesetzt).\n\nDies ist eine Sammel-Benachrichtigung. Weitere Aktionen dieses Kunden innerhalb der nächsten 30 Minuten werden keine neue E-Mail auslösen.\n\nAlle Details zu den einzelnen Änderungen finden Sie im Redaktionsplan im Dashboard.\n\nGesendet von,\nDeinem Data Peak Dashboard`;
 
       for (const admin of allAdmins) {
         // Interne Benachrichtigung wird IMMER erstellt (wichtig!)

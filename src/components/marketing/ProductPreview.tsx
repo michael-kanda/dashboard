@@ -81,26 +81,18 @@ function OverviewPanel() {
 }
 
 function AiPanel() {
-  const score = 64;
-  const circumference = 2 * Math.PI * 26;
+  const total = AI_SOURCES.reduce((sum, source) => sum + source.sessions, 0);
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-4 rounded-[10px] border border-border-subtle bg-surface px-3 py-3">
-        <svg viewBox="0 0 64 64" className="h-16 w-16 flex-shrink-0 -rotate-90" aria-hidden="true">
-          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--dp-fill)" strokeWidth="7" />
-          <circle
-            cx="32" cy="32" r="26" fill="none" stroke="var(--dp-accent)" strokeWidth="7" strokeLinecap="round"
-            strokeDasharray={`${(score / 100) * circumference} ${circumference}`}
-          />
-        </svg>
-        <div>
-          <p className="text-[11px] font-medium text-muted">GEO-Sichtbarkeits-Score</p>
-          <p className="text-[25px] font-bold leading-none tracking-[-0.02em] text-heading">
-            {score}<span className="text-[14px] font-medium text-muted"> / 100</span>
-          </p>
-          <p className="mt-1 text-[12px] text-body">KI-Anteil, Quellen-Vielfalt und Wachstum</p>
-        </div>
+      <div className="rounded-[10px] border border-border-subtle bg-surface px-3 py-3">
+        <p className="text-[11px] font-medium text-muted">KI-Traffic, letzte 30 Tage</p>
+        <p className="mt-1 text-[25px] font-bold leading-none tracking-[-0.02em] text-heading">
+          {total.toLocaleString('de-AT')}<span className="text-[14px] font-medium text-muted"> Sitzungen</span>
+        </p>
+        <p className="mt-1 text-[12px] text-body">
+          <span className="font-semibold text-success">+19 %</span> gegenüber den 30 Tagen davor · 4,1 % aller Besuche
+        </p>
       </div>
       <ul className="divide-y divide-border-subtle rounded-[10px] border border-border-subtle bg-surface">
         {AI_SOURCES.map((source) => (
@@ -129,7 +121,7 @@ function DataMaxPanel() {
           <p className="font-semibold text-heading">Gute Nachrichten für diesen Monat.</p>
           <p className="mt-1">
             Die Klicks aus Google sind um 12 % gestiegen, vor allem über die Seite <span className="font-medium text-heading">/scheidung</span>.
-            Aus ChatGPT kommen 24 % mehr Besucher als im Vormonat.
+            Aus ChatGPT kommen 24 % mehr Besucher als in den 30 Tagen davor.
           </p>
         </div>
       </div>
