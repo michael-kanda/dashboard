@@ -158,6 +158,9 @@
   --dp-field-bg-hover:    #EAEAED;
   --dp-field-placeholder: #8E8E93;
 
+  /* --- Landingpage: jeder zweite Abschnitt (hell leicht grau, wie apple.com) --- */
+  --dp-section-alt:       #F5F5F7;
+
   /* --- Charts (Recharts) --- */
   --dp-chart-1: #0066CC;   /* Hauptreihe, Klicks */
   --dp-chart-2: #34C759;
@@ -236,4 +239,5 @@
   --dp-field-bg:          #2C2C2E;
   --dp-field-bg-hover:    #333336;
   --dp-field-placeholder: #7C7C80;
+  --dp-section-alt:       var(--dp-bg-primary);
 }

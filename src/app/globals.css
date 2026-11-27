@@ -43,6 +43,7 @@
   --color-fill: var(--dp-fill);
   --color-surface: var(--dp-bg-primary);
   --color-surface-secondary: var(--dp-bg-secondary);
+  --color-section-alt: var(--dp-section-alt);
   --color-surface-tertiary: var(--dp-bg-tertiary);
   --color-surface-quaternary: var(--dp-bg-quaternary);
 
