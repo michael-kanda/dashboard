@@ -64,8 +64,8 @@ export default function DatenschutzPage() {
             <li>
               <strong>Konfigurationsdaten:</strong> Von Ihnen oder einem
               Administrator hinterlegte Daten zu Ihren Projekten, wie Domain,
-              Google Search Console (GSC) Site-URL, Google Analytics 4 (GA4)
-              Property ID sowie Semrush Projekt- und Tracking-IDs.
+              Google Search Console (GSC) Site-URL und Google Analytics 4 (GA4)
+              Property ID.
             </li>
             <li>
               <strong>Inhaltsdaten:</strong> Daten, die Sie im Rahmen des
@@ -100,9 +100,9 @@ export default function DatenschutzPage() {
             </li>
             <li>
               <strong>Abruf von Drittanbieter-Daten:</strong> Die von Ihnen
-              hinterlegten Konfigurationsdaten (GSC, GA4, Semrush IDs) werden
-              ausschließlich dazu verwendet, Daten von den jeweiligen APIs
-              (Google API, Semrush API) abzurufen und in diesem Dashboard
+              hinterlegten Konfigurationsdaten (GSC- und GA4-IDs) werden
+              ausschließlich dazu verwendet, Daten von den Google-APIs
+              abzurufen und in diesem Dashboard
               darzustellen. Diese Daten werden zur Performance-Verbesserung
               zwischengespeichert.
             </li>
@@ -164,9 +164,9 @@ export default function DatenschutzPage() {
               übermittelt.
             </li>
             <li>
-              <strong>Google APIs & Semrush API:</strong> Ihre API-Schlüssel und
-              Konfigurations-IDs werden verwendet, um Anfragen an die Server von
-              Google (USA) und Semrush (USA) zu senden, um die Dashboard-Daten
+              <strong>Google APIs:</strong> Ihre Konfigurations-IDs werden
+              verwendet, um Anfragen an die Server von Google (USA) zu senden,
+              um die Dashboard-Daten
               abzurufen. Es werden keine personenbezogenen Daten *an* diese
               Dienste gesendet, sondern nur Daten *von* diesen abgerufen.
             </li>
