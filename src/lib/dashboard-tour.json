@@ -28,8 +28,8 @@
     "sectionIds": ["section-google-genai"],
     "label": "Google-KI",
     "title": "Google GenAI Sichtbarkeit",
-    "text": "Wie oft Google Ihre Seiten in seinen KI-Antworten (AI Overviews und AI Mode) eingeblendet hat, und welche Seiten das waren.",
-    "honest": "Die Werte kommen aus der Search Console, soweit Google sie dort bereitstellt. Für manche Websites liefert Google noch keine."
+    "text": "Vorbereitet für Googles KI-Suche (AI Overviews und AI Mode): wie oft Ihre Seiten dort eingeblendet werden. In der Demo mit Beispielwerten gefüllt.",
+    "honest": "Google zeigt den AI Mode bisher nur teilweise in der Search Console und bietet dafür noch keine Schnittstelle. In Ihrem Dashboard ist dieser Bereich deshalb vorerst ein Platzhalter."
   },
   {
     "id": "ki-traffic",

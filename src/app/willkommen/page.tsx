@@ -63,7 +63,7 @@ const PILLARS = [
   },
   {
     title: 'KI-Suche messbar',
-    text: 'DataPeak zeigt, wie viele Besucher über ChatGPT, Perplexity, Gemini und Claude kommen, und wie oft Google Ihre Seiten in seinen KI-Antworten einblendet.',
+    text: 'DataPeak zeigt, wie viele Besucher über ChatGPT, Perplexity, Gemini und Claude kommen und welche Seiten sie aufrufen. Lange, fragenartige Google-Suchen zeigt das Fragen-Radar.',
   },
   {
     title: 'In Klartext erklärt',

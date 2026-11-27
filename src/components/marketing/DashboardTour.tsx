@@ -191,7 +191,7 @@ export default function DashboardTour() {
                     <h3 className="text-[18px] font-semibold tracking-[-0.015em] text-heading">{step.title}</h3>
                     <p className="mt-1 text-[15px] leading-[1.55] text-body">{step.text}</p>
                     <p className="mt-3 border-l-2 border-border-strong pl-3 text-[14px] leading-[1.55] text-muted">
-                      <span className="font-semibold text-heading">Ehrlich gesagt:</span> {step.honest}
+                      <span className="font-semibold text-heading">Gut zu wissen:</span> {step.honest}
                     </p>
                   </div>
                   <div className="flex flex-shrink-0 gap-2">
