@@ -12,6 +12,7 @@ import {
   GeoAltFill,
   Grid1x2Fill,
   Link45deg,
+  LightbulbFill,
   ListCheck,
   Search,
   Stars,
@@ -52,12 +53,12 @@ export const metadata: Metadata = {
 
 const CONTACT_MAIL = 'michael@designare.at';
 
-const SOURCES = ['Search Console', 'Analytics 4', 'Google Ads', 'Semrush', 'Bing Webmaster', 'Unternehmensprofile'];
+const SOURCES = ['Search Console', 'Analytics 4', 'Google Ads', 'Unternehmensprofile'];
 
 const PILLARS = [
   {
     title: 'Alles an einem Ort',
-    text: 'Search Console, Analytics, Google Ads und Semrush in einem Dashboard. Statt fünf offener Tabs sehen Sie auf einen Blick, was sich gegenüber dem Vormonat verändert hat.',
+    text: 'Search Console, Analytics, Google Ads und Unternehmensprofile in einem Dashboard. Statt vieler offener Tabs sehen Sie auf einen Blick, was sich gegenüber dem Vormonat verändert hat.',
   },
   {
     title: 'KI-Suche messbar',
@@ -87,7 +88,7 @@ const STEPS = [
 const FEATURES = [
   { icon: Search, title: 'Top 100 Suchanfragen.', text: 'Mit der Seite, die jeweils dafür rankt.' },
   { icon: Stars, title: 'KI-Traffic pro Modell.', text: 'Sitzungen, Conversions und Verlauf für jede KI-Quelle.' },
-  { icon: BellFill, title: 'Anomalie-Erkennung.', text: 'Starke Anstiege und Einbrüche bei KI-Quellen erkennt DataPeak von selbst.' },
+  { icon: BellFill, title: 'Anomalie-Erkennung.', text: 'Starke Anstiege und Einbrüche bei KI-Quellen markiert DataPeak im Dashboard.' },
   { icon: GeoAltFill, title: 'Lokale Sichtbarkeit.', text: 'Standorte auf der Karte, mit Unternehmensprofil und Vergleich.' },
   { icon: ChatQuoteFill, title: 'Fragen-Radar.', text: 'Lange, fragenartige Suchanfragen aus der Search Console.' },
   { icon: CloudSunFill, title: 'Wetter und Feiertage.', text: 'Im Verlauf sehen Sie, was den Traffic an einem Tag beeinflusst hat.' },
@@ -109,7 +110,7 @@ const FAQ = [
     items: [
       {
         q: 'Welche Datenquellen bindet DataPeak an?',
-        a: 'Google Search Console, Google Analytics 4, Google Ads, Semrush, Bing Webmaster Tools und Google-Unternehmensprofile. Welche Bereiche im Dashboard erscheinen, lässt sich pro Projekt einstellen.',
+        a: 'Google Search Console, Google Analytics 4, Google Ads und Google-Unternehmensprofile. Welche Bereiche im Dashboard erscheinen, lässt sich pro Projekt einstellen.',
       },
       {
         q: 'Wie aktuell sind die Zahlen?',
@@ -131,6 +132,10 @@ const FAQ = [
       {
         q: 'Kann ich Ergebnisse mit anderen teilen?',
         a: 'Ja, als PDF-Bericht oder als Gastlink. Ein Gastlink zeigt das Dashboard ohne Konto, läuft automatisch ab und lässt sich jederzeit widerrufen.',
+      },
+      {
+        q: 'Kann ich die Daten exportieren?',
+        a: 'Ja. Suchanfragen, Landingpages, Fragen aus dem Fragen-Radar und der Indexierungsstatus lassen sich als CSV herunterladen, etwa als Grundlage für eine Keyword- oder Content-Strategie. Für Berichte gibt es zusätzlich den PDF-Export.',
       },
       {
         q: 'Was macht DataMax genau?',
@@ -247,6 +252,8 @@ export default function LandingPage() {
           <div className="mt-8 flex flex-wrap gap-3">
             <a
               href={demoHref}
+              target="_blank"
+              rel="noopener"
               className="inline-flex h-11 items-center gap-2 rounded-full bg-accent-solid px-6 text-[15px] font-semibold text-white transition-opacity duration-150 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               Demo ansehen <ArrowRight size={15} aria-hidden="true" />
@@ -290,7 +297,7 @@ export default function LandingPage() {
         <SectionHeading
           eyebrow="So funktioniert’s"
           title="Einmal verbinden. Dann läuft es."
-          lead="Sie arbeiten an Ihrer Website wie bisher. DataPeak sammelt die Zahlen und meldet sich, wenn etwas auffällt."
+          lead="Sie arbeiten an Ihrer Website wie bisher. DataPeak sammelt die Zahlen, und Sie sehen jederzeit im Dashboard, was sich verändert hat, oder fragen einfach DataMax."
         />
 
         <div className="mt-12 grid items-stretch gap-3 lg:grid-cols-[1fr_auto_1fr_auto_1fr]" aria-hidden="true">
@@ -350,6 +357,17 @@ export default function LandingPage() {
               </li>
             ))}
           </ul>
+
+          <div className="mt-4 flex gap-4 rounded-container border border-accent/30 bg-accent-tint p-5">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-accent-solid text-white">
+              <LightbulbFill size={16} aria-hidden="true" />
+            </span>
+            <p className="text-[15px] leading-[1.6]">
+              <span className="font-semibold text-heading">SEO-Tipp: Daten als CSV.</span>{' '}
+              Suchanfragen, Landingpages, die Fragen aus dem Fragen-Radar und den Indexierungsstatus laden Sie mit einem Klick
+              als CSV herunter. So haben Sie die Grundlage für Ihre Keyword- und Content-Strategie direkt in Excel oder Google Sheets.
+            </p>
+          </div>
         </div>
       </section>
 

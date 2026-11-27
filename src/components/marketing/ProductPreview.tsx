@@ -129,7 +129,7 @@ function DataMaxPanel() {
           <p className="font-semibold text-heading">Gute Nachrichten für diesen Monat.</p>
           <p className="mt-1">
             Die Klicks aus Google sind um 12 % gestiegen, vor allem über die Seite <span className="font-medium text-heading">/scheidung</span>.
-            ChatGPT bringt inzwischen mehr Besucher als Bing.
+            Aus ChatGPT kommen 24 % mehr Besucher als im Vormonat.
           </p>
         </div>
       </div>

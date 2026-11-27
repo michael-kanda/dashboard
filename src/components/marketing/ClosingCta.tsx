@@ -54,6 +54,8 @@ export default function ClosingCta({ demoHref }: { demoHref: string }) {
           <div className="mt-8 flex flex-wrap gap-3">
             <a
               href={demoHref}
+              target="_blank"
+              rel="noopener"
               className="inline-flex h-11 items-center gap-2 rounded-full bg-accent-solid px-6 text-[15px] font-semibold text-white transition-opacity duration-150 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               Demo ansehen <ArrowRight size={15} aria-hidden="true" />
