@@ -376,8 +376,8 @@ export default function AiTrafficCard({
 
               <p className="text-xs text-muted mt-4">
                 {isVercel
-                  ? 'KI-Traffic umfasst Besucher, deren Browser den Referrer eines bekannten KI-Assistenten übermittelt hat (Vercel Web Analytics, ohne Sitzungen). Google-GenAI-Sichtbarkeit und Prompt Tracking werden separat ausgewertet.'
-                  : 'KI-Traffic umfasst GA4-Besuche über das offizielle Medium ai-assistant sowie ergänzend erkannte KI-Referrer. Google-GenAI-Sichtbarkeit und Prompt Tracking werden separat ausgewertet.'}
+                  ? 'KI-Traffic umfasst Besucher, deren Browser den Referrer eines bekannten KI-Assistenten übermittelt hat (Vercel Web Analytics, ohne Sitzungen). Google-GenAI-Sichtbarkeit und Fragen-Radar werden separat ausgewertet.'
+                  : 'KI-Traffic umfasst GA4-Besuche über das offizielle Medium ai-assistant sowie ergänzend erkannte KI-Referrer. Google-GenAI-Sichtbarkeit und Fragen-Radar werden separat ausgewertet.'}
               </p>
 
               {/* Action-Buttons — an den unteren Rand gezogen für die Balance */}
@@ -397,7 +397,7 @@ export default function AiTrafficCard({
                   disabled={!onPromptTrackingClick}
                   className="widget-control group w-full py-2 px-4 bg-surface hover:bg-surface-tertiary border border-border text-body rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface"
                 >
-                  Prompt Tracking
+                  Fragen-Radar
                   {promptTrackingOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
                 </button>
               </div>

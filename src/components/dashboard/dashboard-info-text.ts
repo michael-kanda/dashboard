@@ -5,7 +5,7 @@ export const DEFAULT_DASHBOARD_INFO_TEXT = `• GSC & Google Ads (SERP-Daten): M
 • Google Analytics (GA4): Misst das Nutzerverhalten direkt auf der Website. Erfassung ist cookie-abhängig und erfordert in der EU eine Einwilligung (DSGVO/TTDSG). Mit Consent Mode v2 sind teilweise modellierte Daten verfügbar.
 ${LOCAL_VISIBILITY_INFO_TEXT}
 • KI-Traffic (GA4): Misst Website-Besuche über das offizielle GA4-Medium „ai-assistant“ und ergänzt erkannte KI-Referrer wie ChatGPT, Perplexity, Gemini, Copilot, Claude, DeepSeek oder Grok. Google AI Overviews und AI Mode zählen in GA4 weiterhin zu Organic Search.
-• Prompt Tracking / Prompt Research: Nutzt GSC-Queries und KI-generierte Decision-Prompts als Research- und Optimierungsinstrument. Es ist ein AI-Mode-Proxy bzw. Testverfahren, aber kein offizieller Sichtbarkeitswert von Google.`;
+• Fragen-Radar / Prompt Research: Nutzt GSC-Queries und KI-generierte Decision-Prompts als Research- und Optimierungsinstrument. Es ist ein AI-Mode-Proxy bzw. Testverfahren, aber kein offizieller Sichtbarkeitswert von Google.`;
 
 export function resolveDashboardInfoText(value?: string | null) {
   const text = value?.trim() || DEFAULT_DASHBOARD_INFO_TEXT;

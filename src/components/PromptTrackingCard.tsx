@@ -96,7 +96,7 @@ export default function PromptTrackingCard({
     return (
       <div className="dashboard-widget-surface prompt-tracking-card rounded-lg p-6">
         <div className="mb-3">
-          <h3 className="widget-title text-heading">Prompt Tracking</h3>
+          <h3 className="widget-title text-heading">Fragen-Radar</h3>
           <GoogleCleanUnderline id="google-clean-gradient-prompt-tracking-empty" />
         </div>
         <p className="text-muted text-sm">
@@ -175,7 +175,7 @@ export default function PromptTrackingCard({
       <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
         <div className="flex-1">
           <div>
-            <h3 className="widget-title text-heading">Prompt Tracking</h3>
+            <h3 className="widget-title text-heading">Fragen-Radar</h3>
             <GoogleCleanUnderline id="google-clean-gradient-prompt-tracking" />
           </div>
           <div className="widget-meta flex items-center gap-2 flex-wrap mt-3">
@@ -225,14 +225,14 @@ export default function PromptTrackingCard({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <KpiTile
           label="Anteil Sucheinblendungen"
-          tooltip="Prompt-Impressionen / alle GSC-Impressionen. Die ehrlichste Einzel-Kennzahl."
+          tooltip="Impressionen der gefundenen Fragen / alle GSC-Impressionen. Die ehrlichste Einzel-Kennzahl."
           value={`${t.sharePercent.toFixed(1)} %`}
           delta={prev ? t.sharePercent - prev.sharePercent : undefined}
           deltaSuffix=" pp"
           highlight
         />
         <KpiTile
-          label="Prompts gefunden"
+          label="Fragen gefunden"
           tooltip={`Anzahl unterschiedlicher Suchanfragen mit ≥${data.minWords} Wörtern.`}
           value={t.totalQueries.toLocaleString('de-DE')}
           delta={prev ? calcChange(t.totalQueries, prev.totalQueries) : undefined}
@@ -301,7 +301,7 @@ export default function PromptTrackingCard({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
           <input
             type="text"
-            placeholder="Suchen in Prompts..."
+            placeholder="Fragen durchsuchen…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-border bg-surface text-body focus:outline-none focus:ring-2 focus:ring-purple-500/30"
