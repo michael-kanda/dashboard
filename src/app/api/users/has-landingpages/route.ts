@@ -1,4 +1,4 @@
-// src/app/api/user/has-landingpages/route.ts
+// src/app/api/users/has-landingpages/route.ts
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { sql } from '@vercel/postgres';

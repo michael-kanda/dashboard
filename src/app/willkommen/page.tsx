@@ -58,11 +58,11 @@ const SOURCES = ['Search Console', 'Analytics 4', 'Google Ads', 'Unternehmenspro
 const PILLARS = [
   {
     title: 'Alles an einem Ort',
-    text: 'Search Console, Analytics, Google Ads und Unternehmensprofile in einem Dashboard. Statt vieler offener Tabs sehen Sie auf einen Blick, was sich gegenüber dem Vormonat verändert hat.',
+    text: 'Search Console, Analytics, Google Ads und Unternehmensprofile in einem Dashboard. Statt vieler offener Tabs sehen Sie auf einen Blick, was sich gegenüber dem Zeitraum davor verändert hat.',
   },
   {
     title: 'KI-Suche messbar',
-    text: 'DataPeak zeigt, wie viele Besucher über ChatGPT, Perplexity, Gemini und Claude kommen, und fasst Ihre Position in der KI-Suche im GEO-Sichtbarkeits-Score zusammen.',
+    text: 'DataPeak zeigt, wie viele Besucher über ChatGPT, Perplexity, Gemini und Claude kommen, und wie oft Google Ihre Seiten in seinen KI-Antworten einblendet.',
   },
   {
     title: 'In Klartext erklärt',
@@ -77,7 +77,7 @@ const STEPS = [
   },
   {
     title: 'Automatisch aktuell',
-    text: 'DataPeak holt die Zahlen einmal täglich im Hintergrund. Beim Öffnen sehen Sie sofort den letzten Stand, ohne zu warten.',
+    text: 'DataPeak holt die Zahlen der letzten 30 Tage einmal täglich im Hintergrund. Beim Öffnen sehen Sie sofort den letzten Stand, ohne zu warten.',
   },
   {
     title: 'Verstehen und handeln',
@@ -114,7 +114,7 @@ const FAQ = [
       },
       {
         q: 'Wie aktuell sind die Zahlen?',
-        a: 'DataPeak aktualisiert die Daten einmal täglich im Hintergrund. Beim Öffnen des Dashboards sehen Sie sofort den zuletzt gespeicherten Stand; wann er abgerufen wurde, steht direkt dabei.',
+        a: 'Die Zahlen der letzten 30 Tage aktualisiert DataPeak einmal täglich im Hintergrund, längere Zeiträume alle zwei bis sieben Tage. Alle Zeiträume reichen bis gestern; die Werte der letzten zwei bis drei Tage ergänzt Google oft noch. Beim Öffnen sehen Sie sofort den zuletzt gespeicherten Stand.',
       },
       {
         q: 'Woher weiß DataPeak, wie viele Besucher von ChatGPT kommen?',
@@ -122,7 +122,7 @@ const FAQ = [
       },
       {
         q: 'Was zeigt das Fragen-Radar?',
-        a: 'DataPeak filtert lange, fragenartige Suchanfragen ab zehn Wörtern aus der Search Console. So sehen Sie, wie Menschen ihre Fragen formulieren, und finden Themen, die auf Ihrer Website noch fehlen.',
+        a: 'DataPeak filtert lange, fragenartige Suchanfragen ab sechs Wörtern aus der Search Console. So sehen Sie, wie Menschen ihre Fragen formulieren, und finden Themen, die auf Ihrer Website noch fehlen.',
       },
     ],
   },

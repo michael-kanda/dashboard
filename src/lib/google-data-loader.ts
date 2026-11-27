@@ -24,7 +24,6 @@ import {
 import type { AiTrafficData } from '@/types/ai-traffic';
 import { detectBrandKeywords } from '@/lib/prompt-tracking/brand-detector';
 import { normalizeManualGoogleGenAiData } from '@/lib/google-genai-manual';
-import { getBingData } from '@/lib/bing-api';
 import {
   ProjectDashboardData,
   TOP_QUERIES_DATA_VERSION,
@@ -448,7 +447,7 @@ async function loadGoogleData(
   let cityData: ChartEntry[] = [];
   let channelData: ChartEntry[] = [];
   let deviceData: ChartEntry[] = [];
-  let bingData: any[] = [];
+  const bingData: any[] = [];
   const apiErrors: ApiErrorStatus = {};
   let landingPageQueries: LandingPageQueries = {};
   let googleAdsData: GoogleAdsData | undefined;
@@ -729,10 +728,7 @@ async function loadGoogleData(
       ...(googleAdsData.source === 'sheet' && googleAdsGa4Supplement ? { ga4Supplement: googleAdsGa4Supplement } : {}) };
   }
 
-  if (user.gsc_site_url) {
-    try { bingData = await getBingData(user.gsc_site_url); }
-    catch (e: unknown) { console.warn('[Bing] Fetch fehlgeschlagen:', e); apiErrors.bing = errorFields(e).message || 'Bing Fehler'; }
-  }
+  // Bing Webmaster wird nicht mehr abgerufen: Die Daten erscheinen nirgends im Dashboard.
 
   let weatherData: Record<string, import('@/lib/weather').DailyWeather> = {};
   try {

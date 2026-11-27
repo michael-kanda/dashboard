@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
 <div class="text-sm font-semibold text-emerald-900 leading-relaxed">Starker Zuwachs bei Conversions (+31,5%) und stabile Engagement-Rate</div></div>
 </div>[[SPLIT]]<p class="mb-4 font-medium">Sehr geehrte Kundin, sehr geehrter Kunde,</p>
 <h4 class="font-bold text-indigo-900 mt-6 mb-3 text-base">Zusammenfassung:</h4>
-<p class="mb-4 leading-relaxed text-body">Ihr Demo-Shop entwickelt sich hervorragend! Die Besucherzahlen zeigen einen starken Aufwärtstrend (+24% im Vergleich zum Vormonat). Besonders erfreulich: Die Conversion-Rate ist auf stabile 3,2% gestiegen.</p>
+<p class="mb-4 leading-relaxed text-body">Ihr Demo-Shop entwickelt sich hervorragend! Die Besucherzahlen zeigen einen starken Aufwärtstrend (+24% im Vergleich zum Zeitraum davor). Besonders erfreulich: Die Conversion-Rate ist auf stabile 3,2% gestiegen.</p>
 <h4 class="font-bold text-indigo-900 mt-6 mb-3 text-base">Top Seiten (Umsatz):</h4>
 <ul class="space-y-2 mb-4 text-sm text-secondary list-none pl-1">
 <li class="flex gap-2"><span class="text-indigo-400 mt-1">•</span><span>/produkte/sneaker-collection (52 Conversions)</span></li>
