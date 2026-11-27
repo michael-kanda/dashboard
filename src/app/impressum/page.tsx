@@ -69,7 +69,7 @@ export default function ImpressumPage() {
           <p className="text-body">
             Die Inhalte dieser Webseite wurden mit größter Sorgfalt erstellt; für
             die Richtigkeit, Vollständigkeit oder Aktualität der Daten
-            (insbesondere der von Drittanbietern wie Google oder Semrush
+            (insbesondere der von Drittanbietern wie Google
             bezogenen Daten) übernehme ich jedoch keine Gewähr.
           </p>
 
