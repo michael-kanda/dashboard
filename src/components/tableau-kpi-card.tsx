@@ -33,7 +33,8 @@ export default function TableauKpiCard({
   error = null,
   className = '',
   comparison,
-  formatValue = (currentValue) => currentValue.toLocaleString('de-DE'),
+  // Zählwerte ganzzahlig: der Vorher-Wert wird aus der Änderung zurückgerechnet und hat sonst Kommastellen
+  formatValue = (currentValue) => Math.round(currentValue).toLocaleString('de-DE'),
   description,
   source,
 }: TableauKpiCardProps) {

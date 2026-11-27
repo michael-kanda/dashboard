@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'react-bootstrap-icons';
 import { IconButton } from './Button';
-
-const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+import { useFocusTrap } from './useFocusTrap';
 
 // Dialog oder Sheet von rechts: Fokus bleibt im Dialog, Escape schließt.
 // Rendert direkt in <body>, damit kein sticky/transformierter Vorfahr (z. B. die Sidebar) ihn verdeckt.
@@ -25,41 +24,7 @@ export function Dialog({
   variant?: 'dialog' | 'sheet';
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
-  // Aktuelles onClose ohne den Effekt neu zu starten (sonst springt der Fokus bei jedem Rendern).
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-
-  useEffect(() => {
-    if (!open) return;
-    const previous = document.activeElement as HTMLElement | null;
-    const panel = panelRef.current;
-    panel?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
-
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onCloseRef.current();
-        return;
-      }
-      if (event.key !== 'Tab' || !panel) return;
-      const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
-      if (items.length === 0) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      previous?.focus?.();
-    };
-  }, [open]);
+  useFocusTrap(open, panelRef, onClose);
 
   if (!open || typeof document === 'undefined') return null;
 
