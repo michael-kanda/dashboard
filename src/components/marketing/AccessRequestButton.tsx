@@ -118,24 +118,25 @@ export default function AccessRequestButton({ className = '', children = 'Zugang
           <div className="flex flex-col items-center py-4 text-center" role="status">
             <CheckCircleFill size={36} className="text-success-bar" aria-hidden="true" />
             <p className="mt-4 text-[15px] text-body">
-              Wir richten Ihr Projekt ein und melden uns per E-Mail bei{' '}
-              <span className="font-semibold text-heading">{values.email}</span>.
+              Danke! Wir melden uns umgehend bei{' '}
+              <span className="font-semibold text-heading">{values.email}</span>{' '}
+              und kümmern uns um das technische Setup.
             </p>
           </div>
         ) : (
           <form id={formId} onSubmit={submit} noValidate className="space-y-4">
             <p className="text-[14px] text-muted">
-              Wir richten Ihr Dashboard ein und schicken Ihnen die Zugangsdaten. Mit * markierte Felder sind Pflichtfelder.
+              Erzählen Sie uns kurz von Ihrem Projekt. Wir melden uns umgehend und übernehmen das technische Setup für Sie.
             </p>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor={fieldId('name')} className="dp-label mb-1.5 text-[13px]">Name *</label>
+                <label htmlFor={fieldId('name')} className="dp-label mb-1.5 text-[13px]">Name</label>
                 <input {...a11y('name')} type="text" autoComplete="name" value={values.name} onChange={(e) => update('name', e.target.value)} className={inputClasses} />
                 {errorText('name')}
               </div>
               <div>
-                <label htmlFor={fieldId('company')} className="dp-label mb-1.5 text-[13px]">Firma</label>
+                <label htmlFor={fieldId('company')} className="dp-label mb-1.5 text-[13px]">Firma <span className="dp-label-optional">· optional</span></label>
                 <input {...a11y('company')} type="text" autoComplete="organization" value={values.company} onChange={(e) => update('company', e.target.value)} className={inputClasses} />
                 {errorText('company')}
               </div>
@@ -143,12 +144,12 @@ export default function AccessRequestButton({ className = '', children = 'Zugang
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor={fieldId('email')} className="dp-label mb-1.5 text-[13px]">Geschäftliche E-Mail *</label>
+                <label htmlFor={fieldId('email')} className="dp-label mb-1.5 text-[13px]">Geschäftliche E-Mail</label>
                 <input {...a11y('email')} type="email" autoComplete="email" value={values.email} onChange={(e) => update('email', e.target.value)} className={inputClasses} />
                 {errorText('email')}
               </div>
               <div>
-                <label htmlFor={fieldId('website')} className="dp-label mb-1.5 text-[13px]">Ihre Website</label>
+                <label htmlFor={fieldId('website')} className="dp-label mb-1.5 text-[13px]">Ihre Website <span className="dp-label-optional">· optional</span></label>
                 <input {...a11y('website')} type="text" inputMode="url" autoComplete="url" placeholder="ihre-firma.at" value={values.website} onChange={(e) => update('website', e.target.value)} className={inputClasses} />
                 {errorText('website')}
               </div>
@@ -179,7 +180,7 @@ export default function AccessRequestButton({ className = '', children = 'Zugang
                   className="mt-0.5 h-4 w-4 flex-shrink-0 accent-[var(--dp-accent-solid)]"
                 />
                 <span>
-                  * Ich bin einverstanden, dass meine Angaben zur Bearbeitung der Anfrage verwendet werden. Mehr in der{' '}
+                  Ich bin einverstanden, dass meine Angaben zur Bearbeitung der Anfrage verwendet werden. Mehr in der{' '}
                   <a href="/datenschutz" target="_blank" className="text-accent hover:underline">Datenschutzerklärung</a>.
                 </span>
               </label>
