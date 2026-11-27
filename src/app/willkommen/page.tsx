@@ -16,7 +16,7 @@ import {
   Search,
   Stars,
 } from 'react-bootstrap-icons';
-import DataMaxIllustration from '@/components/marketing/DataMaxIllustration';
+import DataMaxChatPreview from '@/components/marketing/DataMaxChatPreview';
 import ProductPreview from '@/components/marketing/ProductPreview';
 import { MARKETING_ORIGIN, appOriginFor } from '@/lib/site-hosts';
 
@@ -354,10 +354,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── DataMax ──────────────────────────────────────── */}
-      <section className="mx-auto grid max-w-[1120px] items-center gap-12 px-4 py-20 sm:px-6 md:grid-cols-[0.8fr_1fr]">
-        <div className="mx-auto w-full max-w-[340px] overflow-hidden rounded-[24px] bg-accent-tint p-8">
-          <DataMaxIllustration className="h-auto w-full" title="DataMax, der KI-Assistent von DataPeak" />
-        </div>
+      <section className="mx-auto grid max-w-[1120px] items-center gap-12 px-4 py-20 sm:px-6 md:grid-cols-2">
         <div>
           <SectionHeading
             eyebrow="DataMax"
@@ -377,6 +374,7 @@ export default function LandingPage() {
             ))}
           </ul>
         </div>
+        <DataMaxChatPreview />
       </section>
 
       {/* ── Sicherheit ───────────────────────────────────── */}
