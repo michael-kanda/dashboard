@@ -15,7 +15,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
       <div className="flex min-h-screen flex-col bg-page">
         <MarketingHeader appOrigin={appOrigin} />
         <main className="flex-grow">{children}</main>
-        <MarketingFooter appOrigin={appOrigin} />
+        <MarketingFooter />
       </div>
       {/* Vercel Web Analytics nur auf der Landingpage, ohne Cookies. */}
       <Analytics />

@@ -1,44 +1,32 @@
 // src/components/layout/Footer.tsx
-import React from 'react';
+// Gemeinsame Fußzeile für Dashboard und Landingpage.
 import Link from 'next/link';
 
-const Footer = () => {
+const linkClass = 'transition-colors duration-150 hover:text-heading hover:underline';
+
+/** Eine Zeile: © Jahr Michael Kanda. Alle Rechte vorbehalten. | Impressum | Datenschutzerklärung */
+export function FooterLine({ className = '' }: { className?: string }) {
   const currentYear = new Date().getFullYear();
 
   return (
+    <p className={`text-[13px] text-muted ${className}`}>
+      &copy; {currentYear}{' '}
+      <a href="https://designare.at/" target="_blank" rel="noopener noreferrer" className={linkClass}>
+        Michael Kanda
+      </a>
+      . Alle Rechte vorbehalten.
+      <span className="mx-2" aria-hidden="true">|</span>
+      <Link href="/impressum" className={linkClass}>Impressum</Link>
+      <span className="mx-2" aria-hidden="true">|</span>
+      <Link href="/datenschutz" className={linkClass}>Datenschutzerklärung</Link>
+    </p>
+  );
+}
+
+export default function Footer() {
+  return (
     <footer className="mt-12 w-full border-t border-border-subtle py-6">
-      <div className="w-full px-6 text-center text-[13px] text-muted">
-        <p>
-          &copy; {currentYear}{' '}
-          <a
-            href="https://designare.at/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-heading hover:underline transition-colors duration-150"
-          >
-            Michael Kanda & Evita
-          </a>
-          . Jede Codezeile von Hand gestreichelt. Also bitte nicht klauen. Alle
-          Rechte vorbehalten.
-          
-          <span className="mx-2">|</span>
-          <Link
-            href="/impressum"
-            className="hover:text-heading hover:underline transition-colors duration-150"
-          >
-            Impressum
-          </Link>
-          <span className="mx-2">|</span>
-          <Link
-            href="/datenschutz"
-            className="hover:text-heading hover:underline transition-colors duration-150"
-          >
-            Datenschutzerklärung
-          </Link>
-        </p>
-      </div>
+      <FooterLine className="w-full px-6 text-center" />
     </footer>
   );
-};
-
-export default Footer;
+}
