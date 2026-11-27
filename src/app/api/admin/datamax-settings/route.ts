@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { logger } from '@/lib/logger';
+import { DATAMAX_LIMIT_RANGE } from '@/lib/datamax-quota';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,13 +22,13 @@ export async function GET(_req: Request) {
     // Superadmin sieht alle, Admin sieht nur eigene Mandanten-User
     if (session.user.role === 'SUPERADMIN') {
       query = sql`
-        SELECT id::text as id, email, role, domain, data_max_enabled
+        SELECT id::text as id, email, role, domain, data_max_enabled, datamax_daily_limit
         FROM users
         ORDER BY data_max_enabled ASC, email ASC
       `;
     } else {
       query = sql`
-        SELECT id::text as id, email, role, domain, data_max_enabled
+        SELECT id::text as id, email, role, domain, data_max_enabled, datamax_daily_limit
         FROM users
         WHERE mandant_id = ${session.user.mandant_id}
         ORDER BY data_max_enabled ASC, email ASC
@@ -62,6 +63,32 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const { userId, isEnabled, bulkDisable, bulkEnable } = body;
+
+    // Eigenes Tageslimit setzen (nur Superadmins); null = Standard nach Rolle.
+    if (Object.prototype.hasOwnProperty.call(body, 'dailyLimit')) {
+      if (session.user.role !== 'SUPERADMIN') {
+        return NextResponse.json({ message: 'Nur Superadmins können das DataMax-Limit ändern' }, { status: 403 });
+      }
+      const raw = body.dailyLimit;
+      const dailyLimit = raw === null || raw === '' ? null : Number(raw);
+      if (
+        dailyLimit !== null
+        && (!Number.isInteger(dailyLimit) || dailyLimit < DATAMAX_LIMIT_RANGE.min || dailyLimit > DATAMAX_LIMIT_RANGE.max)
+      ) {
+        return NextResponse.json(
+          { message: `Limit muss eine ganze Zahl von ${DATAMAX_LIMIT_RANGE.min} bis ${DATAMAX_LIMIT_RANGE.max} sein` },
+          { status: 400 },
+        );
+      }
+      if (!userId) return NextResponse.json({ message: 'User ID required' }, { status: 400 });
+      const { rowCount } = await sql`
+        UPDATE users SET datamax_daily_limit = ${dailyLimit}
+        WHERE id = ${userId}::uuid AND role != 'SUPERADMIN'
+      `;
+      if (rowCount === 0) return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 });
+      logger.info(`[DataMax] Tageslimit für ${userId}: ${dailyLimit ?? 'Standard'}`);
+      return NextResponse.json({ success: true, userId, dailyLimit });
+    }
 
     // NEU: Bulk-Aktionen nur für SUPERADMIN
     if (bulkDisable || bulkEnable) {

@@ -5,7 +5,9 @@ import { ArrowRepeat, PersonCircle } from 'react-bootstrap-icons';
 import { toast } from 'sonner';
 import LoginLogbook from '@/app/admin/LoginLogbook';
 import AiModelSettings from './AiModelSettings';
+import DataMaxLimitCell from './DataMaxLimitCell';
 import { roleLabel } from '@/lib/ui-labels';
+import { DATAMAX_DAILY_LIMITS } from '@/lib/datamax-quota-limits';
 import { PageContainer, PageHeader } from '@/components/ui/Page';
 import { GroupedSection, GroupedRow } from '@/components/ui/GroupedList';
 import { DataList, DataListHead, EmptyRow, PrimaryCell, Td, Th, Tr } from '@/components/ui/DataList';
@@ -51,6 +53,7 @@ type UserStatus = {
   maintenance_mode: boolean;
   ki_tool_enabled?: boolean;
   data_max_enabled?: boolean; // NEU: DataMax Status
+  datamax_daily_limit?: number | null;
 };
 
 // Ausschnitt der Antwort von /api/admin/system-status, den diese Seite liest.
@@ -275,6 +278,10 @@ export default function SystemHealthPage() {
     } finally { setIsSchedulingRefresh(false); }
   };
 
+  const updateDataMaxLimit = (userId: string, dailyLimit: number | null) => {
+    setDataMaxUsers(prev => prev.map(u => (u.id === userId ? { ...u, datamax_daily_limit: dailyLimit } : u)));
+  };
+
   // --- ZUGRIFFE: eine Liste aus den drei Quellen ---
   const accessUsers = useMemo(() => {
     const byId = new Map<string, UserStatus>();
@@ -409,16 +416,17 @@ export default function SystemHealthPage() {
             </Button>
           </div>
 
-          <DataList label="Zugriffe" minWidth={720}>
+          <DataList label="Zugriffe" minWidth={800}>
             <DataListHead>
               <Th>Benutzer</Th>
               <Th>Rolle</Th>
               <Th className="text-center">Zugang</Th>
               <Th className="text-center">KI-Tool</Th>
               <Th className="text-center">DataMax</Th>
+              <Th className="text-center">Fragen/Tag</Th>
             </DataListHead>
             <tbody aria-busy={isLoadingAccess}>
-              {filteredUsers.length === 0 && <EmptyRow colSpan={5}>Keine Benutzer gefunden</EmptyRow>}
+              {filteredUsers.length === 0 && <EmptyRow colSpan={6}>Keine Benutzer gefunden</EmptyRow>}
               {filteredUsers.map((user) => {
                 const isSuperadmin = user.role === 'SUPERADMIN';
                 return (
@@ -449,11 +457,25 @@ export default function SystemHealthPage() {
                         disabled={togglingDataMaxId === user.id || isSuperadmin}
                       />
                     </Td>
+                    <Td className="text-center">
+                      <DataMaxLimitCell
+                        userId={user.id}
+                        email={user.email}
+                        role={user.role}
+                        value={user.datamax_daily_limit}
+                        onSaved={updateDataMaxLimit}
+                      />
+                    </Td>
                   </Tr>
                 );
               })}
             </tbody>
           </DataList>
+
+          <p className="text-[13px] text-muted">
+            Fragen/Tag: DataMax-Chat und KI-Analysen pro Login und Tag. Leer lassen für den Standard
+            (Projekte {DATAMAX_DAILY_LIMITS.BENUTZER}, Admins {DATAMAX_DAILY_LIMITS.ADMIN}); Superadmins sind unbegrenzt.
+          </p>
 
           <GroupedSection title="Für alle Benutzer" help="Superadmins sind ausgenommen.">
             <GroupedRow label="KI-Tool" description={kiToolDisabledCount > 0 ? `${kiToolDisabledCount} ohne Zugriff` : 'Alle haben Zugriff'}>

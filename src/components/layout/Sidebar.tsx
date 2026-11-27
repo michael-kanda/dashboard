@@ -349,9 +349,9 @@ export default function Sidebar() {
         )}
       </nav>
 
-      {openProjectId && status === 'authenticated' && (
+      {((openProjectId && status === 'authenticated') || isDemoPage) && (
         <div className={`flex-shrink-0 border-t border-border py-1.5 px-2`}>
-          <ProjectActions projectId={openProjectId} collapsed={isCollapsed} />
+          <ProjectActions projectId={isDemoPage ? null : openProjectId} collapsed={isCollapsed} />
         </div>
       )}
 
@@ -450,13 +450,13 @@ export default function Sidebar() {
             </>
           )}
 
-          {openProjectId && (
+          {(openProjectId || isDemoPage) && (
             <div className="mt-3 border-t border-border pt-1.5">
-              <ProjectActions projectId={openProjectId} />
+              <ProjectActions projectId={isDemoPage ? null : openProjectId} />
             </div>
           )}
 
-          <div className={`${openProjectId ? 'mt-1.5' : 'mt-3'} border-t border-border pt-1.5`}>
+          <div className={`${openProjectId || isDemoPage ? 'mt-1.5' : 'mt-3'} border-t border-border pt-1.5`}>
             <FontSizeControl />
           </div>
 

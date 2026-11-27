@@ -5,11 +5,9 @@ import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
-/** Fragen pro Person und Tag; Superadmins sind nicht begrenzt. */
-export const DATAMAX_DAILY_LIMITS = {
-  BENUTZER: 10,
-  ADMIN: 50,
-} as const;
+import { DATAMAX_DAILY_LIMITS, DATAMAX_LIMIT_RANGE } from './datamax-quota-limits';
+
+export { DATAMAX_DAILY_LIMITS, DATAMAX_LIMIT_RANGE };
 
 export interface DataMaxQuota {
   /** null = unbegrenzt */
@@ -20,10 +18,27 @@ export interface DataMaxQuota {
   allowed: boolean;
 }
 
+/** Standardlimit nach Rolle; null = unbegrenzt. */
 export function dailyLimitFor(role: string | null | undefined): number | null {
   if (role === 'SUPERADMIN') return null;
   if (role === 'ADMIN') return DATAMAX_DAILY_LIMITS.ADMIN;
   return DATAMAX_DAILY_LIMITS.BENUTZER;
+}
+
+/**
+ * Wirksames Limit: eigenes Limit aus dem System-Bereich, sonst Standard nach Rolle.
+ * Superadmins bleiben unbegrenzt. Fehlt die Spalte (Migration 013), gilt der Standard.
+ */
+async function resolveDailyLimit(userId: string, role: string | null | undefined): Promise<number | null> {
+  const fallback = dailyLimitFor(role);
+  if (fallback === null) return null;
+  try {
+    const { rows } = await sql`SELECT datamax_daily_limit FROM users WHERE id = ${userId}::uuid`;
+    const custom = Number(rows[0]?.datamax_daily_limit);
+    return Number.isInteger(custom) && custom >= DATAMAX_LIMIT_RANGE.min ? custom : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 function quota(limit: number | null, used: number, allowed: boolean): DataMaxQuota {
@@ -37,7 +52,7 @@ function quota(limit: number | null, used: number, allowed: boolean): DataMaxQuo
 
 /** Aktueller Stand, ohne zu zählen. */
 export async function readDataMaxQuota(userId: string, role: string | null | undefined): Promise<DataMaxQuota> {
-  const limit = dailyLimitFor(role);
+  const limit = await resolveDailyLimit(userId, role);
   if (limit === null) return quota(null, 0, true);
   try {
     const { rows } = await sql`
@@ -58,7 +73,7 @@ export async function readDataMaxQuota(userId: string, role: string | null | und
  * Ist die Datenbank nicht erreichbar, wird nicht blockiert.
  */
 export async function consumeDataMaxQuota(userId: string, role: string | null | undefined): Promise<DataMaxQuota> {
-  const limit = dailyLimitFor(role);
+  const limit = await resolveDailyLimit(userId, role);
   if (limit === null) return quota(null, 0, true);
   try {
     const { rows } = await sql`
