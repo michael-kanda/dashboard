@@ -42,6 +42,8 @@ export default function MarketingHeader({ appOrigin }: { appOrigin: string }) {
 
         <a
           href={`${appOrigin}/demo-anwalt`}
+          target="_blank"
+          rel="noopener"
           className="hidden h-9 items-center rounded-full bg-accent-tint px-4 text-[14px] font-semibold text-accent transition-colors duration-150 hover:bg-accent-solid hover:text-white sm:inline-flex"
         >
           Demo
