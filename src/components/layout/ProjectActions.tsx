@@ -3,16 +3,19 @@
 import { useState } from 'react';
 import { Printer, Share } from 'react-bootstrap-icons';
 import ShareLinkDialog from '@/components/ShareLinkDialog';
+import DemoShareDialog from '@/components/DemoShareDialog';
 
 // Drucken und Gastlink für das geöffnete Projekt, zurückhaltend in der Sidebar.
 // Drucken öffnet den eigenen Druckbericht mit dem aktuell gewählten Zeitraum.
-function openReport(projectId: string) {
+function openReport(projectId: string | null) {
   const range = new URLSearchParams(window.location.search).get('range');
   const params = new URLSearchParams({ print: '1', ...(range ? { range } : {}) });
-  window.open(`/projekt/${projectId}/bericht?${params.toString()}`, '_blank', 'noopener');
+  const base = projectId ? `/projekt/${projectId}/bericht` : '/demo-anwalt/bericht';
+  window.open(`${base}?${params.toString()}`, '_blank', 'noopener');
 }
 
-export default function ProjectActions({ projectId, collapsed = false }: { projectId: string; collapsed?: boolean }) {
+/** projectId null = öffentliche Demo (Demo-Bericht, Demo-Link statt Gastlink). */
+export default function ProjectActions({ projectId, collapsed = false }: { projectId: string | null; collapsed?: boolean }) {
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   const item = `flex h-8 items-center gap-2 rounded-lg text-[13px] font-medium text-muted transition-colors duration-150 ease-out
@@ -21,7 +24,7 @@ export default function ProjectActions({ projectId, collapsed = false }: { proje
   return (
     <>
       <div className={`flex ${collapsed ? 'flex-col items-center' : 'items-center'} gap-0.5`}>
-        <button type="button" onClick={() => openReport(projectId)} className={item} aria-label={collapsed ? 'Drucken' : undefined} title="Projektseite drucken">
+        <button type="button" onClick={() => openReport(projectId)} className={item} aria-label={collapsed ? 'Drucken' : undefined} title="Bericht drucken oder als PDF sichern">
           <Printer size={14} aria-hidden="true" />
           {!collapsed && 'Drucken'}
         </button>
@@ -30,7 +33,11 @@ export default function ProjectActions({ projectId, collapsed = false }: { proje
           {!collapsed && 'Teilen'}
         </button>
       </div>
-      <ShareLinkDialog projectId={projectId} open={isShareOpen} onClose={() => setIsShareOpen(false)} />
+      {projectId ? (
+        <ShareLinkDialog projectId={projectId} open={isShareOpen} onClose={() => setIsShareOpen(false)} />
+      ) : (
+        <DemoShareDialog open={isShareOpen} onClose={() => setIsShareOpen(false)} />
+      )}
     </>
   );
 }
