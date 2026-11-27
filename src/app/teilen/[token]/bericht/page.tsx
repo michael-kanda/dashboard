@@ -22,12 +22,12 @@ export default async function SharedReportPage({
 }) {
   const link = await resolveShareLink(params.token).catch(() => null);
   if (!link) {
-    return <p className="flex min-h-[60vh] items-center justify-center px-4 text-center text-[15px] text-muted">Link abgelaufen oder ungültig</p>;
+    return <p className="flex min-h-[60vh] items-center justify-center px-4 text-center text-15 text-muted">Link abgelaufen oder ungültig</p>;
   }
 
   const data = await loadProjectPageData(link.projectId, parseDateRange(searchParams.range));
   if (!data?.dashboardData) {
-    return <p className="flex min-h-[60vh] items-center justify-center px-4 text-center text-[15px] text-muted">Für diesen Zeitraum liegen noch keine Daten vor</p>;
+    return <p className="flex min-h-[60vh] items-center justify-center px-4 text-center text-15 text-muted">Für diesen Zeitraum liegen noch keine Daten vor</p>;
   }
 
   const { projectUser, dashboardData, indexingStatus } = data;

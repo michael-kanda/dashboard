@@ -54,7 +54,7 @@ export default function GoogleConnectionCheck({ gscSiteUrl, ga4PropertyId }: { g
   const row = (label: string, result: Result, hasValue: boolean) => {
     if (!hasValue) return null;
     return (
-      <li className="flex items-start gap-2 text-[13px]">
+      <li className="flex items-start gap-2 text-13">
         <span className="w-[112px] flex-shrink-0 whitespace-nowrap font-semibold text-muted">{label}</span>
         {isChecking || !result ? (
           <span className="inline-flex items-center gap-2 text-muted"><Spinner size={13} />Wird geprüft …</span>
@@ -68,8 +68,8 @@ export default function GoogleConnectionCheck({ gscSiteUrl, ga4PropertyId }: { g
   return (
     <div className="rounded-control border border-border bg-surface-secondary px-3 py-2.5" aria-live="polite">
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <span className="text-[13px] font-semibold text-heading">Live-Check der Datenquellen</span>
-        <button type="button" onClick={check} disabled={isChecking} className="inline-flex items-center gap-1 text-[13px] font-medium text-accent hover:underline disabled:opacity-50">
+        <span className="text-13 font-semibold text-heading">Live-Check der Datenquellen</span>
+        <button type="button" onClick={check} disabled={isChecking} className="inline-flex items-center gap-1 text-13 font-medium text-accent hover:underline disabled:opacity-50">
           <ArrowRepeat size={12} aria-hidden="true" />
           Erneut prüfen
         </button>

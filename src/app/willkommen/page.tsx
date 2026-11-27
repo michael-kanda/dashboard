@@ -212,7 +212,7 @@ const STRUCTURED_DATA = {
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-3 flex items-center gap-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-accent">
+    <p className="mb-3 flex items-center gap-3 text-12 font-semibold uppercase tracking-[0.08em] text-accent">
       <span className="h-px w-6 bg-accent" aria-hidden="true" />
       {children}
     </p>
@@ -223,8 +223,8 @@ function SectionHeading({ eyebrow, title, lead }: { eyebrow: string; title: stri
   return (
     <div className="max-w-[640px]">
       <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 className="text-[clamp(30px,4.2vw,44px)] font-bold leading-[1.08] tracking-[-0.025em] text-heading">{title}</h2>
-      {lead && <p className="mt-4 text-[17px] leading-[1.55] text-body">{lead}</p>}
+      <h2 className="text-[calc(clamp(30px,4.2vw,44px)*var(--dp-fs-heading))] font-bold leading-[1.08] tracking-[-0.025em] text-heading">{title}</h2>
+      {lead && <p className="mt-4 text-17 leading-[1.55] text-body">{lead}</p>}
     </div>
   );
 }
@@ -243,10 +243,10 @@ export default function LandingPage() {
       <section className="mx-auto grid max-w-[1120px] items-center gap-12 px-4 pb-20 pt-14 sm:px-6 md:pt-20 lg:grid-cols-[1fr_1.05fr]">
         <div>
           <Eyebrow>SEO- und KI-Sichtbarkeit</Eyebrow>
-          <h1 className="text-[clamp(42px,6.4vw,72px)] font-bold leading-[1.02] tracking-[-0.035em] text-heading">
+          <h1 className="text-[calc(clamp(42px,6.4vw,72px)*var(--dp-fs-heading))] font-bold leading-[1.02] tracking-[-0.035em] text-heading">
             Ihre Daten. Endlich verständlich<span className="text-accent">.</span>
           </h1>
-          <p className="mt-6 max-w-[520px] text-[18px] leading-[1.55] text-body">
+          <p className="mt-6 max-w-[520px] text-18 leading-[1.55] text-body">
             DataPeak bündelt Search Console, Analytics, Google Ads und KI-Traffic in einem Dashboard. Der KI-Assistent
             DataMax erklärt, was die Zahlen bedeuten und was als Nächstes zu tun ist.
           </p>
@@ -255,20 +255,20 @@ export default function LandingPage() {
               href={demoHref}
               target="_blank"
               rel="noopener"
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-accent-solid px-6 text-[15px] font-semibold text-white transition-opacity duration-150 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-accent-solid px-6 text-15 font-semibold text-white transition-opacity duration-150 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               Demo ansehen <ArrowRight size={15} aria-hidden="true" />
             </a>
             <a
               href="#ablauf"
-              className="inline-flex h-11 items-center rounded-full border border-border px-6 text-[15px] font-semibold text-heading transition-colors duration-150 hover:bg-fill"
+              className="inline-flex h-11 items-center rounded-full border border-border px-6 text-15 font-semibold text-heading transition-colors duration-150 hover:bg-fill"
             >
               So funktioniert’s
             </a>
           </div>
           <ul className="mt-10 flex flex-wrap gap-2" aria-label="Datenquellen">
             {SOURCES.map((source) => (
-              <li key={source} className="rounded-full border border-border-subtle bg-surface px-3 py-1 text-[12px] font-medium text-body">
+              <li key={source} className="rounded-full border border-border-subtle bg-surface px-3 py-1 text-12 font-medium text-body">
                 {source}
               </li>
             ))}
@@ -284,9 +284,9 @@ export default function LandingPage() {
           <div className="mt-12 grid gap-10 md:grid-cols-3">
             {PILLARS.map((pillar, index) => (
               <div key={pillar.title} className="border-t border-border pt-5">
-                <p className="text-[13px] font-semibold tabular-nums text-accent">0{index + 1}</p>
-                <h3 className="mt-2 text-[20px] font-semibold tracking-[-0.015em] text-heading">{pillar.title}</h3>
-                <p className="mt-2 text-[15px] leading-[1.6]">{pillar.text}</p>
+                <p className="text-13 font-semibold tabular-nums text-accent">0{index + 1}</p>
+                <h3 className="mt-2 text-20 font-semibold tracking-[-0.015em] text-heading">{pillar.title}</h3>
+                <p className="mt-2 text-15 leading-[1.6]">{pillar.text}</p>
               </div>
             ))}
           </div>
@@ -303,23 +303,23 @@ export default function LandingPage() {
 
         <div className="mt-12 grid items-stretch gap-3 lg:grid-cols-[1fr_auto_1fr_auto_1fr]" aria-hidden="true">
           <div className="rounded-container border border-border bg-surface p-5">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-muted">Quellen</p>
+            <p className="text-12 font-semibold uppercase tracking-[0.06em] text-muted">Quellen</p>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {SOURCES.slice(0, 5).map((source) => (
-                <span key={source} className="rounded-[6px] bg-fill px-2 py-1 text-[12px] font-medium text-body">{source}</span>
+                <span key={source} className="rounded-[6px] bg-fill px-2 py-1 text-12 font-medium text-body">{source}</span>
               ))}
             </div>
           </div>
           <div className="hidden items-center text-muted lg:flex"><ArrowRight size={18} /></div>
           <div className="rounded-container border border-accent/40 bg-accent-tint p-5">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-accent">DataPeak</p>
-            <p className="mt-3 text-[15px] font-semibold text-heading">Einmal täglich aktualisiert</p>
-            <p className="mt-1 text-[13px] text-body">Gespeichert, verglichen und auf Auffälligkeiten geprüft.</p>
+            <p className="text-12 font-semibold uppercase tracking-[0.06em] text-accent">DataPeak</p>
+            <p className="mt-3 text-15 font-semibold text-heading">Einmal täglich aktualisiert</p>
+            <p className="mt-1 text-13 text-body">Gespeichert, verglichen und auf Auffälligkeiten geprüft.</p>
           </div>
           <div className="hidden items-center text-muted lg:flex"><ArrowRight size={18} /></div>
           <div className="rounded-container border border-border bg-surface p-5">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-muted">Ergebnis</p>
-            <ul className="mt-3 space-y-1.5 text-[14px] text-heading">
+            <p className="text-12 font-semibold uppercase tracking-[0.06em] text-muted">Ergebnis</p>
+            <ul className="mt-3 space-y-1.5 text-14 text-heading">
               <li className="flex items-center gap-2"><Grid1x2Fill size={12} className="text-accent" /> Dashboard</li>
               <li className="flex items-center gap-2"><ChatQuoteFill size={12} className="text-accent" /> Erklärung von DataMax</li>
               <li className="flex items-center gap-2"><Link45deg size={14} className="text-accent" /> PDF-Bericht und Gastlink</li>
@@ -330,9 +330,9 @@ export default function LandingPage() {
         <ol className="mt-12 grid gap-4 md:grid-cols-3">
           {STEPS.map((step, index) => (
             <li key={step.title} className="rounded-container border border-border bg-surface p-5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-solid text-[14px] font-bold text-white">{index + 1}</span>
-              <h3 className="mt-4 text-[18px] font-semibold tracking-[-0.015em] text-heading">{step.title}</h3>
-              <p className="mt-2 text-[15px] leading-[1.6]">{step.text}</p>
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-solid text-14 font-bold text-white">{index + 1}</span>
+              <h3 className="mt-4 text-18 font-semibold tracking-[-0.015em] text-heading">{step.title}</h3>
+              <p className="mt-2 text-15 leading-[1.6]">{step.text}</p>
             </li>
           ))}
         </ol>
@@ -355,7 +355,7 @@ export default function LandingPage() {
                 <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-accent-tint text-accent">
                   <Icon size={16} aria-hidden="true" />
                 </span>
-                <p className="mt-3 text-[15px] leading-[1.55]">
+                <p className="mt-3 text-15 leading-[1.55]">
                   <span className="font-semibold text-heading">{title}</span> {text}
                 </p>
               </li>
@@ -366,7 +366,7 @@ export default function LandingPage() {
             <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-accent-solid text-white">
               <LightbulbFill size={16} aria-hidden="true" />
             </span>
-            <p className="text-[15px] leading-[1.6]">
+            <p className="text-15 leading-[1.6]">
               <span className="font-semibold text-heading">SEO-Tipp: Daten als CSV.</span>{' '}
               Suchanfragen, Landingpages, die Fragen aus dem Fragen-Radar und den Indexierungsstatus laden Sie mit einem Klick
               als CSV herunter. So haben Sie die Grundlage für Ihre Keyword- und Content-Strategie direkt in Excel oder Google Sheets.
@@ -383,7 +383,7 @@ export default function LandingPage() {
             title="Ein Analyst, der nie Feierabend hat."
             lead="DataMax kennt die Zahlen Ihres Projekts und beantwortet Fragen dazu in ganzen Sätzen. Warum ist der Traffic gestiegen? Welche Seite verliert? Was bringt am meisten?"
           />
-          <ul className="mt-6 space-y-3 text-[15px]">
+          <ul className="mt-6 space-y-3 text-15">
             {[
               'Erklärt Trends und Ausreißer in Klartext.',
               'Schlägt konkrete Verbesserungen für einzelne Seiten vor.',
@@ -409,7 +409,7 @@ export default function LandingPage() {
           />
           <ul className="space-y-4 self-center">
             {TRUST.map((line) => (
-              <li key={line} className="flex gap-3 text-[15px] leading-[1.55]">
+              <li key={line} className="flex gap-3 text-15 leading-[1.55]">
                 <CheckCircleFill size={16} className="mt-0.5 flex-shrink-0 text-success-bar" aria-hidden="true" />
                 {line}
               </li>
@@ -428,11 +428,11 @@ export default function LandingPage() {
               <div className="overflow-hidden rounded-container border border-border bg-surface">
                 {group.items.map((item) => (
                   <details key={item.q} className="group border-b border-border-subtle last:border-b-0">
-                    <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-4 py-3.5 text-[15px] font-semibold text-heading hover:bg-fill [&::-webkit-details-marker]:hidden">
+                    <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-4 py-3.5 text-15 font-semibold text-heading hover:bg-fill [&::-webkit-details-marker]:hidden">
                       {item.q}
-                      <span className="mt-0.5 text-[18px] leading-none text-muted transition-transform duration-150 group-open:rotate-45" aria-hidden="true">+</span>
+                      <span className="mt-0.5 text-18 leading-none text-muted transition-transform duration-150 group-open:rotate-45" aria-hidden="true">+</span>
                     </summary>
-                    <p className="px-4 pb-4 text-[14px] leading-[1.6] text-body">{item.a}</p>
+                    <p className="px-4 pb-4 text-14 leading-[1.6] text-body">{item.a}</p>
                   </details>
                 ))}
               </div>

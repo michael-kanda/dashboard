@@ -306,7 +306,7 @@ function GoogleAdsWidgetContent({ data, isLoading, error, showSourceComparison =
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Suchen..."
-              className="widget-control w-40 pl-7 pr-2.5 py-1 h-7 rounded-md border border-border-subtle bg-surface text-body placeholder:text-faint focus:outline-none focus:ring-1 focus:ring-accent"
+              className="widget-control w-40 pl-7 pr-2.5 py-1 h-7 rounded-md border border-border-subtle bg-surface text-body placeholder:text-placeholder focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
         </div>
@@ -568,7 +568,7 @@ function TableRow({
           <tr key={sub.label} className={isExpanded ? 'bg-surface-secondary/50' : ''}>
             <td className="px-2 py-2">
               <div className="ml-3.5 pl-3.5 border-l-2 border-border-subtle text-xs text-body">
-                <span className="text-[11px] text-faint mr-1.5 font-medium">
+                <span className="text-11 text-faint mr-1.5 font-medium">
                   {nextDim!.label}
                 </span>
                 <span className="truncate" title={sub.label}>

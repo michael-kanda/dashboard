@@ -64,3 +64,23 @@ test('font weights apply to both modes and only allowed values pass', () => {
   assert.equal(themeSchema.safeParse({ weights: { normal: '500;color:red' } }).success, false);
   assert.equal(themeSchema.safeParse({ weights: { huge: 500 } }).success, false);
 });
+
+test('font sizes become scale factors and only allowed steps pass', () => {
+  const css = themeToCss(themeSchema.parse({ sizes: { text: 110, heading: 90 } }));
+  assert.match(css, /html:root\{[^}]*--dp-fs-text:1\.1;--dp-fs-heading:0\.9\}/);
+  assert.equal(themeToCss(themeSchema.parse({ sizes: { text: 100 } })), '');
+  for (const sizes of [{ text: 107 }, { text: 60 }, { heading: 200 }, { text: '110;color:red' }, { huge: 110 }]) {
+    assert.equal(themeSchema.safeParse({ sizes }).success, false, JSON.stringify(sizes));
+  }
+});
+
+test('placeholder color applies per mode', () => {
+  const css = themeToCss(themeSchema.parse({ light: { placeholder: '#555555' } }));
+  assert.match(css, /html:root:not\(\.dark\)\{[^}]*--dp-field-placeholder:#555555/);
+  assert.doesNotMatch(css, /html\.dark/);
+});
+
+test('themes saved before font sizes existed still load', () => {
+  const parsed = themeSchema.parse({ light: { accent: '#0066CC' }, radius: 10 });
+  assert.deepEqual(parsed.sizes, {});
+});

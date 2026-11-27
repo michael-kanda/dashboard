@@ -98,12 +98,12 @@ export default function DashboardTour() {
             alt="Das DataPeak-Dashboard mit Seitenleiste und Kennzahlen einer erfundenen Kanzlei"
             className="aspect-[1280/800] w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.01]"
           />
-          <span className="absolute bottom-4 right-4 inline-flex h-10 items-center gap-2 rounded-full border border-border bg-surface/95 px-4 text-[14px] font-semibold text-heading shadow-[0_8px_24px_-8px_rgba(0,0,0,0.3)] backdrop-blur">
+          <span className="absolute bottom-4 right-4 inline-flex h-10 items-center gap-2 rounded-full border border-border bg-surface/95 px-4 text-14 font-semibold text-heading shadow-[0_8px_24px_-8px_rgba(0,0,0,0.3)] backdrop-blur">
             <ArrowsAngleExpand size={13} aria-hidden="true" />
             Vergrößern
           </span>
         </button>
-        <figcaption className="mt-3 text-[13px] leading-[1.5] text-muted">
+        <figcaption className="mt-3 text-13 leading-[1.5] text-muted">
           Das echte Dashboard, gezeigt mit einer erfundenen Kanzlei. In der Vergrößerung blättern Sie durch alle {count} Bereiche.
         </figcaption>
       </figure>
@@ -119,9 +119,9 @@ export default function DashboardTour() {
             className="relative flex h-full w-full flex-col overflow-hidden bg-surface md:h-auto md:max-h-[92vh] md:max-w-[1180px] md:rounded-container md:border md:border-border md:shadow-dialog"
           >
             <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-3">
-              <h2 id={`${baseId}-title`} className="text-[17px] font-semibold tracking-[-0.015em] text-heading">
+              <h2 id={`${baseId}-title`} className="text-17 font-semibold tracking-[-0.015em] text-heading">
                 Rundgang durch das Dashboard
-                <span className="ml-2 whitespace-nowrap text-[14px] font-medium tabular-nums text-muted">{index + 1} / {count}</span>
+                <span className="ml-2 whitespace-nowrap text-14 font-medium tabular-nums text-muted">{index + 1} / {count}</span>
               </h2>
               <button
                 type="button"
@@ -153,7 +153,7 @@ export default function DashboardTour() {
                       aria-controls={`${baseId}-panel`}
                       tabIndex={selected ? 0 : -1}
                       onClick={() => setIndex(i)}
-                      className={`flex-shrink-0 whitespace-nowrap rounded-[8px] px-3 py-2 text-left text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-accent
+                      className={`flex-shrink-0 whitespace-nowrap rounded-[8px] px-3 py-2 text-left text-14 transition-colors focus-visible:outline-2 focus-visible:outline-accent
                         ${selected ? 'bg-accent-tint font-semibold text-accent' : 'font-medium text-body hover:bg-fill hover:text-heading'}`}
                     >
                       {item.label}
@@ -188,9 +188,9 @@ export default function DashboardTour() {
 
                 <div className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-start md:justify-between md:gap-8">
                   <div className="max-w-[640px]">
-                    <h3 className="text-[18px] font-semibold tracking-[-0.015em] text-heading">{step.title}</h3>
-                    <p className="mt-1 text-[15px] leading-[1.55] text-body">{step.text}</p>
-                    <p className="mt-3 border-l-2 border-border-strong pl-3 text-[14px] leading-[1.55] text-muted">
+                    <h3 className="text-18 font-semibold tracking-[-0.015em] text-heading">{step.title}</h3>
+                    <p className="mt-1 text-15 leading-[1.55] text-body">{step.text}</p>
+                    <p className="mt-3 border-l-2 border-border-strong pl-3 text-14 leading-[1.55] text-muted">
                       <span className="font-semibold text-heading">Gut zu wissen:</span> {step.honest}
                     </p>
                   </div>

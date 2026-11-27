@@ -77,7 +77,7 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
   const rowClasses =
     'flex min-h-11 items-center gap-3 border-b border-border-subtle px-4 last:border-b-0 focus-within:bg-surface-secondary';
   const fieldClasses =
-    'h-11 min-w-0 flex-1 bg-transparent text-[15px] text-heading placeholder:text-muted focus:outline-none disabled:opacity-60';
+    'h-11 min-w-0 flex-1 bg-transparent text-15 text-heading placeholder:text-placeholder focus:outline-none disabled:opacity-60';
 
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center bg-page px-4 py-16">
@@ -88,17 +88,17 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
         {!isSuccess ? (
           <>
             <div className="mb-8 flex flex-col items-center text-center">
-              <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-[11px] bg-accent-solid text-[18px] font-bold text-white" aria-hidden="true">
+              <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-[11px] bg-accent-solid text-18 font-bold text-white" aria-hidden="true">
                 DP
               </span>
-              <h1 className="text-[23px] font-bold tracking-[-0.02em] text-heading">Willkommen zurück</h1>
-              <p className="mt-1 text-[14px] text-muted">Ihre aktuellen Daten warten bereits.</p>
+              <h1 className="text-23 font-bold tracking-[-0.02em] text-heading">Willkommen zurück</h1>
+              <p className="mt-1 text-14 text-muted">Ihre aktuellen Daten warten bereits.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="overflow-hidden rounded-container border border-border bg-surface">
                 <div className={rowClasses}>
-                  <label htmlFor="login-email" className="w-[72px] flex-shrink-0 text-[14px] text-heading">E-Mail</label>
+                  <label htmlFor="login-email" className="w-[72px] flex-shrink-0 text-14 text-heading">E-Mail</label>
                   <input
                     id="login-email"
                     type="email"
@@ -112,7 +112,7 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
                   />
                 </div>
                 <div className={rowClasses}>
-                  <label htmlFor="login-password" className="w-[72px] flex-shrink-0 text-[14px] text-heading">Passwort</label>
+                  <label htmlFor="login-password" className="w-[72px] flex-shrink-0 text-14 text-heading">Passwort</label>
                   <input
                     id="login-password"
                     type={showPassword ? 'text' : 'password'}
@@ -139,7 +139,7 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
               {needsCode && (
                 <div className="overflow-hidden rounded-container border border-border bg-surface">
                   <div className={rowClasses}>
-                    <label htmlFor="login-code" className="w-[72px] flex-shrink-0 text-[14px] text-heading">Code</label>
+                    <label htmlFor="login-code" className="w-[72px] flex-shrink-0 text-14 text-heading">Code</label>
                     <input
                       id="login-code"
                       inputMode="numeric"
@@ -156,20 +156,20 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
                 </div>
               )}
               {needsCode && (
-                <p className="text-[13px] text-muted">Kein Zugriff auf die App? Stattdessen einen Wiederherstellungscode eingeben.</p>
+                <p className="text-13 text-muted">Kein Zugriff auf die App? Stattdessen einen Wiederherstellungscode eingeben.</p>
               )}
 
-              {error && <p className="text-[13px] text-danger" role="alert">{error}</p>}
+              {error && <p className="text-13 text-danger" role="alert">{error}</p>}
 
               <button
                 type="submit"
-                className="flex h-9 w-full items-center justify-center gap-2 rounded-control bg-accent-solid px-4 text-[14px] font-semibold text-white transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-60"
+                className="flex h-9 w-full items-center justify-center gap-2 rounded-control bg-accent-solid px-4 text-14 font-semibold text-white transition-opacity duration-150 ease-out hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-60"
                 disabled={isLoading || isSuccess}
               >
                 {isLoading && <Spinner size={14} className="" />}
                 {isLoading ? 'Prüfe Daten …' : 'Anmelden'}
               </button>
-              <p className="flex items-center justify-center gap-1.5 text-[13px] text-muted">
+              <p className="flex items-center justify-center gap-1.5 text-13 text-muted">
                 <Lock size={11} aria-hidden="true" />
                 Sichere Verbindung
               </p>
@@ -178,10 +178,10 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
         ) : (
           <div className="flex min-h-[360px] flex-col items-center justify-center text-center" role="status" aria-live="polite">
             <Spinner size={28} />
-            <h1 className="mt-5 text-[23px] font-bold tracking-[-0.02em] text-heading">
+            <h1 className="mt-5 text-23 font-bold tracking-[-0.02em] text-heading">
               Login erfolgreich{successAnsprache ? `, ${successAnsprache}` : ''}
             </h1>
-            <p className="mt-1 text-[14px] text-muted">Daten werden initialisiert, Sie werden gleich weitergeleitet.</p>
+            <p className="mt-1 text-14 text-muted">Daten werden initialisiert, Sie werden gleich weitergeleitet.</p>
           </div>
         )}
       </div>

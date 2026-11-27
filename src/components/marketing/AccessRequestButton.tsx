@@ -83,7 +83,7 @@ export default function AccessRequestButton({ className = '', children = 'Zugang
 
   const fieldId = (name: string) => `${formId}-${name}`;
   const errorText = (name: FieldName) =>
-    errors[name] ? <p id={`${fieldId(name)}-error`} className="mt-1 text-[13px] text-danger">{errors[name]}</p> : null;
+    errors[name] ? <p id={`${fieldId(name)}-error`} className="mt-1 text-13 text-danger">{errors[name]}</p> : null;
   const a11y = (name: FieldName) => ({
     id: fieldId(name),
     'aria-invalid': errors[name] ? true : undefined,
@@ -117,7 +117,7 @@ export default function AccessRequestButton({ className = '', children = 'Zugang
         {sent ? (
           <div className="flex flex-col items-center py-4 text-center" role="status">
             <CheckCircleFill size={36} className="text-success-bar" aria-hidden="true" />
-            <p className="mt-4 text-[15px] text-body">
+            <p className="mt-4 text-15 text-body">
               Danke! Wir melden uns umgehend bei{' '}
               <span className="font-semibold text-heading">{values.email}</span>{' '}
               und kümmern uns um das technische Setup.
@@ -125,18 +125,18 @@ export default function AccessRequestButton({ className = '', children = 'Zugang
           </div>
         ) : (
           <form id={formId} onSubmit={submit} noValidate className="space-y-4">
-            <p className="text-[14px] text-muted">
+            <p className="text-14 text-muted">
               Erzählen Sie uns kurz von Ihrem Projekt. Wir melden uns umgehend und übernehmen das technische Setup für Sie.
             </p>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor={fieldId('name')} className="dp-label mb-1.5 text-[13px]">Name</label>
+                <label htmlFor={fieldId('name')} className="dp-label mb-1.5 text-13">Name</label>
                 <input {...a11y('name')} type="text" autoComplete="name" value={values.name} onChange={(e) => update('name', e.target.value)} className={inputClasses} />
                 {errorText('name')}
               </div>
               <div>
-                <label htmlFor={fieldId('company')} className="dp-label mb-1.5 text-[13px]">Firma <span className="dp-label-optional">· optional</span></label>
+                <label htmlFor={fieldId('company')} className="dp-label mb-1.5 text-13">Firma <span className="dp-label-optional">· optional</span></label>
                 <input {...a11y('company')} type="text" autoComplete="organization" value={values.company} onChange={(e) => update('company', e.target.value)} className={inputClasses} />
                 {errorText('company')}
               </div>
@@ -144,19 +144,19 @@ export default function AccessRequestButton({ className = '', children = 'Zugang
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor={fieldId('email')} className="dp-label mb-1.5 text-[13px]">Geschäftliche E-Mail</label>
+                <label htmlFor={fieldId('email')} className="dp-label mb-1.5 text-13">Geschäftliche E-Mail</label>
                 <input {...a11y('email')} type="email" autoComplete="email" value={values.email} onChange={(e) => update('email', e.target.value)} className={inputClasses} />
                 {errorText('email')}
               </div>
               <div>
-                <label htmlFor={fieldId('website')} className="dp-label mb-1.5 text-[13px]">Ihre Website <span className="dp-label-optional">· optional</span></label>
+                <label htmlFor={fieldId('website')} className="dp-label mb-1.5 text-13">Ihre Website <span className="dp-label-optional">· optional</span></label>
                 <input {...a11y('website')} type="text" inputMode="url" autoComplete="url" placeholder="ihre-firma.at" value={values.website} onChange={(e) => update('website', e.target.value)} className={inputClasses} />
                 {errorText('website')}
               </div>
             </div>
 
             <div>
-              <label htmlFor={fieldId('message')} className="dp-label mb-1.5 text-[13px]">
+              <label htmlFor={fieldId('message')} className="dp-label mb-1.5 text-13">
                 Nachricht <span className="dp-label-optional">· optional</span>
               </label>
               <textarea {...a11y('message')} rows={3} placeholder="Welche Datenquellen nutzen Sie heute?" value={values.message} onChange={(e) => update('message', e.target.value)} className={textareaClasses} />
@@ -170,7 +170,7 @@ export default function AccessRequestButton({ className = '', children = 'Zugang
             </div>
 
             <div>
-              <label className="flex items-start gap-2.5 text-[13px] leading-[1.5] text-body">
+              <label className="flex items-start gap-2.5 text-13 leading-[1.5] text-body">
                 <input
                   type="checkbox"
                   checked={values.consent}
@@ -187,7 +187,7 @@ export default function AccessRequestButton({ className = '', children = 'Zugang
               {errorText('consent')}
             </div>
 
-            {formError && <p className="text-[13px] text-danger" role="alert">{formError}</p>}
+            {formError && <p className="text-13 text-danger" role="alert">{formError}</p>}
           </form>
         )}
       </Dialog>

@@ -23,7 +23,7 @@ export default async function ProjectReportPage({
 
   const data = await loadProjectPageData(params.id, parseDateRange(searchParams.range));
   if (!data?.dashboardData) {
-    return <p className="flex min-h-[60vh] items-center justify-center px-4 text-center text-[15px] text-muted">Für diesen Zeitraum liegen noch keine Daten vor</p>;
+    return <p className="flex min-h-[60vh] items-center justify-center px-4 text-center text-15 text-muted">Für diesen Zeitraum liegen noch keine Daten vor</p>;
   }
 
   const { projectUser, dashboardData, indexingStatus } = data;

@@ -118,13 +118,13 @@ export default function ProjectDashboard({
         {/* Nur im Ausdruck: der Kopf oben ist beim Drucken ausgeblendet. */}
         <div className="mb-4 hidden border-b-2 border-black pb-2 print:block">
           <h1>{domain || 'Projekt Dashboard'}</h1>
-          <p className="text-[11px]">
+          <p className="text-11">
             {reportingPeriodLabel ? `Zeitraum: ${reportingPeriodLabel} · ` : ''}Gedruckt am {new Date().toLocaleDateString('de-AT')}
           </p>
         </div>
 
         {data.cacheStale && (
-          <p className="mt-4 text-[14px] text-muted" role="status">
+          <p className="mt-4 text-14 text-muted" role="status">
             Gespeicherte Daten{reportingPeriodLabel ? ` für ${reportingPeriodLabel}` : ''}. Aktualisierung ausstehend.
           </p>
         )}

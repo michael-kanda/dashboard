@@ -38,8 +38,8 @@ export default function DashboardLoadingOverlay({
           />
         )}
         <div>
-          <h3 className="mb-1 text-[18px] font-semibold text-heading">{content[0]}</h3>
-          <p className="text-[14px] leading-relaxed text-muted">
+          <h3 className="mb-1 text-18 font-semibold text-heading">{content[0]}</h3>
+          <p className="text-14 leading-relaxed text-muted">
             {content[1]}
           </p>
         </div>

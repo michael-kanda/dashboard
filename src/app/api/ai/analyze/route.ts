@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 </ul>
 <div class="mt-6 p-4 bg-emerald-50 rounded-xl border border-emerald-100 flex items-start gap-4 shadow-sm">
 <div class="bg-surface p-2.5 rounded-full text-emerald-600 shadow-sm mt-1">🏆</div>
-<div><div class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Top Erfolg</div>
+<div><div class="text-10 font-bold text-emerald-700 uppercase tracking-wider mb-1">Top Erfolg</div>
 <div class="text-sm font-semibold text-emerald-900 leading-relaxed">Starker Zuwachs bei Conversions (+31,5%) und stabile Engagement-Rate</div></div>
 </div>[[SPLIT]]<p class="mb-4 font-medium">Sehr geehrte Kundin, sehr geehrter Kunde,</p>
 <h4 class="font-bold text-indigo-900 mt-6 mb-3 text-base">Zusammenfassung:</h4>
@@ -455,7 +455,7 @@ export async function POST(req: NextRequest) {
     const visualSuccessTemplate = `
       <div class="mt-6 p-4 bg-emerald-50 rounded-xl border border-emerald-100 flex items-start gap-4 shadow-sm">
          <div class="bg-surface p-2.5 rounded-full text-emerald-600 shadow-sm mt-1">🏆</div>
-         <div><div class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Top Erfolg</div>
+         <div><div class="text-10 font-bold text-emerald-700 uppercase tracking-wider mb-1">Top Erfolg</div>
          <div class="text-sm font-semibold text-emerald-900 leading-relaxed">ERFOLG_TEXT_PLATZHALTER</div></div>
       </div>
     `;

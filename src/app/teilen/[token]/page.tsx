@@ -23,8 +23,8 @@ function Notice({ title, text }: { title: string; text: string }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-page px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-[22px] font-semibold text-heading">{title}</h1>
-        <p className="mt-2 text-[15px] text-muted">{text}</p>
+        <h1 className="text-22 font-semibold text-heading">{title}</h1>
+        <p className="mt-2 text-15 text-muted">{text}</p>
       </div>
     </div>
   );
@@ -72,7 +72,7 @@ export default async function SharedProjectPage({
 
   return (
     <>
-      <div className="flex items-center justify-center gap-2 border-b border-border bg-accent-tint px-4 py-2 text-[14px] text-heading print:hidden" role="status">
+      <div className="flex items-center justify-center gap-2 border-b border-border bg-accent-tint px-4 py-2 text-14 text-heading print:hidden" role="status">
         <Eye size={15} aria-hidden="true" className="text-accent" />
         <span>Gastansicht, nur lesen. Gültig bis {expiresLabel} Uhr.</span>
         <GuestPrintButton />

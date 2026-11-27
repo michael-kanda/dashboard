@@ -23,7 +23,7 @@ export default function DataMaxLimitCell({ userId, email, role, value, onSaved }
   }, [value]);
 
   if (role === 'SUPERADMIN') {
-    return <span className="text-[13px] text-muted">unbegrenzt</span>;
+    return <span className="text-13 text-muted">unbegrenzt</span>;
   }
 
   const fallback = role === 'ADMIN' ? DATAMAX_DAILY_LIMITS.ADMIN : DATAMAX_DAILY_LIMITS.BENUTZER;
@@ -76,7 +76,7 @@ export default function DataMaxLimitCell({ userId, email, role, value, onSaved }
       disabled={isSaving}
       aria-label={`DataMax-Fragen pro Tag für ${email}, leer lassen für Standard ${fallback}`}
       title={`Leer lassen für den Standard (${fallback})`}
-      className="dp-field mx-auto h-8 w-20 px-2 text-center text-[13px] tabular-nums"
+      className="dp-field mx-auto h-8 w-20 px-2 text-center text-13 tabular-nums"
     />
   );
 }

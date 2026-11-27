@@ -64,16 +64,16 @@ function OverviewPanel() {
       <div className="grid grid-cols-2 gap-2">
         {KPIS.map((kpi) => (
           <div key={kpi.label} className="rounded-[10px] border border-border-subtle bg-surface px-3 py-2.5">
-            <p className="text-[11px] font-medium text-muted">{kpi.label}</p>
+            <p className="text-11 font-medium text-muted">{kpi.label}</p>
             <p className="mt-0.5 flex items-baseline gap-2">
-              <span className="text-[19px] font-bold tracking-[-0.02em] text-heading">{kpi.value}</span>
-              <span className="text-[11px] font-semibold text-success">{kpi.delta}</span>
+              <span className="text-19 font-bold tracking-[-0.02em] text-heading">{kpi.value}</span>
+              <span className="text-11 font-semibold text-success">{kpi.delta}</span>
             </p>
           </div>
         ))}
       </div>
       <div className="rounded-[10px] border border-border-subtle bg-surface px-3 pt-2.5">
-        <p className="text-[11px] font-medium text-muted">Klicks aus der Google-Suche, letzte 12 Wochen</p>
+        <p className="text-11 font-medium text-muted">Klicks aus der Google-Suche, letzte 12 Wochen</p>
         <Sparkline />
       </div>
     </div>
@@ -86,23 +86,23 @@ function AiPanel() {
   return (
     <div className="space-y-3">
       <div className="rounded-[10px] border border-border-subtle bg-surface px-3 py-3">
-        <p className="text-[11px] font-medium text-muted">KI-Traffic, letzte 30 Tage</p>
-        <p className="mt-1 text-[25px] font-bold leading-none tracking-[-0.02em] text-heading">
-          {total.toLocaleString('de-AT')}<span className="text-[14px] font-medium text-muted"> Sitzungen</span>
+        <p className="text-11 font-medium text-muted">KI-Traffic, letzte 30 Tage</p>
+        <p className="mt-1 text-25 font-bold leading-none tracking-[-0.02em] text-heading">
+          {total.toLocaleString('de-AT')}<span className="text-14 font-medium text-muted"> Sitzungen</span>
         </p>
-        <p className="mt-1 text-[12px] text-body">
+        <p className="mt-1 text-12 text-body">
           <span className="font-semibold text-success">+19 %</span> gegenüber den 30 Tagen davor · 4,1 % aller Besuche
         </p>
       </div>
       <ul className="divide-y divide-border-subtle rounded-[10px] border border-border-subtle bg-surface">
         {AI_SOURCES.map((source) => (
           <li key={source.name} className="flex items-center gap-3 px-3 py-2">
-            <span className="w-[74px] text-[13px] font-semibold text-heading">{source.name}</span>
+            <span className="w-[74px] text-13 font-semibold text-heading">{source.name}</span>
             <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-fill">
               <span className="block h-full rounded-full bg-accent-solid" style={{ width: `${source.share}%` }} />
             </span>
-            <span className="w-10 text-right text-[12px] tabular-nums text-body">{source.sessions}</span>
-            <span className="w-11 text-right text-[11px] font-semibold text-success">{source.delta}</span>
+            <span className="w-10 text-right text-12 tabular-nums text-body">{source.sessions}</span>
+            <span className="w-11 text-right text-11 font-semibold text-success">{source.delta}</span>
           </li>
         ))}
       </ul>
@@ -117,7 +117,7 @@ function DataMaxPanel() {
         <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-accent-tint">
           <DataMaxIllustration headOnly className="h-7 w-7" title="" />
         </span>
-        <div className="rounded-[12px] rounded-tl-[4px] border border-border-subtle bg-surface px-3 py-2.5 text-[13px] leading-[1.5] text-body">
+        <div className="rounded-[12px] rounded-tl-[4px] border border-border-subtle bg-surface px-3 py-2.5 text-13 leading-[1.5] text-body">
           <p className="font-semibold text-heading">Gute Nachrichten für diesen Monat.</p>
           <p className="mt-1">
             Die Klicks aus Google sind um 12 % gestiegen, vor allem über die Seite <span className="font-medium text-heading">/scheidung</span>.
@@ -126,8 +126,8 @@ function DataMaxPanel() {
         </div>
       </div>
       <div className="rounded-[10px] border border-border-subtle bg-surface px-3 py-2.5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">Empfehlung</p>
-        <p className="mt-1 text-[13px] leading-[1.5] text-body">
+        <p className="text-11 font-semibold uppercase tracking-[0.06em] text-muted">Empfehlung</p>
+        <p className="mt-1 text-13 leading-[1.5] text-body">
           Die Frage „Was kostet eine einvernehmliche Scheidung?“ wird oft gesucht, aber selten geklickt.
           Ein eigener Abschnitt mit Kostenrahmen auf /scheidung kann das ändern.
         </p>
@@ -154,7 +154,7 @@ export default function ProductPreview() {
               aria-selected={selected}
               aria-controls={`${baseId}-panel`}
               onClick={() => setActive(id)}
-              className={`inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-[13px] transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-accent
+              className={`inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-13 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-accent
                 ${selected ? 'bg-surface font-semibold text-heading shadow-segment' : 'font-medium text-muted hover:text-heading'}`}
             >
               <Icon size={12} aria-hidden="true" />
@@ -171,7 +171,7 @@ export default function ProductPreview() {
             <span className="h-2.5 w-2.5 rounded-full bg-dot-off" />
             <span className="h-2.5 w-2.5 rounded-full bg-dot-off" />
           </span>
-          <span className="ml-2 truncate text-[12px] text-muted">app.datapeak.at · kanzlei-beispiel.at</span>
+          <span className="ml-2 truncate text-12 text-muted">app.datapeak.at · kanzlei-beispiel.at</span>
         </div>
         <div
           id={`${baseId}-panel`}
@@ -184,7 +184,7 @@ export default function ProductPreview() {
           {active === 'datamax' && <DataMaxPanel />}
         </div>
       </div>
-      <figcaption className="mt-3 text-[13px] leading-[1.5] text-muted">
+      <figcaption className="mt-3 text-13 leading-[1.5] text-muted">
         Beispieldaten einer erfundenen Kanzlei. In der Demo sehen Sie das echte Dashboard.
       </figcaption>
     </figure>

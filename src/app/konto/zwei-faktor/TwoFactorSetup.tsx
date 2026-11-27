@@ -112,25 +112,25 @@ export default function TwoFactorSetup({ setupRequired }: { setupRequired: boole
     return <div className={cardClasses}><Spinner size={20} /></div>;
   }
 
-  const errorLine = error ? <p className="mt-3 text-[13px] text-danger" role="alert">{error}</p> : null;
+  const errorLine = error ? <p className="mt-3 text-13 text-danger" role="alert">{error}</p> : null;
 
   if (step === 'codes') {
     return (
       <div className={cardClasses}>
-        <h2 className="flex items-center gap-2 text-[17px] font-semibold text-heading">
+        <h2 className="flex items-center gap-2 text-17 font-semibold text-heading">
           <ShieldCheck size={18} aria-hidden="true" /> Zwei-Faktor-Anmeldung ist aktiv
         </h2>
-        <p className="mt-2 text-[14px] text-muted">
+        <p className="mt-2 text-14 text-muted">
           Speichern Sie diese Wiederherstellungscodes an einem sicheren Ort. Jeder Code funktioniert einmal, falls Sie keinen Zugriff auf die App haben. Sie werden nur jetzt angezeigt.
         </p>
-        <ul className="mt-4 grid grid-cols-2 gap-2 font-mono text-[15px] text-heading">
+        <ul className="mt-4 grid grid-cols-2 gap-2 font-mono text-15 text-heading">
           {recoveryCodes.map((item) => <li key={item} className="rounded-control bg-surface-secondary px-3 py-2">{item}</li>)}
         </ul>
         <div className="mt-5 flex flex-wrap gap-2">
           <Button variant="secondary" onClick={downloadCodes}>Codes herunterladen</Button>
           <Button onClick={() => void signOut({ callbackUrl: '/login' })}>Gesichert, neu anmelden</Button>
         </div>
-        <p className="mt-3 text-[13px] text-muted">Zum Abschluss melden Sie sich einmal neu an, dann mit Code aus der App.</p>
+        <p className="mt-3 text-13 text-muted">Zum Abschluss melden Sie sich einmal neu an, dann mit Code aus der App.</p>
       </div>
     );
   }
@@ -138,15 +138,15 @@ export default function TwoFactorSetup({ setupRequired }: { setupRequired: boole
   if (step === 'scan' && setup) {
     return (
       <form onSubmit={confirmSetup} className={cardClasses}>
-        <h2 className="text-[17px] font-semibold text-heading">1. QR-Code scannen</h2>
-        <p className="mt-1 text-[14px] text-muted">In der Authenticator-App ein neues Konto hinzufügen und diesen Code scannen.</p>
+        <h2 className="text-17 font-semibold text-heading">1. QR-Code scannen</h2>
+        <p className="mt-1 text-14 text-muted">In der Authenticator-App ein neues Konto hinzufügen und diesen Code scannen.</p>
         {/* eslint-disable-next-line @next/next/no-img-element -- data-URL, kein Bild-Optimizer nötig */}
         <img src={setup.qrDataUrl} alt="QR-Code für die Authenticator-App" width={220} height={220} className="mt-4 rounded-control border border-border bg-white p-2" />
-        <p className="mt-3 text-[13px] text-muted">
+        <p className="mt-3 text-13 text-muted">
           Scannen nicht möglich? Diesen Schlüssel eingeben: <code className="select-all break-all font-mono text-heading">{setup.secret}</code>
         </p>
-        <h2 className="mt-6 text-[17px] font-semibold text-heading">2. Code bestätigen</h2>
-        <label htmlFor="totp-code" className="mt-1 block text-[14px] text-muted">Den 6-stelligen Code aus der App eingeben.</label>
+        <h2 className="mt-6 text-17 font-semibold text-heading">2. Code bestätigen</h2>
+        <label htmlFor="totp-code" className="mt-1 block text-14 text-muted">Den 6-stelligen Code aus der App eingeben.</label>
         <input
           id="totp-code"
           inputMode="numeric"
@@ -171,7 +171,7 @@ export default function TwoFactorSetup({ setupRequired }: { setupRequired: boole
   if (!status?.available) {
     return (
       <div className={cardClasses}>
-        <p className="text-[14px] text-muted">Die Zwei-Faktor-Anmeldung ist auf diesem System noch nicht eingerichtet.</p>
+        <p className="text-14 text-muted">Die Zwei-Faktor-Anmeldung ist auf diesem System noch nicht eingerichtet.</p>
         {errorLine}
       </div>
     );
@@ -180,16 +180,16 @@ export default function TwoFactorSetup({ setupRequired }: { setupRequired: boole
   if (status.enabled) {
     return (
       <div className={cardClasses}>
-        <h2 className="flex items-center gap-2 text-[17px] font-semibold text-heading">
+        <h2 className="flex items-center gap-2 text-17 font-semibold text-heading">
           <ShieldCheck size={18} aria-hidden="true" /> Aktiv für {status.email}
         </h2>
-        <p className="mt-2 text-[14px] text-muted">
+        <p className="mt-2 text-14 text-muted">
           Noch {status.recoveryCodesLeft} von 8 Wiederherstellungscodes übrig.
           {status.required ? ' Für Admins ist die Zwei-Faktor-Anmeldung Pflicht. Bei verlorenem Handy setzt ein Superadmin sie zurück.' : ''}
         </p>
         {!status.required && (
           <form onSubmit={disable} className="mt-5">
-            <label htmlFor="disable-code" className="block text-[14px] text-muted">Zum Abschalten einen aktuellen Code oder Wiederherstellungscode eingeben.</label>
+            <label htmlFor="disable-code" className="block text-14 text-muted">Zum Abschalten einen aktuellen Code oder Wiederherstellungscode eingeben.</label>
             <input
               id="disable-code"
               required
@@ -208,10 +208,10 @@ export default function TwoFactorSetup({ setupRequired }: { setupRequired: boole
 
   return (
     <div className={cardClasses}>
-      <h2 className="flex items-center gap-2 text-[17px] font-semibold text-heading">
+      <h2 className="flex items-center gap-2 text-17 font-semibold text-heading">
         <ShieldExclamation size={18} aria-hidden="true" /> Noch nicht eingerichtet
       </h2>
-      <p className="mt-2 text-[14px] text-muted">
+      <p className="mt-2 text-14 text-muted">
         {setupRequired || status.required
           ? 'Für Admins ist die Zwei-Faktor-Anmeldung Pflicht. Bitte jetzt einrichten, danach geht es weiter.'
           : 'Schützt Ihr Konto zusätzlich, falls jemand Ihr Passwort kennt.'}

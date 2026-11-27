@@ -23,7 +23,7 @@ export default function DashboardViewSwitch({
   return (
     <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 print:hidden">
       <SegmentedControl label="Ansicht" options={OPTIONS} value={value} onChange={onChange} />
-      <p className="text-[14px] text-muted" role="status">
+      <p className="text-14 text-muted" role="status">
         {value === 'kunde'
           ? 'Kundenansicht: nur die für den Kunden freigegebenen Widgets, ohne Admin-Funktionen.'
           : 'Admin-Ansicht: alle Widgets und Admin-Funktionen.'}

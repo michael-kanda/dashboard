@@ -21,24 +21,28 @@
 --dp-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), Inter, system-ui, sans-serif;
    --dp-font-mono: 'Courier New', Courier, monospace;
 
-  --dp-text-xs:   11px;   /* labels, badges */
-  --dp-text-sm:   13px;   /* captions, fine print */
-  --dp-text-base: 15px;   /* body copy */
-  --dp-text-md:   17px;   /* subheadings */
-  --dp-text-lg:   19px;   /* section titles */
-  --dp-text-xl:   21px;   /* page titles */
-  --dp-text-2xl:  25px;   /* hero text */
+  /* Faktoren für die Schriftgröße, gesetzt in Admin → Design (1 = Standard) */
+  --dp-fs-text: 1;
+  --dp-fs-heading: 1;
+
+  --dp-text-xs:   calc(11px * var(--dp-fs-text));   /* labels, badges */
+  --dp-text-sm:   calc(13px * var(--dp-fs-text));   /* captions, fine print */
+  --dp-text-base: calc(15px * var(--dp-fs-text));   /* body copy */
+  --dp-text-md:   calc(17px * var(--dp-fs-text));   /* subheadings */
+  --dp-text-lg:   calc(19px * var(--dp-fs-heading));   /* section titles */
+  --dp-text-xl:   calc(21px * var(--dp-fs-heading));   /* page titles */
+  --dp-text-2xl:  calc(25px * var(--dp-fs-heading));   /* hero text */
 
   /* Dashboard widget typography (alle Größen 1 px über dem ursprünglichen Raster) */
-  --dp-widget-eyebrow:     11px;
-  --dp-widget-meta:        12px;
-  --dp-widget-control:     13px;
-  --dp-widget-item-title:  14px;
-  --dp-widget-body:        15px;
-  --dp-widget-title:       18px;
-  --dp-widget-metric-sm:   19px;
-  --dp-widget-metric:      28px;
-  --dp-widget-score:       47px;
+  --dp-widget-eyebrow:     calc(11px * var(--dp-fs-text));
+  --dp-widget-meta:        calc(12px * var(--dp-fs-text));
+  --dp-widget-control:     calc(13px * var(--dp-fs-text));
+  --dp-widget-item-title:  calc(14px * var(--dp-fs-text));
+  --dp-widget-body:        calc(15px * var(--dp-fs-text));
+  --dp-widget-title:       calc(18px * var(--dp-fs-heading));
+  --dp-widget-metric-sm:   calc(19px * var(--dp-fs-heading));
+  --dp-widget-metric:      calc(28px * var(--dp-fs-heading));
+  --dp-widget-score:       calc(47px * var(--dp-fs-heading));
 
   --dp-weight-normal:   450;   /* hell: etwas kräftiger, damit Fließtext lesbar bleibt */
   --dp-weight-medium:   500;

@@ -99,7 +99,7 @@ const CustomTooltip = ({ active, payload, totalValue }: CustomTooltipProps) => {
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-1.5">
                 <GraphUp size={11} className="text-purple-500" />
-                <span className="text-[12px] font-medium text-secondary">{data.subLabel}:</span>
+                <span className="text-12 font-medium text-secondary">{data.subLabel}:</span>
               </div>
               <span className="widget-meta font-medium text-accent">
                 {data.subValue}
@@ -112,7 +112,7 @@ const CustomTooltip = ({ active, payload, totalValue }: CustomTooltipProps) => {
              <div className="flex justify-between items-center">
               <div className="flex items-center gap-1.5">
                 <CheckCircleFill size={11} className="text-success" />
-                <span className="text-[12px] font-medium text-secondary">{data.subLabel2}:</span>
+                <span className="text-12 font-medium text-secondary">{data.subLabel2}:</span>
               </div>
               <span className="widget-meta font-medium text-success">
                 {new Intl.NumberFormat('de-DE').format(data.subValue2)}
@@ -314,7 +314,7 @@ export default function TableauPieChart({
       {/* Eigene Legende statt der Recharts-Legende: bricht um und lässt das Widget mitwachsen. */}
       <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5" aria-label={`Legende ${title}`}>
         {chartData.map((entry) => (
-          <li key={entry.name} className="inline-flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-secondary">
+          <li key={entry.name} className="inline-flex min-w-0 items-center gap-1.5 text-13 font-medium text-secondary">
             <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: entry.fill }} aria-hidden="true" />
             <span className="break-words">{entry.name}</span>
             {totalValue > 0 && (

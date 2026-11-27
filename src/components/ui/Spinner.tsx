@@ -31,7 +31,7 @@ export function PageSpinner({ label = 'Wird geladen', className = 'min-h-[50vh]'
   return (
     <div className={`flex flex-col items-center justify-center gap-3 ${className}`} role="status" aria-live="polite">
       <Spinner size={28} />
-      <span className="text-[14px] text-muted">{label}</span>
+      <span className="text-14 text-muted">{label}</span>
     </div>
   );
 }

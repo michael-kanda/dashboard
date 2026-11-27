@@ -189,7 +189,7 @@ export default function ProjectEditTabs({
                 tabIndex={selected ? 0 : -1}
                 onClick={() => select(tab.id)}
                 onKeyDown={handleKeyDown}
-                className={`h-8 whitespace-nowrap rounded-[7px] px-3 text-[14px] transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-accent
+                className={`h-8 whitespace-nowrap rounded-[7px] px-3 text-14 transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-accent
                   ${selected ? 'bg-surface font-semibold text-heading shadow-segment' : 'font-medium text-secondary hover:text-heading'}`}
               >
                 {tab.label}

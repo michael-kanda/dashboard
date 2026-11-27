@@ -112,7 +112,7 @@ export default function PreviewPage() {
                   {bars.map((height, index) => (
                     <div key={index} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
                       <div className="w-full rounded-t-md bg-[#188bdb]" style={{ height: `${height}%` }} />
-                      <span className="text-[10px] font-medium text-slate-400">{index + 1}</span>
+                      <span className="text-10 font-medium text-slate-400">{index + 1}</span>
                     </div>
                   ))}
                 </div>
