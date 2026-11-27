@@ -73,8 +73,11 @@ export default function Sidebar() {
   // DASHBOARD SEKTIONEN – Untermenü für Projekt-Dashboard
   // ═══════════════════════════════════════════════════════
 
+  // Öffentliche Demo: Abschnitte und Kontakt auch ohne Anmeldung zeigen.
+  const isDemoPage = pathname === '/demo-anwalt';
+
   // Dashboard-Seite erkennen: Admin über /projekt/[id], User über / oder /dashboard/[id]
-  const isDashboardPage = pathname.startsWith('/projekt/') || 
+  const isDashboardPage = isDemoPage || pathname.startsWith('/projekt/') || 
     (pathname.startsWith('/dashboard/') && pathname !== '/dashboard/freigabe') ||
     (session?.user?.role === 'BENUTZER' && pathname === '/');
 
@@ -214,6 +217,17 @@ export default function Sidebar() {
   const userLabel = session?.user?.name ?? session?.user?.email ?? '';
   const themeLabel = theme === 'dark' ? 'Heller Modus' : 'Dunkler Modus';
 
+  const hasMainNav = mainNavItems.some(item => item.visible !== false);
+
+  const renderDemoContact = () => (
+    <div className="mx-1 mt-4 rounded-lg bg-fill px-3 py-2.5 text-[12px] leading-[1.45] text-muted">
+      Fragen zur Demo?{' '}
+      <a href="mailto:michael@designare.at" className="font-medium text-accent hover:underline">
+        michael@designare.at
+      </a>
+    </div>
+  );
+
   const groupTitle = (label: string) => (
     <div className="px-3 pt-4 pb-1.5 text-[12px] font-semibold text-muted">{label}</div>
   );
@@ -321,10 +335,11 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2.5 pb-3 scrollbar-thin">
-        {!isCollapsed && groupTitle('Arbeit')}
+        {!isCollapsed && hasMainNav && groupTitle('Arbeit')}
         <div className="space-y-0.5">{mainNavItems.map((item, i) => renderNavLink(item, i, isCollapsed))}</div>
 
         {isDashboardPage && !isCollapsed && visibleSections.length > 0 && renderSections()}
+        {isDemoPage && !isCollapsed && renderDemoContact()}
 
         {adminNavItems.some(item => item.visible !== false) && (
           <>
@@ -416,16 +431,17 @@ export default function Sidebar() {
           aria-hidden="true"
         />
       )}
-      {isMobileMenuOpen && status === 'authenticated' && (
+      {isMobileMenuOpen && (status === 'authenticated' || isDemoPage) && (
         <nav
           id="mobile-navigation"
           aria-label="Hauptnavigation"
           className="absolute left-0 top-full z-50 max-h-[80vh] w-full overflow-y-auto border-b border-border bg-sidebar px-3 pb-4"
         >
-          {groupTitle('Arbeit')}
+          {hasMainNav && groupTitle('Arbeit')}
           <div className="space-y-0.5">{mainNavItems.map((item, i) => renderNavLink(item, i, false))}</div>
 
           {isDashboardPage && visibleSections.length > 0 && renderSections(() => setIsMobileMenuOpen(false))}
+          {isDemoPage && renderDemoContact()}
 
           {adminNavItems.some(item => item.visible !== false) && (
             <>
@@ -444,6 +460,7 @@ export default function Sidebar() {
             <FontSizeControl />
           </div>
 
+          {status === 'authenticated' ? (
           <div className="mt-1.5 flex items-center gap-2.5 border-t border-border pt-3">
             <Avatar email={session?.user?.email || userLabel} size={30} />
             <div className="min-w-0 flex-1">
@@ -458,6 +475,15 @@ export default function Sidebar() {
               <BoxArrowRight size={16} aria-hidden="true" /> Abmelden
             </button>
           </div>
+          ) : (
+            <Link
+              href="/login"
+              onClick={handleLinkClick}
+              className="mt-1.5 flex h-9 items-center gap-2.5 border-t border-border px-3 pt-3 text-[14px] font-medium text-accent"
+            >
+              <BoxArrowInRight size={16} aria-hidden="true" /> Anmelden
+            </Link>
+          )}
         </nav>
       )}
     </header>

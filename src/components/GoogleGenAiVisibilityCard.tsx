@@ -228,14 +228,14 @@ export default function GoogleGenAiVisibilityCard({ data, className, projectId, 
       ) : null}
 
       {hasData ? (
-        <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
-          <div className="relative">
+        <div className="mt-5 flex items-center justify-end gap-2">
+          <div className="relative min-w-0 flex-1 sm:flex-none">
             <input
               type="text"
               placeholder="Seite suchen..."
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              className="w-56 rounded-md border border-border bg-surface py-1.5 pl-8 pr-8 text-sm text-body placeholder-faint outline-none transition focus:ring-1 focus:ring-accent"
+              className="w-full rounded-md border border-border bg-surface py-1.5 sm:w-56 pl-8 pr-8 text-sm text-body placeholder-faint outline-none transition focus:ring-1 focus:ring-accent"
             />
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
             {searchTerm ? (

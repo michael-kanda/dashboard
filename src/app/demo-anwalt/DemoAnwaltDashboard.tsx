@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { InfoCircleFill } from 'react-bootstrap-icons';
 import ProjectDashboard from '@/components/ProjectDashboard';
 import type { DateRangeOption } from '@/components/DateRangeSelector';
 import type {
@@ -154,13 +155,13 @@ const demoData: ProjectDashboardData = {
     paidSearch: trend([4, 5, 3, 6, 7, 6, 8, 7, 9, 10, 8, 11, 10, 12, 13, 11, 14, 13, 15, 16, 14, 17, 16, 18, 19, 17, 20, 21, 22, 23]),
   },
   topQueries: [
-    { query: 'rechtsanwalt wien', clicks: 214, impressions: 8240, ctr: 2.6, position: 7.8, url: '/rechtsanwalt-wien/' },
-    { query: 'fuehrerschein entzogen anwalt', clicks: 168, impressions: 2980, ctr: 5.6, position: 3.2, url: '/verkehrsrecht/fuehrerschein-entzug/' },
-    { query: 'scheidungsanwalt wien erstberatung', clicks: 132, impressions: 2140, ctr: 6.2, position: 2.9, url: '/familienrecht/scheidung/' },
-    { query: 'anwalt erbrecht testament', clicks: 96, impressions: 1740, ctr: 5.5, position: 4.1, url: '/erbrecht/testament/' },
-    { query: 'strafverteidiger wien', clicks: 84, impressions: 1960, ctr: 4.3, position: 5.6, url: '/strafrecht/' },
-    { query: 'arbeitsrecht kuendigung anwalt', clicks: 73, impressions: 1560, ctr: 4.7, position: 6.4, url: '/arbeitsrecht/kuendigung/' },
-    { query: 'unterhaltsrecht anwalt wien', clicks: 51, impressions: 970, ctr: 5.3, position: 4.8, url: '/familienrecht/unterhalt/' },
+    { query: 'rechtsanwalt wien', clicks: 214, impressions: 8240, ctr: 0.026, position: 7.8, url: '/rechtsanwalt-wien/' },
+    { query: 'fuehrerschein entzogen anwalt', clicks: 168, impressions: 2980, ctr: 0.056, position: 3.2, url: '/verkehrsrecht/fuehrerschein-entzug/' },
+    { query: 'scheidungsanwalt wien erstberatung', clicks: 132, impressions: 2140, ctr: 0.062, position: 2.9, url: '/familienrecht/scheidung/' },
+    { query: 'anwalt erbrecht testament', clicks: 96, impressions: 1740, ctr: 0.055, position: 4.1, url: '/erbrecht/testament/' },
+    { query: 'strafverteidiger wien', clicks: 84, impressions: 1960, ctr: 0.043, position: 5.6, url: '/strafrecht/' },
+    { query: 'arbeitsrecht kuendigung anwalt', clicks: 73, impressions: 1560, ctr: 0.047, position: 6.4, url: '/arbeitsrecht/kuendigung/' },
+    { query: 'unterhaltsrecht anwalt wien', clicks: 51, impressions: 970, ctr: 0.053, position: 4.8, url: '/familienrecht/unterhalt/' },
   ],
   topConvertingPages: [
     { path: '/verkehrsrecht/fuehrerschein-entzug/', conversions: 39, conversionRate: 7.8, engagementRate: 72.4, sessions: 498, newUsers: 344, ctr: 5.6 },
@@ -251,6 +252,16 @@ export default function DemoAnwaltDashboard() {
 
   return (
     <AiTrafficExtendedDemoContext.Provider value={demoAiTrafficExtended}>
+      <div className="px-[clamp(16px,3vw,40px)] pt-5 print:hidden">
+        <div className="flex items-start gap-3 rounded-container border border-border bg-accent-tint px-4 py-3 text-[14px] leading-[1.5] text-body" role="note">
+          <InfoCircleFill size={16} className="mt-0.5 flex-shrink-0 text-accent" aria-hidden="true" />
+          <p>
+            <span className="font-semibold text-heading">Demo mit Beispieldaten.</span>{' '}
+            Der KI-Assistent DataMax, der die Zahlen in Klartext erklärt, ist in der Demo nicht aktiv. Fragen?{' '}
+            <a href="mailto:michael@designare.at" className="font-medium text-accent hover:underline">michael@designare.at</a>
+          </p>
+        </div>
+      </div>
       <ProjectDashboard
         data={dashboardData}
         isLoading={false}
@@ -259,11 +270,11 @@ export default function DemoAnwaltDashboard() {
         domain="kanzlei-demo.at"
         userRole="BENUTZER"
         userEmail="demo@datapeak.at"
-        userAnsprache="Willkommen in der oeffentlichen Demo"
+        userAnsprache="Willkommen in der öffentlichen Demo"
         showLandingPages
         showGoogleAds
         showPromptTracking={false}
-        dashboardInfoText="Demo-Hinweis: Diese oeffentliche Ansicht verwendet ausschliesslich fiktive Werte fuer eine Rechtsanwaltskanzlei. Es werden keine echten Kunden-, Google- oder Backend-Daten geladen."
+        dashboardInfoText="Demo-Hinweis: Diese öffentliche Ansicht verwendet ausschließlich fiktive Werte für eine Rechtsanwaltskanzlei. Es werden keine echten Kunden-, Google- oder Backend-Daten geladen. Der KI-Assistent DataMax ist in der Demo nicht aktiv. Fragen zur Demo: michael@designare.at"
         dataMaxEnabled={false}
       />
     </AiTrafficExtendedDemoContext.Provider>

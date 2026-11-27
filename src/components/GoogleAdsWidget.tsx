@@ -272,7 +272,7 @@ function GoogleAdsWidgetContent({ data, isLoading, error, showSourceComparison =
 
       {/* ── Tabs + Search ───────────────────────────────────── */}
       <div className="flex items-end justify-between gap-3 border-b border-border-subtle mb-1 flex-wrap">
-        <div className="flex gap-0.5 -mb-px">
+        <div className="flex min-w-0 flex-wrap gap-0.5 -mb-px">
           {visibleModes.map((mode) => {
             const isActive = viewMode === mode;
             return (

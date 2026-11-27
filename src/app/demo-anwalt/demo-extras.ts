@@ -138,9 +138,9 @@ export const demoLocalSeo: LocalSeoData = {
       newUsers: 1214,
       conversions: 112,
       topQueries: [
-        { query: 'rechtsanwalt wien', clicks: 214, impressions: 8240, ctr: 2.6, position: 7.8, url: '/rechtsanwalt-wien/' },
-        { query: 'scheidungsanwalt wien erstberatung', clicks: 132, impressions: 2140, ctr: 6.2, position: 2.9, url: '/familienrecht/scheidung/' },
-        { query: 'strafverteidiger wien', clicks: 84, impressions: 1960, ctr: 4.3, position: 5.6, url: '/strafrecht/' },
+        { query: 'rechtsanwalt wien', clicks: 214, impressions: 8240, ctr: 0.026, position: 7.8, url: '/rechtsanwalt-wien/' },
+        { query: 'scheidungsanwalt wien erstberatung', clicks: 132, impressions: 2140, ctr: 0.062, position: 2.9, url: '/familienrecht/scheidung/' },
+        { query: 'strafverteidiger wien', clicks: 84, impressions: 1960, ctr: 0.043, position: 5.6, url: '/strafrecht/' },
       ],
       topLandingPages: [
         { path: '/rechtsanwalt-wien/', conversions: 31, conversionRate: 4.4, engagementRate: 63.8, sessions: 704, newUsers: 552, ctr: 2.6 },
@@ -164,8 +164,8 @@ export const demoLocalSeo: LocalSeoData = {
       newUsers: 471,
       conversions: 41,
       topQueries: [
-        { query: 'anwalt graz verkehrsrecht', clicks: 96, impressions: 2210, ctr: 4.3, position: 6.1, url: '/standorte/graz/' },
-        { query: 'fuehrerschein entzogen graz', clicks: 58, impressions: 1380, ctr: 4.2, position: 7.4, url: '/verkehrsrecht/fuehrerschein-entzug/' },
+        { query: 'anwalt graz verkehrsrecht', clicks: 96, impressions: 2210, ctr: 0.043, position: 6.1, url: '/standorte/graz/' },
+        { query: 'fuehrerschein entzogen graz', clicks: 58, impressions: 1380, ctr: 0.042, position: 7.4, url: '/verkehrsrecht/fuehrerschein-entzug/' },
       ],
       topLandingPages: [
         { path: '/standorte/graz/', conversions: 19, conversionRate: 5.1, engagementRate: 66.2, sessions: 372, newUsers: 268, ctr: 4.3 },
@@ -188,7 +188,7 @@ export const demoLocalSeo: LocalSeoData = {
       newUsers: 238,
       conversions: 14,
       topQueries: [
-        { query: 'erbrecht anwalt linz', clicks: 41, impressions: 1180, ctr: 3.5, position: 9.8, url: '/standorte/linz/' },
+        { query: 'erbrecht anwalt linz', clicks: 41, impressions: 1180, ctr: 0.035, position: 9.8, url: '/standorte/linz/' },
       ],
       topLandingPages: [
         { path: '/standorte/linz/', conversions: 8, conversionRate: 3.9, engagementRate: 61.4, sessions: 205, newUsers: 161, ctr: 3.5 },

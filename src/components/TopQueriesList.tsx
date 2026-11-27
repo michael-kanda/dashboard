@@ -136,7 +136,7 @@ export default function TopQueriesList({
   // ── Header-Block (Titel + Subtitle + Search) ─────────────
   const renderHeader = (subtitle: React.ReactNode) => (
     <div className="mb-6 flex-shrink-0">
-      <div className="flex items-start justify-between gap-4 mb-3">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 mb-3">
         <div>
           <h3 className="widget-title text-heading">Top Suchanfragen</h3>
           <div className="mt-1 h-[12px] max-w-[220px]" aria-hidden="true">
@@ -158,14 +158,14 @@ export default function TopQueriesList({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <div className="relative min-w-0 flex-1 sm:flex-none">
             <input
               type="text"
               placeholder="Query oder Pfad..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="widget-control pl-8 pr-8 py-1.5 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-accent w-56 text-body placeholder-faint bg-surface"
+              className="widget-control pl-8 pr-8 py-1.5 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-accent w-full sm:w-56 text-body placeholder-faint bg-surface"
             />
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-faint" size={12} />
             {searchTerm && (
