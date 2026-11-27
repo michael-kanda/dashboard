@@ -319,9 +319,9 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <ol className="mt-12 grid gap-10 md:grid-cols-3">
+        <ol className="mt-12 grid gap-4 md:grid-cols-3">
           {STEPS.map((step, index) => (
-            <li key={step.title}>
+            <li key={step.title} className="rounded-container border border-border bg-surface p-5">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-solid text-[14px] font-bold text-white">{index + 1}</span>
               <h3 className="mt-4 text-[18px] font-semibold tracking-[-0.015em] text-heading">{step.title}</h3>
               <p className="mt-2 text-[15px] leading-[1.6]">{step.text}</p>
@@ -338,9 +338,9 @@ export default function LandingPage() {
             title="Alles im Blick."
             lead="Vom ersten Klick in Google bis zur Anfrage über ChatGPT: DataPeak zeigt, woher Ihre Besucher kommen und was sie suchen."
           />
-          <ul className="mt-12 grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
+          <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {FEATURES.map(({ icon: Icon, title, text }) => (
-              <li key={title}>
+              <li key={title} className="rounded-container border border-border bg-surface p-5">
                 <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-accent-tint text-accent">
                   <Icon size={16} aria-hidden="true" />
                 </span>
