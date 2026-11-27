@@ -64,8 +64,9 @@ export default function DatenschutzPage() {
             <li>
               <strong>Konfigurationsdaten:</strong> Von Ihnen oder einem
               Administrator hinterlegte Daten zu Ihren Projekten, wie Domain,
-              Google Search Console (GSC) Site-URL und Google Analytics 4 (GA4)
-              Property ID.
+              Google Search Console (GSC) Site-URL, Google Analytics 4 (GA4)
+              Property ID, die ID der Google-Tabelle mit den Google-Ads-Daten
+              sowie Standorte mit Google-Unternehmensprofil (Place ID).
             </li>
             <li>
               <strong>Inhaltsdaten:</strong> Daten, die Sie im Rahmen des
@@ -100,9 +101,9 @@ export default function DatenschutzPage() {
             </li>
             <li>
               <strong>Abruf von Drittanbieter-Daten:</strong> Die von Ihnen
-              hinterlegten Konfigurationsdaten (GSC- und GA4-IDs) werden
-              ausschließlich dazu verwendet, Daten von den Google-APIs
-              abzurufen und in diesem Dashboard
+              hinterlegten Konfigurationsdaten (GSC- und GA4-IDs, Google-Ads-
+              Tabelle, Place IDs) werden ausschließlich dazu verwendet, Daten
+              von den Google-APIs abzurufen und in diesem Dashboard
               darzustellen. Diese Daten werden zur Performance-Verbesserung
               zwischengespeichert.
             </li>
@@ -165,9 +166,12 @@ export default function DatenschutzPage() {
             </li>
             <li>
               <strong>Google APIs:</strong> Ihre Konfigurations-IDs werden
-              verwendet, um Anfragen an die Server von Google (USA) zu senden,
-              um die Dashboard-Daten
-              abzurufen. Es werden keine personenbezogenen Daten *an* diese
+              verwendet, um Anfragen an die Server von Google (USA) zu senden:
+              Google Search Console, Google Analytics 4, Google Ads (über eine
+              freigegebene Google-Tabelle bzw. die Verknüpfung in GA4) und die
+              Google Places API für Unternehmensprofile (Name, Bewertung,
+              Öffnungsstatus, Foto). So werden die Dashboard-Daten
+              abgerufen. Es werden keine personenbezogenen Daten *an* diese
               Dienste gesendet, sondern nur Daten *von* diesen abgerufen.
             </li>
           </ul>
