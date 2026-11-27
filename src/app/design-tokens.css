@@ -241,3 +241,12 @@
   --dp-field-placeholder: #7C7C80;
   --dp-section-alt:       var(--dp-bg-primary);
 }
+
+/* Landingpage (www.datapeak.at) im Dunkelmodus: Hintergründe eine Spur heller als im Dashboard.
+   Karten werden mit angehoben, damit sie sich weiter vom Abschnitt abheben. */
+.dark .dp-marketing {
+  --dp-page:         #1C1C1E;
+  --dp-section-alt:  #232325;
+  --dp-bg-primary:   #262628;
+  --dp-bg-secondary: #2C2C2E;
+}
