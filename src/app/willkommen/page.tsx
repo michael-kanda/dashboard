@@ -270,7 +270,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Drei Säulen ──────────────────────────────────── */}
-      <section id="funktionen" className="scroll-mt-16 border-y border-border-subtle bg-surface">
+      <section id="funktionen" className="scroll-mt-16 border-y border-border-subtle bg-section-alt">
         <div className="mx-auto max-w-[1120px] px-4 py-20 sm:px-6">
           <SectionHeading eyebrow="Warum DataPeak" title="Zahlen, die Sie wirklich lesen." />
           <div className="mt-12 grid gap-10 md:grid-cols-3">
@@ -331,7 +331,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Funktionen ───────────────────────────────────── */}
-      <section className="border-y border-border-subtle bg-surface">
+      <section className="border-y border-border-subtle bg-section-alt">
         <div className="mx-auto max-w-[1120px] px-4 py-20 sm:px-6">
           <SectionHeading
             eyebrow="Dashboard"
@@ -378,7 +378,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Sicherheit ───────────────────────────────────── */}
-      <section className="border-y border-border-subtle bg-surface">
+      <section className="border-y border-border-subtle bg-section-alt">
         <div className="mx-auto grid max-w-[1120px] gap-12 px-4 py-20 sm:px-6 md:grid-cols-2">
           <SectionHeading
             eyebrow="Sicherheit"
