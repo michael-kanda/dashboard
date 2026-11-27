@@ -12,7 +12,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
 
   return (
     <ThemeProvider>
-      <div className="flex min-h-screen flex-col bg-page">
+      <div className="dp-marketing flex min-h-screen flex-col bg-page">
         <MarketingHeader appOrigin={appOrigin} />
         <main className="flex-grow">{children}</main>
         <MarketingFooter />
