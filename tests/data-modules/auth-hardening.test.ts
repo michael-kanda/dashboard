@@ -25,3 +25,13 @@ test('password fingerprint is stable and changes with the hash', async () => {
   assert.notEqual(first, await fingerprintPasswordHash('$2b$10$abd'));
   assert.equal(first.length, 16);
 });
+
+test('Fehlversuche speichern E-Mail und IP nur als Hashwert', async () => {
+  const { loginThrottleKey } = await import('../../src/lib/login-throttle.ts');
+  const key = loginThrottleKey('kunde@example.at', 'geheim');
+  assert.match(key ?? '', /^[0-9a-f]{64}$/);
+  assert.equal(key, loginThrottleKey('kunde@example.at', 'geheim'));
+  assert.notEqual(key, loginThrottleKey('kunde@example.at', 'anderes-geheimnis'));
+  assert.ok(!(key ?? '').includes('kunde'));
+  assert.equal(loginThrottleKey(null, 'geheim'), null);
+});

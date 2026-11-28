@@ -86,9 +86,10 @@ export default function DatenschutzPage() {
               protokolliert. Zu jeder Anmeldung, Passwortänderung und
               Passwort-Zurücksetzung sowie zu jedem angeforderten Link zum
               Zurücksetzen speichern wir Zeitpunkt, Art des Ereignisses,
-              E-Mail-Adresse und Rolle, nie das Passwort selbst; zu
-              fehlgeschlagenen Anmeldeversuchen zum Schutz vor Missbrauch
-              zusätzlich die IP-Adresse.
+              E-Mail-Adresse und Rolle, nie das Passwort selbst. Zu
+              fehlgeschlagenen Anmeldeversuchen speichern wir zum Schutz vor
+              Missbrauch nur den Zeitpunkt sowie E-Mail-Adresse und IP-Adresse
+              als nicht umkehrbaren Hashwert.
             </li>
             <li>
               <strong>Passwort vergessen:</strong> Fordern Sie auf der
@@ -298,7 +299,7 @@ export default function DatenschutzPage() {
             Protokolle zu Landingpages bleiben gespeichert, solange Ihr
             Benutzerkonto besteht; wird ein Konto gelöscht, löschen wir sein
             Anmeldeprotokoll sofort und ersetzen seine E-Mail-Adresse in den
-            Landingpage-Protokollen durch „Gelöschtes Konto“. Fehlgeschlagene Anmeldeversuche samt IP-Adresse löschen wir
+            Landingpage-Protokollen durch „Gelöschtes Konto“. Die Hashwerte fehlgeschlagener Anmeldeversuche löschen wir
             nach einem Tag, ebenso die Hashwerte aus Anfragen zum Zurücksetzen
             des Passworts und abgelaufene Links. Den DataMax-Chatverlauf löschen
             wir nach 90 Tagen, mit „Chat leeren“ sofort. Fehlerberichte bei Sentry werden nach Ablauf der dort
