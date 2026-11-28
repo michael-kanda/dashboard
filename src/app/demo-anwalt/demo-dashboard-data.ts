@@ -8,6 +8,7 @@ import type {
 } from '@/lib/dashboard-shared';
 import { DEMO_START, demoAiTrafficExtended, demoLocalSeo, demoWeatherData } from './demo-extras';
 import { buildDemoPromptTracking } from './demo-prompt-tracking';
+import { buildDemoYearOverYear } from '@/lib/demo-year-over-year';
 
 const DAY = 24 * 60 * 60 * 1000;
 const START = DEMO_START;
@@ -139,7 +140,7 @@ const googleAdsData: GoogleAdsData = {
 
 const impressionsTrend = trend([1120, 1185, 1094, 1260, 1315, 1380, 1440, 1492, 1520, 1588, 1635, 1690, 1722, 1780, 1840, 1905, 1960, 2012, 2070, 2135, 2200, 2260, 2314, 2380, 2445, 2510, 2580, 2640, 2705, 2780]);
 
-export const demoData: ProjectDashboardData = {
+const demoSnapshot: ProjectDashboardData = {
   kpis: {
     clicks: { value: 1848, change: 14.7 },
     impressions: { value: 48210, change: 22.4 },
@@ -255,4 +256,21 @@ export const demoData: ProjectDashboardData = {
     { name: 'Tablet', value: 174, fill: '#FBBC05' },
   ],
   apiErrors: {},
+};
+
+// Vorjahr: Die Kanzlei ist seit dem Relaunch deutlich gewachsen; im Vergleich zur
+// Vorperiode (März/April) wirkt das Plus kleiner, weil der Frühling ohnehin stärker ist.
+export const demoData: ProjectDashboardData = {
+  ...demoSnapshot,
+  yearOverYear: buildDemoYearOverYear(demoSnapshot, {
+    clicks: 1339,
+    impressions: 31870,
+    sessions: 2580,
+    totalUsers: 2051,
+    newUsers: 1662,
+    conversions: 131,
+    engagementRate: 61.8,
+    bounceRate: 38.2,
+    avgEngagementTime: 92,
+  }),
 };

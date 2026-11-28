@@ -2,6 +2,7 @@
 
 import type {
   KpiDatum,
+  KpiComparison,
   ChartPoint,
   TopQueryData,
   ActiveKpi as BaseActiveKpi
@@ -11,8 +12,9 @@ import type { AiTrafficData } from '@/types/ai-traffic';
 import type { DailyWeather } from '@/lib/weather';
 import type { QuestionType } from '@/lib/prompt-tracking/query-classifier';
 import type { MetricMetadata } from '@/lib/metric-metadata';
+import type { DashboardComparison, YearOverYearData } from '@/lib/comparison';
 
-export type { KpiDatum, ChartPoint, TopQueryData, AiTrafficData };
+export type { KpiDatum, KpiComparison, ChartPoint, TopQueryData, AiTrafficData };
 
 export type ActiveKpi =
   | BaseActiveKpi
@@ -260,6 +262,10 @@ export interface ProjectDashboardData {
     conversionsConfigured: boolean;
   };
   snapshotVersion?: number;
+  /** Vorjahreswerte, kalendergleich zum Berichtszeitraum; fehlt bei älteren Snapshots. */
+  yearOverYear?: YearOverYearData;
+  /** Nur nach applyComparisonMode gesetzt, nie gespeichert. */
+  comparison?: DashboardComparison;
   metricMetadata?: Record<string, MetricMetadata>;
   fromCache?: boolean;
   cacheStale?: boolean;

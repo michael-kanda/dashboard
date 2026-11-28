@@ -28,6 +28,8 @@ function usageFromHeaders(headers: Headers): DataMaxUsage | null {
 interface UseDataMaxChatOptions {
   projectId?: string;
   dateRange?: string;
+  /** Vorperiode oder Vorjahr; bestimmt, womit DataMax Veränderungen vergleicht. */
+  comparisonMode?: 'vorperiode' | 'vorjahr';
   /** API-Pfad; die öffentliche Demo nutzt /api/ai/demo-chat. */
   endpoint?: string;
   onError?: (error: string) => void;
@@ -52,7 +54,7 @@ function isStreamDisconnectError(error: unknown): boolean {
 }
 
 export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
-  const { projectId, dateRange = '30d', endpoint = '/api/ai/chat', onError } = options;
+  const { projectId, dateRange = '30d', comparisonMode = 'vorperiode', endpoint = '/api/ai/chat', onError } = options;
   // Kundenansicht der Admins (?ansicht=kunde): Antworten wie fuer den Kunden anfordern.
   const customerView = useSearchParams().get('ansicht') === 'kunde';
 
@@ -132,6 +134,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
             message: content.trim(),
             projectId,
             dateRange,
+            vergleich: comparisonMode,
             customerView,
           }),
           signal: currentController.signal,
@@ -293,7 +296,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
         }
       }
     },
-    [projectId, dateRange, customerView, isLoading, onError, endpoint]
+    [projectId, dateRange, comparisonMode, customerView, isLoading, onError, endpoint]
   );
 
   // Chat zurücksetzen

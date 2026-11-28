@@ -52,6 +52,9 @@ function normalizeKpi(value?: KpiDatum): KpiDatum {
   return {
     value: finiteNumber(value?.value),
     change: finiteNumber(value?.change),
+    // Vorher-Wert und gewählter Vergleich (Vorperiode/Vorjahr) bleiben erhalten.
+    ...(Number.isFinite(value?.previous) ? { previous: value?.previous } : {}),
+    ...(value?.comparison ? { comparison: value.comparison } : {}),
   };
 }
 

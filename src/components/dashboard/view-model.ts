@@ -12,6 +12,7 @@ import {
 import { createDashboardDataModules } from '@/lib/data-modules';
 import { aggregateLandingPages } from '@/lib/utils';
 import { buildDashboardRenderPolicy } from './render-policy';
+import { describeMissingYoy } from '@/lib/comparison';
 
 export interface DashboardExportKpi {
   label: string;
@@ -69,6 +70,15 @@ export function buildDashboardViewModel({
   const analyticsSource = data.analyticsSource === 'vercel' ? 'vercel' as const : 'ga4' as const;
   const isVercel = analyticsSource === 'vercel';
   const ga4Only = <T,>(value: T) => (isVercel ? undefined : value);
+  // Seitenaufrufe liegen außerhalb von data.kpis; Vercel liefert keine Vorjahreswerte.
+  const pageviewsKpi = (): KpiDatum => {
+    const kpi = safeKpi(data.vercelAnalytics?.pageviews);
+    if (data.comparison?.mode !== 'vorjahr') return kpi;
+    return {
+      ...kpi,
+      comparison: { mode: 'vorjahr', previous: null, change: null, note: describeMissingYoy('not_supported', 'web') },
+    };
+  };
   const extendedKpis = data.kpis ? {
     clicks: modules.gsc.data.kpis.clicks,
     impressions: modules.gsc.data.kpis.impressions,
@@ -79,7 +89,7 @@ export function buildDashboardViewModel({
     bounceRate: ga4Only(modules.ga4.data.kpis.bounceRate),
     newUsers: ga4Only(modules.ga4.data.kpis.newUsers),
     avgEngagementTime: ga4Only(modules.ga4.data.kpis.avgEngagementTime),
-    pageviews: isVercel ? safeKpi(data.vercelAnalytics?.pageviews) : undefined,
+    pageviews: isVercel ? pageviewsKpi() : undefined,
     genAiImpressions: safeKpi(data.kpis.genAiImpressions),
   } : undefined;
 
@@ -129,6 +139,7 @@ export function buildDashboardViewModel({
   return {
     modules,
     reportingPeriod: data.reportingPeriod ?? data.metricMetadata?.['ga4.sessions']?.period,
+    comparison: data.comparison,
     isAdmin: policy.isAdmin,
     visibility,
     canShow: policy.canShow,

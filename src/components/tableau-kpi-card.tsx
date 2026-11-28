@@ -14,10 +14,14 @@ interface TableauKpiCardProps {
   color?: string;
   error?: string | null;
   className?: string;
-  comparison?: {
-    current: number;
-    previous: number;
-  };
+  /** Vergleichswert der gewählten Vergleichsart; null = keiner vorhanden. */
+  previousValue?: number | null;
+  /** Beschriftung des Vergleichswerts, z. B. "Vorher" oder "Vorjahr". */
+  comparisonLabel?: string;
+  /** Text, wenn kein Vergleichswert vorhanden ist. */
+  missingComparisonLabel?: string;
+  /** Ehrlicher Grund, warum Vergleichswert oder Veränderung fehlen. */
+  comparisonNote?: string;
   formatValue?: (value: number) => string;
   description?: string;
   source: 'GSC' | 'GA4' | 'Vercel';
@@ -32,8 +36,11 @@ export default function TableauKpiCard({
   color = '#3b82f6',
   error = null,
   className = '',
-  comparison,
-  // Zählwerte ganzzahlig: der Vorher-Wert wird aus der Änderung zurückgerechnet und hat sonst Kommastellen
+  previousValue,
+  comparisonLabel = 'Vorher',
+  missingComparisonLabel = 'Kein Vergleichswert',
+  comparisonNote,
+  // Zählwerte ganzzahlig: ein aus der Änderung zurückgerechneter Vorher-Wert hätte sonst Kommastellen
   formatValue = (currentValue) => Math.round(currentValue).toLocaleString('de-DE'),
   description,
   source,
@@ -43,7 +50,9 @@ export default function TableauKpiCard({
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   });
-  const previousValue = comparison ? formatValue(comparison.previous) : null;
+  const formattedPrevious = typeof previousValue === 'number' && Number.isFinite(previousValue)
+    ? formatValue(previousValue)
+    : null;
 
   const yDomain = useMemo(() => {
     const values = (data ?? [])
@@ -138,8 +147,8 @@ export default function TableauKpiCard({
       )}
 
       <div className="widget-control mt-2 flex items-center justify-between gap-3 text-faint">
-        <span className="truncate tabular-nums">
-          {previousValue ? `Vorher ${previousValue}` : 'Kein Vergleichswert'}
+        <span className="truncate tabular-nums" title={comparisonNote}>
+          {formattedPrevious !== null ? `${comparisonLabel} ${formattedPrevious}` : missingComparisonLabel}
         </span>
         <span className="shrink-0 font-medium">{source}</span>
       </div>

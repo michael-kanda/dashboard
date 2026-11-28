@@ -110,7 +110,7 @@ const trend = weights.map((w, i) => ({
   impressions: Math.round((totalImpressions * w) / weightSum),
 }));
 
-/** Anteil der langen Suchen an allen Impressionen, je Kalenderwoche (wie buildShareTrend im Loader). */
+/** Anteil der langen Suchen an allen Impressionen, je Kalenderwoche (wie buildShareTrend in lib/prompt-tracking/share-trend). */
 export function buildDemoShareTrend(allDaily: { date: number; value: number }[]): PromptTrackingShareBucket[] {
   const week = (ts: number) => {
     const d = new Date(ts);

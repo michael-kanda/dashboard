@@ -16,11 +16,12 @@ import DashboardViewSwitch, { type DashboardViewMode } from '@/components/dashbo
 import { buildDashboardViewModel } from '@/components/dashboard/view-model';
 import type { ProjectDashboardProps } from '@/components/dashboard/types';
 import { formatReportingPeriod } from '@/lib/reporting-period';
+import { applyComparisonMode, parseComparisonMode, type ComparisonMode } from '@/lib/comparison';
 
 export type { ProjectDashboardProps } from '@/components/dashboard/types';
 
 export default function ProjectDashboard({
-  data,
+  data: snapshotData,
   isLoading,
   dateRange,
   onDateRangeChange,
@@ -48,7 +49,13 @@ export default function ProjectDashboard({
   const chartRef = useRef<HTMLDivElement>(null);
   const [activeKpi, setActiveKpi] = useState<ActiveKpi>('clicks');
   const [isUpdating, setIsUpdating] = useState(false);
+  // Die Vergleichsart wechselt ohne Neuladen: der Snapshot enthält Vorperiode und Vorjahr.
+  const [comparisonMode, setComparisonMode] = useState<ComparisonMode>(
+    () => parseComparisonMode(searchParams.get('vergleich')),
+  );
+  const data = useMemo(() => applyComparisonMode(snapshotData, comparisonMode), [snapshotData, comparisonMode]);
   const reportingPeriodLabel = formatReportingPeriod(data.reportingPeriod);
+  const comparisonPeriodLabel = formatReportingPeriod(data.comparison?.period);
 
   const model = useMemo(() => buildDashboardViewModel({
     data,
@@ -74,15 +81,26 @@ export default function ProjectDashboard({
 
   useEffect(() => {
     setIsUpdating(false);
-  }, [dateRange, data, isLoading]);
+  }, [dateRange, snapshotData, isLoading]);
 
   const handleDateRangeChange = (range: ProjectDashboardProps['dateRange']) => {
     if (range === dateRange) return;
     setIsUpdating(true);
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     params.set('range', range);
     router.push(`${pathname}?${params.toString()}`);
     onDateRangeChange?.(range);
+  };
+
+  const handleComparisonModeChange = (mode: ComparisonMode) => {
+    if (mode === comparisonMode) return;
+    setComparisonMode(mode);
+    const params = new URLSearchParams(window.location.search);
+    if (mode === 'vorjahr') params.set('vergleich', 'vorjahr');
+    else params.delete('vergleich');
+    const query = params.toString();
+    // Nur die Adresse anpassen (für Teilen und Drucken), ohne die Seite neu zu laden.
+    window.history.replaceState(window.history.state, '', query ? `${pathname}?${query}` : pathname);
   };
 
   const canSwitchView = viewerRole === 'ADMIN' || viewerRole === 'SUPERADMIN';
@@ -90,7 +108,7 @@ export default function ProjectDashboard({
   const handleViewModeChange = (mode: DashboardViewMode) => {
     if (mode === viewMode) return;
     setIsUpdating(true);
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     if (mode === 'kunde') params.set('ansicht', 'kunde');
     else params.delete('ansicht');
     const query = params.toString();
@@ -107,6 +125,8 @@ export default function ProjectDashboard({
           projectId={projectId}
           dateRange={dateRange}
           onDateRangeChange={handleDateRangeChange}
+          comparisonMode={comparisonMode}
+          onComparisonModeChange={handleComparisonModeChange}
           userRole={userRole}
           userEmail={userEmail}
           userAnsprache={userAnsprache}
@@ -120,7 +140,9 @@ export default function ProjectDashboard({
         <div className="mb-4 hidden border-b-2 border-black pb-2 print:block">
           <h1>{domain || 'Projekt Dashboard'}</h1>
           <p className="text-11">
-            {reportingPeriodLabel ? `Zeitraum: ${reportingPeriodLabel} · ` : ''}Gedruckt am {new Date().toLocaleDateString('de-AT')}
+            {reportingPeriodLabel ? `Zeitraum: ${reportingPeriodLabel} · ` : ''}
+            {data.comparison ? `Vergleich: ${data.comparison.label}${comparisonPeriodLabel ? ` (${comparisonPeriodLabel})` : ''} · ` : ''}
+            Gedruckt am {new Date().toLocaleDateString('de-AT')}
           </p>
         </div>
 
@@ -179,7 +201,7 @@ export default function ProjectDashboard({
       </div>
 
       {dataMaxEnabled && model.canShow('dataMaxChat') && (
-        <DataMaxChat projectId={projectId} dateRange={dateRange} ansprache={isDemo ? null : userAnsprache} demo={isDemo} />
+        <DataMaxChat projectId={projectId} dateRange={dateRange} comparisonMode={comparisonMode} ansprache={isDemo ? null : userAnsprache} demo={isDemo} />
       )}
     </div>
   );

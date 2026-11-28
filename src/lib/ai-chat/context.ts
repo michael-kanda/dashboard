@@ -4,7 +4,9 @@
 
 import Holidays from 'date-holidays';
 import type { User } from '@/lib/schemas';
-import type { ProjectDashboardData } from '@/lib/dashboard-shared';
+import type { KpiDatum, ProjectDashboardData } from '@/lib/dashboard-shared';
+import { applyComparisonMode, type ComparisonMode } from '@/lib/comparison';
+import { formatReportingPeriod } from '@/lib/reporting-period';
 import type { DailyWeather } from '@/lib/weather';
 import type { AiTrafficDetailData } from '@/types/ai-traffic-detail';
 import { getDateRangeLabel } from './date-range';
@@ -148,16 +150,56 @@ function buildHolidayContext(dateRange: string, country: string = 'AT'): string 
 // KONTEXT-BUILDER (Erweitert mit AI Traffic Details)
 // ============================================================================
 
+function buildComparisonSection(data: ProjectDashboardData): string {
+  const comparison = data.comparison;
+  if (!comparison) return '';
+  const period = formatReportingPeriod(comparison.period);
+  const periodText = period ? ` (${period})` : '';
+  if (comparison.mode === 'vorjahr') {
+    const notices = comparison.notices.length
+      ? `\nFEHLENDE VORJAHRESWERTE:\n${comparison.notices.map((notice) => `- ${notice}`).join('\n')}`
+      : '';
+    return `
+=== VERGLEICH ===
+Vergleichsart: Vorjahr, also derselbe Kalenderzeitraum ein Jahr früher${periodText}.
+Formuliere Veränderungen als "im Vergleich zum Vorjahr", nicht als Vorperiode. Saisonale Schwankungen sind so herausgerechnet.
+Fehlt ein Vorjahreswert, sag das offen und erfinde keine Veränderung.
+KI-Traffic-Trends und Wochenvergleiche beziehen sich weiterhin auf die Vorperiode bzw. Vorwoche.${notices}
+`;
+  }
+  return `
+=== VERGLEICH ===
+Vergleichsart: Vorperiode, also der direkt vorhergehende, gleich lange Zeitraum${periodText}.
+Formuliere Veränderungen als "im Vergleich zur Vorperiode". Bei saisonalen Geschäften kann das die Entwicklung verzerren; der Nutzer kann im Dashboard auf Vorjahr umschalten.
+`;
+}
+
 export function buildChatContext(
-  data: ProjectDashboardData, 
+  snapshot: ProjectDashboardData,
   user: User, 
   dateRange: string,
   aiTrafficDetail?: AiTrafficDetailData | null, // Extended AI Traffic Data
-  country?: string // Land für Feiertage
+  country?: string, // Land für Feiertage
+  comparisonMode: ComparisonMode = 'vorperiode',
 ): string {
+  // Veränderungen und Vorher-Werte der gewählten Vergleichsart (Vorperiode oder Vorjahr).
+  const data = applyComparisonMode(snapshot, comparisonMode);
   const kpis = data.kpis;
   const fmt = (val?: number) => val?.toLocaleString('de-DE') ?? '0';
   const pct = (val?: number) => val ? `${val > 0 ? '+' : ''}${val.toFixed(1)}%` : '0%';
+  const comparedTo = comparisonMode === 'vorjahr' ? 'zum Vorjahr' : 'zur Vorperiode';
+  const comparisonName = comparisonMode === 'vorjahr' ? 'Vorjahr' : 'Vorperiode';
+  const kpiLine = (label: string, kpi?: KpiDatum, format: (value?: number) => string = fmt) => {
+    if (!kpi) return `${label}: ${format(0)}`;
+    const selected = kpi.comparison;
+    if (!selected) return `${label}: ${format(kpi.value)} (${pct(kpi.change)})`;
+    const previous = selected.previous !== null ? `; ${comparisonName}: ${format(selected.previous)}` : '';
+    if (selected.change === null) {
+      return `${label}: ${format(kpi.value)} (keine Veränderung ${comparedTo} berechenbar${previous}${selected.note ? `. ${selected.note}` : ''})`;
+    }
+    return `${label}: ${format(kpi.value)} (${pct(selected.change)} ${comparedTo}${previous})`;
+  };
+  const rate = (val?: number) => `${val?.toFixed(1) ?? '0'}%`;
 
   // Early return wenn keine KPIs vorhanden
   if (!kpis) {
@@ -396,15 +438,15 @@ HINWEIS: Conversions sind nur auf Kampagnen- und Anzeigengruppen-Ebene zuverlaes
 PROJEKT: ${user.domain || 'Unbekannt'}
 ZEITRAUM: ${getDateRangeLabel(dateRange)}
 ${analyticsSourceNote(data)}
-
+${buildComparisonSection(data)}
 === HAUPT-KPIs ===
-Nutzer: ${fmt(kpis.totalUsers?.value)} (${pct(kpis.totalUsers?.change)})
-Sessions: ${fmt(kpis.sessions?.value)} (${pct(kpis.sessions?.change)})
-Klicks (GSC): ${fmt(kpis.clicks?.value)} (${pct(kpis.clicks?.change)})
-Impressionen: ${fmt(kpis.impressions?.value)} (${pct(kpis.impressions?.change)})
-Conversions: ${fmt(kpis.conversions?.value)} (${pct(kpis.conversions?.change)})
-Interaktionsrate: ${kpis.engagementRate?.value?.toFixed(1) ?? '0'}%
-Bounce Rate: ${kpis.bounceRate?.value?.toFixed(1) ?? '0'}%
+${kpiLine('Nutzer', kpis.totalUsers)}
+${kpiLine('Sessions', kpis.sessions)}
+${kpiLine('Klicks (GSC)', kpis.clicks)}
+${kpiLine('Impressionen', kpis.impressions)}
+${kpiLine('Conversions', kpis.conversions)}
+${kpiLine('Interaktionsrate', kpis.engagementRate, rate)}
+${kpiLine('Bounce Rate', kpis.bounceRate, rate)}
 ${aiTrafficSection}
 === TOP KEYWORDS ===
 ${topKeywords}

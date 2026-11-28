@@ -10,6 +10,7 @@ import { getAiTrafficDetailWithComparison } from '@/lib/ai-traffic-extended';
 import Holidays from 'date-holidays';
 import { detectRequestedDateRange, getDateRanges, normalizeDateRange } from '@/lib/ai-chat/date-range';
 import { buildChatContext } from '@/lib/ai-chat/context';
+import { parseComparisonMode } from '@/lib/comparison';
 import { generateSuggestedQuestions } from '@/lib/ai-chat/fallback';
 import { buildSystemPrompt } from '@/lib/ai-chat/prompt';
 import { logger } from '@/lib/logger';
@@ -34,7 +35,8 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { message, projectId, dateRange = '30d', customerView } = body;
+    const { message, projectId, dateRange = '30d', customerView, vergleich } = body;
+    const comparisonMode = parseComparisonMode(typeof vergleich === 'string' ? vergleich : null);
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'Nachricht fehlt' }, { status: 400 });
@@ -106,7 +108,7 @@ export async function POST(req: NextRequest) {
     const domainParts = (user.domain || '').replace(/^https?:\/\//, '').replace(/\/.*$/, '').split('.');
     const tld = domainParts[domainParts.length - 1]?.toUpperCase() || 'AT';
     const userCountry = ['AT', 'DE', 'CH'].includes(tld) ? tld : 'AT';
-    const context = buildChatContext(dashboardData, user, effectiveDateRange, aiTrafficDetail, userCountry);
+    const context = buildChatContext(dashboardData, user, effectiveDateRange, aiTrafficDetail, userCountry, comparisonMode);
     
     // Feiertage prüfen für Suggested Questions
     const hasHolidays = (() => {

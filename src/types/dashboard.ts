@@ -6,8 +6,23 @@ export type KPI = {
   change: number;
 };
 
+/** Vorher-Wert und Veränderung der gewählten Vergleichsart (siehe lib/comparison). */
+export type KpiComparison = {
+  mode: 'vorperiode' | 'vorjahr';
+  /** null: kein Vergleichswert vorhanden. */
+  previous: number | null;
+  /** null: keine prozentuale Veränderung berechenbar. */
+  change: number | null;
+  /** Ehrlicher Hinweis, warum ein Vergleichswert fehlt. */
+  note?: string;
+};
+
 // Spezielle Version mit aiTraffic (wird in dashboard-shared verwendet)
 export type KpiDatum = KPI & {
+  /** Wert der Vorperiode; fehlt bei älteren Snapshots. */
+  previous?: number;
+  /** Nur nach applyComparisonMode gesetzt. */
+  comparison?: KpiComparison;
   aiTraffic?: {
     value: number;
     percentage: number;
