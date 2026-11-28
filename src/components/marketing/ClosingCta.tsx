@@ -66,10 +66,13 @@ export default function ClosingCta({ demoHref }: { demoHref: string }) {
           <a
             href={HANDBOOK_PATH}
             download={HANDBOOK_FILENAME}
-            className="mt-6 inline-flex items-center gap-2 text-15 font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="mt-6 inline-flex items-start gap-2 text-15 font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
-            <Download size={15} aria-hidden="true" />
-            Handbuch herunterladen <span className="text-muted">({HANDBOOK_META})</span>
+            <Download size={15} aria-hidden="true" className="mt-[3px] flex-shrink-0" />
+            {/* Text in einem Element, sonst wird jedes Wortstück zur eigenen Flex-Spalte */}
+            <span>
+              Handbuch herunterladen <span className="whitespace-nowrap text-muted">({HANDBOOK_META})</span>
+            </span>
           </a>
         </div>
         <div className="hidden items-end pl-6 pt-10 md:flex">

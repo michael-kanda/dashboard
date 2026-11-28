@@ -2,8 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { BoxArrowInRight, MoonStarsFill, SunFill } from 'react-bootstrap-icons';
-import { useTheme } from '@/components/ThemeProvider';
+import { BoxArrowInRight } from 'react-bootstrap-icons';
 import DataPeakLogo from './DataPeakLogo';
 
 const NAV = [
@@ -13,9 +12,6 @@ const NAV = [
 ];
 
 export default function MarketingHeader({ appOrigin }: { appOrigin: string }) {
-  const { theme, toggleTheme } = useTheme();
-  const isDark = theme === 'dark';
-
   return (
     <header className="sticky top-0 z-40 border-b border-border-subtle bg-page/80 backdrop-blur-xl backdrop-saturate-150">
       <div className="mx-auto flex h-14 max-w-[1120px] items-center gap-4 px-4 sm:px-6">
@@ -31,14 +27,6 @@ export default function MarketingHeader({ appOrigin }: { appOrigin: string }) {
           ))}
         </nav>
 
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label={isDark ? 'Helle Darstellung' : 'Dunkle Darstellung'}
-          className="flex h-9 w-9 items-center justify-center rounded-control text-muted transition-colors duration-150 hover:bg-fill hover:text-heading focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          {isDark ? <SunFill size={15} aria-hidden="true" /> : <MoonStarsFill size={14} aria-hidden="true" />}
-        </button>
 
         <a
           href={`${appOrigin}/demo-anwalt`}

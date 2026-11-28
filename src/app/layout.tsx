@@ -42,12 +42,10 @@ export function generateMetadata(): Metadata {
 const themeInitScript = `
   (function() {
     try {
+      // 'light' oder 'dark' fest gewählt, sonst wie das Gerät (ThemeProvider.tsx)
       var theme = localStorage.getItem('datapeak-theme');
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      var dark = theme === 'dark' || (theme !== 'light' && !!window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.classList.toggle('dark', dark);
       var scale = Number(localStorage.getItem('datapeak-font-scale'));
       if ([0.9, 1.1, 1.2, 1.35].indexOf(scale) !== -1) {
         document.documentElement.style.setProperty('--dp-content-zoom', String(scale));
