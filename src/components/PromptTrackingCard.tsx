@@ -32,6 +32,8 @@ interface PromptTrackingCardProps {
   domain?: string;
   dateRange?: string;
   isAdmin?: boolean;
+  /** false in der Demo: das KI-Clustering braucht ein angemeldetes Projekt. */
+  aiEnabled?: boolean;
 }
 
 type FilterMode = 'all' | 'branded' | 'nonBranded' | 'geo' | 'noGeo';
@@ -41,7 +43,7 @@ const MAX_QUERIES_FOR_AI = 200;
 const MIN_QUERIES_FOR_AI = 5;
 
 export default function PromptTrackingCard({
-  data, dashboardData, domain, dateRange, isAdmin = false,
+  data, dashboardData, domain, dateRange, isAdmin = false, aiEnabled = true,
 }: PromptTrackingCardProps) {
   const [search, setSearch] = useState('');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
@@ -200,6 +202,7 @@ export default function PromptTrackingCard({
         </div>
 
         <div className="flex flex-wrap gap-2">
+{aiEnabled && (
           <button
             onClick={handleCluster}
             disabled={!canCluster || isClustering}
@@ -208,6 +211,7 @@ export default function PromptTrackingCard({
           >
             {isClustering ? <><Spinner size={16} className="" />Analysiere...</> : <><WandSparkles className="w-4 h-4" />Mit AI clustern</>}
           </button>
+          )}
           <button
             onClick={handleExport}
             className="widget-control flex items-center gap-2 px-3 py-1.5 rounded-md border border-border text-body hover:bg-surface-secondary transition"

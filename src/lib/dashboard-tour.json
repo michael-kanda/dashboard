@@ -28,15 +28,15 @@
     "sectionIds": ["section-google-genai"],
     "label": "Google-KI",
     "title": "Google GenAI Sichtbarkeit",
-    "text": "Vorbereitet für Googles KI-Suche (AI Overviews und AI Mode): wie oft Ihre Seiten dort eingeblendet werden. In der Demo mit Beispielwerten gefüllt.",
-    "honest": "Google zeigt den AI Mode bisher nur teilweise in der Search Console und bietet dafür noch keine Schnittstelle. In Ihrem Dashboard ist dieser Bereich deshalb vorerst ein Platzhalter."
+    "text": "Vorbereitet für Googles KI-Suche (AI Overviews und AI Mode): wie oft Ihre Seiten dort eingeblendet werden. Bis Google dafür eine Schnittstelle anbietet, steht hier ein Platzhalter, auch in der Demo.",
+    "honest": "Lange, fragenartige Google-Suchen, wie sie typisch für die KI-Suche sind, zeigt bis dahin das Fragen-Radar im Bereich KI-Traffic."
   },
   {
     "id": "ki-traffic",
     "sectionIds": ["section-ki-traffic"],
     "label": "KI-Traffic",
     "title": "KI-Traffic",
-    "text": "Besuche aus ChatGPT, Perplexity, Gemini, Claude und anderen KI-Diensten, nach Quelle getrennt und mit Verlauf.",
+    "text": "Besuche aus ChatGPT, Perplexity, Gemini, Claude und anderen KI-Diensten, nach Quelle getrennt und mit Verlauf. Dazu das Fragen-Radar mit langen, fragenartigen Google-Suchen.",
     "honest": "DataPeak sieht nur Klicks aus einer KI-Antwort. Wie oft eine KI Ihre Firma erwähnt, ohne dass jemand klickt, misst es nicht."
   },
   {

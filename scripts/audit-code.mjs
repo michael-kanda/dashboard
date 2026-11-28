@@ -77,6 +77,8 @@ const publicRoutes = new Set([
   // Kontaktformular der Landingpage: bewusst öffentlich, geschützt durch
   // Honeypot, Mindest-Ausfüllzeit und Begrenzung pro IP und Tag.
   'src/app/api/zugang-anfragen/route.ts',
+  // Öffentliche Demo: ohne Anmeldung, begrenzt über demo_chat_usage (src/lib/demo-chat-quota.ts)
+  'src/app/api/ai/demo-chat/route.ts',
 ]);
 const authPattern = /\bauth\(\)|\bgetServerSession\(|\brequireContentStudioProject\(|\bCRON_SECRET\b/;
 

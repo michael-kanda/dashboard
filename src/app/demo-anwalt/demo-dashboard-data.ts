@@ -1,10 +1,13 @@
 // src/app/demo-anwalt/demo-dashboard-data.ts
 // Fiktive Dashboard-Daten der öffentlichen Demo (Kanzlei), genutzt von Demo und Demo-Bericht.
 import type {
+  ConvertingPageData,
   GoogleAdsData,
   ProjectDashboardData,
+  TopQueryData,
 } from '@/lib/dashboard-shared';
 import { DEMO_START, demoAiTrafficExtended, demoLocalSeo, demoWeatherData } from './demo-extras';
+import { buildDemoPromptTracking } from './demo-prompt-tracking';
 
 const DAY = 24 * 60 * 60 * 1000;
 const START = DEMO_START;
@@ -31,12 +34,23 @@ function aiTrend(values: number[]) {
   }));
 }
 
-function genAiTrend(values: number[]) {
-  return values.map((impressions, index) => ({
-    date: START + index * DAY,
-    impressions,
-  }));
+// Wie im Loader (addLandingPageConversions): Conversions der zugeordneten Landingpage
+function withLandingPageConversions(queries: TopQueryData[], pages: ConvertingPageData[]): TopQueryData[] {
+  const byPath = new Map(pages.map((page) => [page.path, page.conversions]));
+  return queries.map((query) =>
+    query.url && byPath.has(query.url) ? { ...query, landingPageConversions: byPath.get(query.url) } : query,
+  );
 }
+
+const topConvertingPages: ConvertingPageData[] = [
+  { path: '/verkehrsrecht/fuehrerschein-entzug/', conversions: 39, conversionRate: 7.8, engagementRate: 72.4, sessions: 498, newUsers: 344, ctr: 5.6 },
+  { path: '/familienrecht/scheidung/', conversions: 34, conversionRate: 6.9, engagementRate: 70.1, sessions: 493, newUsers: 381, ctr: 6.2 },
+  { path: '/rechtsanwalt-wien/', conversions: 31, conversionRate: 4.4, engagementRate: 63.8, sessions: 704, newUsers: 552, ctr: 2.6 },
+  { path: '/erbrecht/testament/', conversions: 22, conversionRate: 6.1, engagementRate: 69.3, sessions: 361, newUsers: 278, ctr: 5.5 },
+  { path: '/strafrecht/', conversions: 18, conversionRate: 5.8, engagementRate: 66.7, sessions: 309, newUsers: 244, ctr: 4.3 },
+  { path: '/arbeitsrecht/kuendigung/', conversions: 14, conversionRate: 5.2, engagementRate: 65.9, sessions: 269, newUsers: 211, ctr: 4.7 },
+  { path: '/familienrecht/unterhalt/', conversions: 9, conversionRate: 4.9, engagementRate: 64.2, sessions: 184, newUsers: 149, ctr: 5.3 },
+];
 
 const googleAdsRows: GoogleAdsData['rows'] = [
   {
@@ -123,6 +137,8 @@ const googleAdsData: GoogleAdsData = {
   source: 'sheet',
 };
 
+const impressionsTrend = trend([1120, 1185, 1094, 1260, 1315, 1380, 1440, 1492, 1520, 1588, 1635, 1690, 1722, 1780, 1840, 1905, 1960, 2012, 2070, 2135, 2200, 2260, 2314, 2380, 2445, 2510, 2580, 2640, 2705, 2780]);
+
 export const demoData: ProjectDashboardData = {
   kpis: {
     clicks: { value: 1848, change: 14.7 },
@@ -134,12 +150,11 @@ export const demoData: ProjectDashboardData = {
     engagementRate: { value: 67.4, change: 6.2 },
     bounceRate: { value: 32.6, change: -5.4 },
     avgEngagementTime: { value: 104, change: 11.6 },
-    genAiImpressions: { value: 1430, change: 38.2 },
     paidSearch: { value: 208, change: 16.1 },
   },
   charts: {
     clicks: trend([42, 45, 39, 51, 48, 52, 58, 61, 55, 63, 66, 64, 71, 70, 76, 73, 79, 84, 82, 88, 91, 90, 94, 99, 103, 101, 108, 112, 118, 121]),
-    impressions: trend([1120, 1185, 1094, 1260, 1315, 1380, 1440, 1492, 1520, 1588, 1635, 1690, 1722, 1780, 1840, 1905, 1960, 2012, 2070, 2135, 2200, 2260, 2314, 2380, 2445, 2510, 2580, 2640, 2705, 2780]),
+    impressions: impressionsTrend,
     sessions: trend([82, 88, 84, 96, 101, 97, 106, 111, 108, 115, 119, 122, 128, 131, 126, 135, 141, 144, 149, 151, 156, 160, 164, 169, 172, 176, 181, 184, 189, 194]),
     totalUsers: trend([61, 66, 64, 72, 76, 73, 80, 82, 81, 87, 91, 92, 96, 99, 97, 103, 107, 111, 114, 116, 119, 123, 126, 129, 132, 136, 139, 142, 146, 151]),
     conversions: trend([4, 5, 4, 6, 5, 7, 6, 8, 7, 8, 9, 8, 10, 9, 11, 10, 12, 12, 11, 13, 14, 13, 15, 16, 15, 17, 18, 18, 19, 20]),
@@ -149,7 +164,7 @@ export const demoData: ProjectDashboardData = {
     avgEngagementTime: trend([76, 78, 81, 79, 83, 86, 88, 84, 90, 92, 89, 94, 96, 95, 99, 101, 98, 103, 105, 104, 107, 109, 108, 111, 113, 112, 115, 117, 119, 121]),
     paidSearch: trend([4, 5, 3, 6, 7, 6, 8, 7, 9, 10, 8, 11, 10, 12, 13, 11, 14, 13, 15, 16, 14, 17, 16, 18, 19, 17, 20, 21, 22, 23]),
   },
-  topQueries: [
+  topQueries: withLandingPageConversions([
     { query: 'rechtsanwalt wien', clicks: 214, impressions: 8240, ctr: 0.026, position: 7.8, url: '/rechtsanwalt-wien/' },
     { query: 'fuehrerschein entzogen anwalt', clicks: 168, impressions: 2980, ctr: 0.056, position: 3.2, url: '/verkehrsrecht/fuehrerschein-entzug/' },
     { query: 'scheidungsanwalt wien erstberatung', clicks: 132, impressions: 2140, ctr: 0.062, position: 2.9, url: '/familienrecht/scheidung/' },
@@ -157,14 +172,8 @@ export const demoData: ProjectDashboardData = {
     { query: 'strafverteidiger wien', clicks: 84, impressions: 1960, ctr: 0.043, position: 5.6, url: '/strafrecht/' },
     { query: 'arbeitsrecht kuendigung anwalt', clicks: 73, impressions: 1560, ctr: 0.047, position: 6.4, url: '/arbeitsrecht/kuendigung/' },
     { query: 'unterhaltsrecht anwalt wien', clicks: 51, impressions: 970, ctr: 0.053, position: 4.8, url: '/familienrecht/unterhalt/' },
-  ],
-  topConvertingPages: [
-    { path: '/verkehrsrecht/fuehrerschein-entzug/', conversions: 39, conversionRate: 7.8, engagementRate: 72.4, sessions: 498, newUsers: 344, ctr: 5.6 },
-    { path: '/familienrecht/scheidung/', conversions: 34, conversionRate: 6.9, engagementRate: 70.1, sessions: 493, newUsers: 381, ctr: 6.2 },
-    { path: '/rechtsanwalt-wien/', conversions: 31, conversionRate: 4.4, engagementRate: 63.8, sessions: 704, newUsers: 552, ctr: 2.6 },
-    { path: '/erbrecht/testament/', conversions: 22, conversionRate: 6.1, engagementRate: 69.3, sessions: 361, newUsers: 278, ctr: 5.5 },
-    { path: '/strafrecht/', conversions: 18, conversionRate: 5.8, engagementRate: 66.7, sessions: 309, newUsers: 244, ctr: 4.3 },
-  ],
+  ], topConvertingPages),
+  topConvertingPages,
   landingPageQueries: {
     '/verkehrsrecht/fuehrerschein-entzug/': [
       { query: 'fuehrerschein entzogen anwalt', clicks: 168, impressions: 2980 },
@@ -173,6 +182,26 @@ export const demoData: ProjectDashboardData = {
     '/familienrecht/scheidung/': [
       { query: 'scheidungsanwalt wien erstberatung', clicks: 132, impressions: 2140 },
       { query: 'scheidung kosten anwalt', clicks: 49, impressions: 980 },
+    ],
+    '/rechtsanwalt-wien/': [
+      { query: 'rechtsanwalt wien', clicks: 214, impressions: 8240 },
+      { query: 'anwalt wien erstberatung', clicks: 58, impressions: 1420 },
+    ],
+    '/erbrecht/testament/': [
+      { query: 'anwalt erbrecht testament', clicks: 96, impressions: 1740 },
+      { query: 'testament aufsetzen lassen wien', clicks: 31, impressions: 690 },
+    ],
+    '/strafrecht/': [
+      { query: 'strafverteidiger wien', clicks: 84, impressions: 1960 },
+      { query: 'anwalt strafrecht wien', clicks: 37, impressions: 820 },
+    ],
+    '/arbeitsrecht/kuendigung/': [
+      { query: 'arbeitsrecht kuendigung anwalt', clicks: 73, impressions: 1560 },
+      { query: 'kuendigung im krankenstand', clicks: 28, impressions: 940 },
+    ],
+    '/familienrecht/unterhalt/': [
+      { query: 'unterhaltsrecht anwalt wien', clicks: 51, impressions: 970 },
+      { query: 'kindesunterhalt berechnen', clicks: 22, impressions: 760 },
     ],
   },
   aiTraffic: {
@@ -191,33 +220,20 @@ export const demoData: ProjectDashboardData = {
     })),
     trend: aiTrend(demoAiTrafficExtended.trend.map((day) => day.sessions)),
   },
+  promptTracking: buildDemoPromptTracking(48210, impressionsTrend),
   weatherData: demoWeatherData,
   localSeo: demoLocalSeo,
+  // Wie bei echten Projekten: Google bietet für AI Overviews und AI Mode noch keine Schnittstelle.
   googleGenAi: {
-    status: 'available',
-    message: 'Demo-Daten: fiktive Search-Console-Sichtbarkeit in Google GenAI.',
-    totalImpressions: 1430,
-    impressionsChange: 38.2,
-    trend: genAiTrend([12, 14, 13, 18, 21, 19, 24, 28, 27, 32, 35, 36, 39, 42, 44, 48, 51, 54, 58, 61, 64, 68, 72, 74, 79, 83, 86, 91, 96, 101]),
-    topPages: [
-      { key: '/verkehrsrecht/fuehrerschein-entzug/', impressions: 442 },
-      { key: '/familienrecht/scheidung/', impressions: 318 },
-      { key: '/rechtsanwalt-wien/', impressions: 286 },
-      { key: '/erbrecht/testament/', impressions: 194 },
-      { key: '/strafrecht/', impressions: 128 },
-    ],
-    countries: [
-      { key: 'AT', impressions: 1294 },
-      { key: 'DE', impressions: 96 },
-      { key: 'CH', impressions: 40 },
-    ],
-    devices: [
-      { key: 'mobile', impressions: 914 },
-      { key: 'desktop', impressions: 432 },
-      { key: 'tablet', impressions: 84 },
-    ],
-    detectedAppearances: ['AI Overview', 'AI Mode'],
-    source: 'gsc-search-appearance',
+    status: 'unavailable',
+    message: 'Google zeigt AI Overviews und AI Mode bisher nur teilweise in der Search Console und bietet dafür noch keine Schnittstelle. Sobald Daten verfügbar sind, füllt sich dieser Bereich von selbst. Lange, fragenartige Suchen zeigt bis dahin das Fragen-Radar unter KI-Traffic.',
+    totalImpressions: 0,
+    trend: [],
+    topPages: [],
+    countries: [],
+    devices: [],
+    detectedAppearances: [],
+    source: 'gsc-report-rollout',
   },
   googleAdsData,
   countryData: [

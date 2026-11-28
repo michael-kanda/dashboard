@@ -1,7 +1,7 @@
 // src/middleware.ts
 import NextAuth from 'next-auth';
 import { baseAuthConfig } from '@/lib/auth-config';
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, type NextFetchEvent, type NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { TWO_FACTOR_SETUP_PATH } from '@/lib/two-factor/policy';
 import {
@@ -49,7 +49,7 @@ function handleSiteRouting(req: NextRequest) {
   return null;
 }
 
-export default auth(async (req) => {
+const authMiddleware = auth(async (req) => {
   const { nextUrl } = req;
   const isStaticFile = /\.[^/]+$/.test(nextUrl.pathname);
   if (!isStaticFile) {
@@ -123,6 +123,16 @@ export default auth(async (req) => {
   // Standard NextAuth Verhalten
   return;
 });
+
+// Die Landingpage (www.datapeak.at) läuft ohne next-auth: so setzt sie keine Anmelde-Cookies
+// (csrf-token, callback-url), die dort niemand braucht. Alle anderen Hosts gehen durch auth().
+export default function middleware(req: NextRequest, event: NextFetchEvent) {
+  if (isMarketingHost(req.headers.get('host'))) {
+    const isStaticFile = /\.[^/]+$/.test(req.nextUrl.pathname);
+    return isStaticFile ? NextResponse.next() : handleSiteRouting(req) ?? NextResponse.next();
+  }
+  return authMiddleware(req, event as never);
+}
 
 export const config = {
   matcher: [

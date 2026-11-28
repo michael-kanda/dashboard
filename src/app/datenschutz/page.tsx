@@ -76,8 +76,9 @@ export default function DatenschutzPage() {
             </li>
             <li>
               <strong>Nutzungsdaten / Metadaten:</strong> Zum Zweck der
-              Authentifizierung und Sitzungsverwaltung werden notwendige Cookies
-              (Session-Cookies) von `next-auth` auf Ihrem Gerät gespeichert.
+              Authentifizierung und Sitzungsverwaltung im Dashboard
+              (app.datapeak.at) werden notwendige Cookies (Session-Cookies) von
+              `next-auth` auf Ihrem Gerät gespeichert.
             </li>
             <li>
               <strong>Protokolldaten:</strong> Aktionen von Benutzern (z.B.
@@ -91,6 +92,15 @@ export default function DatenschutzPage() {
               den KI-Assistenten DataMax stellen, sowie die Anzahl Ihrer
               DataMax-Anfragen pro Tag (für das Tageslimit). Der Chatverlauf
               selbst wird nicht gespeichert.
+            </li>
+            <li>
+              <strong>Testversion von DataMax in der öffentlichen Demo:</strong>
+              Auch ohne Anmeldung können Sie DataMax in der Demo bis zu fünf
+              Fragen pro Tag stellen. Um das zu zählen, speichern wir einen
+              nicht umkehrbaren Hash Ihrer IP-Adresse, das Datum und die Anzahl
+              der Fragen, höchstens sieben Tage lang. Die Fragen selbst
+              speichern wir nicht. Die Antworten beziehen sich nur auf die
+              erfundenen Beispieldaten der Demo.
             </li>
           </ul>
         </section>
@@ -199,9 +209,10 @@ export default function DatenschutzPage() {
               Chat, die KI-Analyse und das Gruppieren von Suchanfragen senden
               wir Ihre Frage zusammen mit zusammengefassten Kennzahlen Ihres
               Projekts (z.B. Domain, Klicks, Suchbegriffe, Seiten, Standorte)
-              an die Gemini API von Google (USA). Daten einzelner
-              Website-Besucher sind darin nicht enthalten. Bitte geben Sie im
-              Chat keine personenbezogenen Daten ein.
+              an die Gemini API von Google (USA). In der Testversion der Demo
+              sind das Ihre Frage und die erfundenen Beispieldaten. Daten
+              einzelner Website-Besucher sind darin nicht enthalten. Bitte
+              geben Sie im Chat keine personenbezogenen Daten ein.
             </li>
             <li>
               <strong>Sentry (Fehlerüberwachung):</strong> Treten im Dashboard
@@ -226,13 +237,28 @@ export default function DatenschutzPage() {
             5. Cookies
           </h2>
           <p className="text-body">
-            Diese Website verwendet `next-auth` für die Authentifizierung.
-            `next-auth` setzt technisch notwendige Cookies (Session-Cookies), um
-            Ihre Sitzung aufrechtzuerhalten und Sie als eingeloggten Benutzer zu
-            erkennen. Diese Cookies sind für die Funktion des Dashboards zwingend
-            erforderlich (Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO). Darüber
-            hinaus werden keine Cookies gesetzt; die anonyme Reichweitenmessung
-            auf der Startseite (siehe Abschnitt 4) kommt ohne Cookies aus.
+            <strong>Startseite (www.datapeak.at):</strong> Hier werden keine
+            Cookies gesetzt, auch nicht für die anonyme Reichweitenmessung
+            (siehe Abschnitt 4).
+          </p>
+          <p className="text-body mt-4">
+            <strong>Dashboard (app.datapeak.at):</strong> Für die Anmeldung
+            verwenden wir `next-auth`. `next-auth` setzt technisch notwendige
+            Cookies (Session-Cookies und ein Schutz-Cookie gegen gefälschte
+            Anfragen), um Ihre Sitzung aufrechtzuerhalten und Sie als
+            eingeloggten Benutzer zu erkennen. Diese Cookies sind für die
+            Funktion des Dashboards zwingend erforderlich (Rechtsgrundlage:
+            Art. 6 Abs. 1 lit. f DSGVO). Darüber hinaus werden keine Cookies
+            gesetzt.
+          </p>
+          <p className="text-body mt-4">
+            <strong>Einstellungen im Browser:</strong> Ob Sie die Seite hell,
+            dunkel oder wie Ihr Gerät sehen möchten, und die gewählte
+            Schriftgröße speichern wir nur lokal in Ihrem Browser (Local
+            Storage). Ebenso merkt sich der Browser für die laufende Sitzung,
+            dass Sie den Hinweis zu Cookies gesehen haben (Session Storage).
+            Diese Angaben werden nicht an uns übertragen. Sie können sie
+            jederzeit in den Einstellungen Ihres Browsers löschen.
           </p>
         </section>
 

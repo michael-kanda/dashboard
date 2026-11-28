@@ -19,7 +19,7 @@ export default function DemoAnwaltDashboard() {
           <InfoCircleFill size={16} className="mt-0.5 flex-shrink-0 text-accent" aria-hidden="true" />
           <p>
             <span className="font-semibold text-heading">Demo mit Beispieldaten.</span>{' '}
-            Der KI-Assistent DataMax, der die Zahlen in Klartext erklärt, ist in der Demo nicht aktiv. Fragen?{' '}
+            Unten rechts können Sie DataMax ausprobieren: Der KI-Assistent erklärt die Zahlen in Klartext, in der Testversion bis zu 5 Fragen. Fragen?{' '}
             <a href="mailto:michael@designare.at" className="font-medium text-accent hover:underline">michael@designare.at</a>
           </p>
         </div>
@@ -35,9 +35,10 @@ export default function DemoAnwaltDashboard() {
         userAnsprache="Willkommen in der öffentlichen Demo"
         showLandingPages
         showGoogleAds
-        showPromptTracking={false}
-        dashboardInfoText="Demo-Hinweis: Diese öffentliche Ansicht verwendet ausschließlich fiktive Werte für eine Rechtsanwaltskanzlei. Es werden keine echten Kunden-, Google- oder Backend-Daten geladen. Der KI-Assistent DataMax ist in der Demo nicht aktiv. Fragen zur Demo: michael@designare.at"
-        dataMaxEnabled={false}
+        showPromptTracking
+        dashboardInfoText="Demo-Hinweis: Diese öffentliche Ansicht verwendet ausschließlich fiktive Werte für eine Rechtsanwaltskanzlei. Es werden keine echten Kunden- oder Google-Daten geladen. DataMax beantwortet in der Testversion bis zu 5 Fragen zu diesen Beispieldaten. Fragen zur Demo: michael@designare.at"
+        dataMaxEnabled
+        isDemo
       />
     </AiTrafficExtendedDemoContext.Provider>
   );

@@ -71,16 +71,17 @@ export default async function RootLayout({
         {themeCss && <style id="app-theme" dangerouslySetInnerHTML={{ __html: themeCss }} />}
       </head>
       <body className="bg-page">
-        <Providers>
-          <Toaster position="top-right" richColors closeButton />
-          {isMarketing ? (
-            <MarketingShell>{children}</MarketingShell>
-          ) : (
+        <Toaster position="top-right" richColors closeButton />
+        {/* Die Landingpage braucht keine Sitzung; ohne SessionProvider fragt sie /api/auth/session nicht ab. */}
+        {isMarketing ? (
+          <MarketingShell>{children}</MarketingShell>
+        ) : (
+          <Providers>
             <MainLayout>
               {children}
             </MainLayout>
-          )}
-        </Providers>
+          </Providers>
+        )}
       </body>
     </html>
   );
