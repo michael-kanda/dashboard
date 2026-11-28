@@ -217,6 +217,22 @@
    ═══════════════════════════════════════════════════════════ */
 @layer components {
 
+  /* ── Unterstrichene Links (Landingpage-Navigation und -Footer) ──
+     Die Linie wächst beim Darüberfahren von links ein und verschwindet nach rechts.
+     aria-current markiert den Abschnitt, in dem man gerade ist. */
+  .dp-underline {
+    padding-bottom: 0.22em;
+    background: linear-gradient(var(--dp-accent), var(--dp-accent)) 100% 100% / 0 2px no-repeat;
+    transition: background-size 0.32s cubic-bezier(0.3, 0.7, 0.2, 1), color 0.15s;
+  }
+  .dp-underline:is(:hover, :focus-visible, [aria-current="true"]) {
+    background-position: 0 100%;
+    background-size: 100% 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dp-underline { transition: none; }
+  }
+
   /* ── 0. Formularfelder: gefüllt statt umrandet (Variante C) ──
      Wert kräftig, Platzhalter zurückhaltend, Fokus weiß mit Akzentrand.
      Abstände und Höhe setzen die Utilities am Element (px-3, py-2, h-9 …). */
