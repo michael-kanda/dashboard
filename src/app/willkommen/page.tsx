@@ -278,7 +278,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Drei Säulen ──────────────────────────────────── */}
-      <section id="funktionen" className="scroll-mt-16 border-y border-border-subtle bg-section-alt">
+      <section id="funktionen" className="scroll-mt-[72px] border-y border-border-subtle bg-section-alt">
         <div className="mx-auto max-w-[1120px] px-4 py-20 sm:px-6">
           <SectionHeading eyebrow="Warum DataPeak" title="Zahlen, die Sie wirklich lesen." />
           <div className="mt-12 grid gap-10 md:grid-cols-3">
@@ -294,7 +294,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── So funktioniert's ────────────────────────────── */}
-      <section id="ablauf" className="mx-auto max-w-[1120px] scroll-mt-16 px-4 py-20 sm:px-6">
+      <section id="ablauf" className="mx-auto max-w-[1120px] scroll-mt-[72px] px-4 py-20 sm:px-6">
         <SectionHeading
           eyebrow="So funktioniert’s"
           title="Einmal verbinden. Dann läuft es."
@@ -419,7 +419,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ──────────────────────────────────────────── */}
-      <section id="faq" className="mx-auto max-w-[1120px] scroll-mt-16 px-4 py-20 sm:px-6">
+      <section id="faq" className="mx-auto max-w-[1120px] scroll-mt-[72px] px-4 py-20 sm:px-6">
         <SectionHeading eyebrow="FAQ" title="Häufige Fragen." lead={`Noch etwas offen? Schreiben Sie an ${CONTACT_MAIL}.`} />
         <div className="mt-12 grid gap-10 lg:grid-cols-3">
           {FAQ.map((group) => (
