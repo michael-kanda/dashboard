@@ -241,10 +241,10 @@ export default function AiTrafficDetailCardV2({
   const [isExpanded, setIsExpanded] = useState(true);
 
   const formattedDateRange = formatReportingPeriod(reportingPeriod);
-
+  const { landingPages, sources, trend } = data ?? {};
   const filteredPages = useMemo(() => {
-    if (!data?.landingPages) return [];
-    let filtered = [...data.landingPages];
+    if (!landingPages) return [];
+    let filtered = [...landingPages];
     filtered = filtered.filter(p => p.path !== '(not set)' && p.path !== '(not provided)');
     if (searchTerm) filtered = filtered.filter(p => p.path.toLowerCase().includes(searchTerm.toLowerCase()));
     if (selectedIntent) filtered = filtered.filter(p => p.intent.key === selectedIntent);
@@ -255,20 +255,20 @@ export default function AiTrafficDetailCardV2({
       return sortDirection === 'desc' ? bVal - aVal : aVal - bVal;
     });
     return filtered;
-  }, [data?.landingPages, searchTerm, selectedIntent, sortField, sortDirection]);
+  }, [landingPages, searchTerm, selectedIntent, sortField, sortDirection]);
 
   const sourceChartData = useMemo(() => {
-    if (!data?.sources) return [];
-    return data.sources.slice(0, 6).map(s => ({
+    if (!sources) return [];
+    return sources.slice(0, 6).map(s => ({
       name: getSourceLabel(s.source), sessions: s.sessions, users: s.users,
       engagementRate: s.engagementRate, fill: getSourceColor(s.source)
     }));
-  }, [data?.sources]);
+  }, [sources]);
 
   const trendData = useMemo(() => {
-    if (!data?.trend) return [];
-    return data.trend.map(t => ({ ...t, dateFormatted: format(new Date(t.date), 'dd.MM', { locale: de }) }));
-  }, [data?.trend]);
+    if (!trend) return [];
+    return trend.map(t => ({ ...t, dateFormatted: format(new Date(t.date), 'dd.MM', { locale: de }) }));
+  }, [trend]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) setSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');

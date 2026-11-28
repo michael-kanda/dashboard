@@ -168,16 +168,6 @@ function GoogleAdsWidgetContent({ data, isLoading, error, showSourceComparison =
     }
   };
 
-  // ── Sort-Indikator: aktiv = Pfeil, inaktiv = subtiler Doppelpfeil ──
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) {
-      return <ArrowDownUp size={10} className="ml-1 inline opacity-40" />;
-    }
-    return sortAsc
-      ? <ArrowUp size={10} className="ml-1 inline" />
-      : <ArrowDown size={10} className="ml-1 inline" />;
-  };
-
   const viewModeLabels: Record<ViewMode, string> = {
     campaign: 'Kampagnen',
     adgroup: 'Anzeigengruppen',
@@ -326,7 +316,7 @@ function GoogleAdsWidgetContent({ data, isLoading, error, showSourceComparison =
                   sortField === 'cost' ? 'text-body' : 'text-faint'
                 }`}
               >
-                Kosten<SortIcon field="cost" />
+                Kosten<SortIcon field="cost" sortField={sortField} sortAsc={sortAsc} />
               </th>
               <th
                 onClick={() => handleSort('clicks')}
@@ -334,7 +324,7 @@ function GoogleAdsWidgetContent({ data, isLoading, error, showSourceComparison =
                   sortField === 'clicks' ? 'text-body' : 'text-faint'
                 }`}
               >
-                Klicks<SortIcon field="clicks" />
+                Klicks<SortIcon field="clicks" sortField={sortField} sortAsc={sortAsc} />
               </th>
               <th
                 onClick={() => handleSort('cpc')}
@@ -342,7 +332,7 @@ function GoogleAdsWidgetContent({ data, isLoading, error, showSourceComparison =
                   sortField === 'cpc' ? 'text-body' : 'text-faint'
                 }`}
               >
-                CPC<SortIcon field="cpc" />
+                CPC<SortIcon field="cpc" sortField={sortField} sortAsc={sortAsc} />
               </th>
               {!hideConv && (
                 <th
@@ -351,7 +341,7 @@ function GoogleAdsWidgetContent({ data, isLoading, error, showSourceComparison =
                     sortField === 'conversions' ? 'text-body' : 'text-faint'
                   }`}
                 >
-                  Conv.<SortIcon field="conversions" />
+                  Conv.<SortIcon field="conversions" sortField={sortField} sortAsc={sortAsc} />
                 </th>
               )}
               {showSessions && (
@@ -361,7 +351,7 @@ function GoogleAdsWidgetContent({ data, isLoading, error, showSourceComparison =
                     sortField === 'sessions' ? 'text-body' : 'text-faint'
                   }`}
                 >
-                  Sitzungen<SortIcon field="sessions" />
+                  Sitzungen<SortIcon field="sessions" sortField={sortField} sortAsc={sortAsc} />
                 </th>
               )}
             </tr>
@@ -409,6 +399,16 @@ function formatDiff(value: GoogleAdsSourceComparisonValue): string {
   const rounded = Math.round(value.diffPercent * 10) / 10;
   const sign = rounded > 0 ? '+' : rounded < 0 ? '−' : '±';
   return ` (${sign}${new Intl.NumberFormat('de-DE').format(Math.abs(rounded))} %)`;
+}
+
+// Sort-Indikator: aktiv = Pfeil, inaktiv = subtiler Doppelpfeil
+function SortIcon({ field, sortField, sortAsc }: { field: SortField; sortField: SortField; sortAsc: boolean }) {
+  if (sortField !== field) {
+    return <ArrowDownUp size={10} className="ml-1 inline opacity-40" />;
+  }
+  return sortAsc
+    ? <ArrowUp size={10} className="ml-1 inline" />
+    : <ArrowDown size={10} className="ml-1 inline" />;
 }
 
 function SourceComparisonNote({ comparison }: { comparison: GoogleAdsSourceComparison }) {

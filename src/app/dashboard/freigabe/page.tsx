@@ -1,7 +1,7 @@
 // src/app/dashboard/freigabe/page.tsx
 'use client';
 
-import { useState, useEffect, ReactNode, useCallback, type JSX } from 'react';
+import { useState, useEffect, useMemo, useRef, ReactNode, useCallback, type JSX } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import DateRangeSelector, { type DateRangeOption } from '@/components/DateRangeSelector';
@@ -80,7 +80,6 @@ export default function FreigabePage() {
   const router = useRouter();
 
   const [landingpages, setLandingpages] = useState<Landingpage[]>([]);
-  const [filteredPages, setFilteredPages] = useState<Landingpage[]>([]);
   const [filterStatus, setFilterStatus] = useState<LandingpageStatus | 'alle'>('alle');
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState('');
@@ -91,22 +90,28 @@ export default function FreigabePage() {
   const [dateRange, setDateRange] = useState<DateRangeOption>('30d');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Spinner nur beim ersten Laden; danach im Hintergrund aktualisieren.
+  // (Früher hingen landingpages.length und message in den Abhängigkeiten: Nach dem ersten
+  // Laden entstand dadurch eine neue Funktion, und der Effect lud die Liste ein zweites Mal.)
+  const hasLoadedRef = useRef(false);
+  const userId = session?.user?.id;
   const loadLandingpages = useCallback(async () => {
-    if (!session?.user?.id) return;
-    if (landingpages.length === 0) setIsLoading(true);
+    if (!userId) return;
+    if (!hasLoadedRef.current) setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/users/${session.user.id}/landingpages`);
+      const response = await fetch(`/api/users/${userId}/landingpages`);
       if (!response.ok) throw new Error('API-Fehler');
       const data: Landingpage[] = await response.json();
       setLandingpages(data);
-      if(message.startsWith('Starte')) setMessage('');
+      hasLoadedRef.current = true;
+      setMessage((current) => (current.startsWith('Starte') ? '' : current));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Fehler');
     } finally {
       setIsLoading(false);
     }
-  }, [session?.user?.id, landingpages.length, message]);
+  }, [userId]);
 
   useEffect(() => {
     if (authStatus === 'authenticated' && session?.user?.id) {
@@ -114,9 +119,10 @@ export default function FreigabePage() {
     }
   }, [authStatus, session?.user?.id, loadLandingpages]);
 
-  useEffect(() => {
-    setFilteredPages(filterStatus === 'alle' ? landingpages : landingpages.filter(lp => lp.status === filterStatus));
-  }, [filterStatus, landingpages]);
+  const filteredPages = useMemo(
+    () => (filterStatus === 'alle' ? landingpages : landingpages.filter(lp => lp.status === filterStatus)),
+    [filterStatus, landingpages],
+  );
 
   const updateStatus = async (landingpageId: number, newStatus: 'Freigegeben' | 'Gesperrt') => {
     const now = new Date().toISOString();

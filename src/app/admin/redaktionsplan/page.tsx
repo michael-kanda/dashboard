@@ -1,7 +1,7 @@
 // src/app/admin/redaktionsplan/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { User } from '@/types';
@@ -79,7 +79,6 @@ function RedaktionsplanContent() {
   const [projects, setProjects] = useState<User[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>(initialProjectId || '');
   const [landingpages, setLandingpages] = useState<Landingpage[]>([]);
-  const [filteredPages, setFilteredPages] = useState<Landingpage[]>([]);
   const [filterStatus, setFilterStatus] = useState<LandingpageStatus | 'alle'>('alle');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
@@ -92,10 +91,6 @@ function RedaktionsplanContent() {
   
   const [dateRange, setDateRange] = useState<DateRangeOption>('30d');
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  useEffect(() => {
-    if (authStatus === 'authenticated') loadProjects();
-  }, [authStatus]);
 
   const loadLandingpages = useCallback(async (userId: string) => {
     setIsLoading(true);
@@ -115,13 +110,14 @@ function RedaktionsplanContent() {
 
   useEffect(() => {
     if (selectedProject) loadLandingpages(selectedProject);
-    else { setLandingpages([]); setFilteredPages([]); }
+    else setLandingpages([]);
     setFilterStatus('alle');
   }, [selectedProject, loadLandingpages]);
 
-  useEffect(() => {
-    setFilteredPages(filterStatus === 'alle' ? landingpages : landingpages.filter(lp => lp.status === filterStatus));
-  }, [filterStatus, landingpages]);
+  const filteredPages = useMemo(
+    () => (filterStatus === 'alle' ? landingpages : landingpages.filter(lp => lp.status === filterStatus)),
+    [filterStatus, landingpages],
+  );
 
   const loadProjects = async () => {
     setIsLoadingProjects(true);
@@ -132,6 +128,11 @@ function RedaktionsplanContent() {
       setProjects(data);
     } catch { setMessage('Fehler beim Laden der Projekte'); } finally { setIsLoadingProjects(false); }
   };
+
+  useEffect(() => {
+    if (authStatus === 'authenticated') loadProjects();
+  }, [authStatus]);
+
 
   const updateStatus = async (landingpageId: number, newStatus: LandingpageStatus) => {
     const now = new Date().toISOString();

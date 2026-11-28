@@ -1,7 +1,7 @@
 // src/components/SourceMiniSparkline.tsx
 'use client';
 
-import React from 'react';
+import React, { useId } from 'react';
 
 interface SourceMiniSparklineProps {
   values: number[];
@@ -22,6 +22,7 @@ export default function SourceMiniSparkline({
   height = 20,
   className,
 }: SourceMiniSparklineProps) {
+  const reactId = useId();
   if (!values || values.length < 2) {
     return <span className={className} style={{ width, height, display: 'inline-block' }} aria-hidden />;
   }
@@ -40,7 +41,8 @@ export default function SourceMiniSparkline({
   const linePath = `M ${points.split(' ').join(' L ')}`;
   const fillPath = `${linePath} L ${width},${height} L 0,${height} Z`;
 
-  const gradientId = `sparkline-grad-${Math.random().toString(36).slice(2, 9)}`;
+  // Stabile ID statt Math.random(): gleich auf Server und Client, eindeutig pro Instanz
+  const gradientId = `sparkline-grad-${reactId.replace(/:/g, '')}`;
 
   return (
     <svg
