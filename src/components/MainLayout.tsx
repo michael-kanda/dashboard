@@ -10,8 +10,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
 
   const noLayoutPaths = ['/login', '/preview'];
-  // Gastlinks (/teilen/…) und Druckberichte (…/bericht) zeigen nur ihren Inhalt, ohne Navigation.
-  const showLayout = !noLayoutPaths.includes(pathname) && !pathname.startsWith('/teilen/') && !pathname.endsWith('/bericht');
+  // Gastlinks (/teilen/…), Druckberichte (…/bericht) und die Abmeldeseite des Monatsberichts
+  // zeigen nur ihren Inhalt, ohne Navigation.
+  const showLayout = !noLayoutPaths.includes(pathname) && !pathname.startsWith('/teilen/') && !pathname.startsWith('/monatsbericht/') && !pathname.endsWith('/bericht');
 
   // ─── Kein Layout (z.B. Login-Seite) ───
   if (!showLayout) {

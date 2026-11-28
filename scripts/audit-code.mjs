@@ -84,6 +84,8 @@ const publicRoutes = new Set([
   'src/app/api/password/forgot/route.ts',
   // Einlösen des Links: nur mit gültigem, einmaligem Token aus der E-Mail (60 Minuten).
   'src/app/api/password/reset/route.ts',
+  // Abmelden vom Monatsbericht: nur mit gültiger HMAC-Signatur aus der E-Mail (src/lib/monthly-report/token.ts).
+  'src/app/api/monatsbericht/abmelden/route.ts',
 ]);
 const authPattern = /\bauth\(\)|\bgetServerSession\(|\brequireContentStudioProject\(|\bCRON_SECRET\b/;
 

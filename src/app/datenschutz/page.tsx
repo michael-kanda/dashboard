@@ -207,11 +207,24 @@ export default function DatenschutzPage() {
             </li>
             <li>
               <strong>Brevo (E-Mail-Versand):</strong> Für den Versand von
-              Systembenachrichtigungen (z.B. bei Statusänderungen) und der
-              E-Mail mit dem Link zum Zurücksetzen des Passworts wird der
-              Dienst Brevo (ehemals Sendinblue) genutzt. Hierzu wird Ihre
-              E-Mail-Adresse sowie der Inhalt der Benachrichtigung an Brevo
-              übermittelt.
+              Systembenachrichtigungen (z.B. bei Statusänderungen), der
+              E-Mail mit dem Link zum Zurücksetzen des Passworts und des
+              Monatsberichts wird der Dienst Brevo (ehemals Sendinblue)
+              genutzt. Hierzu wird Ihre E-Mail-Adresse sowie der Inhalt der
+              Nachricht an Brevo übermittelt.
+            </li>
+            <li>
+              <strong>Monatsbericht per E-Mail:</strong> Ist er für ein Projekt
+              eingeschaltet, senden wir am 1. jedes Monats die wichtigsten
+              Kennzahlen der letzten 30 Tage an die Login-Adresse des Projekts
+              und als Kopie an die zugewiesenen Betreuer. Eine kurze
+              Einordnung schreibt DataMax; dafür gehen nur die
+              zusammengefassten Kennzahlen und die Domain an Google Gemini.
+              Über den Link in jeder E-Mail können Sie sich abmelden; wir
+              speichern dann nur einen nicht umkehrbaren Hashwert Ihrer
+              Adresse, damit Sie keine weiteren Berichte erhalten. Den Bericht
+              selbst öffnen Sie nur nach Anmeldung (Rechtsgrundlage: Art. 6
+              Abs. 1 lit. b DSGVO).
             </li>
             <li>
               <strong>Google APIs:</strong> Ihre Konfigurations-IDs werden
@@ -304,7 +317,9 @@ export default function DatenschutzPage() {
             Anmeldeprotokoll sofort und ersetzen seine E-Mail-Adresse in den
             Landingpage-Protokollen durch „Gelöschtes Konto“. Die Hashwerte fehlgeschlagener Anmeldeversuche löschen wir
             nach einem Tag, ebenso die Hashwerte aus Anfragen zum Zurücksetzen
-            des Passworts und abgelaufene Links. Den DataMax-Chatverlauf löschen
+            des Passworts und abgelaufene Links. Versanddatum und -status der
+            Monatsberichte sowie Abmeldungen (als Hashwert) speichern wir, solange
+            das Projekt besteht. Den DataMax-Chatverlauf löschen
             wir nach 90 Tagen, mit „Chat leeren“ sofort. Fehlerberichte bei Sentry werden nach Ablauf der dort
             geltenden Aufbewahrungsfrist automatisch gelöscht. Auf Wunsch löschen
             wir Ihr Konto und alle zugehörigen Daten.

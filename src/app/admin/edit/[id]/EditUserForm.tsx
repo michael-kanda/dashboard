@@ -31,6 +31,7 @@ import ConfigurationSection from './sections/ConfigurationSection';
 import AnalyticsSourceSection from './sections/AnalyticsSourceSection';
 import GoogleAdsSection from './sections/GoogleAdsSection';
 import SemrushSection from './sections/SemrushSection';
+import MonthlyReportSection from './sections/MonthlyReportSection';
 import ProjectEditTabs, { type ProjectSupportData } from './ProjectEditTabs';
 import { logger } from '@/lib/logger';
 
@@ -455,6 +456,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin, projec
             <>
               {visibilitySection}
               {timelineSection}
+              <MonthlyReportSection projectId={user.id} />
             </>
           ),
           localseo: localSeoSection,
@@ -490,6 +492,7 @@ export default function EditUserForm({ user, onUserUpdated, isSuperAdmin, projec
           <>
             {timelineSection}
             {visibilitySection}
+            <MonthlyReportSection projectId={user.id} />
             {localSeoSection}
             {dataSourceSections}
           </>
