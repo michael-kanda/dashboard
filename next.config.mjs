@@ -49,6 +49,18 @@ const nextConfig = {
   // Das Dashboard auf app.datapeak.at, vercel.app und Previews sind noindex.
   async headers() {
     return [
+      // Sicherheits-Header für alle Seiten. HSTS setzt Vercel selbst (max-age=63072000).
+      // Keine fremde Seite darf DataPeak einbetten (Schutz vor Clickjacking, z. B. auf der Anmeldeseite).
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'" },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()' },
+        ],
+      },
       {
         source: '/:path*',
         missing: [{ type: 'host', value: '(www\\.)?datapeak\\.at' }],

@@ -110,7 +110,7 @@ export async function POST(req: Request) {
       WHERE id = ${userId}::uuid
     `;
 
-    logger.debug(`[KI-Tool] ${isEnabled ? 'Aktiviert' : 'Deaktiviert'} für User: ${targetUser[0].email}`);
+    logger.debug(`[KI-Tool] ${isEnabled ? 'Aktiviert' : 'Deaktiviert'} für User: ${targetUser[0].id}`);
 
     return NextResponse.json({ 
       success: true, 

@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!ga4PropertyId) {
-      console.warn(`[Landing Page Followup] No GA4 Property ID found. ProjectId: ${projectId}, User: ${session.user.email}`);
+      console.warn(`[Landing Page Followup] No GA4 Property ID found. ProjectId: ${projectId}, User: ${session.user.id}`);
       return NextResponse.json({ 
         data: null, 
         error: 'Keine GA4 Property ID gefunden' 

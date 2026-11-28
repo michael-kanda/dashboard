@@ -55,7 +55,7 @@ export async function PUT(
     const body = await request.json();
     const { status: newStatus } = body as { status: StatusType };
 
-    logger.debug('[Status Update] User:', session.user.email, 'Role:', session.user.role);
+    logger.debug('[Status Update] User:', session.user.id, 'Role:', session.user.role);
     logger.debug('[Status Update] Landingpage ID:', landingpageId);
     logger.debug('[Status Update] Neuer Status:', newStatus);
 
@@ -86,7 +86,7 @@ export async function PUT(
     const customerUserId = landingpage.user_id; // ID des Kunden, dem die LP gehört
 
     logger.debug('[Status Update] Alter Status:', oldStatus);
-    logger.debug('[Status Update] Landingpage gehört zu:', landingpage.user_email);
+    logger.debug('[Status Update] Landingpage gehört zu:', landingpage.user_id);
 
     // Berechtigungsprüfung (bleibt gleich)
     const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SUPERADMIN';
@@ -223,9 +223,9 @@ export async function PUT(
 
           try {
             await apiInstance.sendTransacEmail(sendSmtpEmail);
-            logger.info(`✅ E-Mail gesendet an Admin: ${admin.email} (für Kunde ${customerUserId})`);
+            logger.info(`✅ E-Mail gesendet an Admin ${admin.id} (für Kunde ${customerUserId})`);
           } catch (emailError) {
-            console.error(`❌ Fehler beim Senden der E-Mail an ${admin.email}:`, emailError);
+            console.error(`❌ Fehler beim Senden der E-Mail an Admin ${admin.id}:`, emailError);
           }
         }
       } // Ende der Admin-Schleife

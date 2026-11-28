@@ -235,13 +235,16 @@ export default function DatenschutzPage() {
               geben Sie im Chat keine personenbezogenen Daten ein.
             </li>
             <li>
-              <strong>Sentry (Fehlerüberwachung):</strong> Treten im Dashboard
-              Fehler auf, senden wir einen Fehlerbericht an Sentry (Functional
-              Software, Inc.), Datenspeicherung in der EU. Der Bericht kann
-              IP-Adresse, Browser- und Gerätedaten sowie die aufgerufene Seite
-              enthalten. Bei einem Teil der Sitzungen und bei Fehlern wird
-              zusätzlich der Ablauf im Dashboard aufgezeichnet; Texte und
-              Eingaben werden dabei unkenntlich gemacht.
+              <strong>Sentry (Fehlerüberwachung):</strong> Treten auf dieser
+              Website oder im Dashboard Fehler auf, senden wir einen
+              Fehlerbericht an Sentry (Functional Software, Inc.),
+              Datenspeicherung in der EU. Der Bericht enthält Browser- und
+              Gerätedaten, die aufgerufene Seite und technische Angaben zum
+              Fehler, aber keine IP-Adresse, keine Cookies und keine
+              Benutzerdaten. Nur bei einem Fehler wird zusätzlich der Ablauf
+              kurz vor dem Fehler aufgezeichnet; Texte, Eingaben, Bilder und
+              Videos werden dabei unkenntlich gemacht. Für Ladezeiten werten
+              wir stichprobenartig etwa jeden zehnten Seitenaufruf aus.
             </li>
             <li>
               <strong>Open-Meteo (Wetterdaten):</strong> Für die Wetteranzeige
@@ -290,9 +293,12 @@ export default function DatenschutzPage() {
             Ihre Bestands- und Konfigurationsdaten werden gespeichert, solange
             Ihr Benutzerkonto für das &quot;Data Peak&quot; Dashboard besteht. Die
             zwischengespeicherten Google-Daten werden je nach Zeitraum nach zwei
-            bis sieben Tagen erneuert. Anmeldungen, KI-Auswertungen und
-            Protokolldaten bleiben gespeichert, solange Ihr Benutzerkonto
-            besteht; fehlgeschlagene Anmeldeversuche samt IP-Adresse löschen wir
+            bis sieben Tagen erneuert. Das Protokoll der Anmeldungen und
+            Passwortänderungen löschen wir nach 12 Monaten. KI-Auswertungen und
+            Protokolle zu Landingpages bleiben gespeichert, solange Ihr
+            Benutzerkonto besteht; wird ein Konto gelöscht, löschen wir sein
+            Anmeldeprotokoll sofort und ersetzen seine E-Mail-Adresse in den
+            Landingpage-Protokollen durch „Gelöschtes Konto“. Fehlgeschlagene Anmeldeversuche samt IP-Adresse löschen wir
             nach einem Tag, ebenso die Hashwerte aus Anfragen zum Zurücksetzen
             des Passworts und abgelaufene Links. Den DataMax-Chatverlauf löschen
             wir nach 90 Tagen, mit „Chat leeren“ sofort. Fehlerberichte bei Sentry werden nach Ablauf der dort

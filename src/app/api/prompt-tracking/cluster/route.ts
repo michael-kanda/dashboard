@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
   }
 
   const userId = session.user.id;
-  logger.debug(`[Prompt Cluster] Auth OK für ${session.user.email}`);
+  logger.debug(`[Prompt Cluster] Auth OK für ${session.user.id}`);
 
   // ── 2. ENV-Check ────────────────────────────────────────────────
   if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {

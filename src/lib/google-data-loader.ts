@@ -304,7 +304,7 @@ async function getBrandKeywordsForUser(
     return { keywords: existing, autoDetected: false };
   }
 
-  logger.debug(`[Brand Auto-Detect] Starte für ${user.email}...`);
+  logger.debug(`[Brand Auto-Detect] Starte für ${user.id}...`);
   try {
     const result = await detectBrandKeywords({ domain: user.domain });
 
@@ -367,11 +367,11 @@ async function loadGoogleData(
       enqueueIfMissing: options.enqueueIfMissing,
       priority: 50,
     });
-    logger.debug(`[Google Cache] ${snapshot.data ? '✅ SNAPSHOT' : '⏳ AUSSTEHEND'} für ${user.email}`);
+    logger.debug(`[Google Cache] ${snapshot.data ? '✅ SNAPSHOT' : '⏳ AUSSTEHEND'} für ${user.id}`);
     return snapshot.data;
   }
 
-  logger.debug(`[Google Cache] 🔄 Lade frische Daten für ${user.email}...`);
+  logger.debug(`[Google Cache] 🔄 Lade frische Daten für ${user.id}...`);
 
   const reportingWindow = getReportingWindow(dateRange);
   const startDateStr = reportingWindow.startDate;

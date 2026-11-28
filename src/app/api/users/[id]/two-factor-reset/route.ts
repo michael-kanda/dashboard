@@ -18,6 +18,6 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
   if (!rows[0]) return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 });
 
   await clearTwoFactor(id);
-  logger.info(`[2FA] Zurückgesetzt für ${rows[0].email} durch ${session.user.email}`);
+  logger.info(`[2FA] Zurückgesetzt für Benutzer ${id} durch ${session.user.id}`);
   return NextResponse.json({ message: 'Zwei-Faktor-Anmeldung zurückgesetzt.' });
 }
