@@ -16,8 +16,10 @@ export function useFocusTrap(
   // Aktuelle Callbacks ohne den Effekt neu zu starten (sonst springt der Fokus bei jedem Rendern).
   const onCloseRef = useRef(onClose);
   const onKeyDownRef = useRef(onKeyDown);
-  onCloseRef.current = onClose;
-  onKeyDownRef.current = onKeyDown;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    onKeyDownRef.current = onKeyDown;
+  });
 
   useEffect(() => {
     if (!open) return;

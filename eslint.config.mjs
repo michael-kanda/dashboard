@@ -22,14 +22,11 @@ const eslintConfig = [
       // gruen ist; --max-warnings in package.json verhindert neue Vorkommen.
       "@typescript-eslint/no-explicit-any": "warn",
       // Neu mit eslint-config-next 16 (React-Compiler-Regeln von eslint-plugin-react-hooks 7).
-      // Sie melden ca. 47 Stellen im Altbestand (setState im Effect, Komponenten im Render u. a.),
-      // die bisher funktionieren. Vorerst aus; Aufräumen als eigener Schritt.
+      // Alle aktiv bis auf set-state-in-effect: Die 26 Stellen im Bestand sind bewusste Muster
+      // (Daten beim Öffnen laden, Browserwerte wie Theme oder Schriftgröße erst nach dem
+      // Hydrieren lesen, Entwürfe bei geänderter Vorgabe zurücksetzen). Ein Umbau brächte
+      // wenig und ließe sich in den Bereichen hinter dem Login nur schwer prüfen.
       "react-hooks/set-state-in-effect": "off",
-      "react-hooks/static-components": "off",
-      "react-hooks/preserve-manual-memoization": "off",
-      "react-hooks/purity": "off",
-      "react-hooks/refs": "off",
-      "react-hooks/immutability": "off",
     },
   },
   {

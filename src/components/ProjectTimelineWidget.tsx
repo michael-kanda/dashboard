@@ -212,32 +212,6 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
   const aiChangePercent = calculatePercentageChange(aiTrafficTrend);
   const genAiChangePercent = calculatePercentageChange(genAiImpressionTrend);
 
-  // Helper Components
-  const TrendIcon = ({ direction, colorClass }: { direction: 'up' | 'down' | 'neutral', colorClass: string }) => {
-    if (direction === 'up') return <GraphUpArrow className={colorClass} size={16} />; // Etwas größer für die neue Position
-    if (direction === 'down') return <GraphDownArrow className={colorClass} size={16} />;
-    return <Dash className="text-faint" size={16} />;
-  };
-
-  // Das neue Badge-Element (Grün/Rot mit Pfeil, Style wie Top-Performer)
-  const ChangeBadge = ({ change }: { change: number }) => {
-    if (change === 0) return null;
-    const isPositive = change > 0;
-    
-    const colorClass = isPositive 
-      ? 'text-success border-border' 
-      : 'text-danger border-border';
-    
-    const Icon = isPositive ? ArrowUp : ArrowDown;
-
-    return (
-      <div className={`widget-eyebrow flex items-center gap-1 bg-surface px-1.5 py-0.5 rounded border ${colorClass} mb-1`}>
-        <Icon size={9} />
-        {Math.abs(change).toFixed(0)}%
-      </div>
-    );
-  };
-
   return (
     <div className="dashboard-widget-surface rounded-lg p-6 lg:p-8 print-timeline">
       
@@ -504,6 +478,27 @@ export default function ProjectTimelineWidget({ projectId }: ProjectTimelineWidg
         </div>
 
       </div>
+    </div>
+  );
+}
+
+// Trend-Pfeil (steigend, fallend, gleich)
+function TrendIcon({ direction, colorClass }: { direction: 'up' | 'down' | 'neutral'; colorClass: string }) {
+  if (direction === 'up') return <GraphUpArrow className={colorClass} size={16} />;
+  if (direction === 'down') return <GraphDownArrow className={colorClass} size={16} />;
+  return <Dash className="text-faint" size={16} />;
+}
+
+// Badge Grün/Rot mit Pfeil, Style wie Top-Performer
+function ChangeBadge({ change }: { change: number }) {
+  if (change === 0) return null;
+  const isPositive = change > 0;
+  const colorClass = isPositive ? 'text-success border-border' : 'text-danger border-border';
+  const Icon = isPositive ? ArrowUp : ArrowDown;
+  return (
+    <div className={`widget-eyebrow flex items-center gap-1 bg-surface px-1.5 py-0.5 rounded border ${colorClass} mb-1`}>
+      <Icon size={9} />
+      {Math.abs(change).toFixed(0)}%
     </div>
   );
 }

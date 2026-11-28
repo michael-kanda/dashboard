@@ -143,6 +143,7 @@ export default function AiAnalysisWidget({
         const chunk = decoder.decode(value, { stream: true });
         fullText += chunk;
 
+        // eslint-disable-next-line react-hooks/purity -- läuft im Klick-Handler nach await, nicht beim Rendern
         const now = Date.now();
         if (now - lastUpdateTime > UPDATE_INTERVAL) {
           parseAndSetContent(fullText);
