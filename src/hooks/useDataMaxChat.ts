@@ -28,6 +28,8 @@ function usageFromHeaders(headers: Headers): DataMaxUsage | null {
 interface UseDataMaxChatOptions {
   projectId?: string;
   dateRange?: string;
+  /** API-Pfad; die öffentliche Demo nutzt /api/ai/demo-chat. */
+  endpoint?: string;
   onError?: (error: string) => void;
 }
 
@@ -50,7 +52,7 @@ function isStreamDisconnectError(error: unknown): boolean {
 }
 
 export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
-  const { projectId, dateRange = '30d', onError } = options;
+  const { projectId, dateRange = '30d', endpoint = '/api/ai/chat', onError } = options;
   // Kundenansicht der Admins (?ansicht=kunde): Antworten wie fuer den Kunden anfordern.
   const customerView = useSearchParams().get('ansicht') === 'kunde';
 
@@ -81,7 +83,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
       if (projectId) params.set('projectId', projectId);
       params.set('dateRange', dateRange);
 
-      const response = await fetch(`/api/ai/chat?${params.toString()}`);
+      const response = await fetch(`${endpoint}?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         setSuggestedQuestions(data.questions || []);
@@ -90,7 +92,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
     } catch (error) {
       console.warn('Konnte Suggested Questions nicht laden:', error);
     }
-  }, [projectId, dateRange]);
+  }, [projectId, dateRange, endpoint]);
 
   // Nachricht senden
   const sendMessage = useCallback(
@@ -123,7 +125,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
       setIsLoading(true);
 
       try {
-        const response = await fetch('/api/ai/chat', {
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -158,8 +160,9 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
         const suggestedHeader = response.headers.get('X-Suggested-Questions');
         if (suggestedHeader) {
           try {
-            const decoded = atob(suggestedHeader);
-            setSuggestedQuestions(JSON.parse(decoded));
+            // Base64 aus UTF-8-Bytes: atob liefert Bytes, TextDecoder macht daraus wieder Umlaute
+            const bytes = Uint8Array.from(atob(suggestedHeader), (c) => c.charCodeAt(0));
+            setSuggestedQuestions(JSON.parse(new TextDecoder().decode(bytes)));
           } catch {
             console.warn('Konnte Suggested Questions nicht decodieren');
           }
@@ -290,7 +293,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
         }
       }
     },
-    [projectId, dateRange, customerView, isLoading, onError]
+    [projectId, dateRange, customerView, isLoading, onError, endpoint]
   );
 
   // Chat zurücksetzen

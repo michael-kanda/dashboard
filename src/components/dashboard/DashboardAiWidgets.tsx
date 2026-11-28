@@ -14,6 +14,7 @@ interface DashboardAiWidgetsProps {
   dateRange: DateRangeOption;
   projectId?: string;
   domain?: string;
+  isDemo?: boolean;
 }
 
 export default function DashboardAiWidgets({
@@ -23,6 +24,7 @@ export default function DashboardAiWidgets({
   dateRange,
   projectId,
   domain,
+  isDemo = false,
 }: DashboardAiWidgetsProps) {
   const [showTrafficDetail, setShowTrafficDetail] = useState(false);
   const [showPromptTracking, setShowPromptTracking] = useState(false);
@@ -94,6 +96,7 @@ export default function DashboardAiWidgets({
             domain={domain}
             dateRange={dateRange}
             isAdmin={model.isAdmin}
+            aiEnabled={!isDemo}
           />
         </div>
       )}

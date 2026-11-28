@@ -39,9 +39,11 @@ interface DataMaxChatProps {
   dateRange?: string;
   ansprache?: string | null;
   className?: string;
+  /** Öffentliche Demo: Testversion mit wenigen Fragen und den Beispieldaten der Demo. */
+  demo?: boolean;
 }
 
-export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, className = '' }: DataMaxChatProps) {
+export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, className = '', demo = false }: DataMaxChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fontSizeIndex, setFontSizeIndex] = useState(DEFAULT_FONT_INDEX);
@@ -58,7 +60,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
     clearChat,
     cancelRequest,
     loadSuggestedQuestions,
-  } = useDataMaxChat({ projectId, dateRange });
+  } = useDataMaxChat({ projectId, dateRange, endpoint: demo ? '/api/ai/demo-chat' : undefined });
 
   const fontSizeClass = FONT_SIZES[fontSizeIndex].class;
   // Tageslimit: ohne Angabe (Superadmin) unbegrenzt.
@@ -178,7 +180,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                 </div>
                 <div>
                   <h3 className="font-semibold text-sm">DataMax</h3>
-                  <p className="text-xs text-muted">SEO & Analytics Assistent</p>
+                  <p className="text-xs text-muted">{demo ? 'Testversion mit Beispieldaten' : 'SEO & Analytics Assistent'}</p>
                 </div>
               </div>
 
@@ -274,7 +276,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder={limitReached ? 'Tageslimit erreicht' : 'Frag DataMax...'}
+                  placeholder={limitReached ? (demo ? 'Testversion beendet' : 'Tageslimit erreicht') : 'Frag DataMax...'}
                   disabled={isLoading || limitReached}
                   className={`
                     flex-1 px-4 py-2.5
@@ -317,9 +319,13 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
               </div>
               {usage?.limit != null && usage.remaining != null && (
                 <p className="mt-2 text-12 text-muted" role="status" aria-live="polite">
-                  {limitReached
-                    ? `Tageslimit von ${usage.limit} Fragen erreicht. Ab morgen geht es weiter.`
-                    : `Noch ${usage.remaining} von ${usage.limit} Fragen heute.`}
+                  {demo
+                    ? limitReached
+                      ? <>Die Testversion beantwortet {usage.limit} Fragen. Mit eigenem Zugang fragen Sie DataMax zu Ihren echten Zahlen: <a href="mailto:michael@designare.at?subject=Zugang%20zu%20DataPeak" className="font-medium text-accent underline underline-offset-2">Zugang anfragen</a></>
+                      : `Testversion: noch ${usage.remaining} von ${usage.limit} Fragen.`
+                    : limitReached
+                      ? `Tageslimit von ${usage.limit} Fragen erreicht. Ab morgen geht es weiter.`
+                      : `Noch ${usage.remaining} von ${usage.limit} Fragen heute.`}
                 </p>
               )}
             </form>

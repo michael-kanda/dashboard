@@ -6,6 +6,7 @@ import ThemeProvider from '@/components/ThemeProvider';
 import { appOriginFor } from '@/lib/site-hosts';
 import MarketingHeader from './MarketingHeader';
 import MarketingFooter from './MarketingFooter';
+import CookieHint from './CookieHint';
 
 export default function MarketingShell({ children }: { children: React.ReactNode }) {
   const appOrigin = appOriginFor(headers().get('host'));
@@ -17,6 +18,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
         <main className="flex-grow">{children}</main>
         <MarketingFooter />
       </div>
+      <CookieHint />
       {/* Vercel Web Analytics nur auf der Landingpage, ohne Cookies. */}
       <Analytics />
     </ThemeProvider>

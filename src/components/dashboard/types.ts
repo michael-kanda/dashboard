@@ -33,5 +33,7 @@ export interface ProjectDashboardProps {
   widgetVisibility?: Partial<DashboardWidgetVisibility> | null;
   dashboardInfoText?: string | null;
   dataMaxEnabled?: boolean;
+  /** Öffentliche Demo: DataMax als Testversion mit 5 Fragen, keine KI-Knöpfe, die ein Projekt brauchen. */
+  isDemo?: boolean;
   indexingStatus?: ProjectIndexingStatus;
 }

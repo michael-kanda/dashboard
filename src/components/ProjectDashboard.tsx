@@ -39,6 +39,7 @@ export default function ProjectDashboard({
   widgetVisibility,
   dashboardInfoText = null,
   dataMaxEnabled = true,
+  isDemo = false,
   indexingStatus,
 }: ProjectDashboardProps) {
   const router = useRouter();
@@ -150,6 +151,7 @@ export default function ProjectDashboard({
           dateRange={dateRange}
           projectId={projectId}
           domain={domain}
+          isDemo={isDemo}
         />
 
         <DashboardSearchWidgets
@@ -177,7 +179,7 @@ export default function ProjectDashboard({
       </div>
 
       {dataMaxEnabled && model.canShow('dataMaxChat') && (
-        <DataMaxChat projectId={projectId} dateRange={dateRange} ansprache={userAnsprache} />
+        <DataMaxChat projectId={projectId} dateRange={dateRange} ansprache={isDemo ? null : userAnsprache} demo={isDemo} />
       )}
     </div>
   );

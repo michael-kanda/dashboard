@@ -163,9 +163,11 @@ export function ShareTrendChart({ trend }: { trend: PromptTrackingShareBucket[] 
           return (
             <div
               key={bucket.bucket}
-              className="flex-1 flex flex-col items-center justify-end gap-1 group"
+              className="flex-1 h-full min-w-0 flex flex-col items-center justify-end gap-1 group"
               title={`${bucket.label}: ${bucket.sharePercent.toFixed(1)} %`}
             >
+              {/* Eigener Bereich mit fester Höhe, sonst greift die Prozenthöhe des Balkens nicht */}
+              <div className="flex w-full flex-1 items-end">
               <div
                 className="w-full rounded-t bg-purple-400 group-hover:bg-purple-500 transition relative"
                 style={{ height: `${Math.max(height, 4)}%`, minHeight: '4px' }}
@@ -173,6 +175,7 @@ export function ShareTrendChart({ trend }: { trend: PromptTrackingShareBucket[] 
                 <span className="hidden group-hover:block absolute -top-5 left-1/2 -translate-x-1/2 text-11 tabular-nums whitespace-nowrap text-body">
                   {bucket.sharePercent.toFixed(1)}%
                 </span>
+              </div>
               </div>
               <span className="text-11 text-muted tabular-nums truncate w-full text-center">
                 {bucket.label}

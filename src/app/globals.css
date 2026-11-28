@@ -178,6 +178,19 @@
     to { transform: rotate(360deg); }
   }
 
+  @keyframes dp-toast-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes dp-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes dp-countdown {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .dp-spinner {
       animation-duration: 1.8s !important;
@@ -231,6 +244,24 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .dp-underline { transition: none; }
+  }
+
+  /* ── Hinweis unten auf der Landingpage (CookieHint) ── */
+  .dp-toast-in {
+    animation: dp-toast-in 0.32s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+  }
+  /* 8 Sekunden Anzeigedauer; gilt auch bei reduzierter Bewegung (die globale Regel kürzt sonst auf 0,01 ms) */
+  .dp-countdown {
+    animation: dp-countdown 8s linear forwards;
+  }
+  /* Solange die Maus darauf steht oder ein Element darin den Fokus hat, läuft die Zeit nicht ab */
+  .dp-toast-in:hover .dp-countdown,
+  .dp-toast-in:focus-within .dp-countdown {
+    animation-play-state: paused;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dp-toast-in { animation-name: dp-fade-in; }
+    .dp-countdown { animation-duration: 8s !important; }
   }
 
   /* ── 0. Formularfelder: gefüllt statt umrandet (Variante C) ──

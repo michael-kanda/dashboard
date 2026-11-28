@@ -161,7 +161,7 @@ const FAQ = [
       },
       {
         q: 'Kann ich DataPeak vorher ansehen?',
-        a: 'Ja. Die Demo zeigt das echte Dashboard mit einer erfundenen Kanzlei als Beispiel, ohne Anmeldung.',
+        a: 'Ja. Die Demo zeigt das echte Dashboard mit einer erfundenen Kanzlei als Beispiel, ohne Anmeldung. DataMax können Sie dort mit bis zu fünf Fragen ausprobieren.',
       },
     ],
   },

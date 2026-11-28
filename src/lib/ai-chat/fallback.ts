@@ -34,7 +34,7 @@ export function generateSuggestedQuestions(data: ProjectDashboardData, aiTraffic
       questions.push('Welche KI-Plattform bringt den besten Traffic?');
     }
   } else if (data.aiTraffic && data.aiTraffic.totalSessions > 50) {
-    questions.push('Erklaere meinen KI-Traffic genauer');
+    questions.push('Erkläre meinen KI-Traffic genauer');
   }
   
   if (data.topQueries?.some(q => q.position >= 4 && q.position <= 10)) {
@@ -68,7 +68,7 @@ export function generateSuggestedQuestions(data: ProjectDashboardData, aiTraffic
   // Fallback-Fragen
   if (questions.length < 3) {
     questions.push('Wie kann ich meine Conversion-Rate verbessern?');
-    questions.push('Was sind meine groessten SEO-Chancen?');
+    questions.push('Was sind meine größten SEO-Chancen?');
     questions.push('Gib mir 3 konkrete Empfehlungen');
   }
 
