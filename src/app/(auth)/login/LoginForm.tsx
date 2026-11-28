@@ -5,7 +5,7 @@ import { getSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Eye, EyeSlash, Lock } from 'react-bootstrap-icons';
-import ThemeModeSwitch from '@/components/ThemeModeSwitch';
+import ThemeSwitch from '@/components/ThemeSwitch';
 import { Spinner } from '@/components/ui/Spinner';
 
 interface LoginFormProps {
@@ -82,7 +82,7 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center bg-page px-4 py-16">
       <div className="absolute right-4 top-4">
-        <ThemeModeSwitch />
+        <ThemeSwitch />
       </div>
       <div className="w-full max-w-[360px]">
         {!isSuccess ? (

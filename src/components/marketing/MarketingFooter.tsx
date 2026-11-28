@@ -1,5 +1,6 @@
 // src/components/marketing/MarketingFooter.tsx
 import { FooterLine } from '@/components/layout/Footer';
+import ThemeSwitch from '@/components/ThemeSwitch';
 import DataPeakLogo from './DataPeakLogo';
 
 export default function MarketingFooter() {
@@ -9,7 +10,10 @@ export default function MarketingFooter() {
         <div className="self-start sm:self-auto">
           <DataPeakLogo className="h-7 w-auto" />
         </div>
-        <FooterLine />
+        <div className="flex flex-col items-start gap-3 sm:items-end">
+          <FooterLine />
+          <ThemeSwitch />
+        </div>
       </div>
     </footer>
   );

@@ -5,12 +5,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
-import { useTheme } from '@/components/ThemeProvider';
+import ThemeSwitch, { ThemeCycleButton } from '@/components/ThemeSwitch';
 import { useState, useEffect, useCallback } from 'react';
 import { 
   List, X, Briefcase, CalendarCheck, ShieldLock, Speedometer2, 
   BoxArrowRight, BoxArrowInRight, HddNetwork, Magic, Palette,
-  LayoutSidebarInset, SunFill, MoonStarsFill,
+  LayoutSidebarInset,
   ChevronDown, ChevronUp,
   BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search, Google, GeoAlt, ShieldCheck, Book
 } from 'react-bootstrap-icons';
@@ -48,7 +48,6 @@ const DASHBOARD_SECTIONS = [
 export default function Sidebar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const { theme, toggleTheme } = useTheme();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -228,7 +227,6 @@ export default function Sidebar() {
 
   const visibleSections = DASHBOARD_SECTIONS.filter(section => availableSectionIds.includes(section.id));
   const userLabel = session?.user?.name ?? session?.user?.email ?? '';
-  const themeLabel = theme === 'dark' ? 'Heller Modus' : 'Dunkler Modus';
 
   const showHandbook = isAdmin || isUser || isDemoPage;
   const hasMainNav = showHandbook || mainNavItems.some(item => item.visible !== false);
@@ -385,6 +383,10 @@ export default function Sidebar() {
       {!isCollapsed && (
         <div className="flex-shrink-0 border-t border-border px-3 py-1.5">
           <FontSizeControl />
+          <div className="flex items-center justify-between gap-2 py-1">
+            <span className="text-13 font-medium text-muted">Darstellung</span>
+            <ThemeSwitch />
+          </div>
         </div>
       )}
 
@@ -398,9 +400,7 @@ export default function Sidebar() {
                 <div className="truncate text-12 text-muted">{roleLabel(session.user.role)}</div>
               </div>
             )}
-            <button type="button" onClick={toggleTheme} aria-label={themeLabel} title={themeLabel} className={`${iconButton} text-muted hover:text-heading`}>
-              {theme === 'dark' ? <SunFill size={16} aria-hidden="true" /> : <MoonStarsFill size={16} aria-hidden="true" />}
-            </button>
+            {isCollapsed && <ThemeCycleButton className={`${iconButton} text-muted hover:text-heading`} />}
             <button
               type="button"
               onClick={() => signOut({ callbackUrl: '/login' })}
@@ -417,9 +417,7 @@ export default function Sidebar() {
               <BoxArrowInRight size={16} aria-hidden="true" />
               {!isCollapsed && <span>Anmelden</span>}
             </Link>
-            <button type="button" onClick={toggleTheme} aria-label={themeLabel} title={themeLabel} className={`${iconButton} text-muted hover:text-heading`}>
-              {theme === 'dark' ? <SunFill size={16} aria-hidden="true" /> : <MoonStarsFill size={16} aria-hidden="true" />}
-            </button>
+            {isCollapsed && <ThemeCycleButton className={`${iconButton} text-muted hover:text-heading`} />}
           </>
         )}
       </div>
@@ -435,9 +433,7 @@ export default function Sidebar() {
       <div className="flex h-14 items-center justify-between px-4">
         {renderBrand(false)}
         <div className="flex items-center gap-1">
-          <button type="button" onClick={toggleTheme} aria-label={themeLabel} className={`${iconButton} text-muted`}>
-            {theme === 'dark' ? <SunFill size={18} aria-hidden="true" /> : <MoonStarsFill size={18} aria-hidden="true" />}
-          </button>
+          <ThemeCycleButton className={`${iconButton} text-muted`} iconSize={18} />
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -485,6 +481,10 @@ export default function Sidebar() {
 
           <div className={`${openProjectId || isDemoPage ? 'mt-1.5' : 'mt-3'} border-t border-border pt-1.5`}>
             <FontSizeControl />
+            <div className="flex items-center justify-between gap-2 py-1">
+              <span className="text-13 font-medium text-muted">Darstellung</span>
+              <ThemeSwitch />
+            </div>
           </div>
 
           {status === 'authenticated' ? (
