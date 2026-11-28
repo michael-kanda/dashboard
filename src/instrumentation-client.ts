@@ -8,27 +8,27 @@ import { isNonBrowserRuntimeEvent } from "@/lib/sentry-filter";
 Sentry.init({
   dsn: "https://47443b3ff6edf164f0a58f55f12bd41e@o4510442605051905.ingest.de.sentry.io/4510442606755920",
 
-  // Add optional integrations for additional features
+  // Sitzungsaufzeichnung nur, wenn ein Fehler auftritt. Texte, Eingaben, Bilder und Videos
+  // werden dabei verdeckt, damit keine Kundendaten oder Kennzahlen bei Sentry landen.
   integrations: [
-    Sentry.replayIntegration(),
+    Sentry.replayIntegration({
+      maskAllText: true,
+      maskAllInputs: true,
+      blockAllMedia: true,
+    }),
   ],
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
+  // Jeder zehnte Seitenaufruf reicht, um langsame Stellen zu finden.
+  tracesSampleRate: 0.1,
   // Enable logs to be sent to Sentry
   enableLogs: true,
 
-  // Define how likely Replay events are sampled.
-  // This sets the sample rate to be 10%. You may want this to be 100% while
-  // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 0.1,
-
-  // Define how likely Replay events are sampled when an error occurs.
+  // Keine Aufzeichnung ohne Fehler, bei Fehlern immer (verdeckt, siehe oben).
+  replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 1.0,
 
-  // Enable sending user PII (Personally Identifiable Information)
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
-  sendDefaultPii: true,
+  // Datensparsam: keine IP-Adressen, Cookies oder Benutzerdaten an Sentry (Datenschutzerklärung).
+  sendDefaultPii: false,
 
   // Bots, die die Seite in Deno o. Ä. ausführen, erzeugen Fehler ohne echte Nutzer (z. B. fehlender
   // Response-Stream beim Prefetch). Diese Meldungen nicht an Sentry senden.

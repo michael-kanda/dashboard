@@ -8,6 +8,7 @@ import { baseAuthConfig } from '@/lib/auth-config';
 import { clearLoginFailures, isLoginLocked, readClientIp, recordLoginFailure } from '@/lib/login-throttle';
 import { fingerprintPasswordHash } from '@/lib/session-state';
 import { logger } from '@/lib/logger';
+import { pruneLoginLogs } from '@/lib/account-log-retention';
 import { loadTwoFactorState, verifySecondFactor } from '@/lib/two-factor/repository';
 
 // Code erscheint im Login-Formular als Hinweis auf die vorübergehende Sperre.
@@ -100,7 +101,7 @@ export const authConfig = {
             throw new Error('Diese E-Mail-Adresse ist nicht registriert');
           }
 
-          logger.debug('[Authorize] Benutzer gefunden:', user.email);
+          logger.debug('[Authorize] Benutzer gefunden:', user.id);
 
           if (!user.password) {
             console.error('[Authorize] KRITISCHER FEHLER: Benutzer hat kein Passwort-Hash in der DB!');
@@ -126,10 +127,10 @@ export const authConfig = {
               await recordLoginFailure(normalizedEmail, clientIp);
               throw new TwoFactorInvalidError();
             }
-            if (method === 'recovery') logger.info('[Authorize] Wiederherstellungscode benutzt:', user.email);
+            if (method === 'recovery') logger.info('[Authorize] Wiederherstellungscode benutzt von Benutzer', user.id);
           }
 
-          logger.info('[Authorize] Login erfolgreich für:', user.email);
+          logger.info('[Authorize] Login erfolgreich für Benutzer', user.id);
           await clearLoginFailures(normalizedEmail);
 
         } catch (authError) {
@@ -150,6 +151,8 @@ export const authConfig = {
         } catch (logError) {
           console.error('[Authorize] FEHLER beim Protokollieren des Logins (nicht-fatal):', logError);
         }
+        // Anmeldeprotokolle älter als 12 Monate löschen (höchstens einmal pro Stunde)
+        await pruneLoginLogs();
 
         // Logo-URL-Abruf
         let logo_url: string | null = null;

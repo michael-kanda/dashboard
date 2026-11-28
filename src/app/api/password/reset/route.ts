@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
     await revokeResetTokens(user.id);
     await recordAccountEvent(user, 'password_reset');
-    logger.info('[Passwort] Über Link zurückgesetzt für', user.email);
+    logger.info('[Passwort] Über Link zurückgesetzt für Benutzer', user.id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[Passwort] Zurücksetzen fehlgeschlagen:', error instanceof Error ? error.message : error);

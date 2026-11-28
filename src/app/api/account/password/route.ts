@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
   await revokeResetTokens(user.id);
   await recordAccountEvent(user, 'password_changed');
-  logger.info('[Passwort] Geändert für', user.email);
+  logger.info('[Passwort] Geändert für Benutzer', user.id);
 
   // Diese Sitzung übernimmt den neuen Fingerabdruck. Gelingt das nicht, endet sie wie die anderen.
   let keptSession = false;

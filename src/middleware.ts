@@ -57,7 +57,8 @@ const authMiddleware = auth(async (req) => {
     if (siteResponse) return siteResponse;
   }
 
-  const isLoggedIn = !!req.auth;
+  // Nur eine Sitzung mit Benutzer-ID gilt als angemeldet (nicht schon ein befülltes req.auth).
+  const isLoggedIn = Boolean(req.auth?.user?.id);
   const userId = req.auth?.user?.id;
   const userRole = req.auth?.user?.role;
 

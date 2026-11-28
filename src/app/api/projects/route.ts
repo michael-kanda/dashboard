@@ -12,7 +12,7 @@ export async function GET(_request: NextRequest) {
     const user = session?.user;
 
     logger.debug('[/api/projects] GET Request');
-    logger.debug('[/api/projects] User:', user?.email, 'Role:', user?.role);
+    logger.debug('[/api/projects] User:', user?.id, 'Role:', user?.role);
 
     if (!user) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 });

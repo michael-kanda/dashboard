@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     const projectId = searchParams.get('projectId'); 
 
     logger.debug('[/api/data] GET Request');
-    logger.debug('[/api/data] User:', session.user.email, 'Role:', role, 'ID:', id);
+    logger.debug('[/api/data] User:', session.user.id, 'Role:', role, 'Projekt:', id);
     logger.debug('[/api/data] DateRange:', dateRange, 'ProjectId:', projectId || 'none');
 
     // ========================================

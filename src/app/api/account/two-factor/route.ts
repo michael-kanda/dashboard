@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   if (action === 'enable') {
     const result = await enableTwoFactor(account.id, code);
     if ('error' in result) return NextResponse.json({ message: result.error }, { status: 400 });
-    logger.info('[2FA] Aktiviert für', account.email);
+    logger.info('[2FA] Aktiviert für Benutzer', account.id);
     return NextResponse.json({ recoveryCodes: result.recoveryCodes });
   }
 
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Der Code stimmt nicht.' }, { status: 400 });
     }
     await clearTwoFactor(account.id);
-    logger.info('[2FA] Abgeschaltet für', account.email);
+    logger.info('[2FA] Abgeschaltet für Benutzer', account.id);
     return NextResponse.json({ message: 'Zwei-Faktor-Anmeldung abgeschaltet.' });
   }
 

@@ -29,7 +29,7 @@ export async function PATCH(
     // 3. DEMO-SCHUTZ (NEU)
     // ==========================================
     if (session.user.is_demo) {
-      logger.debug('[Settings] Blockiere Schreibzugriff für Demo-User:', session.user.email);
+      logger.debug('[Settings] Blockiere Schreibzugriff für Demo-User:', session.user.id);
       return NextResponse.json(
         { message: 'Im Demo-Modus können Projekteinstellungen nicht geändert werden.' },
         { status: 403 }

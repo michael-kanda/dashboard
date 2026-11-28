@@ -11,6 +11,7 @@ import { canAccessProject } from '@/lib/project-access';
 import { User } from '@/types';
 import { normalizeDashboardWidgetVisibility } from '@/lib/dashboard-widget-visibility';
 import { logger } from '@/lib/logger';
+import { removeAccountLogTraces } from '@/lib/account-log-retention';
 import { parseAnalyticsSettingsInput } from '@/lib/vercel-analytics/settings';
 import { loadAnalyticsSettingsColumns, saveAnalyticsSettingsColumns } from '@/lib/vercel-analytics/settings-repository';
 export const revalidate = 0;
@@ -462,7 +463,7 @@ export async function PUT(
       console.warn(`[PUT /api/users/${targetUserId}] Cache/Sync-Auftrag konnte nicht aktualisiert werden:`, cacheError);
     }
 
-    logger.info(`✅ [PUT /api/users/${targetUserId}] Benutzer erfolgreich aktualisiert:`, rows[0].email);
+    logger.info(`✅ [PUT /api/users/${targetUserId}] Benutzer erfolgreich aktualisiert`);
     
     return NextResponse.json({
       ...rows[0],
@@ -542,6 +543,9 @@ export async function DELETE(
       }
     }
     // --- ENDE BERECHTIGUNGSPRÜFUNG ---
+
+    // Protokolle behalten sonst die E-Mail-Adresse (user_id wird nur auf NULL gesetzt).
+    await removeAccountLogTraces(targetUserId);
 
     const result = await sql`
       DELETE FROM users WHERE id = ${targetUserId}::uuid;

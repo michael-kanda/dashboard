@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     }
 
     const user = existingUsers[0];
-    logger.debug('[RESET-PASSWORD] Benutzer gefunden:', user.email, 'Rolle:', user.role);
+    logger.debug('[RESET-PASSWORD] Benutzer gefunden:', user.id, 'Rolle:', user.role);
 
     // Neues Passwort hashen
     const hashedPassword = await bcrypt.hash(newPassword, 10);
