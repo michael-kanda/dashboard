@@ -190,6 +190,15 @@
     from { transform: scaleX(1); }
     to { transform: scaleX(0); }
   }
+  @keyframes dp-show {
+    to { visibility: visible; }
+  }
+  @keyframes dp-draw {
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes dp-pulse {
+    50% { opacity: 0.35; }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .dp-spinner {
@@ -244,6 +253,41 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .dp-underline { transition: none; }
+  }
+
+  /* ── Einblenden beim Scrollen (Landingpage, ScrollReveal.tsx) ── */
+  .dp-reveal-armed {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  .dp-reveal-armed.dp-reveal-in {
+    opacity: 1;
+    transform: none;
+    transition: opacity 0.6s cubic-bezier(0.3, 0.7, 0.2, 1), transform 0.6s cubic-bezier(0.3, 0.7, 0.2, 1);
+  }
+  @media print {
+    .dp-reveal-armed { opacity: 1 !important; transform: none !important; }
+  }
+
+  /* ── Hero-Vorschau (ProductPreview.tsx): Zahlen zählen hoch, Linie zeichnet sich ──
+     html.dp-anim setzt das Startskript in layout.tsx, nur ohne „Bewegung reduzieren“. */
+  html.dp-anim .dp-countup:not(.dp-counting) {
+    visibility: hidden;
+    /* Falls das Skript nicht lädt, nach kurzer Zeit trotzdem zeigen */
+    animation: dp-show 0s 2.5s forwards;
+  }
+  html.dp-anim .dp-draw {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: dp-draw 1.4s 0.25s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
+  }
+  html.dp-anim .dp-draw-fill {
+    opacity: 0;
+    /* erst wenn die Linie fertig gezeichnet ist (0,25 s + 1,4 s) */
+    animation: dp-fade-in 0.6s 1.5s ease-out forwards;
+  }
+  .dp-live-dot {
+    animation: dp-pulse 2.4s ease-in-out infinite;
   }
 
   /* ── Hinweis unten auf der Landingpage (CookieHint) ── */

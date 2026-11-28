@@ -46,6 +46,10 @@ const themeInitScript = `
       var theme = localStorage.getItem('datapeak-theme');
       var dark = theme === 'dark' || (theme !== 'light' && !!window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
       document.documentElement.classList.toggle('dark', dark);
+      // Animationen der Landingpage (globals.css: .dp-countup, .dp-draw) nur ohne „Bewegung reduzieren“
+      if (window.matchMedia && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('dp-anim');
+      }
       var scale = Number(localStorage.getItem('datapeak-font-scale'));
       if ([0.9, 1.1, 1.2, 1.35].indexOf(scale) !== -1) {
         document.documentElement.style.setProperty('--dp-content-zoom', String(scale));
