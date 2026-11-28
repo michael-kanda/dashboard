@@ -5,6 +5,7 @@ import type { PointerEvent } from 'react';
 import { MapPin, Save, X } from 'lucide-react';
 import type { LocalSeoData, LocalSeoLocationData } from '@/lib/dashboard-shared';
 import austriaGeoJson from '@/data/austria-bundeslaender.json';
+import { latLngToAustriaMapUnits } from '@/lib/austria-map-projection';
 import { formatReportingPeriod, type ReportingPeriod } from '@/lib/reporting-period';
 
 interface LocalSeoMapWidgetProps {
@@ -130,96 +131,6 @@ function mapGeoPoint([x, y]: GeoPoint) {
   };
 }
 
-function collectGeoPoints(coordinates: unknown, points: GeoPoint[] = []) {
-  if (!Array.isArray(coordinates)) return points;
-  if (typeof coordinates[0] === 'number' && typeof coordinates[1] === 'number') {
-    points.push([coordinates[0], coordinates[1]]);
-    return points;
-  }
-  coordinates.forEach((entry) => collectGeoPoints(entry, points));
-  return points;
-}
-
-function getFeatureCenter(feature: AustriaFeature) {
-  const points = collectGeoPoints(feature.geometry.coordinates);
-  const center = points.reduce(
-    (acc, point) => ({ x: acc.x + point[0], y: acc.y + point[1] }),
-    { x: 0, y: 0 }
-  );
-
-  return mapGeoPoint([center.x / points.length, center.y / points.length]);
-}
-
-function solveThreeByThree(matrix: number[][], vector: number[]) {
-  const a = matrix.map((row) => [...row]);
-  const b = [...vector];
-
-  for (let pivot = 0; pivot < 3; pivot += 1) {
-    let bestRow = pivot;
-    for (let row = pivot + 1; row < 3; row += 1) {
-      if (Math.abs(a[row][pivot]) > Math.abs(a[bestRow][pivot])) bestRow = row;
-    }
-
-    [a[pivot], a[bestRow]] = [a[bestRow], a[pivot]];
-    [b[pivot], b[bestRow]] = [b[bestRow], b[pivot]];
-
-    const divisor = a[pivot][pivot] || 1;
-    for (let column = pivot; column < 3; column += 1) a[pivot][column] /= divisor;
-    b[pivot] /= divisor;
-
-    for (let row = 0; row < 3; row += 1) {
-      if (row === pivot) continue;
-      const factor = a[row][pivot];
-      for (let column = pivot; column < 3; column += 1) {
-        a[row][column] -= factor * a[pivot][column];
-      }
-      b[row] -= factor * b[pivot];
-    }
-  }
-
-  return b;
-}
-
-function buildLatLngProjection() {
-  const calibrationPoints = austriaFeatures
-    .map((feature) => {
-      const longitude = Number(feature.properties?.longitude);
-      const latitude = Number(feature.properties?.latitude);
-      if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) return null;
-      return { longitude, latitude, ...getFeatureCenter(feature) };
-    })
-    .filter((point): point is { longitude: number; latitude: number; x: number; y: number } => Boolean(point));
-
-  const solveAxis = (axis: 'x' | 'y') => {
-    const matrix = [
-      [0, 0, 0],
-      [0, 0, 0],
-      [0, 0, 0],
-    ];
-    const vector = [0, 0, 0];
-
-    calibrationPoints.forEach((point) => {
-      const values = [point.longitude, point.latitude, 1];
-      values.forEach((value, row) => {
-        vector[row] += value * point[axis];
-        values.forEach((innerValue, column) => {
-          matrix[row][column] += value * innerValue;
-        });
-      });
-    });
-
-    return solveThreeByThree(matrix, vector);
-  };
-
-  const xCoefficients = solveAxis('x');
-  const yCoefficients = solveAxis('y');
-
-  return (latitude: number, longitude: number) => ({
-    x: xCoefficients[0] * longitude + xCoefficients[1] * latitude + xCoefficients[2],
-    y: yCoefficients[0] * longitude + yCoefficients[1] * latitude + yCoefficients[2],
-  });
-}
-
 function ringToPath(ring: GeoRing) {
   return ring
     .map((point, index) => {
@@ -246,28 +157,6 @@ const AUSTRIA_REGION_PATHS = austriaFeatures.map((feature) => ({
   path: featureToPath(feature),
 }));
 
-const projectLatLngToAustriaSvg = buildLatLngProjection();
-const cityPointOverrides = austriaFeatures.reduce<Record<string, { x: number; y: number }>>((points, feature) => {
-  const name = feature.properties?.name?.toLowerCase();
-  if (name === 'wien') {
-    const center = getFeatureCenter(feature);
-    points.wien = center;
-    points.vienna = center;
-  }
-  return points;
-}, {});
-
-const knownCitySvgPoints: Record<string, { x: number; y: number }> = {
-  wien: { x: 704, y: 203 },
-  vienna: { x: 704, y: 203 },
-  graz: { x: 610, y: 295 },
-  leoben: { x: 580, y: 250 },
-  linz: { x: 430, y: 182 },
-  salzburg: { x: 316, y: 258 },
-  innsbruck: { x: 202, y: 278 },
-  klagenfurt: { x: 520, y: 326 },
-};
-
 function projectToAustriaSvg(location: LocalSeoLocationData) {
   if (typeof location.mapX === 'number' && typeof location.mapY === 'number') {
     return {
@@ -287,29 +176,16 @@ function projectToAustriaSvg(location: LocalSeoLocationData) {
     klagenfurt: { lat: 46.6247, lng: 14.3053 },
   };
   const cityKey = (location.city || location.name || '').toLowerCase().trim();
-  const manualOverrideKey = Object.keys(knownCitySvgPoints).find((key) => cityKey === key || cityKey.includes(key));
-  if (manualOverrideKey) {
-    return knownCitySvgPoints[manualOverrideKey];
-  }
-
-  const cityOverrideKey = Object.keys(cityPointOverrides).find((key) => cityKey === key || cityKey.includes(key));
-  if (cityOverrideKey) {
-    const point = cityPointOverrides[cityOverrideKey];
-    return {
-      x: Math.max(45, Math.min(760, point.x)),
-      y: Math.max(70, Math.min(315, point.y)),
-    };
-  }
-
   const fallbackKey = Object.keys(knownCityCoordinates).find((key) => cityKey === key || cityKey.includes(key));
   const fallback = fallbackKey ? knownCityCoordinates[fallbackKey] : undefined;
   const lat = typeof location.lat === 'number' ? location.lat : (fallback?.lat ?? 47.6);
   const lng = typeof location.lng === 'number' ? location.lng : (fallback?.lng ?? 14.2);
-  const { x, y } = projectLatLngToAustriaSvg(lat, lng);
+  // Gleiche Umrechnung wie die Landesgrenzen: erst in Kartenkoordinaten, dann in die SVG-Fläche
+  const { x, y } = mapGeoPoint(latLngToAustriaMapUnits(lat, lng));
 
   return {
-    x: Math.max(45, Math.min(760, x)),
-    y: Math.max(70, Math.min(315, y)),
+    x: Math.max(0, Math.min(MAP_VIEWBOX.width, x)),
+    y: Math.max(0, Math.min(MAP_VIEWBOX.height, y)),
   };
 }
 
@@ -353,6 +229,8 @@ export default function LocalSeoMapWidget({
   const [selectedId, setSelectedId] = useState<string | undefined>(locations[0]?.id);
   const [isEditingPins, setIsEditingPins] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  // Abstand Mauszeiger → Pin-Spitze beim Anfassen, damit der Pin nicht zum Zeiger springt
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [detailTab, setDetailTab] = useState<LocationDetailTab>('overview');
   const [isSavingPins, setIsSavingPins] = useState(false);
@@ -492,14 +370,18 @@ export default function LocalSeoMapWidget({
     event.stopPropagation();
     setDraggingId(locationId);
     selectLocation(locationId);
-    const point = getSvgPointFromClient(event.clientX, event.clientY);
-    if (point) moveLocationPin(locationId, point);
+    const pointer = getSvgPointFromClient(event.clientX, event.clientY);
+    const location = displayLocations.find((item) => item.id === locationId);
+    if (pointer && location) {
+      const tip = projectToAustriaSvg(location);
+      dragOffsetRef.current = { x: tip.x - pointer.x, y: tip.y - pointer.y };
+    }
   };
 
   const handleMapPointerMove = (event: PointerEvent<SVGSVGElement>) => {
     if (!draggingId) return;
     const point = getSvgPointFromClient(event.clientX, event.clientY);
-    if (point) moveLocationPin(draggingId, point);
+    if (point) moveLocationPin(draggingId, { x: point.x + dragOffsetRef.current.x, y: point.y + dragOffsetRef.current.y });
   };
 
   const stopDragging = () => setDraggingId(null);
@@ -688,7 +570,8 @@ export default function LocalSeoMapWidget({
                   onMouseLeave={() => setHoveredId(null)}
                 >
                   <title>{location.name}</title>
-                  <g transform="scale(0.44) translate(-50 -30)">
+                  {/* Verankert an der Spitze (Mitte des Schattens), dort liegt der Standort; der Kopf steht darüber */}
+                  <g transform="scale(0.44) translate(-50 -78)">
                     <ellipse cx="50" cy="78" rx="32" ry="13" fill={isActive ? GOOGLE_BLUE : 'var(--dp-text-muted)'} opacity={isActive ? '0.22' : '0.25'} />
                     <g fill={isActive ? GOOGLE_BLUE : '#4B5563'}>
                       <rect x="46.5" y="44" width="7" height="30" rx="3.5" />
@@ -697,7 +580,7 @@ export default function LocalSeoMapWidget({
                   </g>
                   <text
                     x="12"
-                    y="-10"
+                    y="-26"
                     className="fill-slate-700 text-12 font-medium dark:fill-slate-200"
                   >
                     {location.city || (location.name.length > 18 ? `${location.name.slice(0, 16)}…` : location.name)}
