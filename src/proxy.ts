@@ -1,11 +1,9 @@
 // src/proxy.ts (bis Next 15: middleware.ts)
-import { AsyncLocalStorage } from 'node:async_hooks';
 import NextAuth from 'next-auth';
 import { baseAuthConfig } from '@/lib/auth-config';
 import { NextResponse, type NextFetchEvent, type NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { TWO_FACTOR_SETUP_PATH } from '@/lib/two-factor/policy';
-import { buildCsp, createNonce, CSP_HEADER } from '@/lib/csp';
 import {
   APP_HOST,
   LANDING_PATH,
@@ -19,35 +17,9 @@ import {
 
 const { auth } = NextAuth(baseAuthConfig);
 
-// Nonce und CSP der laufenden Anfrage. Sie werden beim Weiterleiten als Request-Header
-// mitgegeben, damit Next.js die Nonce beim Rendern an seine Skripte setzt. Eine geklonte
-// NextRequest mit geänderten Headern kam auf Vercel nicht beim Rendern an, deshalb so.
-const cspContext = new AsyncLocalStorage<{ nonce: string }>();
-
-/** Request-Header für die Weitergabe: die der Anfrage plus Nonce und CSP. */
-function forwardedHeaders(req: NextRequest) {
-  const headers = new Headers(req.headers);
-  const context = cspContext.getStore();
-  if (context) {
-    headers.set('x-nonce', context.nonce);
-    // Next.js liest die Nonce aus einem dieser beiden Request-Header (nur script-src wird
-    // ausgewertet). Auf Vercel kam der volle CSP-Wert unter dem ersten Namen nicht beim Rendern
-    // an, x-nonce dagegen schon; deshalb kurz und unter beiden Namen.
-    const scriptSrc = `script-src 'self' 'nonce-${context.nonce}' 'strict-dynamic'`;
-    headers.set('content-security-policy', scriptSrc);
-    headers.set('content-security-policy-report-only', scriptSrc);
-  }
-  return headers;
-}
-
-/** Lässt die Anfrage durch und reicht die Request-Header weiter (inkl. Nonce und CSP). */
-function forward(req: NextRequest) {
-  return NextResponse.next({ request: { headers: forwardedHeaders(req) } });
-}
-
 /** Leitet den Request weiter und markiert ihn für das Layout als Landingpage. */
 function marketingResponse(req: NextRequest, rewriteTo?: string) {
-  const headers = forwardedHeaders(req);
+  const headers = new Headers(req.headers);
   headers.set(SITE_HEADER, 'marketing');
   return rewriteTo
     ? NextResponse.rewrite(new URL(rewriteTo, req.url), { request: { headers } })
@@ -126,7 +98,7 @@ const authMiddleware = auth(async (req) => {
 
   // Wenn es eine API, Login oder statische Datei ist -> Durchlassen
   if (isApiRoute || isLoginRoute || isPublicDemoRoute || isShareRoute || isStaticAsset) {
-    return forward(req);
+    return;
   }
 
   // Admins und Superadmins ohne aktive Zwei-Faktor-Anmeldung richten sie zuerst ein.
@@ -146,7 +118,7 @@ const authMiddleware = auth(async (req) => {
   if (userInMaintenance) {
     // SUPERADMIN ist immer ausgenommen
     if (userRole === 'SUPERADMIN') {
-      const res = forward(req);
+      const res = NextResponse.next();
       res.headers.set('x-maintenance-mode', 'active-but-bypassed');
       return res;
     }
@@ -157,7 +129,7 @@ const authMiddleware = auth(async (req) => {
     }
     
     // User ist bereits auf Wartungsseite -> Header mit Maintenance-Flag setzen
-    const res = forward(req);
+    const res = NextResponse.next();
     res.headers.set('x-user-maintenance', 'true');
     return res;
   } else {
@@ -169,29 +141,17 @@ const authMiddleware = auth(async (req) => {
   }
 
   // Standard NextAuth Verhalten
-  return forward(req);
+  return;
 });
 
 // Die Landingpage (www.datapeak.at) läuft ohne next-auth: so setzt sie keine Anmelde-Cookies
 // (csrf-token, callback-url), die dort niemand braucht. Alle anderen Hosts gehen durch auth().
-export default async function proxy(req: NextRequest, event: NextFetchEvent) {
-  if (/\.[^/]+$/.test(req.nextUrl.pathname)) {
-    // Statische Dateien (Bilder, PDF, robots.txt …): keine Nonce nötig
-    return isMarketingHost(req.headers.get('host')) ? NextResponse.next() : authMiddleware(req, event as never);
+export default function proxy(req: NextRequest, event: NextFetchEvent) {
+  if (isMarketingHost(req.headers.get('host'))) {
+    const isStaticFile = /\.[^/]+$/.test(req.nextUrl.pathname);
+    return isStaticFile ? NextResponse.next() : handleSiteRouting(req) ?? NextResponse.next();
   }
-
-  // Pro Anfrage eine neue Nonce. Next.js liest sie aus dem Request-Header Content-Security-Policy
-  // und setzt sie an seine Skripte; der Browser bekommt die Policy über den Response-Header.
-  const nonce = createNonce();
-  const csp = buildCsp(nonce, { isDev: process.env.NODE_ENV === 'development' });
-
-  const response = await cspContext.run({ nonce }, async () => (
-    isMarketingHost(req.headers.get('host'))
-      ? handleSiteRouting(req) ?? forward(req)
-      : await authMiddleware(req, event as never)
-  ));
-  response?.headers.set(CSP_HEADER, csp);
-  return response;
+  return authMiddleware(req, event as never);
 }
 
 export const config = {

@@ -1,12 +1,15 @@
-// src/lib/csp.ts
-// Content Security Policy für alle Seiten (Proxy setzt sie pro Anfrage mit eigener Nonce).
+// src/lib/csp.mjs
+// Content Security Policy für alle Seiten, gesetzt in next.config.mjs (headers()).
 // Vorerst als Content-Security-Policy-Report-Only: Der Browser blockiert nichts, meldet aber
 // Verstöße an Sentry (Bereich „Security“). Erst wenn dort nichts Unerwartetes auftaucht, wird
 // die Policy scharf geschaltet (CSP_ENFORCE).
 //
+// Ohne Nonce: Next.js liest die Nonce aus dem Request-Header Content-Security-Policy, und den
+// lässt Vercel nicht bis zum Rendern durch (live getestet, PR 52/53). Deshalb sind Inline-Skripte
+// erlaubt; Skripte von fremden Domains bleiben ausgeschlossen.
+//
 // Warum diese Quellen:
-// - script-src: nur eigene Skripte mit Nonce; 'strict-dynamic' erlaubt, was diese nachladen
-//   (z. B. Vercel Analytics unter /_vercel/insights)
+// - script-src 'self' 'unsafe-inline': eigene Skripte und die Inline-Skripte von Next.js
 // - style-src 'unsafe-inline': React-style-Attribute und Tailwind-Inline-Stile
 // - img-src https:: Mandanten-Logos liegen auf beliebigen Kunden-Domains
 // - connect-src: eigene APIs, Analytics über /_vercel; Sentry über den Tunnel /monitoring oder,
@@ -19,16 +22,11 @@ export const CSP_HEADER = CSP_ENFORCE ? 'Content-Security-Policy' : 'Content-Sec
 const SENTRY_CSP_REPORT_URI =
   'https://o4510442605051905.ingest.de.sentry.io/api/4510442606755920/security/?sentry_key=47443b3ff6edf164f0a58f55f12bd41e';
 
-export function createNonce(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return btoa(String.fromCharCode(...bytes));
-}
-
-export function buildCsp(nonce: string, { isDev = false }: { isDev?: boolean } = {}): string {
+/** @param {{ isDev?: boolean }} [options] */
+export function buildCsp({ isDev = false } = {}) {
   const directives = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
