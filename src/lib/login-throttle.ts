@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { sql } from '@vercel/postgres';
 
 export const LOGIN_LOCK_MINUTES = 15;
@@ -9,12 +10,21 @@ function warn(action: string, error: unknown) {
   console.warn(`[Login Throttle] ${action} fehlgeschlagen:`, error instanceof Error ? error.message : error);
 }
 
+// E-Mail-Adresse und IP-Adresse werden nur als HMAC gespeichert (Spalten email/ip), wie bei
+// den Anfragen zum Zurücksetzen des Passworts. Für die Sperre reicht der Vergleich der Hashwerte.
+export function loginThrottleKey(value: string | null, secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'datapeak'): string | null {
+  if (!value) return null;
+  return createHmac('sha256', secret).update(`login:${value}`).digest('hex');
+}
+
 export function readClientIp(request?: Request): string | null {
   const forwarded = request?.headers.get('x-forwarded-for');
   return forwarded?.split(',')[0]?.trim() || null;
 }
 
-export async function isLoginLocked(email: string, ip: string | null): Promise<boolean> {
+export async function isLoginLocked(rawEmail: string, rawIp: string | null): Promise<boolean> {
+  const email = loginThrottleKey(rawEmail);
+  const ip = loginThrottleKey(rawIp);
   try {
     const { rows } = await sql<{ by_email: number; by_ip: number }>`
       SELECT
@@ -32,7 +42,9 @@ export async function isLoginLocked(email: string, ip: string | null): Promise<b
   }
 }
 
-export async function recordLoginFailure(email: string, ip: string | null) {
+export async function recordLoginFailure(rawEmail: string, rawIp: string | null) {
+  const email = loginThrottleKey(rawEmail);
+  const ip = loginThrottleKey(rawIp);
   try {
     await sql`INSERT INTO login_attempts (email, ip) VALUES (${email}, ${ip})`;
     await sql`DELETE FROM login_attempts WHERE attempted_at < NOW() - INTERVAL '1 day'`;
@@ -41,7 +53,8 @@ export async function recordLoginFailure(email: string, ip: string | null) {
   }
 }
 
-export async function clearLoginFailures(email: string) {
+export async function clearLoginFailures(rawEmail: string) {
+  const email = loginThrottleKey(rawEmail);
   try {
     await sql`DELETE FROM login_attempts WHERE email = ${email}`;
   } catch (error) {

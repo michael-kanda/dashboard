@@ -11,7 +11,6 @@ import { Toaster } from 'sonner';
 import * as Sentry from '@sentry/nextjs';
 import { themeToCss } from '@/lib/theme';
 import { getCachedTheme } from '@/lib/theme-store';
-import "bootstrap-icons/font/bootstrap-icons.css";
 
 // Auf dem Mac greift SF Pro aus dem Systemstapel, sonst Inter.
 const inter = Inter({

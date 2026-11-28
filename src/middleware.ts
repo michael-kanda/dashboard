@@ -49,6 +49,31 @@ function handleSiteRouting(req: NextRequest) {
   return null;
 }
 
+// Wartungsmodus pro Benutzer: nicht bei jedem Seitenaufruf aus der Datenbank lesen, sondern
+// höchstens alle 30 Sekunden je Benutzer und Instanz. Ein Umschalten im Admin-Bereich greift
+// dadurch spätestens nach 30 Sekunden.
+const MAINTENANCE_CACHE_MS = 30_000;
+const MAINTENANCE_CACHE_MAX = 1_000;
+const maintenanceCache = new Map<string, { value: boolean; expiresAt: number }>();
+
+async function isUserInMaintenance(userId: string, now = Date.now()): Promise<boolean> {
+  const cached = maintenanceCache.get(userId);
+  if (cached && cached.expiresAt > now) return cached.value;
+  try {
+    const { rows } = await sql`
+      SELECT maintenance_mode FROM users WHERE id = ${userId}::uuid
+    `;
+    const value = rows[0]?.maintenance_mode === true;
+    if (maintenanceCache.size >= MAINTENANCE_CACHE_MAX) maintenanceCache.clear();
+    maintenanceCache.set(userId, { value, expiresAt: now + MAINTENANCE_CACHE_MS });
+    return value;
+  } catch (e) {
+    console.error('Middleware DB Error:', e);
+    // Im Fehlerfall lassen wir den Zugriff zu (nicht zwischenspeichern, beim nächsten Aufruf erneut prüfen)
+    return false;
+  }
+}
+
 const authMiddleware = auth(async (req) => {
   const { nextUrl } = req;
   const isStaticFile = /\.[^/]+$/.test(nextUrl.pathname);
@@ -84,16 +109,9 @@ const authMiddleware = auth(async (req) => {
   // 2. Per-User Wartungsmodus prüfen (nur für eingeloggte User)
   let userInMaintenance = false;
   
-  if (isLoggedIn && userId) {
-    try {
-      const { rows } = await sql`
-        SELECT maintenance_mode FROM users WHERE id = ${userId}::uuid
-      `;
-      userInMaintenance = rows[0]?.maintenance_mode === true;
-    } catch (e) {
-      console.error('Middleware DB Error:', e);
-      // Im Fehlerfall lassen wir den Zugriff zu
-    }
+  // Superadmins sind ohnehin ausgenommen, für sie entfällt die Abfrage.
+  if (isLoggedIn && userId && userRole !== 'SUPERADMIN') {
+    userInMaintenance = await isUserInMaintenance(userId);
   }
 
   // 3. Logik anwenden
