@@ -1,6 +1,6 @@
 import type { NextAuthConfig } from 'next-auth';
 import { isDemoProject } from '@/lib/demo-project';
-import { loadSessionState } from '@/lib/session-state';
+import { isValidPasswordChangeProof, loadSessionState } from '@/lib/session-state';
 import { needsTwoFactorSetup } from '@/lib/two-factor/policy';
 
 // Rolle, Rechte und Mandant werden spätestens nach diesem Intervall aus der Datenbank übernommen.
@@ -17,7 +17,7 @@ export const baseAuthConfig = {
     signIn: '/login',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         if (user.id) token.id = user.id;
         token.role = user.role as 'BENUTZER' | 'ADMIN' | 'SUPERADMIN';
@@ -36,6 +36,23 @@ export const baseAuthConfig = {
         token.two_factor_enabled = user.two_factor_enabled;
         token.refreshed_at = Date.now();
         return token;
+      }
+
+      // Eigene Passwortänderung: nur diese Sitzung übernimmt den neuen Fingerabdruck,
+      // alle anderen enden bei der nächsten Auffrischung (spätestens nach SESSION_REFRESH_MS).
+      const proof = (session as { passwordChangeProof?: unknown } | undefined)?.passwordChangeProof;
+      if (trigger === 'update' && token.id && proof !== undefined) {
+        const current = await loadSessionState(token.id as string);
+        if (current === null) return null;
+        if (current && await isValidPasswordChangeProof(proof, token.id as string, current.passwordFingerprint)) {
+          token.password_fingerprint = current.passwordFingerprint;
+          token.role = current.role;
+          token.mandant_id = current.mandant_id;
+          token.permissions = current.permissions;
+          token.two_factor_enabled = current.twoFactorEnabled;
+          token.refreshed_at = Date.now();
+          return token;
+        }
       }
 
       const refreshedAt = typeof token.refreshed_at === 'number' ? token.refreshed_at : 0;

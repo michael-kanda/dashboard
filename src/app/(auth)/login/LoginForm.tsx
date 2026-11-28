@@ -2,6 +2,7 @@
 'use client';
 
 import { getSession, signIn } from 'next-auth/react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Eye, EyeSlash, Lock } from 'react-bootstrap-icons';
@@ -160,6 +161,12 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
               )}
 
               {error && <p className="text-13 text-danger" role="alert">{error}</p>}
+
+              {!needsCode && (
+                <p className="-mt-1 text-right text-13">
+                  <Link href="/login/passwort-vergessen" className="text-accent hover:underline">Passwort vergessen?</Link>
+                </p>
+              )}
 
               <button
                 type="submit"

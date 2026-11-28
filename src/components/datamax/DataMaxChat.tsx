@@ -58,11 +58,20 @@ export function DataMaxChat({ projectId, dateRange = '30d', comparisonMode = 'vo
     isLoading,
     suggestedQuestions,
     usage,
+    historyLoading,
     sendMessage,
     clearChat,
     cancelRequest,
     loadSuggestedQuestions,
-  } = useDataMaxChat({ projectId, dateRange, comparisonMode, endpoint: demo ? '/api/ai/demo-chat' : undefined });
+    loadHistory,
+  } = useDataMaxChat({
+    projectId,
+    dateRange,
+    comparisonMode,
+    // Die Demo merkt sich das Gespräch nur in der Sitzung; angemeldet wird es gespeichert.
+    endpoint: demo ? '/api/ai/demo-chat' : undefined,
+    historyEndpoint: demo ? null : '/api/ai/chat/history',
+  });
 
   const fontSizeClass = FONT_SIZES[fontSizeIndex].class;
   // Tageslimit: ohne Angabe (Superadmin) unbegrenzt.
@@ -72,6 +81,11 @@ export function DataMaxChat({ projectId, dateRange = '30d', comparisonMode = 'vo
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Gespeicherten Verlauf beim ersten Öffnen laden
+  useEffect(() => {
+    if (isOpen) loadHistory();
+  }, [isOpen, loadHistory]);
 
   // Suggested Questions beim Öffnen laden
   useEffect(() => {
@@ -221,11 +235,12 @@ export function DataMaxChat({ projectId, dateRange = '30d', comparisonMode = 'vo
                   {isFullscreen ? <FullscreenExit size={16} /> : <ArrowsFullscreen size={16} />}
                 </button>
 
-                {/* Chat Reset */}
+                {/* Chat leeren (löscht auch den gespeicherten Verlauf) */}
                 <button
-                  onClick={clearChat}
+                  onClick={() => { void clearChat(); }}
                   className="p-2 text-muted hover:bg-surface-secondary hover:text-heading rounded-md transition-colors"
-                  title="Chat zurücksetzen"
+                  title={demo ? 'Chat leeren' : 'Chat leeren (löscht den gespeicherten Verlauf)'}
+                  aria-label="Chat leeren"
                 >
                   <ArrowClockwise size={16} />
                 </button>
@@ -245,7 +260,9 @@ export function DataMaxChat({ projectId, dateRange = '30d', comparisonMode = 'vo
               flex-1 overflow-y-auto p-4 space-y-4 bg-surface-secondary
               ${isFullscreen ? 'max-w-4xl mx-auto w-full' : ''}
             `}>
-              {messages.length === 0 ? (
+              {messages.length === 0 && historyLoading ? (
+                <p className="text-sm text-muted" role="status">Verlauf wird geladen …</p>
+              ) : messages.length === 0 ? (
                 <SuggestedQuestions 
                   questions={suggestedQuestions}
                   onQuestionClick={handleSuggestedClick}

@@ -63,6 +63,7 @@ const authMiddleware = auth(async (req) => {
 
   // 1. Ausnahmen definieren (Pfade, die immer erreichbar sein müssen)
   const isApiRoute = nextUrl.pathname.startsWith('/api');
+  // Auch /login/passwort-vergessen und /login/neues-passwort: ohne Anmeldung erreichbar.
   const isLoginRoute = nextUrl.pathname.startsWith('/login');
   const isMaintenancePage = nextUrl.pathname === '/maintenance';
   const isPublicDemoRoute = nextUrl.pathname.startsWith('/demo-anwalt');

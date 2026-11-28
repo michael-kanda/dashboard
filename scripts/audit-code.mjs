@@ -79,6 +79,11 @@ const publicRoutes = new Set([
   'src/app/api/zugang-anfragen/route.ts',
   // Öffentliche Demo: ohne Anmeldung, begrenzt über demo_chat_usage (src/lib/demo-chat-quota.ts)
   'src/app/api/ai/demo-chat/route.ts',
+  // „Passwort vergessen?“: gleiche Antwort für jede Adresse, begrenzt pro E-Mail und IP
+  // (password_reset_requests, src/lib/password-reset/request.ts).
+  'src/app/api/password/forgot/route.ts',
+  // Einlösen des Links: nur mit gültigem, einmaligem Token aus der E-Mail (60 Minuten).
+  'src/app/api/password/reset/route.ts',
 ]);
 const authPattern = /\bauth\(\)|\bgetServerSession\(|\brequireContentStudioProject\(|\bCRON_SECRET\b/;
 
