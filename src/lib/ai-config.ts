@@ -1,6 +1,6 @@
 // src/lib/ai-config.ts
 import { createGoogle as createGoogleGenerativeAI } from '@ai-sdk/google';
-import { streamText } from 'ai';
+import { createTextStreamResponse, streamText, toTextStream } from 'ai';
 import { DEFAULT_AI_MODELS } from './ai-model-schema';
 import { getAiModels } from './ai-model-store';
 import { logger } from '@/lib/logger';
@@ -95,7 +95,7 @@ function getErrorType(error: unknown): 'rateLimit' | 'serverError' | 'unknown' {
  *   prompt: 'Analysiere diese Daten...',
  *   temperature: 0.3,
  * });
- * return result.toTextStreamResponse(); // Funktioniert direkt!
+ * return textStreamResponse(result);
  */
 export async function streamTextSafe(
   params: Omit<Parameters<typeof streamText>[0], 'model'>
@@ -164,4 +164,15 @@ export async function streamTextSafe(
   
   console.error('❌ AI-Manager: Alle Modelle erschöpft!', finalError);
   throw finalError;
+}
+
+/**
+ * Antwort mit dem reinen Text-Stream (text/plain, UTF-8), wie bisher result.toTextStreamResponse().
+ * AI SDK 7 führt dafür eigenständige Helfer; die Methode am Ergebnis ist dort veraltet.
+ */
+export function textStreamResponse(
+  result: Awaited<ReturnType<typeof streamText>>,
+  init: ResponseInit = {},
+): Response {
+  return createTextStreamResponse({ ...init, stream: toTextStream({ stream: result.stream }) });
 }

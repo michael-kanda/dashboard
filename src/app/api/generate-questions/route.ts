@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { createGoogle as createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
-import { getAiModels } from '@/lib/ai-config';
+import { getAiModels, textStreamResponse } from '@/lib/ai-config';
 import { logger } from '@/lib/logger';
 
 // Google AI Konfiguration
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     });
 
     // 5. Stream als Response zurückgeben
-    return result.toTextStreamResponse();
+    return textStreamResponse(result);
 
   } catch (error) {
     console.error('[AI Generate Questions] Fehler:', error);

@@ -245,7 +245,10 @@ export default function DatenschutzPage() {
               Benutzerdaten. Nur bei einem Fehler wird zusätzlich der Ablauf
               kurz vor dem Fehler aufgezeichnet; Texte, Eingaben, Bilder und
               Videos werden dabei unkenntlich gemacht. Für Ladezeiten werten
-              wir stichprobenartig etwa jeden zehnten Seitenaufruf aus.
+              wir stichprobenartig etwa jeden zehnten Seitenaufruf aus. Verstößt
+              ein Inhalt gegen unsere Sicherheitsrichtlinie (Content Security
+              Policy), meldet Ihr Browser das ebenfalls an Sentry, mit der
+              aufgerufenen Seite, der blockierten Adresse und Browserdaten.
             </li>
             <li>
               <strong>Open-Meteo (Wetterdaten):</strong> Für die Wetteranzeige

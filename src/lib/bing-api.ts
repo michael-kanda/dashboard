@@ -1,5 +1,5 @@
 // src/lib/bing-api.ts
-import axios from 'axios';
+import { httpGet } from '@/lib/http-get';
 import { requestBudgetOptions } from './sync/request-budget';
 import { logger } from '@/lib/logger';
 import { errorFields, getErrorMessage } from '@/lib/errors';
@@ -39,28 +39,29 @@ export async function getBingData(
     
     logger.debug('[BING] Fetching data for:', cleanUrl);
 
-    const response = await axios.get(`${BING_API_BASE}/GetQueryStats`, {
+    const response = await httpGet<{ d?: BingQueryStatEntry[] } | BingQueryStatEntry[]>(`${BING_API_BASE}/GetQueryStats`, {
       ...requestBudgetOptions(),
       params: {
         apikey: apiKey,
         siteUrl: cleanUrl,
       },
-      timeout: 10000
+      timeoutMs: 10000
     });
     
     logger.debug('[BING] Response status:', response.status);
 
     let keywords: BingKeywordData[] = [];
 
-    if (response.data && response.data.d) {
-      keywords = response.data.d.map((entry: BingQueryStatEntry) => ({
+    const data = response.data;
+    if (data && !Array.isArray(data) && data.d) {
+      keywords = data.d.map((entry: BingQueryStatEntry) => ({
         query: entry.Query || entry.query || '',
         impressions: entry.Impressions || entry.impressions || 0,
         clicks: entry.Clicks || entry.clicks || 0,
         position: entry.AvgImpressionPosition || entry.Position || entry.position || 0,
       }));
-    } else if (Array.isArray(response.data)) {
-      keywords = response.data.map((entry: BingQueryStatEntry) => ({
+    } else if (Array.isArray(data)) {
+      keywords = data.map((entry: BingQueryStatEntry) => ({
         query: entry.Query || entry.query || '',
         impressions: entry.Impressions || entry.impressions || 0,
         clicks: entry.Clicks || entry.clicks || 0,

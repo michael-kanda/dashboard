@@ -1,5 +1,5 @@
 // src/lib/semrush-api-v2-fallback.ts - ALTERNATIVE MIT V2 API
-import axios from 'axios';
+import { httpGet, HttpError } from '@/lib/http-get';
 import { logger } from '@/lib/logger';
 
 const apiKey = process.env.SEMRUSH_API_KEY;
@@ -56,10 +56,10 @@ export async function getSemrushKeywordsV2Fallback(
     
     const queryString = new URLSearchParams(rankParams).toString();
     
-    const response = await axios.get(
+    const response = await httpGet<string>(
       `https://www.semrush.com/api/v2/?${queryString}`,
       {
-        timeout: 15000,
+        timeoutMs: 15000,
         headers: {
           'Accept': 'text/plain'
         }
@@ -110,9 +110,9 @@ export async function getSemrushKeywordsV2Fallback(
     return { keywords: top20, error: null };
 
   } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      console.error('[Semrush-v2] Error status:', error.response?.status);
-      console.error('[Semrush-v2] Error data:', error.response?.data);
+    if (error instanceof HttpError) {
+      console.error('[Semrush-v2] Error status:', error.status);
+      console.error('[Semrush-v2] Error data:', error.data);
     } else {
       console.error('[Semrush-v2] Error:', error);
     }
@@ -149,9 +149,9 @@ export async function getSemrushKeywordsV2Extended(
       limit: '50'
     };
 
-    const rankResponse = await axios.get(
+    const rankResponse = await httpGet<string>(
       `https://www.semrush.com/api/v2/?${new URLSearchParams(rankParams).toString()}`,
-      { timeout: 15000 }
+      { timeoutMs: 15000 }
     );
 
     const volumeParams: Record<string, string> = {
@@ -163,9 +163,9 @@ export async function getSemrushKeywordsV2Extended(
 
     let volumeMap: Record<string, number> = {};
     try {
-      const volumeResponse = await axios.get(
+      const volumeResponse = await httpGet<string>(
         `https://www.semrush.com/api/v2/?${new URLSearchParams(volumeParams).toString()}`,
-        { timeout: 15000 }
+        { timeoutMs: 15000 }
       );
       
       volumeMap = volumeResponse.data.split('\n').reduce((acc: Record<string, number>, line: string) => {

@@ -1,5 +1,5 @@
 // src/lib/semrush-api.ts
-import axios from 'axios';
+import { httpGet, HttpError } from '@/lib/http-get';
 import { logger } from '@/lib/logger';
 import { errorFields } from '@/lib/errors';
 
@@ -83,9 +83,9 @@ export async function getSemrushKeywords(
   };
 
   try {
-    const response = await axios.get<SemrushApiResponse>(endpoint, {
+    const response = await httpGet<SemrushApiResponse>(endpoint, {
       params,
-      timeout: 10000, // 10s Timeout
+      timeoutMs: 10000, // 10s Timeout
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'DataPeak Dashboard/1.0'
@@ -171,16 +171,16 @@ export async function getSemrushKeywords(
   } catch (error: unknown) {
     let errorMessage = 'Unknown Semrush Error';
     
-    if (axios.isAxiosError(error)) {
-      const status = error.response?.status;
-      const apiMsg = errorFields(error.response?.data).message || JSON.stringify(error.response?.data);
+    if (error instanceof HttpError) {
+      const status = error.status;
+      const apiMsg = errorFields(error.data).message || JSON.stringify(error.data);
       
       if (status === 403) errorMessage = 'API Key ungültig oder abgelaufen.';
       else if (status === 404) errorMessage = 'Projekt-ID nicht gefunden (Überprüfe Konfiguration).';
       else if (status === 429) errorMessage = 'Rate Limit erreicht (Zu viele Anfragen).';
       else errorMessage = `API Fehler (${status}): ${apiMsg}`;
       
-      console.error(`[Semrush] ❌ Axios Fehler: ${errorMessage}`);
+      console.error(`[Semrush] ❌ HTTP-Fehler: ${errorMessage}`);
     } else {
       console.error('[Semrush] ❌ Code Fehler:', error);
       errorMessage = error instanceof Error ? error.message : String(error);

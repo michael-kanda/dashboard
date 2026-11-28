@@ -3,7 +3,12 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { z } from "zod";
 import { isNonBrowserRuntimeEvent } from "@/lib/sentry-filter";
+
+// Zod prüft sonst per Function("") (eval), ob es Validierungen kompilieren darf. Das verstößt gegen
+// die Content Security Policy (kein unsafe-eval, src/lib/csp.ts); ohne JIT validiert Zod genauso.
+z.config({ jitless: true });
 
 Sentry.init({
   dsn: "https://47443b3ff6edf164f0a58f55f12bd41e@o4510442605051905.ingest.de.sentry.io/4510442606755920",

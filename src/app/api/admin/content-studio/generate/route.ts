@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { streamTextSafe } from '@/lib/ai-config';
+import { streamTextSafe, textStreamResponse } from '@/lib/ai-config';
 import { requireContentStudioProject, ContentStudioAccessError } from '@/lib/content-studio/access';
 import {
   buildDraftPrompt,
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       prompt: buildDraftPrompt(brief, context, body.outline, selectedLinks),
       temperature: 0.45,
     });
-    return result.toTextStreamResponse({
+    return textStreamResponse(result, {
       headers: { 'X-AI-Model': result._modelName },
     });
   } catch (error) {

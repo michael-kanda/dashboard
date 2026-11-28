@@ -5,7 +5,7 @@
 // gespeichert wird nichts.
 import { NextRequest, NextResponse } from 'next/server';
 import { demoData } from '@/app/demo-anwalt/demo-dashboard-data';
-import { streamTextSafe } from '@/lib/ai-config';
+import { streamTextSafe, textStreamResponse } from '@/lib/ai-config';
 import { buildChatContext } from '@/lib/ai-chat/context';
 import { parseComparisonMode } from '@/lib/comparison';
 import { generateSuggestedQuestions } from '@/lib/ai-chat/fallback';
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     });
 
     const questions = generateSuggestedQuestions(demoData, null, false);
-    const response = result.toTextStreamResponse();
+    const response = textStreamResponse(result);
     response.headers.set('X-Suggested-Questions', Buffer.from(JSON.stringify(questions), 'utf-8').toString('base64'));
     for (const [key, value] of Object.entries(demoQuotaHeaders(quota))) response.headers.set(key, value);
     return response;
