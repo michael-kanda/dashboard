@@ -1,9 +1,10 @@
 // src/proxy.ts (bis Next 15: middleware.ts)
 import NextAuth from 'next-auth';
 import { baseAuthConfig } from '@/lib/auth-config';
-import { NextResponse, type NextFetchEvent, type NextRequest } from 'next/server';
+import { NextRequest, NextResponse, type NextFetchEvent } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { TWO_FACTOR_SETUP_PATH } from '@/lib/two-factor/policy';
+import { buildCsp, createNonce, CSP_HEADER } from '@/lib/csp';
 import {
   APP_HOST,
   LANDING_PATH,
@@ -16,6 +17,14 @@ import {
 } from '@/lib/site-hosts';
 
 const { auth } = NextAuth(baseAuthConfig);
+
+/**
+ * Lässt die Anfrage durch und reicht die Request-Header weiter (inkl. Nonce und CSP für das
+ * Rendering). Ohne diese Weitergabe sähe Next.js die Nonce nicht.
+ */
+function forward(req: NextRequest) {
+  return NextResponse.next({ request: { headers: new Headers(req.headers) } });
+}
 
 /** Leitet den Request weiter und markiert ihn für das Layout als Landingpage. */
 function marketingResponse(req: NextRequest, rewriteTo?: string) {
@@ -98,7 +107,7 @@ const authMiddleware = auth(async (req) => {
 
   // Wenn es eine API, Login oder statische Datei ist -> Durchlassen
   if (isApiRoute || isLoginRoute || isPublicDemoRoute || isShareRoute || isStaticAsset) {
-    return;
+    return forward(req);
   }
 
   // Admins und Superadmins ohne aktive Zwei-Faktor-Anmeldung richten sie zuerst ein.
@@ -118,7 +127,7 @@ const authMiddleware = auth(async (req) => {
   if (userInMaintenance) {
     // SUPERADMIN ist immer ausgenommen
     if (userRole === 'SUPERADMIN') {
-      const res = NextResponse.next();
+      const res = forward(req);
       res.headers.set('x-maintenance-mode', 'active-but-bypassed');
       return res;
     }
@@ -129,7 +138,7 @@ const authMiddleware = auth(async (req) => {
     }
     
     // User ist bereits auf Wartungsseite -> Header mit Maintenance-Flag setzen
-    const res = NextResponse.next();
+    const res = forward(req);
     res.headers.set('x-user-maintenance', 'true');
     return res;
   } else {
@@ -141,17 +150,31 @@ const authMiddleware = auth(async (req) => {
   }
 
   // Standard NextAuth Verhalten
-  return;
+  return forward(req);
 });
 
 // Die Landingpage (www.datapeak.at) läuft ohne next-auth: so setzt sie keine Anmelde-Cookies
 // (csrf-token, callback-url), die dort niemand braucht. Alle anderen Hosts gehen durch auth().
-export default function proxy(req: NextRequest, event: NextFetchEvent) {
-  if (isMarketingHost(req.headers.get('host'))) {
-    const isStaticFile = /\.[^/]+$/.test(req.nextUrl.pathname);
-    return isStaticFile ? NextResponse.next() : handleSiteRouting(req) ?? NextResponse.next();
+export default async function proxy(req: NextRequest, event: NextFetchEvent) {
+  if (/\.[^/]+$/.test(req.nextUrl.pathname)) {
+    // Statische Dateien (Bilder, PDF, robots.txt …): keine Nonce nötig
+    return isMarketingHost(req.headers.get('host')) ? NextResponse.next() : authMiddleware(req, event as never);
   }
-  return authMiddleware(req, event as never);
+
+  // Pro Anfrage eine neue Nonce. Next.js liest sie aus dem Request-Header Content-Security-Policy
+  // und setzt sie an seine Skripte; der Browser bekommt die Policy über den Response-Header.
+  const nonce = createNonce();
+  const csp = buildCsp(nonce, { isDev: process.env.NODE_ENV === 'development' });
+  const headers = new Headers(req.headers);
+  headers.set('x-nonce', nonce);
+  headers.set('Content-Security-Policy', csp);
+  const request = new NextRequest(req, { headers });
+
+  const response = isMarketingHost(req.headers.get('host'))
+    ? handleSiteRouting(request) ?? forward(request)
+    : await authMiddleware(request, event as never);
+  response?.headers.set(CSP_HEADER, csp);
+  return response;
 }
 
 export const config = {

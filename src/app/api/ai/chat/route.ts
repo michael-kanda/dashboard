@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
-import { streamTextSafe } from '@/lib/ai-config';
+import { streamTextSafe, textStreamResponse } from '@/lib/ai-config';
 import { UserSchema } from '@/lib/schemas';
 import { getAiTrafficDetailWithComparison } from '@/lib/ai-traffic-extended';
 import Holidays from 'date-holidays';
@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
     // Base64-Encoding für Header
     const questionsBase64 = Buffer.from(JSON.stringify(suggestedQuestions), 'utf-8').toString('base64');
     
-    const response = result.toTextStreamResponse();
+    const response = textStreamResponse(result);
     response.headers.set('X-Suggested-Questions', questionsBase64);
     for (const [key, value] of Object.entries(quotaHeaders(quotaState))) {
       response.headers.set(key, value);

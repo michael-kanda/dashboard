@@ -65,12 +65,15 @@ export default async function RootLayout({
   // Vom Superadmin gewählte Farben, Rahmen und Schatten; leer, solange nichts geändert wurde.
   const themeCss = themeToCss(await getCachedTheme());
   // Die Middleware markiert Aufrufe der Landingpage (www.datapeak.at); dort gibt es keine Sidebar.
-  const isMarketing = (await headers()).get(SITE_HEADER) === 'marketing';
+  const requestHeaders = await headers();
+  const isMarketing = requestHeaders.get(SITE_HEADER) === 'marketing';
+  // Nonce aus dem Proxy (src/lib/csp.ts), damit das Inline-Skript die Content Security Policy erfüllt.
+  const nonce = requestHeaders.get('x-nonce') ?? undefined;
 
   return (
     <html lang="de" className={inter.variable} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {themeCss && <style id="app-theme" dangerouslySetInnerHTML={{ __html: themeCss }} />}
       </head>
       <body className="bg-page">

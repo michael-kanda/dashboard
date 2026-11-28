@@ -9,7 +9,7 @@ import { createGoogle as createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import crypto from 'node:crypto';
 import type { User } from '@/lib/schemas'; 
-import { getAiModels } from '@/lib/ai-config';
+import { getAiModels, textStreamResponse } from '@/lib/ai-config';
 import { getProjectIndexingStatus } from '@/lib/indexing-status';
 import { logger } from '@/lib/logger';
 import { consumeDataMaxQuota, quotaExceededResponse, quotaHeaders } from '@/lib/datamax-quota';
@@ -638,7 +638,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    return result.toTextStreamResponse({ headers: quotaHeaders(quotaState) });
+    return textStreamResponse(result, { headers: quotaHeaders(quotaState) });
 
   } catch (error) {
     console.error('[AI Analyze] Fehler:', error);

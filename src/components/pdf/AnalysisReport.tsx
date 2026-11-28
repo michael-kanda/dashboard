@@ -4,12 +4,15 @@ import { Page, Text, View, Document, StyleSheet, Font, Image } from '@react-pdf/
 import { format, subDays, subMonths } from 'date-fns';
 
 // Fonts laden
+// Schrift liegt selbst gehostet unter public/fonts/poppins (OFL-1.1, aus @fontsource/poppins),
+// damit beim PDF-Export keine Anfrage samt IP-Adresse an ein CDN geht.
+const fontBase = typeof window !== 'undefined' ? window.location.origin : '';
 Font.register({
   family: 'Poppins',
   fonts: [
-    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/poppins@latest/latin-400-normal.ttf', fontWeight: 400 }, 
-    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/poppins@latest/latin-700-normal.ttf', fontWeight: 700 },
-    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/poppins@latest/latin-400-italic.ttf', fontStyle: 'italic' }
+    { src: `${fontBase}/fonts/poppins/poppins-latin-400-normal.woff`, fontWeight: 400 },
+    { src: `${fontBase}/fonts/poppins/poppins-latin-700-normal.woff`, fontWeight: 700 },
+    { src: `${fontBase}/fonts/poppins/poppins-latin-400-italic.woff`, fontStyle: 'italic' }
   ]
 });
 
