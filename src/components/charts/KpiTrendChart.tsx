@@ -1,7 +1,7 @@
 // src/components/KpiTrendChart.tsx
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -20,6 +20,11 @@ import { cn } from '@/lib/utils';
 import { buildHolidayMap, type HolidayInfo } from '@/lib/holidays';
 import type { DailyWeather, WeatherIcon } from '@/lib/weather';
 import { formatReportingPeriod, type ReportingPeriod } from '@/lib/reporting-period';
+import type { DashboardComparison } from '@/lib/comparison';
+
+/** Auswahl im Vergleichsfeld für die Vorjahreslinie derselben Kennzahl. */
+const YEAR_OVER_YEAR = '__vorjahr';
+const YEAR_OVER_YEAR_COLOR = 'var(--dp-chart-text)';
 
 // --- KONFIGURATION ---
 const KPI_CONFIG: Record<string, { label: string; color: string; gradientId: string; source: string }> = {
@@ -134,6 +139,8 @@ interface KpiTrendChartProps {
   kpiKeys?: string[];
   /** Ersetzt die Quellenangabe 'GA4', z. B. durch 'Vercel'. */
   webSourceLabel?: string;
+  /** Gewählte Vergleichsart; im Vorjahresmodus gibt es eine Vorjahreslinie. */
+  comparison?: DashboardComparison;
 }
 
 const isPercentageKpi = (kpi: string) => ['engagementRate', 'bounceRate'].includes(kpi);
@@ -196,8 +203,10 @@ const CustomTooltip = ({ active, payload, label, kpi1, kpi2, holidayMap, weather
         
         {/* KPI-Werte */}
         {payload.map((entry: any, index: number) => {
-          const kpiKey = entry.dataKey === 'value' ? kpi1 : kpi2;
-          const conf = KPI_CONFIG[kpiKey] || { label: kpiKey, color: '#888' };
+          const isYearOverYear = entry.dataKey !== 'value' && kpi2 === YEAR_OVER_YEAR;
+          const kpiKey = entry.dataKey === 'value' || isYearOverYear ? kpi1 : kpi2;
+          const baseConf = KPI_CONFIG[kpiKey] || { label: kpiKey, color: '#888' };
+          const conf = isYearOverYear ? { ...baseConf, label: `${baseConf.label} (Vorjahr)` } : baseConf;
           
           return (
             <div key={index} className="flex items-center justify-between gap-4 mb-1.5 last:mb-0">
@@ -232,16 +241,34 @@ export default function KpiTrendChart({
   className,
   kpiKeys,
   webSourceLabel,
+  comparison,
 }: KpiTrendChartProps) {
   const visibleKeys = kpiKeys ?? Object.keys(KPI_CONFIG).filter((key) => key !== 'pageviews');
-  
-  const [compareKpi, setCompareKpi] = useState<string>('none');
+  const isYearOverYearMode = comparison?.mode === 'vorjahr';
+
+  const [compareKpi, setCompareKpi] = useState<string>(isYearOverYearMode ? YEAR_OVER_YEAR : 'none');
+  const isYearOverYearLine = compareKpi === YEAR_OVER_YEAR;
+  const yearOverYearSeries = isYearOverYearMode
+    ? (comparison?.chartSeries as Record<string, ChartPoint[] | undefined> | undefined)?.[activeKpi]
+    : undefined;
+
+  // Beim Umschalten auf Vorjahr die Vorjahreslinie zeigen, beim Zurückschalten entfernen.
+  useEffect(() => {
+    setCompareKpi((current) => {
+      if (isYearOverYearMode && current === 'none') return YEAR_OVER_YEAR;
+      if (!isYearOverYearMode && current === YEAR_OVER_YEAR) return 'none';
+      return current;
+    });
+  }, [isYearOverYearMode]);
 
   const chartData = useMemo(() => {
     if (!allChartData) return [];
     
     const primaryData = allChartData[activeKpi] || [];
-    const secondaryData = compareKpi !== 'none' ? allChartData[compareKpi] || [] : [];
+    const secondaryKpi = isYearOverYearLine ? activeKpi : compareKpi;
+    const secondaryData = isYearOverYearLine
+      ? yearOverYearSeries || []
+      : compareKpi !== 'none' ? allChartData[compareKpi] || [] : [];
 
     const dataMap = new Map<string, any>();
 
@@ -259,7 +286,7 @@ export default function KpiTrendChart({
         const dStr = new Date(p.date).toISOString();
         const existing = dataMap.get(dStr) || { date: p.date };
         let compVal = p.value;
-        if (isPercentageKpi(compareKpi) && compVal <= 1) {
+        if (isPercentageKpi(secondaryKpi) && compVal <= 1) {
           compVal = compVal * 100;
         }
         existing.compareValue = compVal;
@@ -270,7 +297,7 @@ export default function KpiTrendChart({
     return Array.from(dataMap.values()).sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
-  }, [allChartData, activeKpi, compareKpi]);
+  }, [allChartData, activeKpi, compareKpi, isYearOverYearLine, yearOverYearSeries]);
 
   const holidayMap = useMemo(() => {
     if (chartData.length === 0) return new Map();
@@ -280,7 +307,12 @@ export default function KpiTrendChart({
   }, [chartData]);
 
   const activeConfig = KPI_CONFIG[activeKpi] || KPI_CONFIG['sessions'];
-  const compareConfig = compareKpi !== 'none' ? KPI_CONFIG[compareKpi] : null;
+  const compareConfig = isYearOverYearLine
+    ? (yearOverYearSeries?.length
+        ? { ...activeConfig, label: `${activeConfig.label} (Vorjahr)`, color: YEAR_OVER_YEAR_COLOR }
+        : null)
+    : compareKpi !== 'none' ? KPI_CONFIG[compareKpi] : null;
+  const missingYearOverYearLine = isYearOverYearLine && !yearOverYearSeries?.length;
   const reportingPeriodLabel = formatReportingPeriod(reportingPeriod);
 
   const formatYAxis = (val: number, kpiContext: string) => {
@@ -344,6 +376,12 @@ export default function KpiTrendChart({
                 <span>{reportingPeriodLabel}</span>
               </>
             )}
+            {missingYearOverYearLine && (
+              <>
+                <span className="text-faint">•</span>
+                <span>Kein Vorjahresverlauf für diese Kennzahl</span>
+              </>
+            )}
           </div>
         </div>
 
@@ -375,6 +413,7 @@ export default function KpiTrendChart({
               className="widget-control appearance-none bg-surface border border-border hover:border-border text-secondary rounded-md focus:ring-purple-500 focus:border-purple-500 block w-full pl-9 pr-8 py-2 cursor-pointer transition-colors"
             >
               <option value="none">Kein Vergleich</option>
+              {isYearOverYearMode && <option value={YEAR_OVER_YEAR}>vs. Vorjahr</option>}
               {visibleKeys
                 .filter((k) => k !== activeKpi)
                 .map((key) => (
@@ -421,7 +460,7 @@ export default function KpiTrendChart({
               dx={-10}
             />
 
-            {compareKpi !== 'none' && (
+            {compareKpi !== 'none' && !isYearOverYearLine && (
               <YAxis
                 yAxisId="right"
                 orientation="right"
@@ -483,7 +522,7 @@ export default function KpiTrendChart({
 
             {compareKpi !== 'none' && compareConfig && (
               <Area
-                yAxisId="right"
+                yAxisId={isYearOverYearLine ? 'left' : 'right'}
                 type="monotone"
                 dataKey="compareValue"
                 name="compareValue"

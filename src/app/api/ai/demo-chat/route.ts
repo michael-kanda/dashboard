@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { demoData } from '@/app/demo-anwalt/demo-dashboard-data';
 import { streamTextSafe } from '@/lib/ai-config';
 import { buildChatContext } from '@/lib/ai-chat/context';
+import { parseComparisonMode } from '@/lib/comparison';
 import { generateSuggestedQuestions } from '@/lib/ai-chat/fallback';
 import { buildSystemPrompt } from '@/lib/ai-chat/prompt';
 import { buildChatMessages } from '@/lib/ai-chat/history';
@@ -62,7 +63,8 @@ export async function POST(req: NextRequest) {
     const quota = await consumeDemoChatQuota(ipHash);
     if (!quota.allowed) return limitResponse(quota);
 
-    const context = buildChatContext(demoData, demoUser, '30d', null, 'AT');
+    const comparisonMode = parseComparisonMode(typeof body?.vergleich === 'string' ? body.vergleich : null);
+    const context = buildChatContext(demoData, demoUser, '30d', null, 'AT', comparisonMode);
     const system = buildSystemPrompt(context, false, '30d', '30d') + DEMO_NOTE;
     const result = await streamTextSafe({
       system,

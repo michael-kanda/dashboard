@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import ProjectPrintReport from '@/components/print/ProjectPrintReport';
 import { loadProjectPageData } from '@/lib/project-page-data';
 import { parseDateRange } from '@/lib/date-range-param';
+import { parseComparisonMode } from '@/lib/comparison';
 import { resolveShareLink } from '@/lib/share-links';
 import { GUEST_ROLE } from '@/lib/share-link-token';
 
@@ -18,7 +19,7 @@ export default async function SharedReportPage({
   searchParams,
 }: {
   params: { token: string };
-  searchParams: { range?: string; print?: string };
+  searchParams: { range?: string; print?: string; vergleich?: string };
 }) {
   const link = await resolveShareLink(params.token).catch(() => null);
   if (!link) {
@@ -41,6 +42,7 @@ export default async function SharedReportPage({
       showPromptTracking={projectUser.settings_show_prompt_tracking === true}
       widgetVisibility={projectUser.dashboard_widget_visibility}
       indexingStatus={indexingStatus}
+      comparisonMode={parseComparisonMode(searchParams.vergleich)}
       autoPrint={searchParams.print === '1'}
     />
   );

@@ -2,6 +2,8 @@
 import type { ProjectDashboardData, ConvertingPageData } from '@/lib/dashboard-shared';
 import type { TopQueryData } from '@/types/dashboard';
 import type { AiTrafficData } from '@/types/ai-traffic';
+import { buildDemoYearOverYear } from '@/lib/demo-year-over-year';
+import { YOY_KPI_KEYS } from '@/lib/comparison';
 
 /**
  * Generiert realistische Demo-Daten für Demo-Accounts
@@ -327,5 +329,16 @@ export function getDemoAnalyticsData(dateRange: string): ProjectDashboardData {
     deviceData,
     bingData: [], // Leer, da im Frontend nicht angezeigt
     apiErrors: undefined, // Demo hat keine Fehler
+    // Fiktives Vorjahr: rund ein Fünftel weniger, Raten leicht schwächer.
+    yearOverYear: buildDemoYearOverYear(
+      { kpis, charts },
+      Object.fromEntries(YOY_KPI_KEYS.flatMap((key) => {
+        const value = (kpis as Record<string, { value: number } | undefined>)[key]?.value;
+        if (value === undefined) return [];
+        const factor = key === 'bounceRate' ? 1.12 : key === 'engagementRate' || key === 'avgEngagementTime' ? 0.93 : 0.81;
+        const isRate = key === 'bounceRate' || key === 'engagementRate' || key === 'avgEngagementTime';
+        return [[key, isRate ? Math.round(value * factor * 100) / 100 : Math.round(value * factor)]];
+      })),
+    ),
   };
 }

@@ -5,12 +5,17 @@ import React from 'react';
 import { StatusPill } from '@/components/ui/Status';
 import { Avatar } from '@/components/ui/AvatarStack';
 import DateRangeSelector, { type DateRangeOption } from '@/components/DateRangeSelector';
+import ComparisonModeToggle from '@/components/ComparisonModeToggle';
+import type { ComparisonMode } from '@/lib/comparison';
 
 interface GlobalHeaderProps {
   domain?: string;
   projectId?: string;
   dateRange: DateRangeOption;
   onDateRangeChange: (range: DateRangeOption) => void;
+  /** Ohne Handler erscheint kein Umschalter für die Vergleichsart. */
+  comparisonMode?: ComparisonMode;
+  onComparisonModeChange?: (mode: ComparisonMode) => void;
   userRole?: string;
   userEmail?: string;
   userAnsprache?: string | null;
@@ -21,6 +26,8 @@ export default function GlobalHeader({
   projectId,
   dateRange,
   onDateRangeChange,
+  comparisonMode = 'vorperiode',
+  onComparisonModeChange,
   userRole = 'USER',
   userEmail = '',
   userAnsprache = null
@@ -60,6 +67,9 @@ export default function GlobalHeader({
         <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:items-end">
           <span className="text-13 text-muted">Daten bis gestern, die letzten Tage ergänzt Google noch</span>
           <DateRangeSelector value={dateRange} onChange={onDateRangeChange} className="w-full sm:w-auto" />
+          {onComparisonModeChange && (
+            <ComparisonModeToggle value={comparisonMode} onChange={onComparisonModeChange} className="w-full sm:w-auto" />
+          )}
         </div>
       </div>
     </header>

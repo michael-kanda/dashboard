@@ -10,6 +10,7 @@ import type { DashboardWidgetVisibility } from '@/lib/dashboard-widget-visibilit
 import type { ProjectIndexingStatus } from '@/lib/indexing-status';
 import { buildDashboardViewModel } from '@/components/dashboard/view-model';
 import { formatReportingPeriod } from '@/lib/reporting-period';
+import { applyComparisonMode, type ComparisonMode } from '@/lib/comparison';
 import { Button } from '@/components/ui/Button';
 
 const TOP_QUERIES = 15;
@@ -34,6 +35,8 @@ export interface ProjectPrintReportProps {
   showPromptTracking: boolean;
   widgetVisibility?: Partial<DashboardWidgetVisibility> | null;
   indexingStatus?: ProjectIndexingStatus;
+  /** Vergleichsart aus dem Dashboard (?vergleich=). */
+  comparisonMode?: ComparisonMode;
   autoPrint?: boolean;
 }
 
@@ -72,7 +75,7 @@ function Breakdown({ title, entries }: { title: string; entries: ChartEntry[] })
 }
 
 export default function ProjectPrintReport({
-  data,
+  data: snapshotData,
   domain,
   userRole,
   showLandingPages,
@@ -80,8 +83,10 @@ export default function ProjectPrintReport({
   showPromptTracking,
   widgetVisibility,
   indexingStatus,
+  comparisonMode = 'vorperiode',
   autoPrint = false,
 }: ProjectPrintReportProps) {
+  const data = useMemo(() => applyComparisonMode(snapshotData, comparisonMode), [snapshotData, comparisonMode]);
   const model = useMemo(() => buildDashboardViewModel({
     data,
     indexingStatus,
@@ -111,6 +116,9 @@ export default function ProjectPrintReport({
   }, [autoPrint]);
 
   const period = formatReportingPeriod(model.reportingPeriod);
+  const comparison = model.comparison;
+  const isYearOverYear = comparison?.mode === 'vorjahr';
+  const comparisonPeriod = formatReportingPeriod(comparison?.period);
   const kpis = model.extendedKpis;
 
   // Website-Kennzahlen aus GA4 oder Vercel; fehlende Kennzahlen (z. B. bei Vercel) entfallen.
@@ -127,14 +135,21 @@ export default function ProjectPrintReport({
     { label: 'Absprungrate', kpi: kpis.bounceRate, format: formatPercent, source: web, lowerIsBetter: true },
   ].filter((row): row is typeof row & { kpi: NonNullable<typeof row.kpi> } => Boolean(row.kpi)) : [];
 
+  // Im Vorjahresmodus kommt die Klick-Linie des Vorjahres gestrichelt dazu, sofern vorhanden.
+  const yearOverYearClicks = isYearOverYear ? comparison?.chartSeries.clicks : undefined;
   const trend = useMemo(() => {
-    const byDate = new Map<number, { date: number; clicks?: number; impressions?: number }>();
+    const byDate = new Map<number, { date: number; clicks?: number; impressions?: number; clicksYoy?: number }>();
     for (const point of model.allChartData.clicks) byDate.set(point.date, { date: point.date, clicks: point.value });
     for (const point of model.allChartData.impressions) {
       byDate.set(point.date, { ...byDate.get(point.date), date: point.date, impressions: point.value });
     }
+    for (const point of yearOverYearClicks ?? []) {
+      const existing = byDate.get(point.date);
+      if (existing) byDate.set(point.date, { ...existing, clicksYoy: point.value });
+    }
     return Array.from(byDate.values()).sort((a, b) => a.date - b.date);
-  }, [model.allChartData]);
+  }, [model.allChartData, yearOverYearClicks]);
+  const hasYearOverYearClicks = trend.some((point) => point.clicksYoy !== undefined);
 
   const topQueries = [...model.modules.gsc.data.topQueries].sort((a, b) => b.clicks - a.clicks || b.impressions - a.impressions).slice(0, TOP_QUERIES);
   const topPages = [...model.cleanLandingPages].sort((a, b) => (b.newUsers ?? 0) - (a.newUsers ?? 0)).slice(0, TOP_PAGES);
@@ -166,6 +181,9 @@ export default function ProjectPrintReport({
           </div>
           <div className="text-right text-12 text-[#3a3a3c]">
             {period && <div>Zeitraum: <span className="font-semibold">{period}</span></div>}
+            {comparison && (
+              <div>Vergleich: <span className="font-semibold">{comparison.label}</span>{comparisonPeriod ? ` (${comparisonPeriod})` : ''}</div>
+            )}
             <div>Erstellt am {new Date().toLocaleDateString('de-AT')}</div>
           </div>
         </div>
@@ -174,21 +192,34 @@ export default function ProjectPrintReport({
           <Section title="Kennzahlen">
             <div className="grid grid-cols-4 gap-px overflow-hidden rounded-[8px] border border-[#d2d2d7] bg-[#d2d2d7]">
               {kpiRows.map(({ label, kpi, format, source, lowerIsBetter }) => {
-                const good = lowerIsBetter ? kpi.change < 0 : kpi.change > 0;
-                const tone = kpi.change === 0 ? 'text-[#636366]' : good ? 'text-[#1B7A35]' : 'text-[#C4001A]';
-                const previous = kpi.change === -100 ? 0 : kpi.value / (1 + kpi.change / 100);
+                // Veränderung und Vergleichswert der gewählten Vergleichsart.
+                const change = kpi.comparison ? kpi.comparison.change : kpi.change;
+                const previous = kpi.comparison
+                  ? kpi.comparison.previous
+                  : kpi.previous ?? (kpi.change === -100 ? 0 : kpi.value / (1 + kpi.change / 100));
+                const good = change !== null && (lowerIsBetter ? change < 0 : change > 0);
+                const tone = change === null || change === 0 ? 'text-[#636366]' : good ? 'text-[#1B7A35]' : 'text-[#C4001A]';
                 return (
                   <div key={label} className="bg-white px-3 py-2.5">
                     <div className="flex justify-between text-11 text-[#636366]"><span>{label}</span><span>{source}</span></div>
                     <div className="mt-0.5 text-20 font-semibold tabular-nums">{format(kpi.value)}</div>
                     <div className="text-11 tabular-nums">
-                      <span className={`font-semibold ${tone}`}>{formatChange(kpi.change)}</span>
-                      {Number.isFinite(previous) && <span className="text-[#636366]"> · vorher {format(previous)}</span>}
+                      {change !== null && <span className={`font-semibold ${tone}`}>{formatChange(change)}</span>}
+                      {previous !== null && Number.isFinite(previous) ? (
+                        <span className="text-[#636366]">{change !== null ? ' · ' : ''}{isYearOverYear ? 'Vorjahr' : 'vorher'} {format(previous)}</span>
+                      ) : (
+                        <span className="text-[#636366]">{isYearOverYear ? 'kein Vorjahreswert' : 'kein Vergleichswert'}</span>
+                      )}
                     </div>
                   </div>
                 );
               })}
             </div>
+            {comparison && comparison.notices.length > 0 && (
+              <div className="mt-2 space-y-0.5 text-11 leading-[1.45] text-[#3a3a3c]">
+                {comparison.notices.map((notice) => <p key={notice}>{notice}</p>)}
+              </div>
+            )}
           </Section>
         )}
 
@@ -201,10 +232,16 @@ export default function ProjectPrintReport({
               <YAxis yAxisId="impressions" orientation="right" tick={{ fontSize: 10, fill: '#636366' }} tickLine={false} axisLine={false} width={44} />
               <Line yAxisId="clicks" dataKey="clicks" name="Klicks" stroke="#0066CC" strokeWidth={2} dot={false} isAnimationActive={false} />
               <Line yAxisId="impressions" dataKey="impressions" name="Impressionen" stroke="#AF52DE" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+              {hasYearOverYearClicks && (
+                <Line yAxisId="clicks" dataKey="clicksYoy" name="Klicks Vorjahr" stroke="#8e8e93" strokeWidth={1.5} strokeDasharray="4 3" dot={false} isAnimationActive={false} />
+              )}
             </LineChart>
             <div className="mt-1 flex gap-4 text-11 text-[#3a3a3c]">
               <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-[#0066CC]" />Klicks (links)</span>
               <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-[#AF52DE]" />Impressionen (rechts)</span>
+              {hasYearOverYearClicks && (
+                <span className="flex items-center gap-1.5"><span className="h-0 w-4 border-t-2 border-dashed border-[#8e8e93]" />Klicks Vorjahr (links)</span>
+              )}
             </div>
           </Section>
         )}
@@ -277,7 +314,7 @@ export default function ProjectPrintReport({
           <Section title="KI-Traffic">
             <p className="text-12 text-[#3a3a3c]">
               {number.format(aiTraffic.totalSessions)} Sitzungen und {number.format(aiTraffic.totalUsers)} Nutzer kamen über KI-Assistenten
-              {typeof aiTraffic.totalUsersChange === 'number' ? ` (${formatChange(aiTraffic.totalUsersChange)} zum Vorzeitraum)` : ''}.
+              {typeof aiTraffic.totalUsersChange === 'number' ? ` (${formatChange(aiTraffic.totalUsersChange)} zur Vorperiode)` : ''}.
             </p>
           </Section>
         )}

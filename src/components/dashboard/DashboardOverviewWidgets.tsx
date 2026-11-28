@@ -72,6 +72,7 @@ export default function DashboardOverviewWidgets({
               dateRange={dateRange}
               reportingPeriod={model.reportingPeriod}
               analyticsSource={model.analyticsSource}
+              comparison={model.comparison}
             />
           )}
         </div>
@@ -87,6 +88,7 @@ export default function DashboardOverviewWidgets({
             reportingPeriod={model.reportingPeriod}
             kpiKeys={model.trendKpis}
             webSourceLabel={model.analyticsSource === 'vercel' ? 'Vercel' : undefined}
+            comparison={model.comparison}
           />
         </div>
       )}

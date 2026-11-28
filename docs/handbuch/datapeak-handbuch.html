@@ -87,7 +87,7 @@
       <h3>Was DataPeak macht</h3>
       <ul class="dots">
         <li>Führt Search Console, Analytics 4, Google Ads und Google-Unternehmensprofile in einem Dashboard zusammen.</li>
-        <li>Vergleicht jeden Zeitraum mit dem gleich langen Zeitraum davor.</li>
+        <li>Vergleicht jeden Zeitraum mit dem gleich langen Zeitraum davor oder mit dem Vorjahr.</li>
         <li>Zeigt, wie viele Besucher über KI-Dienste wie ChatGPT oder Perplexity kommen.</li>
         <li>Erklärt mit DataMax Veränderungen in Klartext und schlägt nächste Schritte vor.</li>
         <li>Erstellt einen Bericht zum Drucken und einen Gastlink zum Teilen.</li>
@@ -189,7 +189,7 @@
     <tr><th>Bereich</th><th>Was Sie dort sehen</th></tr>
     <tr><td>Projekt-Status</td><td>Zeitachse und Stand der Landingpages. Nur sichtbar, wenn wir aktiv an Ihrer Website arbeiten. Neue Texte geben Sie dann in der Seitenleiste unter „Redaktionsplan“ frei oder kommentieren sie.</td></tr>
     <tr><td>Data Max (KI-Analyse)</td><td>Eine schriftliche Auswertung Ihrer Zahlen auf Knopfdruck (Kapitel 11).</td></tr>
-    <tr><td>Kennzahlen im Überblick</td><td>Die acht wichtigsten Zahlen mit dem Wert der Vorperiode (Kapitel 5).</td></tr>
+    <tr><td>Kennzahlen im Überblick</td><td>Die acht wichtigsten Zahlen mit dem Wert der Vorperiode oder des Vorjahres (Kapitel 4 und 5).</td></tr>
     <tr><td>Verlauf &amp; Analyse</td><td>Tagesverlauf einer Kennzahl, mit Wetter und Feiertagen.</td></tr>
     <tr><td>Lokale Sichtbarkeit</td><td>Ihre Standorte auf der Karte (Kapitel 9).</td></tr>
     <tr><td>Google GenAI Sichtbarkeit</td><td>Vorbereitet für Googles KI-Suche, vorerst ein Platzhalter (Kapitel 7).</td></tr>
@@ -206,23 +206,30 @@
 <!-- ───────────── 4 ───────────── -->
 <section class="page">
   <div class="chead"><span class="cnum">4</span><div><h2>Zeitraum und Aktualität<span class="dot">.</span></h2><div class="where">Dashboard → Zeitraum oben</div></div></div>
-  <p class="lead">Oben im Dashboard wählen Sie den Zeitraum. Jede Zahl wird automatisch mit dem gleich langen Zeitraum direkt davor verglichen.</p>
+  <p class="lead">Oben im Dashboard wählen Sie den Zeitraum und den Vergleich: mit dem gleich langen Zeitraum direkt davor oder mit demselben Zeitraum ein Jahr früher.</p>
 
   <div class="figure">
     <svg viewBox="0 0 520 96" style="width:100%;display:block">
-      <rect x="20" y="30" width="220" height="30" rx="8" fill="#E5E5EA"/>
-      <rect x="250" y="30" width="220" height="30" rx="8" fill="#0066CC"/>
-      <text x="130" y="50" text-anchor="middle" font-size="12" fill="#3A3A3C" font-weight="600">Vorperiode: 30 Tage</text>
-      <text x="360" y="50" text-anchor="middle" font-size="12" fill="#fff" font-weight="600">Gewählter Zeitraum: 30 Tage</text>
+      <rect x="20" y="30" width="140" height="30" rx="8" fill="#fff" stroke="#8E8E93" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <text x="90" y="50" text-anchor="middle" font-size="12" fill="#3A3A3C" font-weight="600">Vorjahr</text>
+      <text x="183" y="50" text-anchor="middle" font-size="12" fill="#8E8E93">…</text>
+      <rect x="206" y="30" width="126" height="30" rx="8" fill="#E5E5EA"/>
+      <rect x="340" y="30" width="130" height="30" rx="8" fill="#0066CC"/>
+      <text x="269" y="50" text-anchor="middle" font-size="12" fill="#3A3A3C" font-weight="600">Vorperiode</text>
+      <text x="405" y="50" text-anchor="middle" font-size="12" fill="#fff" font-weight="600">Gewählter Zeitraum</text>
       <rect x="478" y="30" width="26" height="30" rx="6" fill="#fff" stroke="#FF9F0A" stroke-width="2" stroke-dasharray="3 2"/>
       <text x="491" y="22" text-anchor="middle" font-size="10" fill="#8A4200">heute</text>
+      <text x="20" y="80" font-size="10.5" fill="#636366">dieselben Tage ein Jahr früher</text>
+      <text x="206" y="80" font-size="10.5" fill="#636366">direkt davor</text>
       <text x="470" y="80" text-anchor="end" font-size="10.5" fill="#636366">endet gestern</text>
-      <text x="20" y="80" font-size="10.5" fill="#636366">„Vorher“-Wert im Dashboard</text>
     </svg>
   </div>
 
   <h3>Die Zeiträume</h3>
   <p><span class="kbd">Letzte 30 Tage</span> <span class="kbd">3 Monate</span> <span class="kbd">6 Monate</span> <span class="kbd">12 Monate</span> <span class="kbd">18 Monate</span> <span class="kbd">24 Monate</span>. Voreingestellt sind 30 Tage. Alle Zeiträume enden gestern; der heutige Tag ist nie enthalten.</p>
+
+  <h3>Vergleich: Vorperiode oder Vorjahr</h3>
+  <p>Unter dem Zeitraum wählen Sie <span class="kbd">Vorperiode</span> (voreingestellt) oder <span class="kbd">Vorjahr</span>: dieselben Kalendertage ein Jahr früher, ohne Saisoneffekte. Ob ein ruhiger August besser lief als der letzte, zeigt erst der Vorjahresvergleich. Bericht, Gastlink und DataMax übernehmen die Wahl.</p>
 
   <h3>Wie aktuell sind die Zahlen?</h3>
   <table class="t">
@@ -232,13 +239,14 @@
     <tr><td>6 Monate</td><td>Beim Öffnen, wenn der gespeicherte Stand älter als 3 Tage ist.</td></tr>
     <tr><td>12, 18, 24 Monate</td><td>Beim Öffnen, wenn der gespeicherte Stand älter als 7 Tage ist.</td></tr>
   </table>
-  <p>Zur Erinnerung steht oben rechts im Dashboard „Daten bis gestern, die letzten Tage ergänzt Google noch“. Beim Öffnen sehen Sie sofort den zuletzt gespeicherten Stand. Ist er fällig, holt DataPeak im Hintergrund neue Zahlen. Dann steht oben „Gespeicherte Daten für … Aktualisierung ausstehend.“ Öffnen Sie einen langen Zeitraum zum ersten Mal, kann das Laden etwas dauern; ein Fenster zeigt den Fortschritt.</p>
+  <p>Beim Öffnen sehen Sie sofort den zuletzt gespeicherten Stand. Ist er fällig, holt DataPeak im Hintergrund neue Zahlen; oben steht dann „Gespeicherte Daten für … Aktualisierung ausstehend.“ Der erste Aufruf eines langen Zeitraums kann etwas dauern, ein Fenster zeigt den Fortschritt.</p>
 
   <div class="box honest">
     <div class="lbl">Gut zu wissen</div>
     <ul class="dots" style="margin:2px 0 0">
       <li><b>Gestern ist noch vorläufig.</b> Google ergänzt die Werte der letzten zwei bis drei Tage oft noch. Ein scheinbarer Einbruch am letzten Tag ist meist keiner.</li>
-      <li><b>Vorperiode, nicht Vormonat.</b> Bei „3 Monate“ vergleicht DataPeak mit den drei Monaten davor, nicht mit dem Vorjahr. Saisonale Schwankungen sind darin enthalten.</li>
+      <li><b>Vorperiode enthält Saisoneffekte.</b> Für saisonale Geschäfte ist „Vorjahr“ meist aussagekräftiger.</li>
+      <li><b>Vorjahr nur mit vollständigen Daten.</b> Die Search Console speichert 16 Monate, Klicks und Impressionen haben deshalb nur bei 30 Tagen und 3 Monaten einen Vorjahreswert. Fehlt einer, etwa weil Analytics damals noch nicht gemessen hat, steht dort „Kein Vorjahreswert“ mit dem Grund statt 0 %. Ein 29. Februar hat kein Gegenstück.</li>
       <li>Wann genau die Zahlen zuletzt abgerufen wurden, zeigt das Dashboard derzeit nicht an. Sie sehen den Zeitraum, den die Zahlen abdecken.</li>
     </ul>
   </div>
@@ -248,7 +256,7 @@
 <!-- ───────────── 5 ───────────── -->
 <section class="page">
   <div class="chead"><span class="cnum">5</span><div><h2>Kennzahlen und Verlauf<span class="dot">.</span></h2><div class="where">Dashboard → Kennzahlen im Überblick · Verlauf &amp; Analyse</div></div></div>
-  <p class="lead">Acht Zahlen zeigen, wie Ihre Website gefunden wird und was Besucher dort tun. Unter jeder Zahl steht der Wert der Vorperiode.</p>
+  <p class="lead">Acht Zahlen zeigen, wie Ihre Website gefunden wird und was Besucher dort tun. Unter jeder Zahl steht der Vergleichswert, „Vorher“ oder „Vorjahr“.</p>
 
   <table class="t">
     <tr><th>Kennzahl</th><th>Was sie bedeutet</th><th style="width:16%">Quelle</th></tr>
@@ -265,7 +273,7 @@
   <h3>Verlauf &amp; Analyse</h3>
   <div class="cols" style="align-items:center">
     <div>
-      <p>Das Diagramm zeigt eine Kennzahl Tag für Tag. Über der Grafik wählen Sie, welche, und mit „vs. …“ eine zweite zum Vergleich. Fahren Sie mit der Maus über einen Tag, sehen Sie zusätzlich <b>Wetter</b> und <b>Feiertage</b>. So erklärt sich mancher Ausschlag von selbst, etwa ein ruhiger Feiertag oder ein verregnetes Wochenende.</p>
+      <p>Das Diagramm zeigt eine Kennzahl Tag für Tag. Über der Grafik wählen Sie, welche, und mit „vs. …“ eine zweite zum Vergleich. Bei „Vorjahr“ zeigt eine gestrichelte Linie das Vorjahr. Fahren Sie mit der Maus über einen Tag, sehen Sie zusätzlich <b>Wetter</b> und <b>Feiertage</b>. So erklärt sich mancher Ausschlag von selbst, etwa ein ruhiger Feiertag oder ein verregnetes Wochenende.</p>
     </div>
     <div class="ui" style="padding:10px">
       <svg viewBox="0 0 220 80" style="width:100%;display:block">
@@ -513,7 +521,7 @@
     <div>
       <h3>Bericht drucken oder als PDF</h3>
       <ol class="steps">
-        <li>Zeitraum wählen, dann in der Seitenleiste <span class="kbd">Drucken</span>.</li>
+        <li>Zeitraum und Vergleich wählen, dann in der Seitenleiste <span class="kbd">Drucken</span>.</li>
         <li>Es öffnet sich der Bericht mit Kennzahlen, Verlauf, Zugriffen, den Top 15 Suchanfragen und Top 10 Landingpages.</li>
         <li>Im Druckfenster „Als PDF sichern“ wählen oder drucken.</li>
       </ol>
@@ -599,6 +607,7 @@
     <tr><th>Grenze</th><th>Was das für Sie bedeutet</th></tr>
     <tr><td>Keine Benachrichtigungen zu Ihren Zahlen</td><td>DataPeak schickt keine Wochenberichte und keine Warnungen per E-Mail. E-Mails gibt es nur, wenn wir im Redaktionsplan eine Anmerkung für Sie hinterlassen. Auffälligkeiten sehen Sie, wenn Sie das Dashboard öffnen. Am besten einmal pro Woche hineinschauen.</td></tr>
     <tr><td>Daten bis gestern</td><td>Heute ist nie enthalten, und die letzten zwei bis drei Tage ergänzt Google noch.</td></tr>
+    <tr><td>Vorjahr nur 16 Monate zurück</td><td>So lange speichert die Search Console. Ab 6 Monaten Zeitraum gibt es für Klicks und Impressionen keinen Vorjahreswert.</td></tr>
     <tr><td>Analytics zählt nicht alle</td><td>Wer Cookies ablehnt, fehlt ganz oder wird geschätzt. Besucherzahlen sind Untergrenzen.</td></tr>
     <tr><td>KI-Erwähnungen ohne Klick</td><td>Wie oft ChatGPT &amp; Co. Sie nennen, ohne dass jemand klickt, kann DataPeak nicht messen.</td></tr>
     <tr><td>Fragen-Radar ist ein Hinweis</td><td>Es zeigt lange Google-Suchen, keine Fragen aus KI-Assistenten.</td></tr>

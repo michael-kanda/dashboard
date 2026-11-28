@@ -37,13 +37,15 @@ const DEFAULT_FONT_INDEX = 1; // text-sm
 interface DataMaxChatProps {
   projectId?: string;
   dateRange?: string;
+  /** Gewählte Vergleichsart, damit DataMax Veränderungen richtig benennt. */
+  comparisonMode?: 'vorperiode' | 'vorjahr';
   ansprache?: string | null;
   className?: string;
   /** Öffentliche Demo: Testversion mit wenigen Fragen und den Beispieldaten der Demo. */
   demo?: boolean;
 }
 
-export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, className = '', demo = false }: DataMaxChatProps) {
+export function DataMaxChat({ projectId, dateRange = '30d', comparisonMode = 'vorperiode', ansprache = null, className = '', demo = false }: DataMaxChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fontSizeIndex, setFontSizeIndex] = useState(DEFAULT_FONT_INDEX);
@@ -65,6 +67,7 @@ export function DataMaxChat({ projectId, dateRange = '30d', ansprache = null, cl
   } = useDataMaxChat({
     projectId,
     dateRange,
+    comparisonMode,
     // Die Demo merkt sich das Gespräch nur in der Sitzung; angemeldet wird es gespeichert.
     endpoint: demo ? '/api/ai/demo-chat' : undefined,
     historyEndpoint: demo ? null : '/api/ai/chat/history',

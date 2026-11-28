@@ -34,7 +34,6 @@ import {
   LocalSeoData,
   LocalSeoLocationConfig,
   PromptTrackingResult,
-  PromptTrackingShareBucket,
   PromptTrackingPrevious,
 } from '@/lib/dashboard-shared';
 import type { GoogleGenAiPerformanceData } from '@/lib/dashboard-shared';
@@ -53,6 +52,8 @@ import {
 } from '@/lib/sync/dashboard-snapshot';
 import { isPaidSearchChannel } from '@/lib/ga4-metrics';
 import { getReportingWindow } from '@/lib/sync/cache-policy';
+import { resolveYearOverYear } from '@/lib/sync/year-over-year';
+import { buildShareTrend } from '@/lib/prompt-tracking/share-trend';
 import { classifyGoogleApiError } from '@/lib/sync/google-api-error';
 import { isDemoProject } from '@/lib/demo-project';
 import { GOOGLE_ADS_SHEET_DATA_VERSION } from '@/lib/google-ads-sheet';
@@ -77,6 +78,8 @@ interface RawApiData {
   avgEngagementTime: { total: number; daily: ChartPoint[] };
   paidSearch: { total: number; daily: ChartPoint[] };
 }
+
+const toPercent = (rate: number) => parseFloat((rate * 100).toFixed(2));
 
 function calculateChange(current: number, previous: number): number {
   if (!previous || previous === 0) return current > 0 ? 100 : 0;
@@ -286,67 +289,6 @@ function buildLocalSeoData(
       conversions: dataLocations.reduce((sum, location) => sum + location.conversions, 0),
     },
   };
-}
-
-function buildShareTrend(
-  allDaily: ChartPoint[],
-  promptDaily: { date: number; impressions: number }[],
-  days: number
-): PromptTrackingShareBucket[] {
-  const useMonthly = days > 60;
-  const allByBucket = new Map<string, number>();
-  const promptByBucket = new Map<string, number>();
-
-  function bucketKey(ts: number): { key: string; label: string } {
-    const d = new Date(ts);
-    if (useMonthly) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-      return { key: `${y}-${m}`, label: `${monthNames[d.getMonth()]} '${String(y).slice(2)}` };
-    }
-    const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    const dayNum = tmp.getUTCDay() || 7;
-    tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
-    const week = Math.ceil((((tmp.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-    return { key: `${tmp.getUTCFullYear()}-W${String(week).padStart(2, '0')}`, label: `KW ${week}` };
-  }
-
-  for (const point of allDaily) {
-    const ts = typeof point.date === 'number' ? point.date : new Date(point.date).getTime();
-    if (!ts) continue;
-    const { key } = bucketKey(ts);
-    const value = point.value ?? 0;
-    allByBucket.set(key, (allByBucket.get(key) || 0) + value);
-  }
-
-  for (const point of promptDaily) {
-    if (!point.date) continue;
-    const { key } = bucketKey(point.date);
-    promptByBucket.set(key, (promptByBucket.get(key) || 0) + point.impressions);
-  }
-
-  const allKeys = Array.from(new Set([
-    ...Array.from(allByBucket.keys()),
-    ...Array.from(promptByBucket.keys()),
-  ])).sort();
-
-  return allKeys.map((key) => {
-    const totalImpressions = allByBucket.get(key) || 0;
-    const promptImpressions = promptByBucket.get(key) || 0;
-    const sharePercent = totalImpressions > 0 ? (promptImpressions / totalImpressions) * 100 : 0;
-    let label = key;
-    if (useMonthly) {
-      const [y, m] = key.split('-');
-      const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-      label = `${monthNames[parseInt(m, 10) - 1]} '${y.slice(2)}`;
-    } else {
-      const week = key.split('-W')[1];
-      label = `KW ${week}`;
-    }
-    return { bucket: key, label, totalImpressions, promptImpressions, sharePercent };
-  });
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -741,22 +683,24 @@ async function loadGoogleData(
 
   const freshData: ProjectDashboardData = {
     reportingPeriod: { from: startDateStr, to: endDateStr },
+    // previous: Wert der Vorperiode, damit die Karten ihn nicht aus der Änderung zurückrechnen müssen.
     kpis: {
-      clicks: { value: currentData.clicks.total, change: calculateChange(currentData.clicks.total, prevData.clicks.total) },
-      impressions: { value: currentData.impressions.total, change: calculateChange(currentData.impressions.total, prevData.impressions.total) },
+      clicks: { value: currentData.clicks.total, change: calculateChange(currentData.clicks.total, prevData.clicks.total), previous: prevData.clicks.total },
+      impressions: { value: currentData.impressions.total, change: calculateChange(currentData.impressions.total, prevData.impressions.total), previous: prevData.impressions.total },
       sessions: {
         value: currentData.sessions.total,
         change: calculateChange(currentData.sessions.total, prevData.sessions.total),
+        previous: prevData.sessions.total,
         aiTraffic: aiTraffic ? { value: aiTraffic.totalSessions, percentage: aiTrafficPercentage } : undefined
       },
-      totalUsers: { value: currentData.totalUsers.total, change: calculateChange(currentData.totalUsers.total, prevData.totalUsers.total) },
-      conversions: { value: currentData.conversions.total, change: calculateChange(currentData.conversions.total, prevData.conversions.total) },
-      engagementRate: { value: parseFloat((currentData.engagementRate.total * 100).toFixed(2)), change: calculateChange(currentData.engagementRate.total, prevData.engagementRate.total) },
-      bounceRate: { value: parseFloat((currentData.bounceRate.total * 100).toFixed(2)), change: calculateChange(currentData.bounceRate.total, prevData.bounceRate.total) },
-      newUsers: { value: currentData.newUsers.total, change: calculateChange(currentData.newUsers.total, prevData.newUsers.total) },
-      avgEngagementTime: { value: currentData.avgEngagementTime.total, change: calculateChange(currentData.avgEngagementTime.total, prevData.avgEngagementTime.total) },
+      totalUsers: { value: currentData.totalUsers.total, change: calculateChange(currentData.totalUsers.total, prevData.totalUsers.total), previous: prevData.totalUsers.total },
+      conversions: { value: currentData.conversions.total, change: calculateChange(currentData.conversions.total, prevData.conversions.total), previous: prevData.conversions.total },
+      engagementRate: { value: toPercent(currentData.engagementRate.total), change: calculateChange(currentData.engagementRate.total, prevData.engagementRate.total), previous: toPercent(prevData.engagementRate.total) },
+      bounceRate: { value: toPercent(currentData.bounceRate.total), change: calculateChange(currentData.bounceRate.total, prevData.bounceRate.total), previous: toPercent(prevData.bounceRate.total) },
+      newUsers: { value: currentData.newUsers.total, change: calculateChange(currentData.newUsers.total, prevData.newUsers.total), previous: prevData.newUsers.total },
+      avgEngagementTime: { value: currentData.avgEngagementTime.total, change: calculateChange(currentData.avgEngagementTime.total, prevData.avgEngagementTime.total), previous: prevData.avgEngagementTime.total },
       genAiImpressions: { value: googleGenAi?.totalImpressions || 0, change: googleGenAi?.impressionsChange || 0 },
-      paidSearch: { value: currentData.paidSearch.total, change: calculateChange(currentData.paidSearch.total, prevData.paidSearch.total) }
+      paidSearch: { value: currentData.paidSearch.total, change: calculateChange(currentData.paidSearch.total, prevData.paidSearch.total), previous: prevData.paidSearch.total }
     },
     charts: {
       clicks: currentData.clicks.daily || [],
@@ -791,13 +735,25 @@ async function loadGoogleData(
   // guten Eintrag und der Kunde sieht stunden-/tagelang Nullen.
   // Nicht-kritische Quellen (Bing, Ads, Weather) sind hier bewusst egal.
   // ════════════════════════════════════════════════════════════════════
-  const synchronizedAt = new Date().toISOString();
-  const enrichedFreshData = attachDashboardMetricMetadata(freshData, dateRange, synchronizedAt);
   const blockingSources = (['gsc', 'ga4'] as const).filter((source) => {
     const raw = apiErrors[source];
     return raw ? classifyGoogleApiError(raw).blocksSnapshotWrite : false;
   });
   const hasCriticalErrors = blockingSources.length > 0;
+
+  // Vorjahr: gespeicherten Block wiederverwenden, solange Zeitraum und Quellen gleich sind.
+  // Bei kritischen Fehlern wird nichts gespeichert, also auch nichts nachgeladen.
+  const yearOverYear = await resolveYearOverYear(userId, dateRange, !hasCriticalErrors, {
+    window: reportingWindow, gscSiteUrl: user.gsc_site_url, analyticsSource: analytics.source,
+    ga4PropertyId: ga4Property.ok ? ga4Property.value : null,
+  });
+
+  const synchronizedAt = new Date().toISOString();
+  const enrichedFreshData = attachDashboardMetricMetadata(
+    yearOverYear ? { ...freshData, yearOverYear } : freshData,
+    dateRange,
+    synchronizedAt,
+  );
 
   if (!hasCriticalErrors) {
     requestBudgetOptions();

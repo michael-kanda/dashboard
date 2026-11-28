@@ -6,10 +6,12 @@ import ShareLinkDialog from '@/components/ShareLinkDialog';
 import DemoShareDialog from '@/components/DemoShareDialog';
 
 // Drucken und Gastlink für das geöffnete Projekt, zurückhaltend in der Sidebar.
-// Drucken öffnet den eigenen Druckbericht mit dem aktuell gewählten Zeitraum.
+// Drucken öffnet den eigenen Druckbericht mit dem aktuell gewählten Zeitraum und Vergleich.
 function openReport(projectId: string | null) {
-  const range = new URLSearchParams(window.location.search).get('range');
-  const params = new URLSearchParams({ print: '1', ...(range ? { range } : {}) });
+  const current = new URLSearchParams(window.location.search);
+  const range = current.get('range');
+  const vergleich = current.get('vergleich');
+  const params = new URLSearchParams({ print: '1', ...(range ? { range } : {}), ...(vergleich ? { vergleich } : {}) });
   const base = projectId ? `/projekt/${projectId}/bericht` : '/demo-anwalt/bericht';
   window.open(`${base}?${params.toString()}`, '_blank', 'noopener');
 }

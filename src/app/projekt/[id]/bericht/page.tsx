@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { loadProjectPageData } from '@/lib/project-page-data';
 import { parseDateRange } from '@/lib/date-range-param';
+import { parseComparisonMode } from '@/lib/comparison';
 import ProjectPrintReport from '@/components/print/ProjectPrintReport';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ export default async function ProjectReportPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { range?: string; print?: string };
+  searchParams: { range?: string; print?: string; vergleich?: string };
 }) {
   const session = await auth();
   if (!session?.user) redirect('/login');
@@ -37,6 +38,7 @@ export default async function ProjectReportPage({
       showPromptTracking={projectUser.settings_show_prompt_tracking === true}
       widgetVisibility={projectUser.dashboard_widget_visibility}
       indexingStatus={indexingStatus}
+      comparisonMode={parseComparisonMode(searchParams.vergleich)}
       autoPrint={searchParams.print === '1'}
     />
   );
