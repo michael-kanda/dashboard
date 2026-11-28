@@ -3,6 +3,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { HISTORY_MAX_MESSAGES, type ChatHistoryMessage } from '@/lib/ai-chat/history';
 
 export interface ChatMessage {
   id: string;
@@ -10,6 +11,8 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   isStreaming?: boolean;
+  /** Fehler- und Limit-Hinweise gehören nicht ins Gesprächsgedächtnis. */
+  excludeFromContext?: boolean;
 }
 
 /** Tageslimit aus der API; limit null = unbegrenzt. */
@@ -30,6 +33,8 @@ interface UseDataMaxChatOptions {
   dateRange?: string;
   /** API-Pfad; die öffentliche Demo nutzt /api/ai/demo-chat. */
   endpoint?: string;
+  /** Gespeicherter Verlauf (laden und leeren); ohne Angabe bleibt das Gedächtnis in der Sitzung. */
+  historyEndpoint?: string | null;
   onError?: (error: string) => void;
 }
 
@@ -38,6 +43,14 @@ interface UseDataMaxChatOptions {
  * Diese Errors werden NICHT als echte Fehler behandelt – sie sind erwartbar
  * (z.B. wenn User wegnavigiert oder die Vercel-Function ein Timeout hat).
  */
+/** Verlauf für die KI: fertige Nachrichten ohne Hinweise; gekürzt wird zusätzlich auf dem Server. */
+function historyForRequest(messages: ChatMessage[]): ChatHistoryMessage[] {
+  return messages
+    .filter((msg) => !msg.isStreaming && !msg.excludeFromContext && msg.content.trim())
+    .slice(-HISTORY_MAX_MESSAGES * 2)
+    .map(({ role, content }) => ({ role, content }));
+}
+
 function isStreamDisconnectError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   const msg = error.message?.toLowerCase() || '';
@@ -52,7 +65,7 @@ function isStreamDisconnectError(error: unknown): boolean {
 }
 
 export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
-  const { projectId, dateRange = '30d', endpoint = '/api/ai/chat', onError } = options;
+  const { projectId, dateRange = '30d', endpoint = '/api/ai/chat', historyEndpoint = null, onError } = options;
   // Kundenansicht der Admins (?ansicht=kunde): Antworten wie fuer den Kunden anfordern.
   const customerView = useSearchParams().get('ansicht') === 'kunde';
 
@@ -60,7 +73,14 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [usage, setUsage] = useState<DataMaxUsage | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const messagesRef = useRef<ChatMessage[]>([]);
+  const historyKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   // ----------------------------------------------------------------------
   // Cleanup beim Unmount: Laufende Streams abbrechen, damit der Browser
@@ -94,6 +114,35 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
     }
   }, [projectId, dateRange, endpoint]);
 
+  // Gespeicherten Verlauf laden (einmal pro Projekt), solange noch nichts geschrieben wurde.
+  const loadHistory = useCallback(async () => {
+    if (!historyEndpoint) return;
+    const key = projectId ?? '';
+    if (historyKeyRef.current === key) return;
+    historyKeyRef.current = key;
+    setHistoryLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (projectId) params.set('projectId', projectId);
+      const response = await fetch(`${historyEndpoint}?${params.toString()}`, { cache: 'no-store' });
+      if (!response.ok) return;
+      const data: { messages?: Array<{ id: string; role: 'user' | 'assistant'; content: string; createdAt: string }> } =
+        await response.json();
+      const stored = (data.messages ?? []).map((msg) => ({
+        id: `stored-${msg.id}`,
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date(msg.createdAt),
+      }));
+      if (stored.length > 0) setMessages((prev) => (prev.length === 0 ? stored : prev));
+    } catch (error) {
+      console.warn('Konnte den DataMax-Verlauf nicht laden:', error);
+      historyKeyRef.current = null;
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [historyEndpoint, projectId]);
+
   // Nachricht senden
   const sendMessage = useCallback(
     async (content: string) => {
@@ -121,6 +170,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
         isStreaming: true,
       };
 
+      const history = historyForRequest(messagesRef.current);
       setMessages((prev) => [...prev, userMessage, assistantMessage]);
       setIsLoading(true);
 
@@ -130,6 +180,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: content.trim(),
+            history,
             projectId,
             dateRange,
             customerView,
@@ -147,7 +198,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === assistantMessage.id
-                  ? { ...msg, content: errorData.error, isStreaming: false }
+                  ? { ...msg, content: errorData.error, isStreaming: false, excludeFromContext: true }
                   : msg
               )
             );
@@ -259,6 +310,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
                       msg.content ||
                       '⚠️ Verbindung unterbrochen. Bitte erneut versuchen.',
                     isStreaming: false,
+                    excludeFromContext: !msg.content,
                   }
                 : msg
             )
@@ -277,6 +329,7 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
                   ...msg,
                   content: `❌ ${errorMessage}`,
                   isStreaming: false,
+                  excludeFromContext: true,
                 }
               : msg
           )
@@ -296,15 +349,25 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
     [projectId, dateRange, customerView, isLoading, onError, endpoint]
   );
 
-  // Chat zurücksetzen
-  const clearChat = useCallback(() => {
+  // Chat leeren: lokal sofort, der gespeicherte Verlauf wird auf dem Server gelöscht.
+  const clearChat = useCallback(async () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
     setMessages([]);
     setIsLoading(false);
-  }, []);
+    if (!historyEndpoint) return;
+    try {
+      const params = new URLSearchParams();
+      if (projectId) params.set('projectId', projectId);
+      const response = await fetch(`${historyEndpoint}?${params.toString()}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error(`Fehler: ${response.status}`);
+    } catch (error) {
+      console.warn('Konnte den DataMax-Verlauf nicht löschen:', error);
+      onError?.('Der gespeicherte Verlauf konnte nicht gelöscht werden.');
+    }
+  }, [historyEndpoint, projectId, onError]);
 
   // Letzte Nachricht abbrechen
   const cancelRequest = useCallback(() => {
@@ -320,9 +383,11 @@ export function useDataMaxChat(options: UseDataMaxChatOptions = {}) {
     isLoading,
     suggestedQuestions,
     usage,
+    historyLoading,
     sendMessage,
     clearChat,
     cancelRequest,
     loadSuggestedQuestions,
+    loadHistory,
   };
 }

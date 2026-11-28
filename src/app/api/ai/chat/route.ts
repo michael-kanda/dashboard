@@ -15,6 +15,8 @@ import { buildSystemPrompt } from '@/lib/ai-chat/prompt';
 import { logger } from '@/lib/logger';
 import { readAnalyticsSettings } from '@/lib/vercel-analytics/settings';
 import { consumeDataMaxQuota, quotaExceededResponse, quotaHeaders, readDataMaxQuota } from '@/lib/datamax-quota';
+import { buildChatMessages, resolveChatProjectId } from '@/lib/ai-chat/history';
+import { saveChatMessage } from '@/lib/ai-chat/history-store';
 export const maxDuration = 60;
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,9 +36,10 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { message, projectId, dateRange = '30d', customerView } = body;
+    const { projectId, dateRange = '30d', customerView, history } = body;
+    const message = typeof body?.message === 'string' ? body.message.trim() : '';
 
-    if (!message || typeof message !== 'string') {
+    if (!message) {
       return NextResponse.json({ error: 'Nachricht fehlt' }, { status: 400 });
     }
 
@@ -52,12 +55,11 @@ export async function POST(req: NextRequest) {
     if (!quotaBefore.allowed) return quotaExceededResponse(quotaBefore);
     // Kundenansicht der Admins: Antworten wie fuer den Kunden (setzt die Rolle nur herab).
     const userRole = customerView === true ? 'BENUTZER' : session.user.role;
-    const targetUserId = projectId || userId;
 
     // Fremde Projekte nur mit Berechtigung (Kunden ausschließlich das eigene)
-    if (targetUserId !== userId && !(await canAccessProject(session.user, targetUserId))) {
-      return NextResponse.json({ error: 'Zugriff verweigert' }, { status: 403 });
-    }
+    const project = await resolveChatProjectId(session.user, projectId, canAccessProject);
+    if (!project.ok) return NextResponse.json({ error: project.error }, { status: project.status });
+    const targetUserId = project.projectId;
 
     // 3. User-Daten laden
     const { rows } = await sql`SELECT * FROM users WHERE id::text = ${targetUserId}`;
@@ -139,10 +141,16 @@ export async function POST(req: NextRequest) {
     const quotaState = await consumeDataMaxQuota(userId, session.user.role);
     if (!quotaState.allowed) return quotaExceededResponse(quotaState);
 
+    // Gesprächsgedächtnis: die letzten Nachrichten gehen gekürzt mit (src/lib/ai-chat/history.ts).
+    // Frage und Antwort werden pro Person und Projekt gespeichert; die Antwort, sobald sie fertig ist.
+    await saveChatMessage(userId, targetUserId, { role: 'user', content: message });
     const result = await streamTextSafe({
       system: systemPrompt,
-      prompt: message,
+      messages: buildChatMessages(history, message),
       temperature: 0.7,
+      onFinish: async ({ text }) => {
+        await saveChatMessage(userId, targetUserId, { role: 'assistant', content: text });
+      },
     });
 
     // Base64-Encoding für Header
