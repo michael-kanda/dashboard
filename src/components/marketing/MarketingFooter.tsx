@@ -16,7 +16,7 @@ export default function MarketingFooter() {
   return (
     <footer className="border-t border-border-subtle">
       <div className="mx-auto flex max-w-[1120px] flex-col items-center gap-6 px-4 py-12 text-center sm:px-6">
-        <DataPeakLogo className="h-7 w-auto" />
+        <DataPeakLogo className="h-10 w-auto md:h-12" />
         <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
           {MARKETING_NAV.map((item) => (
             <a key={item.id} href={`/#${item.id}`} className={linkClass}>{item.label}</a>
