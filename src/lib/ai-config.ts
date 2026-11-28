@@ -1,5 +1,5 @@
 // src/lib/ai-config.ts
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogle as createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { DEFAULT_AI_MODELS } from './ai-model-schema';
 import { getAiModels } from './ai-model-store';

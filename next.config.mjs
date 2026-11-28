@@ -1,11 +1,9 @@
-// designare-evita/dasboard/dasboard-51c35db465e734e54d24d3ac7e57518724990087/next.config.mjs
-import { fileURLToPath } from 'node:url';
-
+// next.config.mjs
 const disableSentryBuild = process.env.DISABLE_SENTRY_BUILD === '1';
 const enableSentryBuild = process.env.DISABLE_SENTRY_BUILD !== '1'
   && (process.env.VERCEL === '1' || process.env.CI === 'true');
 const withSentryConfig = enableSentryBuild
-  ? (await import('@sentry/nextjs')).withSentryConfig
+  ? (await import('@sentry/nextjs/config')).withSentryConfig
   : (config) => config;
 
 /** @type {import('next').NextConfig} */
@@ -68,24 +66,23 @@ const nextConfig = {
       },
     ];
   },
-  // WICHTIG: Damit @react-pdf/renderer im App Router funktioniert
+  // Serverseitig nicht bündeln (u. a. damit @react-pdf/renderer im App Router funktioniert)
+  serverExternalPackages: [
+    '@react-pdf/renderer',
+    '@getbrevo/brevo',
+    'googleapis',
+    'google-auth-library',
+  ],
   experimental: {
     optimizePackageImports: ['react-bootstrap-icons', 'lucide-react'],
-    serverComponentsExternalPackages: [
-      '@react-pdf/renderer',
-      '@getbrevo/brevo',
-      'googleapis',
-      'google-auth-library',
-    ],
   },
-  webpack: (config) => {
-    config.resolve.alias.canvas = false;
-    if (disableSentryBuild) {
-      config.resolve.alias['@sentry/nextjs$'] = fileURLToPath(
-        new URL('./scripts/sentry-build-stub.mjs', import.meta.url)
-      );
-    }
-    return config;
+  // Turbopack (Standard ab Next 16): canvas wird von PDF-Bibliotheken optional angefragt,
+  // wird aber nicht gebraucht. Ohne Sentry-Build ersetzt ein Stub das Sentry-Paket.
+  turbopack: {
+    resolveAlias: {
+      canvas: './scripts/empty-module.mjs',
+      ...(disableSentryBuild ? { '@sentry/nextjs': './scripts/sentry-build-stub.mjs' } : {}),
+    },
   },
 };
 
@@ -95,6 +92,4 @@ export default withSentryConfig(nextConfig, {
   silent: !process.env.CI,
   widenClientFileUpload: true,
   tunnelRoute: "/monitoring",
-  disableLogger: true,
-  automaticVercelMonitors: true
 });

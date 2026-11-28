@@ -57,6 +57,6 @@ export async function PUT(req: Request) {
     return NextResponse.json({ message: 'KI-Modell konnte nicht gespeichert werden' }, { status: 500 });
   }
 
-  revalidateTag(AI_MODELS_CACHE_TAG);
+  revalidateTag(AI_MODELS_CACHE_TAG, { expire: 0 }); // sofort, wie vor Next 16
   return NextResponse.json({ models });
 }

@@ -30,13 +30,14 @@ function Notice({ title, text }: { title: string; text: string }) {
   );
 }
 
-export default async function SharedProjectPage({
-  params,
-  searchParams,
-}: {
-  params: { token: string };
-  searchParams: { range?: string };
-}) {
+export default async function SharedProjectPage(
+  props: {
+    params: Promise<{ token: string }>;
+    searchParams: Promise<{ range?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const link = await resolveShareLink(params.token).catch((error) => {
     console.error('[Gastlink] Auflösen fehlgeschlagen:', error);
     return null;

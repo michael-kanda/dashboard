@@ -2,9 +2,9 @@
 import LoginForm from './LoginForm';
 
 interface LoginPageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     callbackUrl?: string | string[];
-  };
+  }>;
 }
 
 function getSafeCallbackUrl(value: string | string[] | undefined) {
@@ -12,6 +12,7 @@ function getSafeCallbackUrl(value: string | string[] | undefined) {
   return callbackUrl?.startsWith('/') && !callbackUrl.startsWith('//') ? callbackUrl : '/';
 }
 
-export default function LoginPage({ searchParams }: LoginPageProps) {
+export default async function LoginPage(props: LoginPageProps) {
+  const searchParams = await props.searchParams;
   return <LoginForm callbackUrl={getSafeCallbackUrl(searchParams?.callbackUrl)} />;
 }

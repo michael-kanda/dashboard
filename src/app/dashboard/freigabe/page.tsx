@@ -1,7 +1,7 @@
 // src/app/dashboard/freigabe/page.tsx
 'use client';
 
-import { useState, useEffect, ReactNode, useCallback } from 'react';
+import { useState, useEffect, ReactNode, useCallback, type JSX } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import DateRangeSelector, { type DateRangeOption } from '@/components/DateRangeSelector';

@@ -62,9 +62,9 @@ Für lokale Projekte kann DataPeak mehrere Standorte abbilden, z.B. Kanzlei Wien
 
 ### Technischer Stack
 
-- **Framework:** Next.js 14
+- **Framework:** Next.js 16 (App Router, Turbopack), React 19
 - **Sprache:** TypeScript
-- **KI:** Vercel AI SDK + Google Gemini (für DataMax und Prompt-Cluster-Analyse)
+- **KI:** Vercel AI SDK 7 + Google Gemini (für DataMax und Prompt-Cluster-Analyse)
 - **Datenbank:** Neon Postgres über die serverlose Vercel-Integration
 - **APIs:** Google Search Console API, Google Analytics 4 Data API (via OAuth2), Google GenAI Search-Console-Signale je nach Rollout/API-Verfügbarkeit
 - **Hosting:** Vercel
@@ -189,9 +189,9 @@ For local projects, DataPeak can represent multiple locations such as a main off
 
 ### Tech Stack
 
-- **Framework:** Next.js 14
+- **Framework:** Next.js 16 (App Router, Turbopack), React 19
 - **Language:** TypeScript
-- **AI:** Vercel AI SDK + Google Gemini (powers DataMax and prompt cluster analysis)
+- **AI:** Vercel AI SDK 7 + Google Gemini (powers DataMax and prompt cluster analysis)
 - **Database:** Neon Postgres through the serverless Vercel integration
 - **APIs:** Google Search Console API, Google Analytics 4 Data API (via OAuth2), Google GenAI Search Console signals depending on rollout/API availability
 - **Hosting:** Vercel

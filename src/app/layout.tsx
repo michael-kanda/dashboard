@@ -21,9 +21,9 @@ const inter = Inter({
 });
 
 // Metadata mit Sentry Tracing
-export function generateMetadata(): Metadata {
+export async function generateMetadata(): Promise<Metadata> {
   // Das Dashboard soll nicht in Suchmaschinen erscheinen, nur die Landingpage.
-  const isMarketing = headers().get(SITE_HEADER) === 'marketing';
+  const isMarketing = (await headers()).get(SITE_HEADER) === 'marketing';
   return {
     robots: isMarketing ? { index: true, follow: true } : { index: false, follow: false },
     title: 'Data Peak | SEO & Analytics Dashboard',
@@ -65,7 +65,7 @@ export default async function RootLayout({
   // Vom Superadmin gewählte Farben, Rahmen und Schatten; leer, solange nichts geändert wurde.
   const themeCss = themeToCss(await getCachedTheme());
   // Die Middleware markiert Aufrufe der Landingpage (www.datapeak.at); dort gibt es keine Sidebar.
-  const isMarketing = headers().get(SITE_HEADER) === 'marketing';
+  const isMarketing = (await headers()).get(SITE_HEADER) === 'marketing';
 
   return (
     <html lang="de" className={inter.variable} suppressHydrationWarning>

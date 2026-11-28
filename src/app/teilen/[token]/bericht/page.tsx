@@ -14,13 +14,14 @@ export const metadata: Metadata = {
   referrer: 'no-referrer',
 };
 
-export default async function SharedReportPage({
-  params,
-  searchParams,
-}: {
-  params: { token: string };
-  searchParams: { range?: string; print?: string; vergleich?: string };
-}) {
+export default async function SharedReportPage(
+  props: {
+    params: Promise<{ token: string }>;
+    searchParams: Promise<{ range?: string; print?: string; vergleich?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const link = await resolveShareLink(params.token).catch(() => null);
   if (!link) {
     return <p className="flex min-h-[60vh] items-center justify-center px-4 text-center text-15 text-muted">Link abgelaufen oder ungültig</p>;

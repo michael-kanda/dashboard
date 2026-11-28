@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth';
 import { canAccessProject } from '@/lib/project-access';
 import { sql } from '@vercel/postgres';
 import { getOrFetchGoogleData } from '@/lib/google-data-loader';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogle as createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import crypto from 'node:crypto';
 import type { User } from '@/lib/schemas'; 
@@ -623,10 +623,10 @@ export async function POST(req: NextRequest) {
 
     const result = streamText({
       model: google((await getAiModels()).primary),
-      system: systemPrompt,
+      instructions: systemPrompt,
       prompt: `Analysiere diese Daten für den Zeitraum ${dateRange}:\n${summaryData}`,
       temperature: 0.4, 
-      onFinish: async ({ text }) => {
+      onEnd: async ({ text }) => {
         if (text && text.length > 50) {
           try {
             await sql`
