@@ -1,7 +1,8 @@
 // src/proxy.ts (bis Next 15: middleware.ts)
+import { AsyncLocalStorage } from 'node:async_hooks';
 import NextAuth from 'next-auth';
 import { baseAuthConfig } from '@/lib/auth-config';
-import { NextRequest, NextResponse, type NextFetchEvent } from 'next/server';
+import { NextResponse, type NextFetchEvent, type NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { TWO_FACTOR_SETUP_PATH } from '@/lib/two-factor/policy';
 import { buildCsp, createNonce, CSP_HEADER } from '@/lib/csp';
@@ -18,17 +19,30 @@ import {
 
 const { auth } = NextAuth(baseAuthConfig);
 
-/**
- * Lässt die Anfrage durch und reicht die Request-Header weiter (inkl. Nonce und CSP für das
- * Rendering). Ohne diese Weitergabe sähe Next.js die Nonce nicht.
- */
+// Nonce und CSP der laufenden Anfrage. Sie werden beim Weiterleiten als Request-Header
+// mitgegeben, damit Next.js die Nonce beim Rendern an seine Skripte setzt. Eine geklonte
+// NextRequest mit geänderten Headern kam auf Vercel nicht beim Rendern an, deshalb so.
+const cspContext = new AsyncLocalStorage<{ nonce: string; csp: string }>();
+
+/** Request-Header für die Weitergabe: die der Anfrage plus Nonce und CSP. */
+function forwardedHeaders(req: NextRequest) {
+  const headers = new Headers(req.headers);
+  const context = cspContext.getStore();
+  if (context) {
+    headers.set('x-nonce', context.nonce);
+    headers.set('Content-Security-Policy', context.csp);
+  }
+  return headers;
+}
+
+/** Lässt die Anfrage durch und reicht die Request-Header weiter (inkl. Nonce und CSP). */
 function forward(req: NextRequest) {
-  return NextResponse.next({ request: { headers: new Headers(req.headers) } });
+  return NextResponse.next({ request: { headers: forwardedHeaders(req) } });
 }
 
 /** Leitet den Request weiter und markiert ihn für das Layout als Landingpage. */
 function marketingResponse(req: NextRequest, rewriteTo?: string) {
-  const headers = new Headers(req.headers);
+  const headers = forwardedHeaders(req);
   headers.set(SITE_HEADER, 'marketing');
   return rewriteTo
     ? NextResponse.rewrite(new URL(rewriteTo, req.url), { request: { headers } })
@@ -165,14 +179,12 @@ export default async function proxy(req: NextRequest, event: NextFetchEvent) {
   // und setzt sie an seine Skripte; der Browser bekommt die Policy über den Response-Header.
   const nonce = createNonce();
   const csp = buildCsp(nonce, { isDev: process.env.NODE_ENV === 'development' });
-  const headers = new Headers(req.headers);
-  headers.set('x-nonce', nonce);
-  headers.set('Content-Security-Policy', csp);
-  const request = new NextRequest(req, { headers });
 
-  const response = isMarketingHost(req.headers.get('host'))
-    ? handleSiteRouting(request) ?? forward(request)
-    : await authMiddleware(request, event as never);
+  const response = await cspContext.run({ nonce, csp }, async () => (
+    isMarketingHost(req.headers.get('host'))
+      ? handleSiteRouting(req) ?? forward(req)
+      : await authMiddleware(req, event as never)
+  ));
   response?.headers.set(CSP_HEADER, csp);
   return response;
 }
