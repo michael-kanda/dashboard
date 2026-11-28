@@ -1,12 +1,15 @@
 // src/app/api/ai/demo-chat/route.ts
 // DataMax in der öffentlichen Demo (/demo-anwalt): ohne Anmeldung, nur mit den fiktiven
 // Demo-Daten, höchstens 5 Fragen pro Besucher und Tag (src/lib/demo-chat-quota.ts).
+// Das Gesprächsgedächtnis gilt nur innerhalb der Sitzung: Der Browser schickt den Verlauf mit,
+// gespeichert wird nichts.
 import { NextRequest, NextResponse } from 'next/server';
 import { demoData } from '@/app/demo-anwalt/demo-dashboard-data';
 import { streamTextSafe } from '@/lib/ai-config';
 import { buildChatContext } from '@/lib/ai-chat/context';
 import { generateSuggestedQuestions } from '@/lib/ai-chat/fallback';
 import { buildSystemPrompt } from '@/lib/ai-chat/prompt';
+import { buildChatMessages } from '@/lib/ai-chat/history';
 import {
   consumeDemoChatQuota,
   demoQuotaHeaders,
@@ -61,7 +64,12 @@ export async function POST(req: NextRequest) {
 
     const context = buildChatContext(demoData, demoUser, '30d', null, 'AT');
     const system = buildSystemPrompt(context, false, '30d', '30d') + DEMO_NOTE;
-    const result = await streamTextSafe({ system, prompt: message, temperature: 0.7 });
+    const result = await streamTextSafe({
+      system,
+      // In der Demo reicht ein kürzeres Gedächtnis; das hält die KI-Kosten klein.
+      messages: buildChatMessages(body?.history, message, { maxChars: 6_000 }),
+      temperature: 0.7,
+    });
 
     const questions = generateSuggestedQuestions(demoData, null, false);
     const response = result.toTextStreamResponse();
