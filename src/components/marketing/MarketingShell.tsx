@@ -7,6 +7,7 @@ import { appOriginFor } from '@/lib/site-hosts';
 import MarketingHeader from './MarketingHeader';
 import MarketingFooter from './MarketingFooter';
 import CookieHint from './CookieHint';
+import ScrollReveal from './ScrollReveal';
 
 export default function MarketingShell({ children }: { children: React.ReactNode }) {
   const appOrigin = appOriginFor(headers().get('host'));
@@ -19,6 +20,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
         <MarketingFooter />
       </div>
       <CookieHint />
+      <ScrollReveal />
       {/* Vercel Web Analytics nur auf der Landingpage, ohne Cookies. */}
       <Analytics />
     </ThemeProvider>

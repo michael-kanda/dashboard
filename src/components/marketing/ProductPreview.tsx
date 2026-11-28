@@ -2,7 +2,7 @@
 // Nachgebaute Dashboard-Ansicht mit Beispieldaten für die Landingpage.
 'use client';
 
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { BarChartLineFill, ChatQuoteFill, Stars } from 'react-bootstrap-icons';
 import DataMaxIllustration from './DataMaxIllustration';
 
@@ -15,11 +15,43 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id'];
 
 const KPIS = [
-  { label: 'Klicks', value: '4.812', delta: '+12 %' },
-  { label: 'Impressionen', value: '182.400', delta: '+8 %' },
-  { label: 'Besucher', value: '3.960', delta: '+5 %' },
-  { label: 'Conversions', value: '74', delta: '+18 %' },
+  { label: 'Klicks', value: 4812, delta: '+12 %' },
+  { label: 'Impressionen', value: 182400, delta: '+8 %' },
+  { label: 'Besucher', value: 3960, delta: '+5 %' },
+  { label: 'Conversions', value: 74, delta: '+18 %' },
 ];
+
+const COUNT_MS = 1200;
+const formatCount = (n: number) => Math.round(n).toLocaleString('de-DE');
+
+// Zählt beim ersten Anzeigen einmal von 0 hoch. Der Server liefert gleich den Endwert;
+// globals.css blendet ihn bis zum Start aus (html.dp-anim), damit er nicht kurz aufblitzt.
+function CountUp({ value, animate }: { value: number; animate: boolean }) {
+  const [shown, setShown] = useState(value);
+  const [counting, setCounting] = useState(!animate);
+  const frame = useRef(0);
+
+  useEffect(() => {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (!animate || reduce) {
+      setShown(value);
+      setCounting(true);
+      return;
+    }
+    const start = performance.now();
+    setShown(0);
+    setCounting(true);
+    const step = (now: number) => {
+      const p = Math.min(1, (now - start) / COUNT_MS);
+      setShown(value * (1 - (1 - p) ** 3));
+      if (p < 1) frame.current = requestAnimationFrame(step);
+    };
+    frame.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame.current);
+  }, [animate, value]);
+
+  return <span className={`dp-countup tabular-nums ${counting ? 'dp-counting' : ''}`}>{formatCount(shown)}</span>;
+}
 
 // Klicks pro Woche, Beispielverlauf
 const TREND = [41, 44, 43, 47, 46, 52, 50, 55, 58, 57, 63, 66];
@@ -31,7 +63,7 @@ const AI_SOURCES = [
   { name: 'Claude', sessions: 27, delta: '+6 %', share: 9 },
 ];
 
-function Sparkline() {
+function Sparkline({ animate }: { animate: boolean }) {
   const width = 320;
   const height = 96;
   const max = Math.max(...TREND);
@@ -52,13 +84,14 @@ function Sparkline() {
           <stop offset="100%" stopColor="var(--dp-accent)" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={area} fill="url(#dp-trend-fill)" />
-      <path d={line} fill="none" stroke="var(--dp-accent)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+      <path d={area} fill="url(#dp-trend-fill)" className={animate ? 'dp-draw-fill' : undefined} />
+      {/* pathLength=1: die Linie zeichnet sich per CSS von links nach rechts (globals.css .dp-draw) */}
+      <path d={line} pathLength={1} fill="none" stroke="var(--dp-accent)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" className={animate ? 'dp-draw' : undefined} />
     </svg>
   );
 }
 
-function OverviewPanel() {
+function OverviewPanel({ animate }: { animate: boolean }) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
@@ -66,7 +99,7 @@ function OverviewPanel() {
           <div key={kpi.label} className="rounded-[10px] border border-border-subtle bg-surface px-3 py-2.5">
             <p className="text-11 font-medium text-muted">{kpi.label}</p>
             <p className="mt-0.5 flex items-baseline gap-2">
-              <span className="text-19 font-bold tracking-[-0.02em] text-heading">{kpi.value}</span>
+              <span className="text-19 font-bold tracking-[-0.02em] text-heading"><CountUp value={kpi.value} animate={animate} /></span>
               <span className="text-11 font-semibold text-success">{kpi.delta}</span>
             </p>
           </div>
@@ -74,7 +107,7 @@ function OverviewPanel() {
       </div>
       <div className="rounded-[10px] border border-border-subtle bg-surface px-3 pt-2.5">
         <p className="text-11 font-medium text-muted">Klicks aus der Google-Suche, letzte 12 Wochen</p>
-        <Sparkline />
+        <Sparkline animate={animate} />
       </div>
     </div>
   );
@@ -138,6 +171,8 @@ function DataMaxPanel() {
 
 export default function ProductPreview() {
   const [active, setActive] = useState<TabId>('uebersicht');
+  // Die Einstiegsanimation läuft nur beim ersten Anzeigen, nicht bei jedem Reiterwechsel
+  const [intro, setIntro] = useState(true);
   const baseId = useId();
 
   return (
@@ -153,7 +188,7 @@ export default function ProductPreview() {
               id={`${baseId}-tab-${id}`}
               aria-selected={selected}
               aria-controls={`${baseId}-panel`}
-              onClick={() => setActive(id)}
+              onClick={() => { setActive(id); setIntro(false); }}
               className={`inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-13 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-accent
                 ${selected ? 'bg-surface font-semibold text-heading shadow-segment' : 'font-medium text-muted hover:text-heading'}`}
             >
@@ -171,7 +206,10 @@ export default function ProductPreview() {
             <span className="h-2.5 w-2.5 rounded-full bg-dot-off" />
             <span className="h-2.5 w-2.5 rounded-full bg-dot-off" />
           </span>
-          <span className="ml-2 truncate text-12 text-muted">app.datapeak.at · kanzlei-beispiel.at</span>
+          <span className="ml-2 flex min-w-0 items-center gap-1.5 text-12 text-muted">
+            <span className="dp-live-dot h-1.5 w-1.5 flex-shrink-0 rounded-full bg-success-bar" aria-hidden="true" />
+            <span className="truncate">app.datapeak.at · kanzlei-beispiel.at</span>
+          </span>
         </div>
         <div
           id={`${baseId}-panel`}
@@ -179,7 +217,7 @@ export default function ProductPreview() {
           aria-labelledby={`${baseId}-tab-${active}`}
           className="min-h-[300px] p-4"
         >
-          {active === 'uebersicht' && <OverviewPanel />}
+          {active === 'uebersicht' && <OverviewPanel animate={intro} />}
           {active === 'ki' && <AiPanel />}
           {active === 'datamax' && <DataMaxPanel />}
         </div>

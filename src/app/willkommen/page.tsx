@@ -221,7 +221,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 
 function SectionHeading({ eyebrow, title, lead }: { eyebrow: string; title: string; lead?: string }) {
   return (
-    <div className="max-w-[640px]">
+    <div className="dp-reveal max-w-[640px]">
       <Eyebrow>{eyebrow}</Eyebrow>
       <h2 className="text-[calc(clamp(30px,4.2vw,44px)*var(--dp-fs-heading))] font-bold leading-[1.08] tracking-[-0.025em] text-heading">{title}</h2>
       {lead && <p className="mt-4 text-17 leading-[1.55] text-body">{lead}</p>}
@@ -283,7 +283,7 @@ export default function LandingPage() {
           <SectionHeading eyebrow="Warum DataPeak" title="Zahlen, die Sie wirklich lesen." />
           <div className="mt-12 grid gap-10 md:grid-cols-3">
             {PILLARS.map((pillar, index) => (
-              <div key={pillar.title} className="border-t border-border pt-5">
+              <div key={pillar.title} className="dp-reveal border-t border-border pt-5" data-reveal-delay={index * 100}>
                 <p className="text-13 font-semibold tabular-nums text-accent">0{index + 1}</p>
                 <h3 className="mt-2 text-20 font-semibold tracking-[-0.015em] text-heading">{pillar.title}</h3>
                 <p className="mt-2 text-15 leading-[1.6]">{pillar.text}</p>
@@ -301,7 +301,7 @@ export default function LandingPage() {
           lead="Sie arbeiten an Ihrer Website wie bisher. DataPeak sammelt die Zahlen, und Sie sehen jederzeit im Dashboard, was sich verändert hat, oder fragen einfach DataMax."
         />
 
-        <div className="mt-12 grid items-stretch gap-3 lg:grid-cols-[1fr_auto_1fr_auto_1fr]" aria-hidden="true">
+        <div className="dp-reveal mt-12 grid items-stretch gap-3 lg:grid-cols-[1fr_auto_1fr_auto_1fr]" aria-hidden="true">
           <div className="rounded-container border border-border bg-surface p-5">
             <p className="text-12 font-semibold uppercase tracking-[0.06em] text-muted">Quellen</p>
             <div className="mt-3 flex flex-wrap gap-1.5">
@@ -329,7 +329,7 @@ export default function LandingPage() {
 
         <ol className="mt-12 grid gap-4 md:grid-cols-3">
           {STEPS.map((step, index) => (
-            <li key={step.title} className="rounded-container border border-border bg-surface p-5">
+            <li key={step.title} className="dp-reveal rounded-container border border-border bg-surface p-5" data-reveal-delay={index * 100}>
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-solid text-14 font-bold text-white">{index + 1}</span>
               <h3 className="mt-4 text-18 font-semibold tracking-[-0.015em] text-heading">{step.title}</h3>
               <p className="mt-2 text-15 leading-[1.6]">{step.text}</p>
@@ -346,12 +346,12 @@ export default function LandingPage() {
             title="Alles im Blick."
             lead="Vom ersten Klick in Google bis zur Anfrage über ChatGPT: DataPeak zeigt, woher Ihre Besucher kommen und was sie suchen."
           />
-          <div className="mt-12">
+          <div className="dp-reveal mt-12">
             <DashboardTour />
           </div>
           <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {FEATURES.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="rounded-container border border-border bg-surface p-5">
+            {FEATURES.map(({ icon: Icon, title, text }, index) => (
+              <li key={title} className="dp-reveal rounded-container border border-border bg-surface p-5" data-reveal-delay={(index % 4) * 80}>
                 <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-accent-tint text-accent">
                   <Icon size={16} aria-hidden="true" />
                 </span>
@@ -362,7 +362,7 @@ export default function LandingPage() {
             ))}
           </ul>
 
-          <div className="mt-4 flex gap-4 rounded-container border border-accent/30 bg-accent-tint p-5">
+          <div className="dp-reveal mt-4 flex gap-4 rounded-container border border-accent/30 bg-accent-tint p-5">
             <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-accent-solid text-white">
               <LightbulbFill size={16} aria-hidden="true" />
             </span>
@@ -383,7 +383,7 @@ export default function LandingPage() {
             title="Ein Analyst, der nie Feierabend hat."
             lead="DataMax kennt die Zahlen Ihres Projekts und beantwortet Fragen dazu in ganzen Sätzen. Warum ist der Traffic gestiegen? Welche Seite verliert? Was bringt am meisten?"
           />
-          <ul className="mt-6 space-y-3 text-15">
+          <ul className="dp-reveal mt-6 space-y-3 text-15" data-reveal-delay={100}>
             {[
               'Erklärt Trends und Ausreißer in Klartext.',
               'Schlägt konkrete Verbesserungen für einzelne Seiten vor.',
@@ -396,7 +396,9 @@ export default function LandingPage() {
             ))}
           </ul>
         </div>
-        <DataMaxChatPreview />
+        <div className="dp-reveal" data-reveal-delay={150}>
+          <DataMaxChatPreview />
+        </div>
       </section>
 
       {/* ── Sicherheit ───────────────────────────────────── */}
@@ -407,7 +409,7 @@ export default function LandingPage() {
             title="Ihre Daten bleiben Ihre Daten."
             lead="Analysedaten sind Geschäftsdaten. DataPeak ist von Grund auf darauf ausgelegt, dass jeder nur sieht, was er sehen soll."
           />
-          <ul className="space-y-4 self-center">
+          <ul className="dp-reveal space-y-4 self-center" data-reveal-delay={100}>
             {TRUST.map((line) => (
               <li key={line} className="flex gap-3 text-15 leading-[1.55]">
                 <CheckCircleFill size={16} className="mt-0.5 flex-shrink-0 text-success-bar" aria-hidden="true" />
@@ -422,8 +424,8 @@ export default function LandingPage() {
       <section id="faq" className="mx-auto max-w-[1120px] scroll-mt-[72px] px-4 py-20 sm:px-6">
         <SectionHeading eyebrow="FAQ" title="Häufige Fragen." lead={`Noch etwas offen? Schreiben Sie an ${CONTACT_MAIL}.`} />
         <div className="mt-12 grid gap-10 lg:grid-cols-3">
-          {FAQ.map((group) => (
-            <div key={group.group}>
+          {FAQ.map((group, index) => (
+            <div key={group.group} className="dp-reveal" data-reveal-delay={index * 100}>
               <h3 className="dp-section-title">{group.group}</h3>
               <div className="overflow-hidden rounded-container border border-border bg-surface">
                 {group.items.map((item) => (

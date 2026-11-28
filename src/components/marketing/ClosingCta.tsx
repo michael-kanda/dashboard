@@ -42,7 +42,7 @@ function DashboardSnippet() {
 export default function ClosingCta({ demoHref }: { demoHref: string }) {
   return (
     <section className="px-4 pb-24 sm:px-6">
-      <div className="mx-auto grid max-w-[1120px] overflow-hidden rounded-[24px] border border-border bg-surface-secondary md:grid-cols-2">
+      <div className="dp-reveal mx-auto grid max-w-[1120px] overflow-hidden rounded-[24px] border border-border bg-surface-secondary md:grid-cols-2">
         <div className="px-6 py-12 sm:px-12">
           <p className="mb-3 flex items-center gap-3 text-12 font-semibold uppercase tracking-[0.08em] text-accent">
             <span className="h-px w-6 bg-accent" aria-hidden="true" />
