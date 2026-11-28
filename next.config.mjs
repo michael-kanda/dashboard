@@ -1,4 +1,5 @@
 // next.config.mjs
+import { buildCsp, CSP_HEADER } from './src/lib/csp.mjs';
 const disableSentryBuild = process.env.DISABLE_SENTRY_BUILD === '1';
 const enableSentryBuild = process.env.DISABLE_SENTRY_BUILD !== '1'
   && (process.env.VERCEL === '1' || process.env.CI === 'true');
@@ -57,6 +58,8 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()' },
+          // Vollständige Policy, vorerst nur beobachtend (src/lib/csp.mjs)
+          { key: CSP_HEADER, value: buildCsp({ isDev: process.env.NODE_ENV === 'development' }) },
         ],
       },
       {
