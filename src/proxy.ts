@@ -22,7 +22,7 @@ const { auth } = NextAuth(baseAuthConfig);
 // Nonce und CSP der laufenden Anfrage. Sie werden beim Weiterleiten als Request-Header
 // mitgegeben, damit Next.js die Nonce beim Rendern an seine Skripte setzt. Eine geklonte
 // NextRequest mit geänderten Headern kam auf Vercel nicht beim Rendern an, deshalb so.
-const cspContext = new AsyncLocalStorage<{ nonce: string; csp: string }>();
+const cspContext = new AsyncLocalStorage<{ nonce: string }>();
 
 /** Request-Header für die Weitergabe: die der Anfrage plus Nonce und CSP. */
 function forwardedHeaders(req: NextRequest) {
@@ -30,7 +30,12 @@ function forwardedHeaders(req: NextRequest) {
   const context = cspContext.getStore();
   if (context) {
     headers.set('x-nonce', context.nonce);
-    headers.set('Content-Security-Policy', context.csp);
+    // Next.js liest die Nonce aus einem dieser beiden Request-Header (nur script-src wird
+    // ausgewertet). Auf Vercel kam der volle CSP-Wert unter dem ersten Namen nicht beim Rendern
+    // an, x-nonce dagegen schon; deshalb kurz und unter beiden Namen.
+    const scriptSrc = `script-src 'self' 'nonce-${context.nonce}' 'strict-dynamic'`;
+    headers.set('content-security-policy', scriptSrc);
+    headers.set('content-security-policy-report-only', scriptSrc);
   }
   return headers;
 }
@@ -180,7 +185,7 @@ export default async function proxy(req: NextRequest, event: NextFetchEvent) {
   const nonce = createNonce();
   const csp = buildCsp(nonce, { isDev: process.env.NODE_ENV === 'development' });
 
-  const response = await cspContext.run({ nonce, csp }, async () => (
+  const response = await cspContext.run({ nonce }, async () => (
     isMarketingHost(req.headers.get('host'))
       ? handleSiteRouting(req) ?? forward(req)
       : await authMiddleware(req, event as never)
