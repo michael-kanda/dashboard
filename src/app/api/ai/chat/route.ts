@@ -147,10 +147,10 @@ export async function POST(req: NextRequest) {
     // Frage und Antwort werden pro Person und Projekt gespeichert; die Antwort, sobald sie fertig ist.
     await saveChatMessage(userId, targetUserId, { role: 'user', content: message });
     const result = await streamTextSafe({
-      system: systemPrompt,
+      instructions: systemPrompt,
       messages: buildChatMessages(history, message),
       temperature: 0.7,
-      onFinish: async ({ text }) => {
+      onEnd: async ({ text }) => {
         await saveChatMessage(userId, targetUserId, { role: 'assistant', content: text });
       },
     });

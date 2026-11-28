@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
     const result = await generateObject({
       model: google(modelId),
       schema: PromptClusterResultSchema,
-      system: SYSTEM_PROMPT,
+      instructions: SYSTEM_PROMPT,
       prompt: userPrompt,
       temperature: 0.3,
     });

@@ -11,13 +11,14 @@ import ProjectPrintReport from '@/components/print/ProjectPrintReport';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Bericht | Data Peak', robots: { index: false, follow: false } };
 
-export default async function ProjectReportPage({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams: { range?: string; print?: string; vergleich?: string };
-}) {
+export default async function ProjectReportPage(
+  props: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ range?: string; print?: string; vergleich?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const session = await auth();
   if (!session?.user) redirect('/login');
   if (!(await canAccessProject(session.user, params.id))) redirect('/');

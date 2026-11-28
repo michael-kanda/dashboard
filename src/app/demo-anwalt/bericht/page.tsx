@@ -7,7 +7,8 @@ import { parseComparisonMode } from '@/lib/comparison';
 
 export const metadata: Metadata = { title: 'Demo-Bericht | Data Peak', robots: { index: false, follow: false } };
 
-export default function DemoReportPage({ searchParams }: { searchParams: { print?: string; vergleich?: string } }) {
+export default async function DemoReportPage(props: { searchParams: Promise<{ print?: string; vergleich?: string }> }) {
+  const searchParams = await props.searchParams;
   return (
     <ProjectPrintReport
       data={demoData}

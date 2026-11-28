@@ -17,7 +17,7 @@ interface Props {
   projectId: string;
   domain?: string; // ✅ NEU: Prop für Domain
   dateRange: DateRangeOption;
-  chartRef?: React.RefObject<HTMLDivElement>;
+  chartRef?: React.RefObject<HTMLDivElement | null>;
   kpis?: Array<{
     label: string;
     value: string | number;

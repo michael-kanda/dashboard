@@ -1,4 +1,4 @@
-// src/middleware.ts
+// src/proxy.ts (bis Next 15: middleware.ts)
 import NextAuth from 'next-auth';
 import { baseAuthConfig } from '@/lib/auth-config';
 import { NextResponse, type NextFetchEvent, type NextRequest } from 'next/server';
@@ -146,7 +146,7 @@ const authMiddleware = auth(async (req) => {
 
 // Die Landingpage (www.datapeak.at) läuft ohne next-auth: so setzt sie keine Anmelde-Cookies
 // (csrf-token, callback-url), die dort niemand braucht. Alle anderen Hosts gehen durch auth().
-export default function middleware(req: NextRequest, event: NextFetchEvent) {
+export default function proxy(req: NextRequest, event: NextFetchEvent) {
   if (isMarketingHost(req.headers.get('host'))) {
     const isStaticFile = /\.[^/]+$/.test(req.nextUrl.pathname);
     return isStaticFile ? NextResponse.next() : handleSiteRouting(req) ?? NextResponse.next();

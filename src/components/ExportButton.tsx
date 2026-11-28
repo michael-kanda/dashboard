@@ -8,7 +8,7 @@ import { FileEarmarkPdf } from 'react-bootstrap-icons';
 import { Spinner } from '@/components/ui/Spinner';
 
 interface ExportButtonProps {
-  chartRef?: React.RefObject<HTMLDivElement>;
+  chartRef?: React.RefObject<HTMLDivElement | null>;
   analysisText: string;
   projectId: string;
   domain?: string; // ✅ NEU

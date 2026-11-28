@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogle as createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { getAiModels } from '@/lib/ai-config';
 import { logger } from '@/lib/logger';
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     const result = await streamText({
       model: google((await getAiModels()).primary),
-      system: "Du bist ein erfahrener SEO-Redakteur. Deine Aufgabe ist es, basierend auf Keywords relevante 'W-Fragen' (Wer, Wie, Was, Wo, Warum) zu generieren, die Nutzer suchen könnten. Formatiere die Antwort als saubere Liste.",
+      instructions: "Du bist ein erfahrener SEO-Redakteur. Deine Aufgabe ist es, basierend auf Keywords relevante 'W-Fragen' (Wer, Wie, Was, Wo, Warum) zu generieren, die Nutzer suchen könnten. Formatiere die Antwort als saubere Liste.",
       prompt: `Analysiere die Domain "${domain}" und die folgenden Keywords: ${keywordList}.\n\nGeneriere eine Liste von 10-15 relevanten W-Fragen, die potentielle Besucher dieser Domain in Bezug auf die Keywords haben könnten.`,
       temperature: 0.7,
     });

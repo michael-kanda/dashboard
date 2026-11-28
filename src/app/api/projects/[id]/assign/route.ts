@@ -70,9 +70,9 @@ async function readRequest(request: NextRequest, params: Promise<{ id: string }>
 }
 
 // Weist einem Projekt einen Betreuer zu
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
-    const result = await readRequest(request, params);
+    const result = await readRequest(request, props.params);
     if ('error' in result) return result.error;
     const { projectId, staffId, check } = result;
 
@@ -90,9 +90,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 }
 
 // Entfernt einen Betreuer von einem Projekt
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
-    const result = await readRequest(request, params);
+    const result = await readRequest(request, props.params);
     if ('error' in result) return result.error;
     const { projectId, staffId, check } = result;
 

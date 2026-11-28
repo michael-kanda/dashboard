@@ -9,8 +9,8 @@ import MarketingFooter from './MarketingFooter';
 import CookieHint from './CookieHint';
 import ScrollReveal from './ScrollReveal';
 
-export default function MarketingShell({ children }: { children: React.ReactNode }) {
-  const appOrigin = appOriginFor(headers().get('host'));
+export default async function MarketingShell({ children }: { children: React.ReactNode }) {
+  const appOrigin = appOriginFor((await headers()).get('host'));
 
   return (
     <ThemeProvider>

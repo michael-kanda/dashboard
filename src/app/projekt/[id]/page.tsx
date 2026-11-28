@@ -12,13 +12,14 @@ import DashboardSyncPending from '@/components/DashboardSyncPending';
 // ausschließlich im zentralen Sync-Dispatcher.
 export const maxDuration = 30;
 
-export default async function ProjectPage({ 
-  params, 
-  searchParams 
-}: { 
-  params: { id: string },
-  searchParams: { range?: string; ansicht?: string }
-}) {
+export default async function ProjectPage(
+  props: { 
+    params: Promise<{ id: string }>,
+    searchParams: Promise<{ range?: string; ansicht?: string }>
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const projectId = params.id;
   const dateRange = (searchParams.range as DateRangeOption) || '30d';
 

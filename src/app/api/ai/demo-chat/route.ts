@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     const context = buildChatContext(demoData, demoUser, '30d', null, 'AT', comparisonMode);
     const system = buildSystemPrompt(context, false, '30d', '30d') + DEMO_NOTE;
     const result = await streamTextSafe({
-      system,
+      instructions: system,
       // In der Demo reicht ein kürzeres Gedächtnis; das hält die KI-Kosten klein.
       messages: buildChatMessages(body?.history, message, { maxChars: 6_000 }),
       temperature: 0.7,

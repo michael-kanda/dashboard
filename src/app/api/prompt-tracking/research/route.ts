@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     const result = await generateObject({
       model: google((await getAiModels()).fallback),
       schema: ResearchResponseSchema,
-      system: SYSTEM_PROMPT,
+      instructions: SYSTEM_PROMPT,
       prompt,
       temperature: 0.35,
     });

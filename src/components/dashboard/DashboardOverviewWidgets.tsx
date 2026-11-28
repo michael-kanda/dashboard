@@ -24,7 +24,7 @@ interface DashboardOverviewWidgetsProps {
   projectTimelineActive: boolean;
   activeKpi: ActiveKpi;
   onActiveKpiChange: (kpi: ActiveKpi) => void;
-  chartRef: RefObject<HTMLDivElement>;
+  chartRef: RefObject<HTMLDivElement | null>;
 }
 
 export default function DashboardOverviewWidgets({

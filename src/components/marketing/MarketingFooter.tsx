@@ -10,8 +10,8 @@ import { MARKETING_NAV } from './nav';
 
 const linkClass = 'dp-underline text-14 text-body hover:text-heading focus-visible:outline-none';
 
-export default function MarketingFooter() {
-  const appOrigin = appOriginFor(headers().get('host'));
+export default async function MarketingFooter() {
+  const appOrigin = appOriginFor((await headers()).get('host'));
 
   return (
     <footer className="border-t border-border-subtle">

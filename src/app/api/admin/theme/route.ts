@@ -41,7 +41,7 @@ export async function PUT(req: Request) {
     return NextResponse.json({ message: 'Design konnte nicht gespeichert werden' }, { status: 500 });
   }
 
-  revalidateTag(THEME_CACHE_TAG);
+  revalidateTag(THEME_CACHE_TAG, { expire: 0 }); // sofort, wie vor Next 16
   revalidatePath('/', 'layout');
   return NextResponse.json({ theme: parsed.data });
 }

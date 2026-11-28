@@ -144,7 +144,7 @@ for (const [file, content] of contents) {
   visit(source);
 }
 
-const frameworkEntry = /\/(?:page|layout|route|loading|error|global-error|not-found|template|default|middleware|instrumentation|instrumentation-client)\.(?:ts|tsx)$/;
+const frameworkEntry = /\/(?:page|layout|route|loading|error|global-error|not-found|template|default|middleware|proxy|instrumentation|instrumentation-client)\.(?:ts|tsx)$/;
 for (const [file, count] of incoming) {
   if (count > 0 || frameworkEntry.test(file) || file.endsWith(`${join('preview', 'page 2.tsx')}`)) continue;
   errors.push(`Ohne Importreferenz: ${relative(workspace, file)}`);

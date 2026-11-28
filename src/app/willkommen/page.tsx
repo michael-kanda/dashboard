@@ -229,8 +229,8 @@ function SectionHeading({ eyebrow, title, lead }: { eyebrow: string; title: stri
   );
 }
 
-export default function LandingPage() {
-  const appOrigin = appOriginFor(headers().get('host'));
+export default async function LandingPage() {
+  const appOrigin = appOriginFor((await headers()).get('host'));
   const demoHref = `${appOrigin}/demo-anwalt`;
 
   return (
