@@ -90,8 +90,11 @@ export default function DatenschutzPage() {
             <li>
               <strong>Eingaben in KI-Funktionen:</strong> Fragen, die Sie an
               den KI-Assistenten DataMax stellen, sowie die Anzahl Ihrer
-              DataMax-Anfragen pro Tag (für das Tageslimit). Der Chatverlauf
-              selbst wird nicht gespeichert.
+              DataMax-Anfragen pro Tag (für das Tageslimit). Ihren Chatverlauf
+              mit DataMax (Ihre Fragen und die Antworten) speichern wir pro
+              Person und Projekt, damit Sie das Gespräch beim nächsten Öffnen
+              fortsetzen können. Mit „Chat leeren“ löschen Sie ihn sofort;
+              sonst löschen wir die Nachrichten nach 90 Tagen.
             </li>
             <li>
               <strong>Testversion von DataMax in der öffentlichen Demo:</strong>
@@ -99,7 +102,8 @@ export default function DatenschutzPage() {
               Fragen pro Tag stellen. Um das zu zählen, speichern wir einen
               nicht umkehrbaren Hash Ihrer IP-Adresse, das Datum und die Anzahl
               der Fragen, höchstens sieben Tage lang. Die Fragen selbst
-              speichern wir nicht. Die Antworten beziehen sich nur auf die
+              speichern wir nicht; DataMax merkt sich das Gespräch nur, solange
+              die Seite geöffnet ist. Die Antworten beziehen sich nur auf die
               erfundenen Beispieldaten der Demo.
             </li>
           </ul>
@@ -209,8 +213,10 @@ export default function DatenschutzPage() {
               Chat, die KI-Analyse und das Gruppieren von Suchanfragen senden
               wir Ihre Frage zusammen mit zusammengefassten Kennzahlen Ihres
               Projekts (z.B. Domain, Klicks, Suchbegriffe, Seiten, Standorte)
-              an die Gemini API von Google (USA). In der Testversion der Demo
-              sind das Ihre Frage und die erfundenen Beispieldaten. Daten
+              an die Gemini API von Google (USA). Im Chat gehen außerdem die
+              letzten Nachrichten des laufenden Gesprächs mit, damit DataMax
+              Folgefragen versteht. In der Testversion der Demo sind das Ihre
+              Fragen, die bisherigen Antworten und die erfundenen Beispieldaten. Daten
               einzelner Website-Besucher sind darin nicht enthalten. Bitte
               geben Sie im Chat keine personenbezogenen Daten ein.
             </li>
@@ -273,7 +279,8 @@ export default function DatenschutzPage() {
             bis sieben Tagen erneuert. Anmeldungen, KI-Auswertungen und
             Protokolldaten bleiben gespeichert, solange Ihr Benutzerkonto
             besteht; fehlgeschlagene Anmeldeversuche samt IP-Adresse löschen wir
-            nach einem Tag. Fehlerberichte bei Sentry werden nach Ablauf der dort
+            nach einem Tag. Den DataMax-Chatverlauf löschen wir nach 90 Tagen,
+            mit „Chat leeren“ sofort. Fehlerberichte bei Sentry werden nach Ablauf der dort
             geltenden Aufbewahrungsfrist automatisch gelöscht. Auf Wunsch löschen
             wir Ihr Konto und alle zugehörigen Daten.
           </p>
@@ -293,7 +300,7 @@ export default function DatenschutzPage() {
           </p>
         </section>
 
-        <p className="text-14 text-muted mt-8">Stand: 27. November 2026</p>
+        <p className="text-14 text-muted mt-8">Stand: 28. November 2026</p>
       </div>
     </div>
   );
