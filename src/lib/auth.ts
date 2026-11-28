@@ -190,4 +190,4 @@ export const authConfig = {
   ],
 };
 
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth(authConfig);

@@ -42,3 +42,35 @@ export async function loadSessionState(userId: string): Promise<SessionState | n
     return undefined;
   }
 }
+
+// Nach einer Passwortänderung behält nur die Sitzung, die sie ausgelöst hat, ihre Gültigkeit:
+// Die Route schickt über unstable_update diesen Nachweis mit. Er hängt vom neuen Fingerabdruck
+// ab und lässt sich ohne AUTH_SECRET nicht erzeugen, ein update() aus dem Browser reicht also nicht.
+function sessionSecret(): string | null {
+  return process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || null;
+}
+
+async function hmacHex(secret: string, message: string): Promise<string> {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message));
+  return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+export async function createPasswordChangeProof(userId: string, passwordFingerprint: string, secret = sessionSecret()): Promise<string | null> {
+  if (!secret) return null;
+  return hmacHex(secret, `password-change:${userId}:${passwordFingerprint}`);
+}
+
+export async function isValidPasswordChangeProof(
+  proof: unknown,
+  userId: string,
+  passwordFingerprint: string,
+  secret = sessionSecret(),
+): Promise<boolean> {
+  if (typeof proof !== 'string' || !secret) return false;
+  const expected = await createPasswordChangeProof(userId, passwordFingerprint, secret);
+  if (!expected || expected.length !== proof.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i += 1) diff |= expected.charCodeAt(i) ^ proof.charCodeAt(i);
+  return diff === 0;
+}

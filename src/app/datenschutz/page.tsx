@@ -83,9 +83,21 @@ export default function DatenschutzPage() {
             <li>
               <strong>Protokolldaten:</strong> Aktionen von Benutzern (z.B.
               Statusänderungen von Landingpages) werden zur Nachvollziehbarkeit
-              protokolliert. Zu jeder Anmeldung speichern wir Zeitpunkt,
-              E-Mail-Adresse und Rolle; zu fehlgeschlagenen Anmeldeversuchen
-              zum Schutz vor Missbrauch zusätzlich die IP-Adresse.
+              protokolliert. Zu jeder Anmeldung, Passwortänderung und
+              Passwort-Zurücksetzung sowie zu jedem angeforderten Link zum
+              Zurücksetzen speichern wir Zeitpunkt, Art des Ereignisses,
+              E-Mail-Adresse und Rolle, nie das Passwort selbst; zu
+              fehlgeschlagenen Anmeldeversuchen zum Schutz vor Missbrauch
+              zusätzlich die IP-Adresse.
+            </li>
+            <li>
+              <strong>Passwort vergessen:</strong> Fordern Sie auf der
+              Login-Seite einen Link zum Zurücksetzen an, speichern wir zur
+              Begrenzung wiederholter Anfragen die eingegebene E-Mail-Adresse und
+              Ihre IP-Adresse nur als nicht umkehrbaren Hashwert, auch wenn zur
+              Adresse kein Konto besteht. Besteht ein Konto, speichern wir den
+              Link nur als Hashwert; er ist 60 Minuten gültig und funktioniert
+              einmal.
             </li>
             <li>
               <strong>Eingaben in KI-Funktionen:</strong> Fragen, die Sie an
@@ -148,8 +160,9 @@ export default function DatenschutzPage() {
             </li>
             <li>
               <strong>Sicherheit und Administration:</strong> Zur Verwaltung von
-              Benutzerkonten und Berechtigungen (Rechtsgrundlage: Art. 6 Abs. 1
-              lit. f DSGVO - Berechtigtes Interesse an der Verwaltung des
+              Benutzerkonten und Berechtigungen, zum Zurücksetzen vergessener
+              Passwörter und zur Abwehr von Missbrauch (Rechtsgrundlage: Art. 6
+              Abs. 1 lit. f DSGVO - Berechtigtes Interesse an der Verwaltung des
               Dienstes).
             </li>
           </ul>
@@ -193,7 +206,8 @@ export default function DatenschutzPage() {
             </li>
             <li>
               <strong>Brevo (E-Mail-Versand):</strong> Für den Versand von
-              Systembenachrichtigungen (z.B. bei Statusänderungen) wird der
+              Systembenachrichtigungen (z.B. bei Statusänderungen) und der
+              E-Mail mit dem Link zum Zurücksetzen des Passworts wird der
               Dienst Brevo (ehemals Sendinblue) genutzt. Hierzu wird Ihre
               E-Mail-Adresse sowie der Inhalt der Benachrichtigung an Brevo
               übermittelt.
@@ -279,8 +293,9 @@ export default function DatenschutzPage() {
             bis sieben Tagen erneuert. Anmeldungen, KI-Auswertungen und
             Protokolldaten bleiben gespeichert, solange Ihr Benutzerkonto
             besteht; fehlgeschlagene Anmeldeversuche samt IP-Adresse löschen wir
-            nach einem Tag. Den DataMax-Chatverlauf löschen wir nach 90 Tagen,
-            mit „Chat leeren“ sofort. Fehlerberichte bei Sentry werden nach Ablauf der dort
+            nach einem Tag, ebenso die Hashwerte aus Anfragen zum Zurücksetzen
+            des Passworts und abgelaufene Links. Den DataMax-Chatverlauf löschen
+            wir nach 90 Tagen, mit „Chat leeren“ sofort. Fehlerberichte bei Sentry werden nach Ablauf der dort
             geltenden Aufbewahrungsfrist automatisch gelöscht. Auf Wunsch löschen
             wir Ihr Konto und alle zugehörigen Daten.
           </p>

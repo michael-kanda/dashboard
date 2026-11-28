@@ -12,7 +12,7 @@ import {
   BoxArrowRight, BoxArrowInRight, HddNetwork, Magic, Palette,
   LayoutSidebarInset,
   ChevronDown, ChevronUp,
-  BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search, Google, GeoAlt, ShieldCheck, Book
+  BarChartFill, GraphUpArrow, Robot, FileEarmarkText, PieChartFill, Search, Google, GeoAlt, ShieldCheck, Book, Key
 } from 'react-bootstrap-icons';
 import { HANDBOOK_FILENAME, HANDBOOK_PATH } from '@/lib/handbook';
 import { roleLabel } from '@/lib/ui-labels';
@@ -198,7 +198,7 @@ export default function Sidebar() {
     if (status !== 'loading') checkLandingpages();
   }, [session, status]);
 
-  if (pathname === '/login' || isInMaintenance) return null;
+  if (pathname === '/login' || pathname.startsWith('/login/') || isInMaintenance) return null;
   if (isCheckingMaintenance && status === 'authenticated' && session?.user?.role !== 'SUPERADMIN') return null;
 
   const handleLinkClick = () => setIsMobileMenuOpen(false);
@@ -212,6 +212,7 @@ export default function Sidebar() {
     { href: '/dashboard/freigabe', label: 'Redaktionsplan', icon: <CalendarCheck size={16} />, visible: shouldShowRedaktionsplanForUser },
     { href: '/admin/ki-tool', label: 'Content Studio', icon: <Magic size={16} />, visible: shouldShowKiTool },
     { href: '/konto/zwei-faktor', label: 'Zwei-Faktor-Anmeldung', icon: <ShieldCheck size={16} />, visible: isAdmin || isUser },
+    { href: '/konto/passwort', label: 'Passwort ändern', icon: <Key size={16} />, visible: isAdmin || isUser },
   ];
 
   const adminNavItems: NavItem[] = [

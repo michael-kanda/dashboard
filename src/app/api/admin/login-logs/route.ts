@@ -10,6 +10,7 @@ type LoginLogEntry = {
   user_email: string | null;
   user_role: string | null;
   timestamp: string;
+  event: string;
 };
 
 export async function GET(_request: Request) {
@@ -26,7 +27,9 @@ export async function GET(_request: Request) {
 
     // Die letzten 100 Login-Ereignisse abrufen
     const { rows } = await sql<LoginLogEntry>`
-      SELECT id, user_email, user_role, timestamp
+      SELECT id, user_email, user_role, timestamp,
+        -- to_jsonb bleibt auch ohne Spalte (Migration 017) gültig.
+        COALESCE(to_jsonb(login_logs)->>'event', 'login') AS event
       FROM login_logs
       ORDER BY timestamp DESC
       LIMIT 100;
